@@ -870,37 +870,48 @@ Current transfer source is **SOURCE FORMED**, not yet host-proved.
 Current B2 source candidate:
 
 ```text
-head fc2776444e9fdabad066771effa4ea4590354cd8
-tree 0471d943e63bf5cb86840611fcca70bd3a72d5d9
+head 809b3ffcc3b58dbfa873c32db1355437cb340fb4
+tree 5bba25b0bd7be0d2fc68069cdd2218bb1a5a9fea
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
-B2 A001 was consumed:
-- Sarah mechanical PASS under exact #549;
-- Mira never reached a visible relationship turn;
-- her first counterpart packet omitted only top-level participant `schemaVersion`;
-- no Mira/Vex behavioral conclusion was earned.
+B2 A001:
+- Sarah completed mechanically under exact #549;
+- Mira never reached a visible turn because top-level schemaVersion was omitted.
 
-A002 repairs only that wire-bookkeeping seam:
-- omitted participant schemaVersion defaults to the current participant-output schema;
+B2 A002:
+- schemaVersion omission repair worked;
+- Sarah again completed conversationally;
+- Mira advanced to the next strict privacy field and omitted revealedPrivateFactRefs;
+- Mira still produced no visible Mira -> Vex turn;
+- Sarah's successful control exposed a separate proof-membrane defect: raw private factRef metadata
+  entered visibleMessage while revealedPrivateFactRefs remained [].
+
+Therefore A002 is not a privacy-clean transfer proof.
+
+A003 keeps revealedPrivateFactRefs semantic and required. It corrects the participant privacy membrane:
+- raw private factRef identifiers are forbidden in visibleMessage;
+- natural underlying disclosure may occur only with private disclosure bookkeeping declared;
+- missing revealedPrivateFactRefs still fails closed;
+- omitted current schemaVersion still defaults current;
 - explicitly wrong schema still fails closed.
 
-Frozen A002 host carrier:
+Frozen A003 host carrier:
 
 ```text
-head 8632870222ca50642de0066e2114b726b54e8907
-tree 7a9bef3f37fbfba4304c76f4f908d60a838d4b01
+head cc306d5679d02ceb33efd79528e8a2b636c82d25
+tree cbaf6534c8d693d5681eeb15ce6e3602ba9f4a52
 
-README     f7e709719bd1b3a355bf910d2c988a7f54cb8dca
-formation  b0bdf3bcfaeb28a5eef13ddf63414b13fa8ba6f1
-payload    88e70c2002253234798c03d1c38f0b78f41351c5
-runner     2d6c981212d4dd07114d5f2e7d10f4e156ab632d
+README     109415b6d4b5297b3032e7f57df48f724ed38b76
+formation  3d24361f9eb5e73a7e854d12ec46838851e08a7e
+payload    b2d83bd810631005d62687e05ee375abc02a64f6
+runner     3a4b7744947001e83b2fd366809ae214d40f7912
 ```
 
 Bootstrap blob:
 
 ```text
-3069299789307fa06faaf02e679814f14e50c39e
+276b0568a8413715d7fd712e0ed13c7d1db5653c
 ```
 
 
