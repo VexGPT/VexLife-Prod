@@ -194,10 +194,10 @@ class VexLifePartnerMacHostSourceTest {
         )
         assertTrue(
             build.contains(
-                "\"partnerHost\"",
+                "\\\"partnerHost\\\"",
             ) &&
                 build.contains(
-                    "\"executableSha256\"",
+                    "\\\"executableSha256\\\"",
                 ),
         )
         assertTrue(
