@@ -23,12 +23,21 @@ object VexLifeFoundationalFieldFixture {
     fun revised(version: String = nextVersion()): Reading.Current {
         val body = shipped.body
         val first = body.modules.first()
+        val firstKernel = first.kernel.first()
+        val revisedFirstKernel = firstKernel.replaceFirst("human", "person")
+        require(revisedFirstKernel != firstKernel) {
+            "test revision requires one stable in-place projected wording change"
+        }
         val changed =
             body.copy(
                 version = version,
                 modules =
                     listOf(
-                        first.copy(kernel = first.kernel + "A sentence added by revision $version.")
+                        first.copy(
+                            kernel =
+                                listOf(revisedFirstKernel) +
+                                    first.kernel.drop(1),
+                        ),
                     ) + body.modules.drop(1),
             )
         return read(changed, shipped.revisions) as Reading.Current

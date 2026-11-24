@@ -3749,3 +3749,86 @@ tasks.register<JavaExec>("continuityPressure") {
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
 }
+
+// Experiment-only: adaptive human-side counterpart proof. This is deliberately separate from the
+// fixed ScenarioTurn continuityPressure grammar so dynamic participant turns do not get forced into
+// a static dialogue schema. Nothing here ships in the Product.
+tasks.register<JavaExec>("dynamicCounterpartProof") {
+    group = "verification"
+    description = "Run the dynamic-counterpart lived proof (experiment-only, scratch Home)."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartAdapterKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("dynamicCounterpartSequenceProbe") {
+    group = "verification"
+    description = "Prove Sarah 4B -> Vex 4B -> same Sarah 4B sequencing before DCP-1 semantics."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartSequenceProbeKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("dynamicCounterpartProfileProbe") {
+    group = "verification"
+    description = "Prove one reusable character + role + scenario + binding profile is inhabitable before DCP-1 semantics."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartProfileProbeKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("dynamicCounterpartProfileEncounter") {
+    group = "verification"
+    description = "Run the full reusable-profile counterpart/Vex encounter after S0/S1 prerequisites."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartProfileEncounterAdapterKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("multiVexFreshBootCapability") {
+    group = "verification"
+    description = "Run one fresh-boot embodied capability proof against an empty scratch Home."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFreshBootCapabilityAdapterKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("multiVexFoundationCrossover") {
+    group = "verification"
+    description = "Replay exact preserved Multi-Vex first-turn messages across Foundation v0.6.19/v0.6.20."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFoundationCrossoverAdapterKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("multiVexFoundationReachReplication") {
+    group = "verification"
+    description = "Replicate Foundation v0.6.19/v0.6.20 reach choice in four counterbalanced matched B0 pairs."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFoundationReachReplicationAdapterKt")
+    workingDir = projectDir
+}
+
+tasks.register<JavaExec>("multiVexCounterpartSteeringAblation") {
+    group = "verification"
+    description = "Measure whether Character posture / Role profile steer the counterpart's first move beyond constant scenario ground."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexCounterpartSteeringAblationAdapterKt")
+    workingDir = projectDir
+}

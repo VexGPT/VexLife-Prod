@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "vexlife.multivex.prompt-treatment/v1",
+  "treatmentRef": "treatment.multivex.conversation-chronology-self-location.v1",
+  "owner": "EXPERIMENT",
+  "target": "DirectPromptContext.conversationExtent",
+  "replacementSentence": "The Conversation messages shown in this prompt remain in their original Conversation order, earlier to later. Order is chronology only; it does not by itself mark any turn superseded or more authoritative.",
+  "purpose": "Test whether exposing the Conversation owner's already-known chronological ordering helps the 4B integrate a later explicit project update on a natural current-status request, without creating semantic supersession or giving later turns automatic authority.",
+  "standing": "EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY",
+  "automaticAcceptanceAllowed": false
+}

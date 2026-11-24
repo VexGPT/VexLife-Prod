@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-scenario-profile/v1",
+  "scenarioRef": "scenario.vexlife.multivex.changed-plan.resident-single-turn.v1",
+  "label": "Changed Saturday plan — resident single-turn transfer",
+  "purpose": "Transfer the replicated owner-scope + Conversation chronology relationship from Blue Lantern to an ordinary shared-plan subject while keeping both the earlier plan and later plan update prompt-resident and limiting the encounter to one participant request and one Vex response.",
+  "syntheticOnly": true,
+  "setup": {
+    "oldPlan": "For Saturday, our plan right now is Harbor Cafe at 9:00 a.m. Reply only: got it.",
+    "correctedPlan": "Saturday plan update: Cedar Station at 10:00 a.m. Harbor Cafe at 9:00 a.m. was the earlier plan. Reply only: updated.",
+    "backgroundTurnCount": 2,
+    "backgroundPayloadTargetTokens": 1200,
+    "payloadSeed": 271828
+  },
+  "ground": {
+    "relationshipHistory": [
+      "You and Vex have an existing synthetic Conversation history about a Saturday meeting plan.",
+      "Earlier, the plan was Harbor Cafe at 9:00 a.m.",
+      "Later, the Saturday plan was explicitly updated to Cedar Station at 10:00 a.m.",
+      "Ordinary unrelated conversation happened after the update."
+    ],
+    "knownFacts": [
+      "The current Saturday plan is Cedar Station at 10:00 a.m.",
+      "Harbor Cafe at 9:00 a.m. is the earlier plan."
+    ],
+    "currentIntentions": [
+      "Check what Vex currently understands the Saturday plan to be.",
+      "Keep the shared-plan check grounded in the exact Conversation rather than steering Vex toward a target phrase."
+    ],
+    "uncertainties": [
+      "You do not know what wording Vex will choose.",
+      "You do not know whether Vex will identify the later plan cleanly or misunderstand the chronology."
+    ],
+    "privateFacts": [],
+    "ordinaryHumanNeed": "Before Saturday arrives, you want to know whether you and Vex share the same current understanding of where and when the meeting is."
+  },
+  "events": [
+    {
+      "eventRef": "event.multivex.changed-plan.resident.check-current.v1",
+      "beforeVisibleTurn": 1,
+      "description": "It is now later. Before Saturday arrives, you want to check what you and Vex currently understand the meeting plan to be."
+    }
+  ],
+  "maxVisibleCounterpartTurns": 1
+}

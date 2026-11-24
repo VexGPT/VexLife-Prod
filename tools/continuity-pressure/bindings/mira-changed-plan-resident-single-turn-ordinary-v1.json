@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-binding/v1",
+  "bindingRef": "binding.dynamic-counterpart.person-c.changed-plan.resident-single-turn.ordinary-shared-understanding.v1",
+  "characterRef": "character.vexlife.dynamic-counterpart.person-c.v1",
+  "roleRef": "role.dynamic-counterpart.ordinary-shared-understanding.v1",
+  "scenarioRef": "scenario.vexlife.multivex.changed-plan.resident-single-turn.v1"
+}

@@ -17,6 +17,9 @@ object CanonicalVexLifeHomeFixture {
         home: Path,
         deviceSuffix: String = "00000000-0000-0000-0000-000000000001",
         lineageSuffix: String = "00000000-0000-0000-0000-000000000002",
+        personRef: String = "person.local-user",
+        familyRef: String = "vex-family.local-user",
+        deviceName: String = "Victor's Mac",
     ): Formed {
         val root = home.toAbsolutePath().normalize()
         val deviceRef = "device.vexlife.$deviceSuffix"
@@ -39,7 +42,7 @@ object CanonicalVexLifeHomeFixture {
             {
               "schemaVersion": "vexlife.home/v0",
               "homeRef": "$homeRef",
-              "familyRef": "vex-family.local-user",
+              "familyRef": "$familyRef",
               "createdAt": "$createdAt",
               "currentDeviceRef": "$deviceRef",
               "currentCompanionLineageRef": "$companionLineageRef",
@@ -52,10 +55,10 @@ object CanonicalVexLifeHomeFixture {
             """
             {
               "schemaVersion": "vexlife.device-installation/v0",
-              "personRef": "person.local-user",
-              "familyRef": "vex-family.local-user",
+              "personRef": "$personRef",
+              "familyRef": "$familyRef",
               "deviceRef": "$deviceRef",
-              "deviceName": "Victor's Mac",
+              "deviceName": "$deviceName",
               "platform": "darwin",
               "architecture": "arm64",
               "companionLineageRef": "$companionLineageRef",
