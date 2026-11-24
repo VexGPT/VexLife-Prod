@@ -62,10 +62,8 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeInferenceCurrentState
-import vexlife.model.VexLifeInferenceSelection
 import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
-import vexlife.model.VexLifePartnerModelInventory
 import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticCompanionRepresentation
@@ -74,10 +72,6 @@ import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
-import vexlife.partner.VexLifePartnerConnectionSettingsStore
-import vexlife.partner.VexLifePartnerCredentialCustody
-import vexlife.partner.VexLifePartnerDeterministicSupport
-import vexlife.partner.VexLifePartnerHostEffect
 import vexlife.partner.VexLifePartnerMacHostRealization
 import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -135,7 +129,7 @@ class VexLifeProdLocalService private constructor(
     private val servingRuntimeReceiptRef: () -> String,
     private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
-    private val partnerHostBindings: PartnerHostBindings?,
+    private val partnerInference: VexLifeProdPartnerInference?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -148,11 +142,6 @@ class VexLifeProdLocalService private constructor(
         ) -> VexLifeReleaseUpdates.ControlResult,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
-    internal data class PartnerHostBindings(
-        val credentials: VexLifePartnerCredentialCustody.ProtectedHostStore,
-        val executor: VexLifePartnerHostEffect.Executor,
-    )
-
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
@@ -266,13 +255,6 @@ class VexLifeProdLocalService private constructor(
             it.startObserving()
         }
 
-    private val partnerConnectionSettings =
-        VexLifePartnerConnectionSettingsStore(
-            Path.of(
-                startupSetup.productHome,
-            ),
-        )
-
     /** Settings → Models projects the current serving Session; runtime effects stay outside it. */
     private val models =
         VexLifeModels(
@@ -292,131 +274,52 @@ class VexLifeProdLocalService private constructor(
             modelSwitchRealization = modelSwitchRealization,
         )
 
-    private fun partnerCoordinateOrNull(
-        coordinate: VexLifeInferenceSelection.Coordinate?,
-    ): VexLifePartnerModelInventory.Coordinate? =
-        coordinate
-            ?.takeIf {
-                it.sourceKind ==
-                    VexLifeModelSourceProjection.SourceKind.PARTNER
-            }
-            ?.let {
-                current ->
-                VexLifePartnerModelInventory.Coordinate(
-                    providerRef =
-                        requireNotNull(
-                            current.providerRef,
-                        ),
-                    modelRef = current.modelRef,
-                )
-            }
+    private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection {
+        val local =
+            models.projection()
+        val stagedTarget =
+            models.stagedInferenceTarget()
+        val composition =
+            partnerInference
 
-    private fun currentPartnerModels(): VexLifePartnerModelsCurrentState.Projection {
-        val bindings =
-            partnerHostBindings
-                ?: return VexLifePartnerModelsCurrentState.Projection(
-                    configuredProviders = emptyList(),
-                    connectionByProfileRef = emptyMap(),
-                    offerings = emptyList(),
-                )
-        val targeted =
-            partnerCoordinateOrNull(
-                models.stagedInferenceTarget(),
-            )
-        val deterministicSupport =
-            VexLifePartnerDeterministicSupport.projections()
-        val base =
-            VexLifePartnerModelsCurrentState.project(
-                input =
-                    VexLifePartnerModelsCurrentState.Input(
-                        settings =
-                            partnerConnectionSettings.read(),
-                        support =
-                            deterministicSupport,
-                        targeted = targeted,
-                        serving = null,
-                    ),
-                host = bindings.credentials,
-            )
-
-        val serving =
-            models.partnerServing()
-                ?: return base
-        val receipt =
-            serving.qualification.receipt
-        val providerState =
-            base.configuredProviders
-                .singleOrNull {
-                    it.providerRef ==
-                        receipt.providerRef
-                }
-                ?: return base
-        if (
-            providerState.credentialRef !=
-                receipt.credentialRef ||
-            providerState.accountScope !=
-                receipt.accountScope
+        return if (
+            composition !=
+            null
         ) {
-            return base
-        }
-
-        val handle =
-            serving.coordinate.handle
-        val qualifiedConnections =
-            base.connectionByProfileRef +
-                (
-                    handle to
-                        serving.qualification.connection
-                    )
-        val qualifiedSupport =
-            deterministicSupport.map {
-                support ->
-                if (
-                    support.providerRef ==
-                        receipt.providerRef &&
-                    support.modelRef ==
-                        receipt.modelRef
-                ) {
-                    serving.qualification.support
-                } else {
-                    support
-                }
-            }
-        val offerings =
-            VexLifePartnerModelInventory.offerings(
-                VexLifePartnerModelInventory.Input(
-                    connections =
-                        qualifiedConnections.values.toList(),
-                    support = qualifiedSupport,
-                    targeted = targeted,
-                    serving =
-                        partnerCoordinateOrNull(
-                            serving.coordinate,
-                        ),
-                ),
+            composition.observe(
+                local = local,
+                stagedTarget = stagedTarget,
+                partnerServing =
+                    models.partnerServing(),
+                localRuntimeEvidence =
+                    runCatching {
+                        currentQualifiedRuntimeEvidence()
+                    }
+                        .getOrNull(),
             )
-
-        return VexLifePartnerModelsCurrentState.Projection(
-            configuredProviders =
-                base.configuredProviders,
-            connectionByProfileRef =
-                qualifiedConnections,
-            offerings =
-                offerings,
-        )
+                .current
+        } else {
+            VexLifeInferenceCurrentState.project(
+                productHome =
+                    Path.of(
+                        startupSetup.productHome,
+                    ),
+                local = local,
+                partner =
+                    VexLifePartnerModelsCurrentState.Projection(
+                        configuredProviders = emptyList(),
+                        connectionByProfileRef = emptyMap(),
+                        offerings = emptyList(),
+                    ),
+                stagedTargetOrNull =
+                    stagedTarget
+                        ?.takeIf {
+                            it.sourceKind ==
+                                VexLifeModelSourceProjection.SourceKind.LOCAL
+                        },
+            )
+        }
     }
-
-    private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection =
-        VexLifeInferenceCurrentState.project(
-            productHome =
-                Path.of(
-                    startupSetup.productHome,
-                ),
-            local = models.projection(),
-            partner = currentPartnerModels(),
-            stagedTargetOrNull =
-                models.stagedInferenceTarget(),
-        )
 
     private val privateCompletion =
         privateCompletionOverride
@@ -703,7 +606,7 @@ class VexLifeProdLocalService private constructor(
                     },
                 )
 
-            val partnerHostBindings =
+            val partnerInference =
                 partnerHostExecutablePathOrNull
                     ?.let {
                         helperPath ->
@@ -723,8 +626,12 @@ class VexLifeProdLocalService private constructor(
                                     plan,
                                 ),
                             )
-                        PartnerHostBindings(
-                            credentials = client,
+                        VexLifeProdPartnerInference(
+                            productHome =
+                                Path.of(
+                                    session.foundation.productHome,
+                                ),
+                            host = client,
                             executor = client,
                         )
                     }
@@ -907,7 +814,7 @@ class VexLifeProdLocalService private constructor(
                         .promptCacheEntryLimit
                 },
                 modelSwitchRealization = modelSwitchRealization,
-                partnerHostBindings = partnerHostBindings,
+                partnerInference = partnerInference,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
@@ -975,7 +882,7 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: (() -> String)? = null,
             servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
-            partnerHostBindings: PartnerHostBindings? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1041,7 +948,7 @@ class VexLifeProdLocalService private constructor(
                             setup.promptCacheEntryLimit
                         },
                 modelSwitchRealization = modelSwitchRealization,
-                partnerHostBindings = partnerHostBindings,
+                partnerInference = partnerInference,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
@@ -1080,7 +987,7 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.promptCacheEntryLimit
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
-            partnerHostBindings: PartnerHostBindings? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1190,7 +1097,7 @@ class VexLifeProdLocalService private constructor(
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
-                        partnerHostBindings = partnerHostBindings,
+                        partnerInference = partnerInference,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
