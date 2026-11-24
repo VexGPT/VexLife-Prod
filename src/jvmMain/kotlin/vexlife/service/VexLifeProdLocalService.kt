@@ -518,7 +518,7 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
-            partnerHostExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String? = null,
         ): VexLifeProdLocalService {
             val visionRuntime =
                 visionRuntimeExecutablePathOrNull
