@@ -10,8 +10,8 @@ const TREE='a105ef3e7c5fcbb2bedad437853a52ba81099356';
 const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';
 const REPOSITORY='VexGPT/VexLife-Prod';
 const FOUR_B_MODEL_REF='model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20';
-const TASK_REF='task.vexlife-prod.multivex.relationship-pressure.sc.a001';
-const ATTEMPT_PREFIX='attempt.vexlife-prod.multivex.relationship-pressure.sc.a001.';
+const TASK_REF='task.vexlife-prod.multivex.source-currentness.sc.a001';
+const ATTEMPT_PREFIX='attempt.vexlife-prod.multivex.source-currentness.sc.a001.';
 const RETURN_ROUTE_REF='github.pull.vexlife-prod.543';
 const F20_BODY_BLOB='4af59951c177bddaec058253a967f448e8a5c947';
 const F20_REVISIONS_BLOB='a7a497900bacc5ded736ab12f58e0c6e876a39c8';
@@ -158,7 +158,7 @@ function writeResult(disposition,stopReasonOrNull=null){
 try{
   if(!RESULT_DIR||!PAYLOAD_ROOT||!CAPSULE_ROOT) stop('harness','VEXLOCALBRIDGE_PAYLOAD_ENV_MISSING');
   fs.mkdirSync(WORK_ROOT,{recursive:true});
-  stage('00 admitted SC source-currentness relationship-pressure payload');
+  stage('00 admitted SC source-currentness diagnostic payload');
 
   const taskRef=process.env.VEXLOCALBRIDGE_TASK_REF||null;
   const attemptRef=process.env.VEXLOCALBRIDGE_ATTEMPT_REF||null;
@@ -258,7 +258,7 @@ try{
   const repoRoot=path.join(WORK_ROOT,'VexLife-Prod');
   effects.providerOrNetworkEffectPerformed=true;
   run(gh,['repo','clone',REPOSITORY,repoRoot,'--','--filter=blob:none','--no-checkout'],{cwd:WORK_ROOT,label:'03 acquire exact Multi-Vex source',timeout:300000});
-  run(git,['checkout','--quiet','--detach',HEAD],{cwd:repoRoot,label:'04 checkout exact B2 transfer head',timeout:60000});
+  run(git,['checkout','--quiet','--detach',HEAD],{cwd:repoRoot,label:'04 checkout exact Multi-Vex source',timeout:60000});
   const observedHead=run(git,['rev-parse','HEAD'],{cwd:repoRoot,label:'05 verify source head'}).stdout.trim();
   const observedTree=run(git,['rev-parse','HEAD^{tree}'],{cwd:repoRoot,label:'06 verify source tree'}).stdout.trim();
   if(observedHead!==HEAD||observedTree!==TREE) stop('harness','SOURCE_IDENTITY_DRIFT');
@@ -429,7 +429,7 @@ try{
   };
 
   if(afterState.counterpartProcessCleanup.aliveAfter===true){
-    candidateFindings.push('C1_COUNTERPART_PROCESS_LEAK');
+    candidateFindings.push('SC_COUNTERPART_PROCESS_LEAK');
   }
   if(!afterState.canonicalConversationUnchanged) candidateFindings.push('CANONICAL_CONVERSATION_CHANGED');
   if(!afterState.canonicalMemoryUnchanged) candidateFindings.push('CANONICAL_MEMORY_CHANGED');
@@ -479,7 +479,7 @@ try{
   if(firstVex && !Array.isArray(firstVex.sourceReturnSourceEventRefs)) candidateFindings.push('SC_SOURCE_RETURN_REF_EVIDENCE_MISSING');
 
   completedStepReceipts.push({
-    step:'multivex-relationship-pressure-c1',
+    step:'multivex-source-currentness-sc',
     state:candidateFindings.length===0?'PASS':'SAFE_FAILURE',
     encounterStatus:encounterResult?.status??null,
     characterRef:encounterResult?.characterRef??null,
