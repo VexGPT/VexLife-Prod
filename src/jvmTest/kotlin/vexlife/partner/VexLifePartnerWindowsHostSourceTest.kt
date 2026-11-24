@@ -202,6 +202,11 @@ class VexLifePartnerWindowsHostSourceTest {
         )
         assertTrue(
             proof.contains(
+                "[AllowEmptyCollection()][byte[]]\$Payload",
+            ),
+        )
+        assertTrue(
+            proof.contains(
                 "finally {",
             ),
         )
