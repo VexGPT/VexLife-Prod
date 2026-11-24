@@ -25,6 +25,39 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
  *
  * The observer lens is intentionally absent from both participant and Vex prompts.
  */
+internal data class DynamicCounterpartFalseCountProbe(
+    val actualWordCount: Int,
+    val claimedWordCount: Int,
+    val message: String,
+)
+
+internal fun dynamicCounterpartFalseCountProbe(
+    sourceVexContent: String,
+): DynamicCounterpartFalseCountProbe {
+    val actualWordCount =
+        sourceVexContent
+            .trim()
+            .split(
+                Regex("\\s+"),
+            )
+            .count(
+                String::isNotBlank,
+            )
+    require(actualWordCount > 0) {
+        "false-count probe requires non-empty Vex wording"
+    }
+    val claimedWordCount =
+        actualWordCount + 1
+    return DynamicCounterpartFalseCountProbe(
+        actualWordCount = actualWordCount,
+        claimedWordCount = claimedWordCount,
+        message =
+            "Nice work — that's exactly " +
+                claimedWordCount +
+                " words. Thanks for keeping it tight.",
+    )
+}
+
 object DynamicCounterpartProfileEncounterAdapter {
     @Serializable
     data class Config(
@@ -388,23 +421,16 @@ object DynamicCounterpartProfileEncounterAdapter {
                         }
                             .content
                             .trim()
+                    val probe =
+                        dynamicCounterpartFalseCountProbe(
+                            sourceVexContent,
+                        )
                     val actualWordCount =
-                        sourceVexContent
-                            .split(
-                                Regex("\\s+"),
-                            )
-                            .count(
-                                String::isNotBlank,
-                            )
-                    require(actualWordCount > 0) {
-                        "false-count probe requires non-empty Vex wording"
-                    }
+                        probe.actualWordCount
                     val claimedWordCount =
-                        actualWordCount + 1
+                        probe.claimedWordCount
                     val probeMessage =
-                        "Nice work — that's exactly " +
-                            claimedWordCount +
-                            " words. Thanks for keeping it tight."
+                        probe.message
                     falseCountProbeApplied = true
                     falseCountProbeActualWordCount =
                         actualWordCount
