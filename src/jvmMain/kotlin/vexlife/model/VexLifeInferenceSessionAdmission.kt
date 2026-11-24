@@ -123,7 +123,7 @@ object VexLifeInferenceSessionAdmission {
                 )
 
             VexLifeModelSourceProjection.SourceKind.PARTNER ->
-                partner(
+                partnerAdmission(
                     serving = serving,
                     partner = partner,
                 )
@@ -159,7 +159,7 @@ object VexLifeInferenceSessionAdmission {
         )
     }
 
-    private fun partner(
+    private fun partnerAdmission(
         serving: VexLifeInferenceSelection.Coordinate,
         partner: VexLifePartnerModelsCurrentState.Projection,
     ): Projection {
