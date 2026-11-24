@@ -40,6 +40,8 @@ object VexLifePartnerSupportQualification {
         val adapterConformanceProofRef: String?,
         val vexRelationshipConformanceProofRef: String?,
         val liveQualificationReceiptRef: String? = null,
+        val liveQualificationCredentialRef: String? = null,
+        val liveQualificationAccountScope: VexLifePartnerAccountScope.Selection? = null,
     ) {
         init {
             requireRef(
@@ -66,12 +68,31 @@ object VexLifePartnerSupportQualification {
                 liveQualificationReceiptRef,
                 "liveQualificationReceiptRef",
             )
+            requireOptionalRef(
+                liveQualificationCredentialRef,
+                "liveQualificationCredentialRef",
+            )
 
+            val liveQualificationPresent =
+                liveQualificationReceiptRef != null
             require(
-                liveQualificationReceiptRef == null ||
-                    contractProofComplete,
+                liveQualificationPresent ==
+                    (
+                        liveQualificationCredentialRef != null &&
+                            liveQualificationAccountScope != null
+                    ),
             ) {
-                "live Partner qualification cannot bypass contract/adapter/Vex conformance proof"
+                "live Partner qualification requires one exact credential/account-scope binding"
+            }
+            require(
+                !liveQualificationPresent ||
+                    (
+                        contractProofComplete &&
+                            liveQualificationAccountScope?.providerRef ==
+                            providerRef
+                    ),
+            ) {
+                "live Partner qualification cannot bypass deterministic proof or provider identity"
             }
         }
 
@@ -80,6 +101,40 @@ object VexLifePartnerSupportQualification {
                 contractFixtureProofRef != null &&
                     adapterConformanceProofRef != null &&
                     vexRelationshipConformanceProofRef != null
+    }
+
+    @Serializable
+    data class LiveQualification(
+        val providerRef: String,
+        val modelRef: String,
+        val credentialRef: String,
+        val accountScope: VexLifePartnerAccountScope.Selection,
+        val receiptRef: String,
+    ) {
+        init {
+            requireRef(
+                providerRef,
+                "providerRef",
+            )
+            requireRef(
+                modelRef,
+                "modelRef",
+            )
+            requireRef(
+                credentialRef,
+                "credentialRef",
+            )
+            requireRef(
+                receiptRef,
+                "receiptRef",
+            )
+            require(
+                accountScope.providerRef ==
+                    providerRef,
+            ) {
+                "live Partner qualification account scope must bind the same provider"
+            }
+        }
     }
 
     @Serializable
@@ -96,6 +151,8 @@ object VexLifePartnerSupportQualification {
          */
         val liveValidationDisclosureRequired: Boolean,
         val liveQualificationReceiptRef: String?,
+        val liveQualificationCredentialRef: String? = null,
+        val liveQualificationAccountScope: VexLifePartnerAccountScope.Selection? = null,
     )
 
     fun project(
@@ -122,6 +179,36 @@ object VexLifePartnerSupportQualification {
                     Standing.CONTRACT_PROVEN_LIVE_UNQUALIFIED,
             liveQualificationReceiptRef =
                 evidence.liveQualificationReceiptRef,
+            liveQualificationCredentialRef =
+                evidence.liveQualificationCredentialRef,
+            liveQualificationAccountScope =
+                evidence.liveQualificationAccountScope,
+        )
+    }
+
+    fun acceptLiveQualification(
+        current: Projection,
+        live: LiveQualification,
+    ): Projection {
+        require(
+            current.standing ==
+                Standing.CONTRACT_PROVEN_LIVE_UNQUALIFIED &&
+                current.liveQualificationReceiptRef ==
+                null &&
+                current.providerRef ==
+                live.providerRef &&
+                current.modelRef ==
+                live.modelRef,
+        ) {
+            "live Partner qualification must upgrade the exact current contract-proven provider/model"
+        }
+
+        return current.copy(
+            standing = Standing.LIVE_QUALIFIED,
+            liveValidationDisclosureRequired = false,
+            liveQualificationReceiptRef = live.receiptRef,
+            liveQualificationCredentialRef = live.credentialRef,
+            liveQualificationAccountScope = live.accountScope,
         )
     }
 

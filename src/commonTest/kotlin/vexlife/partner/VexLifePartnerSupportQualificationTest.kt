@@ -20,6 +20,17 @@ class VexLifePartnerSupportQualificationTest {
             adapterConformanceProofRef = adapter,
             vexRelationshipConformanceProofRef = relationship,
             liveQualificationReceiptRef = live,
+            liveQualificationCredentialRef =
+                "credential.partner.fixture".takeIf {
+                    live != null
+                },
+            liveQualificationAccountScope =
+                VexLifePartnerAccountScope.Selection(
+                    providerRef = "provider.openai.api",
+                )
+                    .takeIf {
+                        live != null
+                    },
         )
 
     @Test
@@ -96,6 +107,102 @@ class VexLifePartnerSupportQualificationTest {
             "receipt.partner.live.openai.fixture",
             projection.liveQualificationReceiptRef,
         )
+        assertEquals(
+            "credential.partner.fixture",
+            projection.liveQualificationCredentialRef,
+        )
+        assertEquals(
+            "provider.openai.api",
+            projection.liveQualificationAccountScope?.providerRef,
+        )
+    }
+
+    @Test
+    fun contractProvenProjectionAcceptsOneExactCurrentLiveQualification() {
+        val current =
+            VexLifePartnerSupportQualification.project(
+                evidence(
+                    contract = "proof.partner.p0",
+                    adapter = "proof.partner.p1",
+                    relationship = "proof.partner.p2",
+                ),
+            )
+
+        val qualified =
+            VexLifePartnerSupportQualification.acceptLiveQualification(
+                current = current,
+                live =
+                    VexLifePartnerSupportQualification.LiveQualification(
+                        providerRef = "provider.openai.api",
+                        modelRef = "model.partner.fixture",
+                        credentialRef = "credential.partner.current",
+                        accountScope =
+                            VexLifePartnerAccountScope.Selection(
+                                providerRef = "provider.openai.api",
+                            ),
+                        receiptRef = "receipt.partner.live.current",
+                    ),
+            )
+
+        assertEquals(
+            VexLifePartnerSupportQualification.Standing.LIVE_QUALIFIED,
+            qualified.standing,
+        )
+        assertFalse(
+            qualified.liveValidationDisclosureRequired,
+        )
+        assertEquals(
+            "credential.partner.current",
+            qualified.liveQualificationCredentialRef,
+        )
+        assertEquals(
+            "receipt.partner.live.current",
+            qualified.liveQualificationReceiptRef,
+        )
+    }
+
+    @Test
+    fun liveQualificationCannotUpgradeAnotherProviderOrModel() {
+        val current =
+            VexLifePartnerSupportQualification.project(
+                evidence(
+                    contract = "proof.partner.p0",
+                    adapter = "proof.partner.p1",
+                    relationship = "proof.partner.p2",
+                ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerSupportQualification.acceptLiveQualification(
+                current = current,
+                live =
+                    VexLifePartnerSupportQualification.LiveQualification(
+                        providerRef = VexLifePartnerProviderCatalog.KimiInternationalRef,
+                        modelRef = "model.partner.fixture",
+                        credentialRef = "credential.partner.other",
+                        accountScope =
+                            VexLifePartnerAccountScope.Selection(
+                                providerRef = VexLifePartnerProviderCatalog.KimiInternationalRef,
+                            ),
+                        receiptRef = "receipt.partner.live.other",
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun liveReceiptRequiresExactCredentialAndAccountScopeBinding() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerSupportQualification.Evidence(
+                providerRef = "provider.openai.api",
+                modelRef = "model.partner.fixture",
+                contractFixtureProofRef = "proof.partner.p0",
+                adapterConformanceProofRef = "proof.partner.p1",
+                vexRelationshipConformanceProofRef = "proof.partner.p2",
+                liveQualificationReceiptRef =
+                    "receipt.partner.live.openai.fixture",
+            )
+        }
     }
 
     @Test

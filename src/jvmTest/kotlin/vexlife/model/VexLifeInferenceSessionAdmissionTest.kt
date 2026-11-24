@@ -118,6 +118,17 @@ class VexLifeInferenceSessionAdmissionTest {
                     } else {
                         null
                     },
+                liveQualificationCredentialRef =
+                    "credential.vexlife.partner.inference-session-current".takeIf {
+                        live
+                    },
+                liveQualificationAccountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef = providerRef,
+                    )
+                        .takeIf {
+                            live
+                        },
             ),
         )
 
@@ -431,6 +442,48 @@ class VexLifeInferenceSessionAdmissionTest {
         assertEquals(
             VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol.providerRef,
             projected.qualified?.partnerAccountScope?.providerRef,
+        )
+    }
+
+    @Test
+    fun partnerServingRejectsLiveQualificationFromReplacedCredential() {
+        val partner =
+            partnerOffering(
+                targeted = true,
+                serving = true,
+            )
+        val projected =
+            VexLifeInferenceSessionAdmission.project(
+                current =
+                    current(
+                        localTargeted = false,
+                        localServing = false,
+                        partner = partner,
+                    ),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
+                    ),
+                localRuntimeEvidence = null,
+                partner =
+                    partnerCurrentness(
+                        offering = partner,
+                        credentialRef =
+                            "credential.vexlife.partner.rotated-after-live-proof",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeInferenceSessionAdmission.Standing.HELD,
+            projected.standing,
+        )
+        assertEquals(
+            VexLifeInferenceSessionAdmission.HoldReason.PARTNER_QUALIFICATION_CURRENTNESS_MISMATCH,
+            projected.holdReason,
+        )
+        assertNull(
+            projected.qualified,
         )
     }
 
