@@ -1497,3 +1497,37 @@ state existed if it was not.
 
 Evidence routes to VexLife-Prod issue #61. Mechanical PASS does not decide the cause; it proves the evidence
 needed for the currentness classification was captured.
+
+## SC A001 consumed — current source resident; SC2 stripped currentness discriminator
+
+Canonical SC RETURN:
+```text
+sha256 8cf5c39f8d2a2a942728dc8e1dd7a45fbdbd7dcd72328d130c08efe294820041
+disposition PASS
+```
+
+First Vex prompt proved:
+```text
+contextMode = RECENT_COMPLETED_TURNS
+oldPlanResident = true
+correctedPlanResident = true
+sourceReturnProtocolEnabled = true
+sourceReturnState = null
+conversationContextProjectionState = null
+```
+
+So the stale first answer is not explained by missing Home source, missing prompt residency, or failed Source Return.
+SC2 keeps the exact old -> updated -> background chronology but removes affinity and the seven-word task.
+
+Exact experiment-owned first request:
+```text
+What's the current Blue Lantern status? Please answer in your own words.
+```
+
+Role:
+```text
+role.dynamic-counterpart.ordinary-shared-understanding.v1
+```
+
+Mechanical acceptance proves exact treatment/residency/currentness only. It does not grade the answer.
+
