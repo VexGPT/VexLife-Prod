@@ -43,6 +43,7 @@ object DynamicCounterpartProfileEncounterAdapter {
         val postureSupplied: Boolean = false,
         val roleSupplied: Boolean = false,
         val firstVisibleRequestFile: String? = null,
+        val falseCountProbeAfterFirstVex: Boolean = false,
     )
 
     fun run(config: Config): Int {
@@ -242,6 +243,12 @@ object DynamicCounterpartProfileEncounterAdapter {
                 }
         var firstVisibleParticipantGeneratedMessage: String? = null
         var firstVisibleRequestApplied = false
+        var falseCountProbeApplied = false
+        var falseCountProbeActualWordCount: Int? = null
+        var falseCountProbeClaimedWordCount: Int? = null
+        var falseCountProbeMessage: String? = null
+        var falseCountProbeRawParticipantGeneratedMessage: String? = null
+        var falseCountProbeRawParticipantComplete: Boolean? = null
         val currentRuntimeEvidence = {
             currentProductQualifiedRuntime(
                 runtimeHome = runtimeHome,
@@ -349,7 +356,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                     postureSupplied = config.postureSupplied,
                     roleSupplied = config.roleSupplied,
                 )
-            val visibleDecision =
+            val firstCarrierDecision =
                 if (
                     visibleParticipantTurns == 0 &&
                     firstVisibleRequest != null
@@ -366,6 +373,57 @@ object DynamicCounterpartProfileEncounterAdapter {
                     )
                 } else {
                     decision
+                }
+            val visibleDecision =
+                if (
+                    config.falseCountProbeAfterFirstVex &&
+                    !falseCountProbeApplied &&
+                    vexOrdinal == 1
+                ) {
+                    val sourceVexContent =
+                        requireNotNull(
+                            vex.lastOrNull(),
+                        ) {
+                            "false-count probe requires one completed Vex reply"
+                        }
+                            .content
+                            .trim()
+                    val actualWordCount =
+                        sourceVexContent
+                            .split(
+                                Regex("\\s+"),
+                            )
+                            .count(
+                                String::isNotBlank,
+                            )
+                    require(actualWordCount > 0) {
+                        "false-count probe requires non-empty Vex wording"
+                    }
+                    val claimedWordCount =
+                        actualWordCount + 1
+                    val probeMessage =
+                        "Nice work — that's exactly " +
+                            claimedWordCount +
+                            " words. Thanks for keeping it tight."
+                    falseCountProbeApplied = true
+                    falseCountProbeActualWordCount =
+                        actualWordCount
+                    falseCountProbeClaimedWordCount =
+                        claimedWordCount
+                    falseCountProbeMessage =
+                        probeMessage
+                    falseCountProbeRawParticipantGeneratedMessage =
+                        firstCarrierDecision.visibleMessage
+                    falseCountProbeRawParticipantComplete =
+                        firstCarrierDecision.complete
+                    firstCarrierDecision.copy(
+                        visibleMessage =
+                            probeMessage,
+                        complete = false,
+                        completionReason = "",
+                    )
+                } else {
+                    firstCarrierDecision
                 }
             currentParticipantState = visibleDecision.privateState
             participant +=
@@ -617,6 +675,31 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put(
                     "firstVisibleParticipantGeneratedMessage",
                     firstVisibleParticipantGeneratedMessage ?: "",
+                )
+                put(
+                    "falseCountProbeConfigured",
+                    config.falseCountProbeAfterFirstVex,
+                )
+                put("falseCountProbeApplied", falseCountProbeApplied)
+                put(
+                    "falseCountProbeActualWordCount",
+                    falseCountProbeActualWordCount ?: -1,
+                )
+                put(
+                    "falseCountProbeClaimedWordCount",
+                    falseCountProbeClaimedWordCount ?: -1,
+                )
+                put(
+                    "falseCountProbeMessage",
+                    falseCountProbeMessage ?: "",
+                )
+                put(
+                    "falseCountProbeRawParticipantGeneratedMessage",
+                    falseCountProbeRawParticipantGeneratedMessage ?: "",
+                )
+                put(
+                    "falseCountProbeRawParticipantComplete",
+                    falseCountProbeRawParticipantComplete ?: false,
                 )
                 put("foundationOverrideSupplied", foundationOverride != null)
                 put(
@@ -877,6 +960,10 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("postureSupplied", config.postureSupplied)
                 put("roleSupplied", config.roleSupplied)
                 put("firstVisibleRequestCarrierSupplied", config.firstVisibleRequestFile != null)
+                put(
+                    "falseCountProbeConfigured",
+                    config.falseCountProbeAfterFirstVex,
+                )
                 put("failureStage", failureStage)
                 put("failureClass", error.javaClass.name)
                 put("failureMessage", error.message ?: "")
@@ -1012,6 +1099,8 @@ object DynamicCounterpartProfileEncounterAdapter {
             postureSupplied = values["posture-supplied"] == "true",
             roleSupplied = values["role-supplied"] == "true",
             firstVisibleRequestFile = values["first-visible-request-file"],
+            falseCountProbeAfterFirstVex =
+                values["false-count-probe-after-first-vex"] == "true",
         )
     }
 }
