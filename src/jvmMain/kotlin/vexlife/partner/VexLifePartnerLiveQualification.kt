@@ -234,13 +234,22 @@ object VexLifePartnerLiveQualification {
                 )
             }
 
+        val normalizedText =
+            events
+                .filterIsInstance<ExternalProviderWire.Event.TextDelta>()
+                .joinToString(
+                    separator = "",
+                ) {
+                    it.text
+                }
         if (
             events.none {
                 it is ExternalProviderWire.Event.Completed
             } ||
             events.any {
                 it is ExternalProviderWire.Event.ToolCallReady
-            }
+            } ||
+            normalizedText.isBlank()
         ) {
             return heldForProviderFailure(
                 connection = connection,
@@ -249,7 +258,7 @@ object VexLifePartnerLiveQualification {
                     invalidResponse(
                         provider = wireProvider,
                         message =
-                            "live Partner qualification requires one terminal non-tool provider response",
+                            "live Partner qualification requires one terminal non-tool text response",
                     ),
             )
         }
