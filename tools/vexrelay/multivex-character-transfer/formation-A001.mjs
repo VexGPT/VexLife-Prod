@@ -26,11 +26,8 @@ const HEAD='7907c53ae96097b70a3dae30c78144cb6692de4a';
 const TREE='9c5a20580fa20b527dff5a397898e77fbfdfc052';
 const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';
 
-const F19_BODY_BLOB='2b56a2a4045befed5d62189e364147cdfcd642fe';
-const F19_REVISIONS_BLOB='747093afa4458eb8bcd3409bb8115e374740b26c';
 const F20_BODY_BLOB='4af59951c177bddaec058253a967f448e8a5c947';
 const F20_REVISIONS_BLOB='a7a497900bacc5ded736ab12f58e0c6e876a39c8';
-const F19_BODY_SHA='08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c';
 const F20_BODY_SHA='d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a';
 
 const SDK_HEAD='149455eeec4c7b7ca00e91022154a85faa3d608c';
@@ -50,7 +47,7 @@ for(const [file,label] of [
 }
 
 const suffix=crypto.randomBytes(10).toString('hex');
-const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-reach-replication-formation-'));
+const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-character-transfer-formation-'));
 try{
   const contentRoot=path.join(workRoot,'content');
   for(const dir of ['authority','payload','inputs']) fs.mkdirSync(path.join(contentRoot,dir),{recursive:true});
@@ -96,42 +93,6 @@ try{
       tree:TREE,
       branch:BRANCH,
     },
-    profile:{
-      characterRef:'character.vexlife.dynamic-counterpart.sarah.v1',
-      roleRef:'role.dynamic-counterpart.ordinary-shared-understanding.v1',
-      scenarioRef:'scenario.vexlife.evolve-context.changed-plan.v1',
-      bindingRef:'binding.dynamic-counterpart.sarah.changed-plan.ordinary-shared-understanding.v1',
-      observerLensSupplied:false,
-      counterpartModelUsed:false,
-    },
-    messageSource:{
-      ref:'message.b0.first-sarah',
-      returnSha256:'f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967',
-      messageSha256:'9abfb09999b4a882b130acba77ab2cf891e8276dd87723556bc1593643251672',
-    },
-    foundations:{
-      F19:{
-        version:'0.6.19',
-        bodyBlob:F19_BODY_BLOB,
-        revisionsBlob:F19_REVISIONS_BLOB,
-        bodySha256:F19_BODY_SHA,
-        source:'exact Product source at candidate HEAD',
-      },
-      F20:{
-        version:'0.6.20',
-        bodyBlob:F20_BODY_BLOB,
-        revisionsBlob:F20_REVISIONS_BLOB,
-        bodySha256:F20_BODY_SHA,
-        sourcePullRef:'github.pull.vexlife-prod.549',
-        sourceHead:'1ae377df920b301eaffb3a9112ec89cc3d05d2e4',
-      },
-    },
-    matchedPairs:[
-      {pairOrdinal:1,order:['foundation.v0.6.19','foundation.v0.6.20']},
-      {pairOrdinal:2,order:['foundation.v0.6.20','foundation.v0.6.19']},
-      {pairOrdinal:3,order:['foundation.v0.6.19','foundation.v0.6.20']},
-      {pairOrdinal:4,order:['foundation.v0.6.20','foundation.v0.6.19']},
-    ],
     runtimeConsumptionBoundary:{
       owner:'PRODUCT_QUALIFIED_RUNTIME_RECEIPT',
       mode:'READ_ONLY_EXTERNAL_TRUTH',
