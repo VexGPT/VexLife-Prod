@@ -6576,7 +6576,9 @@ object VexLifeWebP1RuntimeArtifacts {
                       const option = document.createElement('option');
                       option.value = String(choice.promptCacheEntries);
                       option.textContent =
-                        resolveText(choice.label) + ' · ' + resolveText(choice.standing);
+                        [resolveText(choice.label), resolveText(choice.standing)]
+                          .filter(Boolean)
+                          .join(' · ');
                       option.selected = Boolean(choice.selected);
                       option.disabled = !choice.selected && !choice.controlRef;
                       return option;
