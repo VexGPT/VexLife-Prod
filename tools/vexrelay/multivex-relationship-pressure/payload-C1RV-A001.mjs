@@ -158,7 +158,7 @@ function writeResult(disposition,stopReasonOrNull=null){
 try{
   if(!RESULT_DIR||!PAYLOAD_ROOT||!CAPSULE_ROOT) stop('harness','VEXLOCALBRIDGE_PAYLOAD_ENV_MISSING');
   fs.mkdirSync(WORK_ROOT,{recursive:true});
-  stage('00 admitted C1RV false-confirmation correction payload');
+  stage('00 admitted C1RV false-confirmation verification payload');
 
   const taskRef=process.env.VEXLOCALBRIDGE_TASK_REF||null;
   const attemptRef=process.env.VEXLOCALBRIDGE_ATTEMPT_REF||null;
