@@ -346,6 +346,14 @@ class DynamicCounterpartContractTest {
         )
         assertContains(
             prompt,
+            "Every privateState collection is an array of JSON strings only.",
+        )
+        assertContains(
+            prompt,
+            "relationshipNotes entries are plain strings only.",
+        )
+        assertContains(
+            prompt,
             "check that the entire object parses as JSON",
         )
         assertContains(
