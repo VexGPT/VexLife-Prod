@@ -114,6 +114,104 @@ branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 A001 is consumed and must not be interpreted as a failed identity transfer.
 
+## A002 consumed — schema repair worked; privacy membrane became the next real boundary
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-character-transfer-attempt-a002-7635277a6da174d7153b
+sha256 e646331834fcf37c572854b459e20720671112ff3718f8af95b699c5344b52fc
+disposition SAFE_FAILURE
+stop MULTI_VEX_CHARACTER_TRANSFER_ACCEPTANCE_NOT_MET
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- exact Foundation v0.6.20 byte binding PASS;
+- focused B2 source gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+The A001 schemaVersion repair worked.
+
+Sarah again completed a coherent relationship under exact #549. Under the A002 mechanical predicates she
+reported PASS.
+
+However, A002 exposed a more important privacy-contract issue in the successful Sarah control:
+
+```text
+Sarah visibleMessage included:
+  [Private note: ... private.changed-plan.saturday-surprise.v1 ...]
+
+Sarah privateState still reported:
+  revealedPrivateFactRefs = []
+
+Vex then repeated the visible surprise note.
+```
+
+This is not hidden Vex access: only Sarah's visibleMessage crossed to Vex.
+
+But it is a proof-membrane failure:
+- proof-only private factRef metadata entered visible conversation;
+- the participant's disclosure bookkeeping disagreed with what was visibly sent;
+- the old mechanical PASS did not include a privacy-consistency predicate.
+
+Therefore Sarah A002 is:
+```text
+conversation-coherent = yes
+old mechanical gate   = PASS
+privacy-clean proof    = no
+```
+
+Mira progressed past the prior schemaVersion omission but stopped on a different missing field:
+
+```text
+Field 'revealedPrivateFactRefs' is required
+for DynamicCounterpartParticipantState
+```
+
+Mira again reached no visible Mira -> Vex turn.
+
+Unlike schemaVersion, revealedPrivateFactRefs is semantic evidence about whether private scenario
+information crossed the participant membrane. It remains required and is not defaulted away.
+
+### A003 privacy correction
+
+The participant output contract now explicitly says:
+- revealedPrivateFactRefs is mandatory;
+- [] is mandatory when nothing private was revealed;
+- raw private factRef identifiers / proof-only labels must never enter visibleMessage;
+- if underlying private content is naturally disclosed, its factRef must be declared privately while
+  the visible message speaks naturally without the identifier.
+
+The generic participant validator now fails closed if any allowed private factRef appears in
+visibleMessage.
+
+Regression coverage proves:
+- natural disclosure can be declared through revealedPrivateFactRefs;
+- raw private factRef leakage fails closed;
+- missing revealedPrivateFactRefs still fails closed;
+- omitted current schemaVersion still defaults current;
+- explicitly wrong schemaVersion still fails closed.
+
+Corrected candidate:
+
+```text
+head 809b3ffcc3b58dbfa873c32db1355437cb340fb4
+tree 5bba25b0bd7be0d2fc68069cdd2218bb1a5a9fea
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+A002 is consumed. It is evidence that conversational transfer remains promising, but it is not a
+privacy-clean transfer proof.
+
 ## Human outcome
 
 Before beginning the actual manipulation-resilience role family, prove the relationship machinery does
@@ -385,4 +483,4 @@ TRUSTWORTHY FRIEND
 
 B2 is only the portability gate that makes that longer proof credible.
 
-<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
