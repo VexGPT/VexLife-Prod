@@ -59,6 +59,8 @@ class ResponseReadinessResourcePressureTest {
         }
         require(receipt.modelRef == HereticModelCatalog.Models.Qwen4B.modelRef)
         require(receipt.mlxLmVersion == "0.32.0")
+        val canonicalAliveAtStart = alive(receipt.runtime.pid)
+        val totalMemoryAtStart = totalMemoryBytes()
 
         val completed = mutableListOf<String>()
         var failure: Throwable? = null
@@ -77,7 +79,8 @@ class ResponseReadinessResourcePressureTest {
                     put("productHead", PRODUCT_HEAD)
                     put("productTree", PRODUCT_TREE)
                     put("canonicalRuntimePid", receipt.runtime.pid)
-                    put("canonicalRuntimeAlive", alive(receipt.runtime.pid))
+                    put("canonicalRuntimeAliveAtStart", canonicalAliveAtStart)
+                    putNullableLong("totalMemoryBytesAtStart", totalMemoryAtStart)
                     put("completed", buildJsonArray { completed.forEach { add(JsonPrimitive(it)) } })
                     put(
                         "failure",
@@ -244,6 +247,7 @@ class ResponseReadinessResourcePressureTest {
             put("endpoint", endpoint)
             put("canonicalRuntimePid", receipt.runtime.pid)
             put("canonicalRuntimeAlive", alive(receipt.runtime.pid))
+            putNullableLong("totalMemoryBytes", totalMemoryBytes())
             put("qualificationPerformed", qualification != null)
             if (adapterExit == null) put("adapterExit", JsonNull) else put("adapterExit", adapterExit)
             put("childStopped", !child.isAlive)
@@ -476,6 +480,12 @@ class ResponseReadinessResourcePressureTest {
                 alive(child),
                 alive(canonical),
             )
+
+        private fun totalMemoryBytes(): Long? {
+            val result = command("/usr/sbin/sysctl", listOf("-n", "hw.memsize"))
+            if (result.status != 0) return null
+            return result.stdout.trim().toLongOrNull()
+        }
 
         private fun reclaimable(): Long? {
             val result = command("/usr/bin/vm_stat", emptyList())
