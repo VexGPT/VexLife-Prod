@@ -421,32 +421,38 @@ class DirectCompanionPartnerTextTurnTest {
             }
         val idempotencyKey =
             "send.self-development.partner-text-turn.001"
-        val identity =
-            DirectCompanionTurn.turnIdentityForTest(
-                idempotencyKey,
-            )
-        val requestRelay =
-            relay(
-                messageRef = identity.requestMessageRef,
-                originatorRef = "person.local-user",
-                originatorKind = "HUMAN",
-                recipientRef = DirectConversationIdentity.CompanionRoleRef,
-                targetAudienceRef = "audience.vex",
-            )
-        val responseRelay =
-            relay(
-                messageRef = identity.responseMessageRef,
-                originatorRef = DirectConversationIdentity.CompanionRoleRef,
-                originatorKind = "AI",
-                recipientRef = "person.local-user",
-                targetAudienceRef = "audience.person",
-            )
         val partner =
             DirectCompanionTurn.PartnerTextTurn(
                 qualified = qualified,
                 executor = executor,
-                requestSemanticRelay = requestRelay,
-                responseSemanticRelay = responseRelay,
+                requestSemanticRelay =
+                    DirectCompanionTurn.SemanticRelayFactory {
+                        messageRef,
+                        originatorRef,
+                        recipientRefs,
+                        ->
+                        relay(
+                            messageRef = messageRef,
+                            originatorRef = originatorRef,
+                            originatorKind = "HUMAN",
+                            recipientRef = recipientRefs.single(),
+                            targetAudienceRef = "audience.vex",
+                        )
+                    },
+                responseSemanticRelay =
+                    DirectCompanionTurn.SemanticRelayFactory {
+                        messageRef,
+                        originatorRef,
+                        recipientRefs,
+                        ->
+                        relay(
+                            messageRef = messageRef,
+                            originatorRef = originatorRef,
+                            originatorKind = "AI",
+                            recipientRef = recipientRefs.single(),
+                            targetAudienceRef = "audience.person",
+                        )
+                    },
             )
         val intent =
             DirectCompanionTurn.Intent(
@@ -568,7 +574,7 @@ class DirectCompanionPartnerTextTurnTest {
                 response.model,
             )
             assertEquals(
-                identity.requestMessageRef,
+                request.messageRef,
                 request.semanticRelay
                     ?.get(
                         "sourceMessageRef",
@@ -578,7 +584,7 @@ class DirectCompanionPartnerTextTurnTest {
                     },
             )
             assertEquals(
-                identity.responseMessageRef,
+                response.messageRef,
                 response.semanticRelay
                     ?.get(
                         "sourceMessageRef",
