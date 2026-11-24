@@ -3793,6 +3793,16 @@ tasks.register<JavaExec>("dynamicCounterpartProfileEncounter") {
     workingDir = projectDir
 }
 
+tasks.register<JavaExec>("multiVexFreshBootCapability") {
+    group = "verification"
+    description = "Run one fresh-boot embodied capability proof against an empty scratch Home."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFreshBootCapabilityAdapterKt")
+    workingDir = projectDir
+}
+
 tasks.register<JavaExec>("multiVexFoundationCrossover") {
     group = "verification"
     description = "Replay exact preserved Multi-Vex first-turn messages across Foundation v0.6.19/v0.6.20."
