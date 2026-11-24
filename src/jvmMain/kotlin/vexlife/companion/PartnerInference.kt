@@ -97,9 +97,12 @@ internal class PartnerInference(
                         qualified.profileRef &&
                         credential.providerRef ==
                         providerRef &&
-                        accountScope
-                            ?.providerRef ==
-                            providerRef,
+                        (
+                            accountScope ==
+                                null ||
+                                accountScope.providerRef ==
+                                providerRef
+                        ),
                 ) {
                     "Partner inference qualification/profile/credential/account scope do not bind one provider"
                 }
