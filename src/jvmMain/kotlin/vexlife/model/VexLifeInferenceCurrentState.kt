@@ -10,9 +10,9 @@ import vexlife.model.heretic.HereticModelOfferings
  * This object does not own staged-target persistence, durable model choice, runtime switching,
  * provider invocation, prompt/provider cache, Home mutation, or Multi-Vex participant identity.
  *
- * When [stagedTargetHandleOrNull] is present, it is an already-decided process-local human target
- * supplied by a rightful caller. This projection only re-marks the exact current row so Local and
- * Partner can share one no-effect target/serving view.
+ * When [stagedTargetOrNull] is present, it is the already-decided process-local human target owned
+ * by Models. This projection revalidates that exact coordinate against current Local + Partner rows
+ * before re-marking the target, so stale source/model/provider identity fails closed.
  */
 object VexLifeInferenceCurrentState {
     @Serializable
@@ -25,7 +25,7 @@ object VexLifeInferenceCurrentState {
         productHome: Path,
         local: VexLifeModels.Projection,
         partner: VexLifePartnerModelsCurrentState.Projection,
-        stagedTargetHandleOrNull: String? = null,
+        stagedTargetOrNull: VexLifeInferenceSelection.Coordinate? = null,
     ): Projection {
         val home =
             productHome
@@ -86,11 +86,11 @@ object VexLifeInferenceCurrentState {
             )
 
         val models =
-            stagedTargetHandleOrNull
+            stagedTargetOrNull
                 ?.let {
                     stageTarget(
                         observed = observed,
-                        handle = it,
+                        target = it,
                     )
                 }
                 ?: observed
@@ -106,26 +106,32 @@ object VexLifeInferenceCurrentState {
 
     private fun stageTarget(
         observed: VexLifeModelSourceProjection.Projection,
-        handle: String,
+        target: VexLifeInferenceSelection.Coordinate,
     ): VexLifeModelSourceProjection.Projection {
-        val target =
+        val current =
             VexLifeInferenceSelection.requireTarget(
                 models = observed,
-                handle = handle,
+                handle = target.handle,
             )
+        require(
+            current ==
+                target,
+        ) {
+            "staged inference target is stale or does not match one exact current Models row"
+        }
         val rows =
             observed.rows.map { row ->
                 row.copy(
                     targeted =
                         row.handle ==
-                            target.handle,
+                            current.handle,
                 )
             }
 
         return VexLifeModelSourceProjection.Projection(
             rows = rows,
             availableSources = observed.availableSources,
-            targetedSource = target.sourceKind,
+            targetedSource = current.sourceKind,
             servingSource =
                 rows
                     .singleOrNull {
