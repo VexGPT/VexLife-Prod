@@ -10,7 +10,6 @@ import vexlife.partner.ExternalProviderWire
 import vexlife.partner.KimiChatWire
 import vexlife.partner.OpenAiResponsesWire
 import vexlife.partner.PartnerCapabilityExchange
-import vexlife.partner.VexLifePartnerAccountScope
 import vexlife.partner.VexLifePartnerCredentialCustody
 import vexlife.partner.VexLifePartnerHostEffect
 import vexlife.partner.VexLifePartnerModelProfileCatalog
@@ -30,8 +29,6 @@ import vexlife.partner.VexLifePartnerProviderCatalog
  */
 internal class PartnerInference(
     private val qualified: VexLifeInferenceSessionAdmission.Qualified,
-    private val credential: VexLifePartnerCredentialCustody.Coordinate,
-    private val accountScope: VexLifePartnerAccountScope.Selection? = null,
     private val executor: VexLifePartnerHostEffect.Executor,
     private val now: () -> Instant = {
         Instant.now()
@@ -94,17 +91,35 @@ internal class PartnerInference(
             .also {
                 require(
                     it.profileRef ==
-                        qualified.profileRef &&
-                        credential.providerRef ==
-                        providerRef &&
-                        (
-                            accountScope ==
-                                null ||
-                                accountScope.providerRef ==
-                                providerRef
-                        ),
+                        qualified.profileRef,
                 ) {
-                    "Partner inference qualification/profile/credential/account scope do not bind one provider"
+                    "Partner inference qualification/profile do not bind one source-owned profile"
+                }
+            }
+
+    private val credential =
+        VexLifePartnerCredentialCustody.Coordinate(
+            providerRef = providerRef,
+            credentialRef =
+                requireNotNull(
+                    qualified.partnerCredentialRef,
+                ) {
+                    "Partner inference requires the admitted current credential ref"
+                },
+        )
+
+    private val accountScope =
+        requireNotNull(
+            qualified.partnerAccountScope,
+        ) {
+            "Partner inference requires the admitted current account scope"
+        }
+            .also {
+                require(
+                    it.providerRef ==
+                        providerRef,
+                ) {
+                    "Partner inference account scope does not bind the qualified provider"
                 }
             }
 
