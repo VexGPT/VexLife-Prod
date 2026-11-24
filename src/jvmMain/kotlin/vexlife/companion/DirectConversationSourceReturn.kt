@@ -797,7 +797,7 @@ object DirectConversationSourceReturn {
         )
     }
 
-    fun formAttemptTrace(
+    internal fun formAttemptTrace(
         initialPrompt: DirectPromptContext.Receipt,
         inference: CompanionInferenceConnection.Result,
         discovery: Discovery,
