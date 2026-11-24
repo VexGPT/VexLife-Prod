@@ -666,6 +666,11 @@ object DirectCompanionConnection {
             }
         val profile =
             entry.companionProfile
+        val nativeTools =
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = profile,
+                qualification = runtime.qualification,
+            )
         if (
             realization.runtimeConfigurationProfileRef !=
                 HereticRuntimeConfiguration.MlxPromptCacheProfileRef
@@ -698,11 +703,6 @@ object DirectCompanionConnection {
             )
         val generation =
             profile.generation
-        val nativeTools =
-            HereticCompanionRepresentation.providerNativeToolsActive(
-                profile = profile,
-                qualification = runtime.qualification,
-            )
         val payload =
             SystemPrefixPrefillRequestPayload(
                 model = runtime.requestModel,
