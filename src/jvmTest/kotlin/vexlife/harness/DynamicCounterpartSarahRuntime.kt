@@ -276,7 +276,11 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             requireNotNull(probe.content) {
                 "Counterpart runtime returned no assistant content"
             }
-        val decision = parseDynamicCounterpartParticipantDecision(content)
+        val decision =
+            parseDynamicCounterpartParticipantDecision(
+                content = content,
+                allowedPrivateFactRefs = allowedPrivateFactRefs,
+            )
         require(decision.schemaVersion == DynamicCounterpartParticipantOutputSchema) {
             "Counterpart output schema mismatch"
         }
