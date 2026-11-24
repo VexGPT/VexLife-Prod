@@ -1738,3 +1738,40 @@ State/Effect prose. It is to inspect the model-visible boundary between Product/
 and the human project's source/currentness.
 
 No automatic Product/Foundation mutation is earned from A003.
+
+## SE1 A004 current — compact Foundation treatment + kernel-budget preflight
+
+A004 preserves the same State/Effect treatment intent but compresses it within the existing Foundation
+kernel envelope.
+
+Compact experiment-only sentence:
+```text
+I can trace intention, semantic decision, execution, acknowledgement, observation, durable truth,
+convergence, presentation, and lived outcome; readiness or one state does not prove a later effect
+or outcome.
+```
+
+Static owner-bound budget:
+```text
+F20 kernel = 3598
+F21 compact kernel = 3597
+limit = 3600
+```
+
+Before either model cell, A004 requires:
+- canonical JSON encoder reproduces exact F20 body SHA;
+- F20 kernel estimator reproduces 3598;
+- compact F21 kernel <= 3600;
+- compact F21 kernel does not grow beyond F20.
+
+Both cells remain one participant request + one Vex response.
+
+Held separately:
+```text
+VEXLIFE CURRENT STATE != BLUE LANTERN PROJECT STATE
+CURRENT SYSTEM CAPABILITY != EXPLANATION OF PROJECT STATUS
+```
+
+If the matched pair still shows cross-owner mixing, investigate prompt/current-state ownership boundaries next
+rather than adding more State/Effect prose.
+
