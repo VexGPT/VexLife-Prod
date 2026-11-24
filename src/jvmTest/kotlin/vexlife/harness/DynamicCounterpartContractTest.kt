@@ -328,6 +328,29 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun participantOutputPromptRequiresStrictQuotedJsonRatherThanBareArrayProse() {
+        val prompt =
+            DynamicCounterpartProfiles.participantDecisionOutputPrompt()
+
+        assertContains(
+            prompt,
+            "The output must be strict valid JSON.",
+        )
+        assertContains(
+            prompt,
+            "Every string value, including every array entry, must be enclosed in JSON double quotes",
+        )
+        assertContains(
+            prompt,
+            "Never emit bare prose inside an array or object.",
+        )
+        assertContains(
+            prompt,
+            "check that the entire object parses as JSON",
+        )
+    }
+
+    @Test
     fun nullCompletionReasonNormalizesBlankOnlyWhileCompleteStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
