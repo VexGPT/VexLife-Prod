@@ -10,8 +10,8 @@ const TREE='571232b639a9acea9ec544ea5292fa3063b1e431';
 const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';
 const REPOSITORY='VexGPT/VexLife-Prod';
 const FOUR_B_MODEL_REF='model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20';
-const TASK_REF='task.vexlife-prod.multivex.source-currentness.se1.a001';
-const ATTEMPT_PREFIX='attempt.vexlife-prod.multivex.source-currentness.se1.a001.';
+const TASK_REF='task.vexlife-prod.multivex.state-effect-scope.se1.a001';
+const ATTEMPT_PREFIX='attempt.vexlife-prod.multivex.state-effect-scope.se1.a001.';
 const RETURN_ROUTE_REF='github.pull.vexlife-prod.543';
 const F20_BODY_BLOB='4af59951c177bddaec058253a967f448e8a5c947';
 const F20_REVISIONS_BLOB='a7a497900bacc5ded736ab12f58e0c6e876a39c8';
@@ -22,8 +22,8 @@ const PAYLOAD_ROOT=process.env.VEXLOCALBRIDGE_PAYLOAD_ROOT || process.cwd();
 const CAPSULE_ROOT=process.env.VEXLOCALBRIDGE_CAPSULE_ROOT;
 const HOME=path.join(os.homedir(),'.vexlife');
 const RESULT_FILE=RESULT_DIR && path.join(RESULT_DIR,'payload-result.json');
-const WORK_ROOT=RESULT_DIR && path.join(RESULT_DIR,'multivex-resident-currentness-sc2-work');
-const PROGRESS_FILE=CAPSULE_ROOT && path.join(CAPSULE_ROOT,'bridge','progress','multivex-resident-currentness-sc2.log');
+const WORK_ROOT=RESULT_DIR && path.join(RESULT_DIR,'multivex-state-effect-scope-se1-work');
+const PROGRESS_FILE=CAPSULE_ROOT && path.join(CAPSULE_ROOT,'bridge','progress','multivex-state-effect-scope-se1.log');
 
 const effects={
   sourceMutationPerformed:false,
@@ -158,7 +158,7 @@ function writeResult(disposition,stopReasonOrNull=null){
 try{
   if(!RESULT_DIR||!PAYLOAD_ROOT||!CAPSULE_ROOT) stop('harness','VEXLOCALBRIDGE_PAYLOAD_ENV_MISSING');
   fs.mkdirSync(WORK_ROOT,{recursive:true});
-  stage('00 admitted SE1 resident-currentness diagnostic payload');
+  stage('00 admitted SE1 state-effect scope crossover payload');
 
   const taskRef=process.env.VEXLOCALBRIDGE_TASK_REF||null;
   const attemptRef=process.env.VEXLOCALBRIDGE_ATTEMPT_REF||null;
@@ -308,7 +308,7 @@ try{
   const gradlew=path.join(repoRoot,'gradlew');
   if(!fs.existsSync(gradlew)) stop('harness','GRADLE_WRAPPER_MISSING');
 
-  stage('08 focused SE1 resident-currentness source gate');
+  stage('08 focused SE1 state-effect source gate');
   run(bash,[
     gradlew,'--no-daemon','--max-workers=1',
     '-Dorg.gradle.jvmargs=-Xmx4g',
@@ -317,7 +317,7 @@ try{
     '--tests','vexlife.harness.DynamicCounterpartProfilesTest',
     '--tests','vexlife.harness.DynamicCounterpartContractTest',
     '--tests','vexlife.foundational.VexLifeFoundationalFieldTest',
-  ],{cwd:repoRoot,env:gradleEnv,label:'08 focused SE1 resident-currentness source gate',timeout:1200000});
+  ],{cwd:repoRoot,env:gradleEnv,label:'08 focused SE1 state-effect source gate',timeout:1200000});
   completedStepReceipts.push({step:'focused-relationship-pressure-source-gate',state:'PASS'});
 
   stage('09 full JVM regression gate');
