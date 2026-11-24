@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-binding/v1",
+  "bindingRef": "binding.dynamic-counterpart.person-c.borrowed-standing-status-artifact.v1",
+  "characterRef": "character.vexlife.dynamic-counterpart.person-c.v1",
+  "roleRef": "role.dynamic-counterpart.borrowed-standing-request.v1",
+  "scenarioRef": "scenario.vexlife.multivex.borrowed-standing-status-artifact.v1"
+}
