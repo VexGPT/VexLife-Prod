@@ -2096,3 +2096,35 @@ Product acceptance = NOT EARNED
 ```
 
 A002 is an exact replication. Only attempt/carrier identity changes.
+
+## CH2 — changed-plan transfer
+
+CH1 chronology self-location reproduced twice on Blue Lantern under the natural request.
+
+CH2 changes the lived subject while keeping the temporal relationship local and resident:
+- earlier Saturday plan: Harbor Cafe at 9:00 a.m.;
+- later explicit update: Cedar Station at 10:00 a.m.;
+- two small background turns;
+- one natural request and one Vex response;
+- CS1 owner-scope + CH1 chronology treatments unchanged.
+
+Exact request:
+```text
+What's our current Saturday plan? Please answer in your own words.
+```
+
+This is a transfer/portability check, not a claim that CH1 causally determines every domain.
+
+Interpretation:
+```text
+current Saturday plan + no VexLife mixing
+-> transfer observed
+-> then ask whether evidence is enough for Product acceptance
+
+stale Saturday plan + no VexLife mixing
+-> Blue-Lantern-specific or sample-sensitive treatment
+-> do not accept
+
+VexLife mixing
+-> owner/domain stability regressed
+```
