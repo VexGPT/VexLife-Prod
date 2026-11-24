@@ -519,7 +519,7 @@ try{
   if(firstVex && !Array.isArray(firstVex.sourceReturnSourceEventRefs)) candidateFindings.push('TI1_SOURCE_RETURN_REF_EVIDENCE_MISSING');
 
   completedStepReceipts.push({
-    step:'multivex-current-state-owner-scope-cs1',
+    step:'multivex-temporal-integration-ti1',
     treatmentRef:treatmentSpec?.treatmentRef??null,
     treatmentStanding:treatmentSpec?.standing??null,
     state:candidateFindings.length===0?'PASS':'SAFE_FAILURE',
@@ -564,7 +564,7 @@ try{
     stage('12 TI1 temporal integration evidence captured; semantic review remains human/Godward');
     writeResult('PASS',null);
   }else{
-    stage('12 TI1 current-state-owner-scope SAFE_FAILURE');
+    stage('12 TI1 temporal integration SAFE_FAILURE');
     writeResult('SAFE_FAILURE','MULTI_VEX_TEMPORAL_INTEGRATION_TI1_ACCEPTANCE_NOT_MET');
   }
 }catch(error){
