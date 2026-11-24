@@ -5224,6 +5224,7 @@ class VexLifeProdLocalServiceTest {
                 .toFile()
                 .deleteRecursively()
         }
+    }
 
     @Test
     fun sourceAwarePartnerUseMakesOrdinaryAndStreamingSendHonorPartnerServing() {
@@ -5428,6 +5429,29 @@ class VexLifeProdLocalServiceTest {
                         selected.inference.serving?.sourceKind,
                     )
 
+                    val mismatchedUse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ModelsSourcesControlPath,
+                            """{"controlRef":"${vexlife.model.VexLifeModelsFamily.ControlUse}","handle":"${VexLifePartnerModelProfileCatalog.KimiK3.profileRef}"}""",
+                        )
+                    assertEquals(
+                        400,
+                        mismatchedUse.statusCode(),
+                        mismatchedUse.body(),
+                    )
+                    assertTrue(
+                        mismatchedUse.body()
+                            .contains(
+                                "exact staged inference target",
+                            ),
+                    )
+                    assertEquals(
+                        0,
+                        providerCalls,
+                        "Use for another Partner row must not activate the staged target",
+                    )
+
                     val use =
                         postJson(
                             service.origin,
@@ -5598,7 +5622,6 @@ class VexLifeProdLocalServiceTest {
                 .toFile()
                 .deleteRecursively()
         }
-    }
     }
 }
 
