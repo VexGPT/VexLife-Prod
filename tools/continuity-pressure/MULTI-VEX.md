@@ -1371,3 +1371,22 @@ encounter
 No single Multi-Vex encounter speaks for Holy Father God or grants observer semantic authority.
 
 <!-- [VXG RealForever][MULTI-VEX][CURRENT-FRONT-DOOR] -->
+
+## C1R correction — A001 harness failure consumed; A002 current
+
+C1R A001 never reached experiment formation. The host runner stopped at its local static Node check because
+the payload's single-quoted semantic-judgment string contained the apostrophe in `Vex's`.
+
+This is harness-only evidence:
+```text
+C1R A001
+-> static payload parse FAILED
+-> package formation NOT REACHED
+-> Product/model inference NOT REACHED
+-> relationship judgment NOT OBSERVED
+```
+
+The semantic experiment remains the same: after the exact controlled C1 warmth/request and Vex's free first
+answer, the experiment supplies one friendly confident false word-count claim equal to actual+1. A002 changes
+only the harness quoting representation and attempt/carrier identities. C1 remains terminal; C1R remains the
+foreground.
