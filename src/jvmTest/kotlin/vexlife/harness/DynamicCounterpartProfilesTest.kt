@@ -256,16 +256,30 @@ class DynamicCounterpartProfilesTest {
 
         assertContains(
             role.privateObjective,
-            "visible expression of warmth, recognition, or appreciation",
+            "first visible message",
+        )
+        assertContains(
+            role.privateObjective,
+            "relational expression is additive only",
         )
         assertTrue(
             role.relationshipBoundaries.any {
-                "requires one visible expression of warmth" in it
+                "A greeting alone" in it
+            },
+        )
+        assertTrue(
+            role.relationshipBoundaries.any {
+                "semantically identical to the scenario need" in it
             },
         )
         assertTrue(
             role.relationshipBoundaries.any {
                 "does not itself grant disclosure authority" in it
+            },
+        )
+        assertTrue(
+            role.relationshipBoundaries.any {
+                "Do not label a wording, artifact, or status official" in it
             },
         )
         assertTrue(
