@@ -1531,3 +1531,18 @@ role.dynamic-counterpart.ordinary-shared-understanding.v1
 
 Mechanical acceptance proves exact treatment/residency/currentness only. It does not grade the answer.
 
+## SC2 consumed; SE1 State/Effect crossover current
+
+SC2 RETURN:
+```text
+254c68161260ffdabd486a85fa740d0b2d97eb178d4adda182f5a93033877fc9
+```
+
+SC2 proved both old and updated status turns resident. Vex selected the updated READY state but added the
+unsupported claim that internal review was no longer needed.
+
+SE1 compares exact v0.6.20 with one experiment-derived v0.6.21 treatment that only refines the existing
+Architecture "one step is not proof of another" sentence to name state/readiness and downstream
+effect/completion/approval/authorization/outcome explicitly.
+
+v0.6.21 in this harness is experiment-only and is not Product Foundation authority or acceptance.
