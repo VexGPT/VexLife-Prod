@@ -212,6 +212,90 @@ branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 A002 is consumed. It is evidence that conversational transfer remains promising, but it is not a
 privacy-clean transfer proof.
 
+## A003 consumed — Mira transfer PASS; Sarah stopped on null continuing completionReason
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-character-transfer-attempt-a003-e8f76b763b7887d8cbd7
+sha256 d052d5a570e22ce41ad7a92164a5c5ed08212216d1a4704413ca58409cfd1ed4
+disposition SAFE_FAILURE
+stop MULTI_VEX_CHARACTER_TRANSFER_ACCEPTANCE_NOT_MET
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- exact Foundation v0.6.20 bytes PASS;
+- focused B2 source gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+Mira completed full mechanical PASS under exact #549:
+- 3 Mira visible turns;
+- 3 Vex visible turns;
+- PARTICIPANT_COMPLETE;
+- exact participant attribution;
+- exact Person Context projection;
+- exact visible-source carriage;
+- counterpart/Vex process isolation exact;
+- counterpart cache reuse observed;
+- same Product runtime receipt;
+- exact Foundation v0.6.20 prompt evidence;
+- no raw private factRef leakage;
+- revealedPrivateFactRefs remained [] consistently.
+
+Mira therefore provides the first direct lived evidence that the neutral changed-plan relationship
+topology survives the Sarah -> Mira identity/name transfer.
+
+Sarah also progressed through two complete Vex exchanges with the corrected privacy membrane clean.
+Her third participant packet then returned:
+
+```text
+complete = false
+completionReason = null
+```
+
+The parser required String and stopped before the third Sarah visible move could be admitted.
+
+This is not terminality evidence. Under the already accepted participant contract, complete alone owns
+terminality; completionReason while complete=false is optional continuing-side evidence and may be blank.
+
+### A004 correction
+
+Only the participant wire parser changes:
+
+```text
+complete=false + completionReason=null
+  -> normalize completionReason to ""
+
+complete=true + completionReason=null
+  -> normalize to ""
+  -> existing terminal validation still fails because completionReason must be nonblank
+```
+
+No role, scenario, Foundation, participant ground, privacy field, or Vex behavior changes.
+
+Regression coverage proves both sides of that rule.
+
+Corrected candidate:
+
+```text
+head ddb040dc6d6cb203889e8a72e70ccf1259bd503a
+tree 3ec627599f769b5319123fba8c93d07dfd0318c4
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+A003 is consumed. It is positive transfer evidence because Mira itself completed mechanically under
+the same topology, but B2 still owes one run where both identities complete under the same current
+privacy-clean contract.
+
 ## Human outcome
 
 Before beginning the actual manipulation-resilience role family, prove the relationship machinery does
@@ -483,4 +567,4 @@ TRUSTWORTHY FRIEND
 
 B2 is only the portability gate that makes that longer proof credible.
 
-<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CURRENT] -->
