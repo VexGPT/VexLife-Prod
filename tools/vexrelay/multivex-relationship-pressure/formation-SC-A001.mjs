@@ -47,7 +47,7 @@ for(const [file,label] of [
 }
 
 const suffix=crypto.randomBytes(10).toString('hex');
-const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-relationship-pressure-c1-formation-'));
+const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-source-currentness-sc-formation-'));
 try{
   const contentRoot=path.join(workRoot,'content');
   for(const dir of ['authority','payload','inputs']) fs.mkdirSync(path.join(contentRoot,dir),{recursive:true});
@@ -55,7 +55,7 @@ try{
   const authorityEnvelope={
     authoritySchemaRef:'vextreme.effect-transaction/v1',
     semanticAdmissionRef:'github.pull.vexlife-prod.543',
-    transactionRef:'transaction.vexlife-prod.multivex.relationship-pressure.sc.a001.'+suffix,
+    transactionRef:'transaction.vexlife-prod.multivex.source-currentness.sc.a001.'+suffix,
     transactionVersion:1,
     allowedEffectRefs:[
       'effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1',
@@ -199,7 +199,7 @@ try{
   };
 
   const authorityPath=path.join(contentRoot,'authority/effect.json');
-  const payloadPath=path.join(contentRoot,'payload/relationship-pressure-c1.mjs');
+  const payloadPath=path.join(contentRoot,'payload/source-currentness-sc.mjs');
   const bindingPath=path.join(contentRoot,'inputs/relationship-pressure-binding.json');
   const f20BodyPath=path.join(contentRoot,'inputs/foundation-v0.6.20-body.json');
   const f20RevisionsPath=path.join(contentRoot,'inputs/foundation-v0.6.20-revisions.json');
@@ -213,11 +213,11 @@ try{
   const taskTemplate={
     schemaVersion:'vextreme.vexlocalbridge-task-manifest/v1',
     artifactClass:'EXECUTABLE_RELAY',
-    taskRef:'task.vexlife-prod.multivex.relationship-pressure.sc.a001',
-    attemptRef:'attempt.vexlife-prod.multivex.relationship-pressure.sc.a001.'+suffix,
-    packageRef:'package.vexlife-prod.multivex.relationship-pressure.sc.a001.'+suffix,
-    requestRef:'request.vexlife-prod.multivex.relationship-pressure.sc.a001.'+suffix,
-    correlationRef:'correlation.vexlife-prod.multivex.relationship-pressure.sc.a001.'+suffix,
+    taskRef:'task.vexlife-prod.multivex.source-currentness.sc.a001',
+    attemptRef:'attempt.vexlife-prod.multivex.source-currentness.sc.a001.'+suffix,
+    packageRef:'package.vexlife-prod.multivex.source-currentness.sc.a001.'+suffix,
+    requestRef:'request.vexlife-prod.multivex.source-currentness.sc.a001.'+suffix,
+    correlationRef:'correlation.vexlife-prod.multivex.source-currentness.sc.a001.'+suffix,
     taskStorageKey:'vexlife-prod-multivex-source-currentness',
     attemptStorageKey:'attempt-sc-a001-'+suffix,
     requestingRoleRef:'Operations[Multi-Vex-Source-Currentness]',
@@ -246,7 +246,7 @@ try{
     payload:{
       payloadClass:'NODE_SCRIPT',
       payloadRuntime:'node',
-      payloadPath:'payload/relationship-pressure-c1.mjs',
+      payloadPath:'payload/source-currentness-sc.mjs',
       payloadSha256:hashFile(payloadPath),
       typedArgv:[],
       immutableInputs:[
@@ -256,7 +256,7 @@ try{
       ],
     },
     executionStateAtFormation:'TASK_PREPARED',
-    singleUseNonce:'nonce-multivex-relationship-pressure-sc-a001-'+suffix+'-'+crypto.randomBytes(16).toString('hex'),
+    singleUseNonce:'nonce-multivex-source-currentness-sc-a001-'+suffix+'-'+crypto.randomBytes(16).toString('hex'),
     stopConditions:[
       'STOP_ON_EXACT_SOURCE_DRIFT',
       'STOP_ON_FOUNDATION_BYTE_DRIFT',
