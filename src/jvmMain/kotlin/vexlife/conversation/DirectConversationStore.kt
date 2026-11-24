@@ -2512,53 +2512,70 @@ class DirectConversationStore(
             return
         }
 
-        val durable =
-            when (
-                event.schemaVersion to
-                    event.eventKind
-            ) {
-                VexLifeConversationContract.EventSchemaV1 to
-                    VexLifeConversationContract.RequestKind ->
-                    requestRecord(
-                        event,
-                    )
+        when (
+            event.schemaVersion to
+                event.eventKind
+        ) {
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.RequestKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        requestRecord(
+                            event,
+                        ),
+                )
 
-                VexLifeConversationContract.EventSchemaV1 to
-                    VexLifeConversationContract.ResponseKind ->
-                    responseRecord(
-                        event,
-                    )
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.ResponseKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        responseRecord(
+                            event,
+                        ),
+                )
 
-                VexLifeConversationContract.EventSchemaV2 to
-                    VexLifeConversationContract.RequestKind ->
-                    requestRecordV2(
-                        event,
-                    )
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.RequestKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        requestRecordV2(
+                            event,
+                        ),
+                )
 
-                VexLifeConversationContract.EventSchemaV2 to
-                    VexLifeConversationContract.ResponseKind ->
-                    responseRecordV2(
-                        event,
-                    )
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.ResponseKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        responseRecordV2(
+                            event,
+                        ),
+                )
 
-                VexLifeConversationContract.EventSchemaV3 to
-                    VexLifeConversationContract.ResponseKind ->
-                    responseRecordV3(
-                        event,
-                    )
+            VexLifeConversationContract.EventSchemaV3 to
+                VexLifeConversationContract.ResponseKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        responseRecordV3(
+                            event,
+                        ),
+                )
 
-                else ->
-                    error(
-                        "unsupported canonical event schema/kind",
-                    )
-            }
-
-        VexDurableContractFile.write(
-            ownedRoot = productHome,
-            path = path,
-            value = durable,
-        )
-    }
+            else ->
+                error(
+                    "unsupported canonical event schema/kind",
+                )
+        }
 
     private fun writeImmutableHead(
         head: VexLifeConversationContract.Head,
