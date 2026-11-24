@@ -10,6 +10,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertContains
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -33,6 +34,31 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectPromptContextTest {
+    @Test
+    fun conversationChronologyLeadNamesOrderWithoutGrantingSemanticAuthority() {
+        val lead = DirectPromptContext.ConversationChronologyLead
+
+        assertContains(lead, "original Conversation order")
+        assertContains(lead, "earlier to later")
+        assertContains(lead, "chronology only")
+        assertContains(lead, "does not by itself mark any turn superseded or more authoritative")
+        assertFalse(lead.contains("latest wins"))
+        assertFalse(lead.contains("prefer newer"))
+    }
+
+    @Test
+    fun currentStateLeadKeepsCurrentContextWithinNamedOwnerAndSubject() {
+        val lead = DirectPromptContext.CurrentStateLead
+
+        assertContains(lead, "current host context for this request")
+        assertContains(lead, "current only for the owner and subject it names")
+        assertContains(
+            lead,
+            "does not by itself state or explain a different person, project, or subject in the Conversation",
+        )
+        assertFalse(lead.contains("what is current at this request"))
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {
