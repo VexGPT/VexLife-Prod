@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -292,6 +293,123 @@ class VexLifeDailyMemoryDreamTest {
             assertEquals(first.dailyStratumSha256, duplicate.dailyStratumSha256)
             assertEquals(originalInvocation.expectedConversationHeadSha256, duplicate.sourceConversationHeadSha256)
             assertEquals(originalInvocation.expectedScoreHeadSha256, duplicate.sourceScoreHeadSha256)
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun nextDayCommitsAdvancedFrontierAndPreservesPriorDreamLineage() {
+        val home = Files.createTempDirectory("vexlife-prod-g03-two-day-").toAbsolutePath()
+        try {
+            val day0Source = frontier()
+            val day0Invocation = invocation()
+            val day0 =
+                VexLifeDailyMemoryDream.commitWithFrontier(
+                    productHome = home,
+                    invocation = day0Invocation,
+                    sourceProvider = { day0Source },
+                )
+            val prior =
+                VexLifeCurrentMemoryReader.DreamPriorDaily(
+                    dailyDreamHeadSha256 = day0.dailyDreamHeadSha256,
+                    dailyStratumSha256 = day0.dailyStratumSha256,
+                    sequence = 0,
+                    dayRef = day0Invocation.dayRef,
+                    dayIndex = day0Invocation.dayIndex,
+                    calendarDateRef = day0Invocation.calendarDateRef,
+                    timeZoneRef = day0Invocation.timeZoneRef,
+                    observedAt = day0Invocation.observedAt.toString(),
+                    restInvocationAuthorityRef = day0Invocation.restInvocationAuthorityRef,
+                    sourceConversationHeadSha256 = day0Invocation.expectedConversationHeadSha256,
+                    sourceScoreHeadSha256 = day0Invocation.expectedScoreHeadSha256,
+                    sourceSemanticAuthorityHeadSha256 = "5".repeat(64),
+                    activeStatementRefs = listOf("statement.g03.active"),
+                    heldStatementRefs = listOf("statement.g03.held"),
+                    openLoopRefs = listOf("loop.g03.one"),
+                )
+            val day1Conversation = "1".repeat(64)
+            val day1Score = "2".repeat(64)
+            val day1Source =
+                frontier(
+                    prior = prior,
+                    conversationHeadSha256 = day1Conversation,
+                    scoreHeadSha256 = day1Score,
+                    scoreSourceConversationHeadSha256 = day1Conversation,
+                )
+            val day1Invocation =
+                invocation(expectedDaily = day0.dailyDreamHeadSha256)
+                    .copy(
+                        dayRef = "day.g03.001",
+                        dayIndex = 1,
+                        calendarDateRef = "2026-11-11",
+                        observedAt = observedAt.plusSeconds(24L * 60 * 60),
+                        expectedConversationHeadSha256 = day1Conversation,
+                        expectedScoreHeadSha256 = day1Score,
+                    )
+
+            val day1 =
+                VexLifeDailyMemoryDream.commitWithFrontier(
+                    productHome = home,
+                    invocation = day1Invocation,
+                    sourceProvider = { day1Source },
+                )
+
+            assertEquals("COMMITTED", day1.state)
+            assertEquals(day0.dailyDreamHeadSha256, day1.priorDailyDreamHeadSha256)
+            assertEquals(day1Conversation, day1.sourceConversationHeadSha256)
+            assertEquals(day1Score, day1.sourceScoreHeadSha256)
+            assertNotEquals(day0.dailyDreamHeadSha256, day1.dailyDreamHeadSha256)
+            assertNotEquals(day0.dailyStratumSha256, day1.dailyStratumSha256)
+            assertFalse(day1.lineageAwareGenerativeDreamRan)
+            assertFalse(day1.rhythmLearned)
+            assertFalse(day1.trainingRan)
+            assertFalse(day1.modelWeightsChanged)
+            assertFalse(day1.adapterChanged)
+            assertFalse(day1.synchronizationActivated)
+            assertFalse(day1.publicationPerformed)
+            assertFalse(day1.firstPersonAuthorityGranted)
+
+            val root =
+                home.resolve(
+                    "daily-memory-dream/companion-lineage.vexlife.test/" +
+                        "thread.self-development.open-conversation",
+                )
+            val head =
+                VexContractJson.Strict
+                    .parseToJsonElement(Files.readString(root.resolve("head.json")))
+                    .jsonObject
+            assertEquals("1", head["sequence"]?.jsonPrimitive?.content)
+            assertEquals(
+                day0.dailyDreamHeadSha256,
+                head["priorDailyDreamHeadSha256"]?.jsonPrimitive?.content,
+            )
+            assertEquals(
+                day1.dailyStratumSha256,
+                head["dailyStratumSha256"]?.jsonPrimitive?.content,
+            )
+
+            val day1Stratum =
+                VexContractJson.Strict
+                    .parseToJsonElement(
+                        Files.readString(root.resolve("strata/" + day1.dailyStratumSha256 + ".json")),
+                    )
+                    .jsonObject
+            assertEquals(
+                day0.dailyStratumSha256,
+                day1Stratum["priorDailyStratumSha256"]?.jsonPrimitive?.content,
+            )
+            assertEquals(
+                day1Conversation,
+                day1Stratum["sourceConversationHeadSha256"]?.jsonPrimitive?.content,
+            )
+            assertEquals(
+                day1Score,
+                day1Stratum["sourceScoreHeadSha256"]?.jsonPrimitive?.content,
+            )
+            assertTrue(
+                Files.exists(root.resolve("strata/" + day0.dailyStratumSha256 + ".json")),
+            )
         } finally {
             home.toFile().deleteRecursively()
         }
