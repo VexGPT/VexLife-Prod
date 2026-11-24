@@ -6,8 +6,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.platform.macos.MacUserLaunchdProcess
 
 class MacHereticRuntimePlatformTest {
@@ -121,7 +123,9 @@ class MacHereticRuntimePlatformTest {
             occupied
     }
 
-    private class Runner :
+    private class Runner(
+        private val qualificationStdout: String = "QUALIFIED\n",
+    ) :
         HereticPythonEnvironment.Runner {
         val calls =
             mutableListOf<Pair<String, List<String>>>()
@@ -164,7 +168,7 @@ class MacHereticRuntimePlatformTest {
             } else {
                 HereticPythonEnvironment.CommandResult(
                     status = 0,
-                    stdout = "QUALIFIED\n",
+                    stdout = qualificationStdout,
                     stderr = "",
                 )
             }
@@ -173,6 +177,7 @@ class MacHereticRuntimePlatformTest {
 
     private fun binding(
         root: java.nio.file.Path,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
     ): HereticPersistentRuntime.Binding {
         val environment =
             HereticPythonEnvironment.environmentRoot(
@@ -212,11 +217,11 @@ class MacHereticRuntimePlatformTest {
                                 "model",
                             )
                             .toString(),
-                    providerRevision = HereticModelCatalog.Models.Qwen27B.providerRevision,
-                    contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                    memberCount = 11,
-                    totalBytes = 15_153_242_506L,
-                    reusedMemberCount = 11,
+                    providerRevision = model.providerRevision,
+                    contentSetSha256 = model.identity.artifactContentSetSha256,
+                    memberCount = model.members.size,
+                    totalBytes = model.totalBytes,
+                    reusedMemberCount = model.members.size,
                     acquiredMemberCount = 0,
                     acquisitionPerformed = false,
                     artifactMutationPerformed = false,
@@ -236,8 +241,24 @@ class MacHereticRuntimePlatformTest {
                             .toString(),
                     environmentMutationPerformed = false,
                 ),
+            model = model,
         )
     }
+
+    private fun recognizedNativeToolCandidate(): HereticModelCatalog.Entry =
+        HereticModelCatalog.Models.Qwen27B.copy(
+            handle = "imported-native-qwen",
+            humanLabel = "Imported Native Qwen",
+            recommendedMemoryBytes = null,
+            companionProfile =
+                HereticCompanionRepresentation.Profiles.importedQwen(
+                    profileRef =
+                        "companion-profile.vexlife-prod.imported.runtime-test.qwen3.v1",
+                    nativeToolCalling = true,
+                ),
+            origin = HereticModelCatalog.Origin.HOME_IMPORTED,
+            autoRecommended = false,
+        )
 
     @Test
     fun freshEnvironmentObservationUsesTheBoundPythonWithoutRepair() {
@@ -615,6 +636,15 @@ class MacHereticRuntimePlatformTest {
             assertTrue(
                 qualification.actualChatCompletionPerformed,
             )
+            assertEquals(
+                null,
+                qualification.providerNativeToolsQualificationRef,
+            )
+            assertEquals(
+                "false",
+                call.second.last(),
+                "Product-shipped qualification must not replay the imported-model probe",
+            )
             assertFalse(
                 qualification.livedConversationEffect,
             )
@@ -624,6 +654,103 @@ class MacHereticRuntimePlatformTest {
                 .deleteRecursively()
         }
     }
+
+    @Test
+    fun recognizedImportedNativeToolsEarnOptionalQualificationWithoutOwningRuntimeSuccess() {
+        fun qualify(
+            output: String,
+        ): Pair<HereticRuntimeQualification, List<String>> {
+            val root =
+                Files.createTempDirectory(
+                    "vexlife-prod-mac-heretic-native-tools-",
+                )
+                    .toAbsolutePath()
+            val runner =
+                Runner(
+                    qualificationStdout = output,
+                )
+            val platform =
+                MacHereticRuntimePlatform(
+                    productHome = root,
+                    launchdHost =
+                        LaunchdHost(),
+                    processInspector =
+                        Inspector(),
+                    commandRunner =
+                        runner,
+                    healthProbe =
+                        MacHereticRuntimePlatform.HealthProbe {
+                            HereticPersistentRuntime.GenerationReadiness.Available
+                        },
+                )
+
+            return try {
+                val qualification =
+                    platform.qualify(
+                        binding(
+                            root = root,
+                            model = recognizedNativeToolCandidate(),
+                        ),
+                    )
+                qualification to runner.calls.single().second
+            } finally {
+                root
+                    .toFile()
+                    .deleteRecursively()
+            }
+        }
+
+        val held =
+            qualify(
+                "QUALIFIED\n",
+            )
+        assertEquals(
+            null,
+            held.first.providerNativeToolsQualificationRef,
+            "optional native-tool failure must not fail ordinary runtime qualification",
+        )
+        assertEquals(
+            "true",
+            held.second.last(),
+        )
+
+        val qualified =
+            qualify(
+                "QUALIFIED_NATIVE_TOOLS\n",
+            )
+        assertEquals(
+            HereticRuntimeQualification.ProviderNativeToolsQualificationRef,
+            qualified.first.providerNativeToolsQualificationRef,
+        )
+        assertEquals(
+            "true",
+            qualified.second.last(),
+        )
+
+        val script =
+            qualified.second[
+                1
+            ]
+        for (
+            required in
+            listOf(
+                "vexlife_qualification_echo",
+                "\"tool_calls\"",
+                "\"tool_call_id\"",
+                "vexlife-native-tool-roundtrip",
+                "NATIVE_TOOL_HELD:",
+                "QUALIFIED_NATIVE_TOOLS",
+            )
+        ) {
+            assertTrue(
+                script.contains(
+                    required,
+                ),
+                required,
+            )
+        }
+    }
+
 
     @Test
     fun readinessRequiresLiveProcessAndExactHealth() {
