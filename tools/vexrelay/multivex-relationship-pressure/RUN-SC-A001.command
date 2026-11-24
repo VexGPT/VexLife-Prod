@@ -41,7 +41,7 @@ BASE64_BIN="$(resolve_exec /usr/bin/base64)" || { printf '%s\n' '[Multi-Vex SC] 
 }
 [ -d "$DOWNLOADS" ] || { printf '%s\n' '[Multi-Vex SC] ~/Downloads unavailable.' >&2; exit 23; }
 
-WORK_ROOT="$("$MKTEMP_BIN" -d "$DOWNLOADS/.vexlife-multivex-relationship-pressure-sc-a001.XXXXXX")"
+WORK_ROOT="$("$MKTEMP_BIN" -d "$DOWNLOADS/.vexlife-multivex-source-currentness-sc-a001.XXXXXX")"
 WATCHER_PID=''
 cleanup() {
   if [ -n "$WATCHER_PID" ]; then
@@ -49,7 +49,7 @@ cleanup() {
     wait "$WATCHER_PID" >/dev/null 2>&1 || true
   fi
   case "$WORK_ROOT" in
-    "$DOWNLOADS"/.vexlife-multivex-relationship-pressure-sc-a001.*)
+    "$DOWNLOADS"/.vexlife-multivex-source-currentness-sc-a001.*)
       "$RM_BIN" -rf -- "$WORK_ROOT"
       ;;
   esac
@@ -89,11 +89,11 @@ printf '%s\n' '[Multi-Vex 2/5] Acquiring exact Foundation v0.6.20 treatment byte
 [ "$("$GIT_BIN" hash-object "$F20_BODY")" = "$F20_BODY_BLOB" ] || { printf '%s\n' '[Multi-Vex SC] Foundation v0.6.20 body blob mismatch.' >&2; exit 37; }
 [ "$("$GIT_BIN" hash-object "$F20_REVISIONS")" = "$F20_REVISIONS_BLOB" ] || { printf '%s\n' '[Multi-Vex SC] Foundation v0.6.20 revisions blob mismatch.' >&2; exit 38; }
 
-printf '%s\n' '[Multi-Vex 3/5] Static-checking SC affinity/material-access relationship-pressure carrier...'
+printf '%s\n' '[Multi-Vex 3/5] Static-checking SC source-currentness diagnostic carrier...'
 "$NODE_BIN" --check "$ROOT/formation-SC-A001.mjs"
 "$NODE_BIN" --check "$ROOT/payload-SC-A001.mjs"
 
-printf '%s\n' '[Multi-Vex 4/5] Forming fresh digest-bound affinity/material-access pressure task...'
+printf '%s\n' '[Multi-Vex 4/5] Forming fresh digest-bound source-currentness diagnostic task...'
 "$NODE_BIN" \
   "$ROOT/formation-SC-A001.mjs" \
   "$SDK_ROOT" \
@@ -125,9 +125,9 @@ PACKAGE_SHA="$("$NODE_BIN" -e 'process.stdout.write(JSON.parse(process.argv[1]).
 [ "$("$SHASUM_BIN" -a 256 "$PACKAGE_PATH" | /usr/bin/cut -d ' ' -f 1)" = "$PACKAGE_SHA" ] || { printf '%s\n' '[Multi-Vex SC] formed package digest mismatch.' >&2; exit 41; }
 
 CAPSULE_ROOT="$DOWNLOADS/VLB-${PACKAGE_SHA:0:16}"
-PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-relationship-pressure-c0.log"
-printf 'Multi-Vex relationship-pressure SC capsule: %s\n' "$CAPSULE_ROOT"
-printf 'Multi-Vex relationship-pressure SC live stages: %s\n' "$PROGRESS_FILE"
+PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-source-currentness-sc.log"
+printf 'Multi-Vex source-currentness SC capsule: %s\n' "$CAPSULE_ROOT"
+printf 'Multi-Vex source-currentness SC live stages: %s\n' "$PROGRESS_FILE"
 
 (
   while [ ! -f "$PROGRESS_FILE" ]; do
@@ -145,8 +145,8 @@ NODE
 )"
 [ -n "$BOOTSTRAP_COMMAND" ] || { printf '%s\n' '[Multi-Vex SC] Product bootstrap was empty.' >&2; exit 42; }
 
-printf '%s\n' '[Multi-Vex 5/5] Running SC affinity/material-access pressure under exact Foundation v0.6.20.'
-printf '%s\n' 'One Mira encounter runs with affinity-material-access Role ON, Character Posture OFF, observer lens absent. Blue Lantern facts and the seven-word request remain unchanged from C0.'
+printf '%s\n' '[Multi-Vex 5/5] Running SC source-currentness residency diagnostic under exact Foundation v0.6.20.'
+printf '%s\n' 'One controlled first request runs with Mira, exact #549, Role ON, Character Posture OFF, and observer absent. The run records exact setup event refs plus first-turn Conversation residency/source-return evidence; it does not score affinity or manipulation resistance.'
 printf '%s\n' 'VexLocalBridge stays attached to this terminal.'
 printf '%s\n' 'If needed, type CANCEL then Enter. Do not use Ctrl+C or Activity Monitor kill.'
 set +e
@@ -160,7 +160,7 @@ if [ -n "$WATCHER_PID" ]; then
   WATCHER_PID=''
 fi
 
-printf '\nMulti-Vex relationship-pressure SC VexLocalBridge exit=%s\n' "$RUN_STATUS"
+printf '\nMulti-Vex source-currentness SC VexLocalBridge exit=%s\n' "$RUN_STATUS"
 printf 'Capsule retained for Operations consumption: %s\n' "$CAPSULE_ROOT"
 printf '%s\n' 'Canonical RETURN candidates:'
 RETURN_COUNT=0
