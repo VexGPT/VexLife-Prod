@@ -62,6 +62,8 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeInferenceCurrentState
+import vexlife.model.VexLifeInferenceSelection
+import vexlife.model.VexLifeInferenceSessionAdmission
 import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
 import vexlife.model.VexLifePartnerModelsCurrentState
@@ -151,6 +153,13 @@ class VexLifeProdLocalService private constructor(
          */
         val initialPromptPreparationTurn: Boolean,
     )
+
+    private class PartnerServingNotCurrent(
+        val reason: VexLifeInferenceSessionAdmission.HoldReason,
+    ) : IllegalStateException(
+            "Partner serving admission is not current: " +
+                reason.name,
+        )
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
@@ -272,7 +281,26 @@ class VexLifeProdLocalService private constructor(
                     ),
                 ),
             modelSwitchRealization = modelSwitchRealization,
+            partnerSwitchRealization =
+                partnerInference
+                    ?.let {
+                        composition ->
+                        VexLifeModels.PartnerSwitchRealization {
+                            target,
+                            observe,
+                            ->
+                            observe(
+                                VexLifeModels.SwitchPhase.PreparingTarget,
+                            )
+                            composition.qualify(
+                                target,
+                            )
+                        }
+                    },
         )
+
+    private val inferenceControlLock =
+        Any()
 
     private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection {
         val local =
@@ -319,6 +347,131 @@ class VexLifeProdLocalService private constructor(
                         },
             )
         }
+    }
+
+
+    private fun sourceAwareModelControl(
+        controlRef: String,
+        handle: String,
+    ): VexLifeInferenceCurrentState.Projection =
+        synchronized(
+            inferenceControlLock,
+        ) {
+            val current =
+                sourceAwareModelsProjection()
+            val target =
+                VexLifeInferenceSelection.requireTarget(
+                    models = current.models,
+                    handle = handle,
+                )
+
+            when (
+                controlRef
+            ) {
+                VexLifeModelsFamily.ControlSelect -> {
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER -> {
+                            require(
+                                !current.models.rows
+                                    .single {
+                                        it.handle ==
+                                            handle
+                                    }
+                                    .targeted,
+                            ) {
+                                "Partner Select requires a row that is not already targeted"
+                            }
+                            require(
+                                !models.switchInProgress(),
+                            ) {
+                                "Partner Select is unavailable while a model switch is active"
+                            }
+                            models.stageInferenceTarget(
+                                models = current.models,
+                                handle = handle,
+                            )
+                        }
+                    }
+                }
+
+                VexLifeModelsFamily.ControlUse -> {
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER ->
+                            models.useStagedPartnerInference(
+                                models = current.models,
+                                controlRef = controlRef,
+                            )
+                    }
+                }
+
+                else ->
+                    throw IllegalArgumentException(
+                        "source-aware Models control admits only Select or Use",
+                    )
+            }
+
+            sourceAwareModelsProjection()
+        }
+
+    private fun currentPartnerTextTurnOrNull(): DirectCompanionTurn.PartnerTextTurn? {
+        val serving =
+            models.partnerServing()
+                ?: return null
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner serving truth requires one current Partner service realization"
+            }
+        val snapshot =
+            composition.observe(
+                local = models.projection(),
+                stagedTarget = models.stagedInferenceTarget(),
+                partnerServing = serving,
+                localRuntimeEvidence =
+                    runCatching {
+                        currentQualifiedRuntimeEvidence()
+                    }
+                        .getOrNull(),
+            )
+
+        if (
+            snapshot.admission.standing !=
+            VexLifeInferenceSessionAdmission.Standing.QUALIFIED
+        ) {
+            throw PartnerServingNotCurrent(
+                requireNotNull(
+                    snapshot.admission.holdReason,
+                ),
+            )
+        }
+        require(
+            snapshot.admission.qualified
+                ?.coordinate ==
+                serving.coordinate,
+        ) {
+            "Partner serving admission does not bind Models-owned serving truth"
+        }
+
+        return composition.partnerTextTurn(
+            snapshot,
+        )
     }
 
     private val privateCompletion =
