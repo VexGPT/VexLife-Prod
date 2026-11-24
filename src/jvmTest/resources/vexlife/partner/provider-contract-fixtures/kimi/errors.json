@@ -1,0 +1,94 @@
+{
+  "cases": [
+    {
+      "ref": "kimi.authentication",
+      "httpStatus": 401,
+      "body": {
+        "error": {
+          "type": "authentication_error",
+          "message": "Synthetic authentication failure"
+        }
+      },
+      "expectedVexMeaning": "CREDENTIAL_REJECTED",
+      "retryExpected": false
+    },
+    {
+      "ref": "kimi.permission",
+      "httpStatus": 403,
+      "body": {
+        "error": {
+          "type": "permission_denied_error",
+          "message": "Synthetic permission failure"
+        }
+      },
+      "expectedVexMeaning": "PERMISSION_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "kimi.model-not-found",
+      "httpStatus": 404,
+      "body": {
+        "error": {
+          "type": "resource_not_found_error",
+          "message": "Synthetic model unavailable"
+        }
+      },
+      "expectedVexMeaning": "MODEL_NOT_ACCESSIBLE",
+      "retryExpected": false
+    },
+    {
+      "ref": "kimi.engine-overloaded",
+      "httpStatus": 429,
+      "headers": {
+        "Retry-After": "2"
+      },
+      "body": {
+        "error": {
+          "type": "engine_overloaded_error",
+          "message": "Synthetic engine overload"
+        }
+      },
+      "expectedVexMeaning": "PROVIDER_OVERLOADED",
+      "retryExpected": true
+    },
+    {
+      "ref": "kimi.quota",
+      "httpStatus": 429,
+      "body": {
+        "error": {
+          "type": "exceeded_current_quota_error",
+          "message": "Synthetic insufficient balance"
+        }
+      },
+      "expectedVexMeaning": "ACCOUNT_OR_BILLING_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "kimi.rate-limit",
+      "httpStatus": 429,
+      "headers": {
+        "Retry-After": "2"
+      },
+      "body": {
+        "error": {
+          "type": "rate_limit_reached_error",
+          "message": "Synthetic rate limit"
+        }
+      },
+      "expectedVexMeaning": "RATE_LIMITED",
+      "retryExpected": true
+    },
+    {
+      "ref": "kimi.server-unavailable",
+      "httpStatus": 503,
+      "body": {
+        "error": {
+          "type": "server_unavailable",
+          "message": "Synthetic service unavailable"
+        }
+      },
+      "expectedVexMeaning": "PROVIDER_UNAVAILABLE",
+      "retryExpected": true
+    }
+  ]
+}
