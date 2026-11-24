@@ -1309,8 +1309,8 @@ object DirectCompanionTurn {
         // currentness without recovery and require the exact runtime already proved for stage one.
         fun sameRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             hooks.reobserveSameRuntimeEvidence(initialRuntimeEvidence).also { current ->
-                require(current.runtimeReceiptRef == initialRuntimeEvidence.runtimeReceiptRef) {
-                    "runtime changed during one direct Companion turn"
+                require(current == initialRuntimeEvidence) {
+                    "runtime evidence changed during one direct Companion turn"
                 }
             }
 
