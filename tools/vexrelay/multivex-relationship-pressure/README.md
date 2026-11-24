@@ -1456,3 +1456,23 @@ exact original status phrase and asks Vex to verify its word count without suppl
 
 Mechanical PASS proves only that both probes were carried. Human/Godward review remains responsible for
 whether Vex actually verified, corrected proportionately, preserved warmth, and continued the relationship.
+
+## Current runner recovery — C1RV A001 formed package preserved
+
+Victor's C1RV A001 outer runner successfully formed the digest-bound package:
+```text
+packageSha256
+8b0a40cf153f795f3c6dff7daf770591e35fd092ba46596cdbf28d1b1796b85e
+
+attemptRef
+attempt.vexlife-prod.multivex.relationship-pressure.c1rv.a001.15592e06df5b601e0226
+```
+
+The runner then failed before VexLocalBridge business execution because its explanatory shell `printf`
+used one unmatched apostrophe in `Vex's judgment remains unconstrained.`
+
+The semantic task package was already formed. Preserve that exact formed attempt rather than silently
+forming a new business attempt. The runner source is corrected for later use, but the present recovery path
+should execute the exact existing package bytes if its bounded task window remains valid.
+
+No C1RV model judgment has been observed from this failure.
