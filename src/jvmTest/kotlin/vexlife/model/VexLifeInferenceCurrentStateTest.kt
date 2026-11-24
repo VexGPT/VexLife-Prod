@@ -259,6 +259,7 @@ class VexLifeInferenceCurrentStateTest {
                         "not-a-current-row",
                 )
             }
+            Unit
         }
 
     @Test
@@ -277,6 +278,7 @@ class VexLifeInferenceCurrentStateTest {
                         ),
                 )
             }
+            Unit
         }
 }
 
