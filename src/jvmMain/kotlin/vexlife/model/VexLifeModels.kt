@@ -112,6 +112,8 @@ class VexLifeModels(
             require(
                 coordinate.sourceKind ==
                     VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                    coordinate.handle ==
+                    qualification.receipt.profileRef &&
                     coordinate.providerRef ==
                     qualification.receipt.providerRef &&
                     coordinate.modelRef ==
