@@ -164,8 +164,8 @@ object DirectCompanionTurn {
         val currentConversationHeadSha256: String,
         val contextPath: String,
         val promptContextReceipt: DirectPromptContext.Receipt,
-        val providerObservation: CompanionInferenceConnection.Observation,
-        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceObservation,
+        val providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         val localRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
         val localInvocationEvidence: DirectCompanionConnection.InvocationEvidence?,
         /**
