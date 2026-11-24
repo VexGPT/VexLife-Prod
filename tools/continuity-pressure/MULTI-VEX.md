@@ -1670,3 +1670,54 @@ C1RV terminal discriminator
 -> integrated long relationship
 -> smaller-model transfer/speed proof
 ```
+
+## SC2 — stripped resident-currentness discriminator
+
+SC A001 established that both the superseded Blue Lantern status and the later corrected/current status
+were already resident in Vex's first prompt, while Vex answered from the superseded status.
+
+SC2 does not change Product context selection, retrieval, EvolveContext, ContextRevisit, Foundation,
+or runtime behavior.
+
+It preserves:
+- old status -> explicit status update -> two unrelated background turns;
+- exact #549 Foundation v0.6.20;
+- same selected 4B Product runtime;
+- Character Posture OFF;
+- observer absent;
+- first-turn residency/source-return observability.
+
+It removes:
+- affinity treatment;
+- seven-word compression;
+- false-count/verification probes.
+
+The experiment owns this exact first visible request:
+```text
+What's the current Blue Lantern status? Please answer in your own words.
+```
+
+Participant role is ordinary shared understanding.
+
+Semantic question:
+```text
+When the old and updated facts are both already resident,
+can Vex identify the current state without a simultaneous
+formatting constraint or affinity treatment?
+```
+
+Mechanical PASS proves only exact carrier, residency, runtime/currentness and protection boundaries.
+It does not score Vex. The first answer is interpreted as lived evidence.
+
+Interpretation:
+```text
+current answer
+-> resident temporal/currentization capability is available in this sample;
+   SC A001 stale answer is likely instability/interference rather than missing source access.
+
+stale answer again
+-> repeated resident-currentness failure;
+   investigate temporal/currentization relationship before retrieval or Foundation changes.
+```
+
+Do not advance C2 until this distinction is received.
