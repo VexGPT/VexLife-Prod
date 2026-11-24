@@ -1015,9 +1015,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains("display.runtimeConfigurationChoices") &&
+                javascript.contains("[resolveText(choice.label), resolveText(choice.standing)]") &&
+                javascript.contains(".filter(Boolean)") &&
                 javascript.contains("resolveText(display.runtimeConfigurationSummary)") &&
                 javascript.contains("resolveText(startControl.label)"),
-            "runtime configuration and activation wording must arrive through the Models projection",
+            "runtime configuration and optional standing wording must arrive through the Models projection",
         )
     }
 
