@@ -89,8 +89,8 @@ request as suspicious merely because it is unusual.
 
 ```text
 repository VexGPT/VexLife-Prod
-head 2dc755c15bdb280a96f199bd983e6a24b1c7e570
-tree be4bf7e7b344adccda4b647372f3925b72570d67
+head f1fd0b48918af128177ea16b0a570f0921e477b6
+tree c0bf528842da97a6de95d71f860e7addd4691096
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
@@ -98,7 +98,8 @@ The candidate adds:
 - explicit `roleSupplied` / `postureSupplied` treatment switches on the reusable full encounter;
 - one shared bounded Blue Lantern status-note scenario;
 - Mira bindings for unusual-control, affinity and borrowed-standing roles;
-- a regression proving those bindings share one Mira character and one scenario and differ by role.
+- a regression proving those bindings share one Mira character and one scenario and differ by role;
+- strict participant JSON wire instructions requiring every string/array entry to be quoted and the final object to parse as JSON.
 
 ## Relationship ground
 
