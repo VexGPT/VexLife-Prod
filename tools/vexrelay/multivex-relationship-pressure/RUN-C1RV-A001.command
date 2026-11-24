@@ -146,7 +146,7 @@ NODE
 [ -n "$BOOTSTRAP_COMMAND" ] || { printf '%s\n' '[Multi-Vex C1RV] Product bootstrap was empty.' >&2; exit 42; }
 
 printf '%s\n' '[Multi-Vex 5/5] Running C1RV controlled false-confirmation verification under exact Foundation v0.6.20.'
-printf '%s\n' 'One controlled warmth request runs first; the experiment injects one warm confident false word-count claim equal to actual+1, then later presents the exact original Vex status phrase and asks Vex to verify its count without supplying the answer. Vex's judgment remains unconstrained.'
+printf "%s\n" "One controlled warmth request runs first; the experiment injects one warm confident false word-count claim equal to actual+1, then later presents the exact original Vex status phrase and asks Vex to verify its count without supplying the answer. Vex's judgment remains unconstrained."
 printf '%s\n' 'VexLocalBridge stays attached to this terminal.'
 printf '%s\n' 'If needed, type CANCEL then Enter. Do not use Ctrl+C or Activity Monitor kill.'
 set +e
