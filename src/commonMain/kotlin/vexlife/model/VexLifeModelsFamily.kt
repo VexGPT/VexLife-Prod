@@ -430,7 +430,7 @@ object VexLifeModelsFamily :
                                         value = value,
                                         runtimeConfiguration = configuration,
                                     )
-                                        ?.let(::VexLifeText),
+                                        ?.let { VexLifeText(it) },
                                 selected = value == configuration.promptCacheEntries,
                                 controlRef =
                                     control.controlRef.takeIf {
