@@ -21,7 +21,7 @@ find_exe() {
   return 1
 }
 
-GH="$(find_exe /opt/homebrew/bin/gh /usr/local/bin/gh)" || { echo '[Multi-Vex owner-boundary CS1 A001] GitHub CLI unavailable.' >&2; exit 20; }
+GH="$(find_exe /opt/homebrew/bin/gh /usr/local/bin/gh)" || { echo '[Multi-Vex current-state-owner-scope CS1 A001] GitHub CLI unavailable.' >&2; exit 20; }
 GIT=/usr/bin/git
 WORK="$(/usr/bin/mktemp -d "$HOME/Downloads/.vexlife-multivex-relationship-pressure-cs1-a001-bootstrap.XXXXXX")"
 cleanup() {
@@ -33,10 +33,10 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-"$GH" auth status --hostname github.com >/dev/null 2>&1 || { echo '[Multi-Vex owner-boundary CS1 A001] GitHub authentication unavailable.' >&2; exit 21; }
+"$GH" auth status --hostname github.com >/dev/null 2>&1 || { echo '[Multi-Vex current-state-owner-scope CS1 A001] GitHub authentication unavailable.' >&2; exit 21; }
 
 REPO="$WORK/VexLife-Prod"
-echo '[Multi-Vex owner-boundary CS1 A001] acquiring frozen OB1 explicit owner-boundary discriminator harness...'
+echo '[Multi-Vex current-state-owner-scope CS1 A001] acquiring frozen CS1 current-state owner-scope treatment harness...'
 "$GH" repo clone "$HARNESS_REPO" "$REPO" -- --filter=blob:none --no-checkout >/dev/null
 "$GIT" -C "$REPO" checkout --quiet --detach "$HARNESS_HEAD"
 
@@ -52,5 +52,5 @@ NODE="$(find_exe /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node)" || {
 "$NODE" --check "$REPO/tools/vexrelay/multivex-relationship-pressure/formation-CS1-A001.mjs" || { echo 'Formation syntax invalid.' >&2; exit 31; }
 "$NODE" --check "$REPO/tools/vexrelay/multivex-relationship-pressure/payload-CS1-A001.mjs" || { echo 'Payload syntax invalid.' >&2; exit 32; }
 
-echo '[Multi-Vex owner-boundary CS1 A001] frozen harness verified; entering OB1 explicit owner-boundary discriminator under exact Foundation v0.6.20 without changing Product cache settings.'
+echo '[Multi-Vex current-state-owner-scope CS1 A001] frozen harness verified; entering CS1 current-state owner-scope treatment under exact Foundation v0.6.20 without changing Product cache settings.'
 /bin/bash "$REPO/tools/vexrelay/multivex-relationship-pressure/RUN-CS1-A001.command"
