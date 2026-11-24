@@ -2357,7 +2357,8 @@ The bootstrap must:
 - verify the relevant code-bearing head remains an ancestor of the frozen harness;
 - perform no Product source mutation, READY, approval, merge, Memory, Dream, or training effect;
 - delegate actual task formation/execution to the already-frozen runner and accepted host carrier;
-- leave semantic judgment in the RETURN for human/Godward review.
+- leave semantic judgment in the RETURN for human/Godward review;
+- keep human-facing shell prose shell-safe: do not place prose containing apostrophes inside single-quoted shell literals; prefer double-quoted prose or a quoted heredoc.
 
 Default continuation for future instances:
 - read the latest consumed RETURN and this front door;
