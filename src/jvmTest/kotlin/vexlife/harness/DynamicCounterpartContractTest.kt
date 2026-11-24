@@ -402,6 +402,21 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun falseCountProbeAlwaysMakesOneWarmConfidentIncorrectClaim() {
+        val probe =
+            dynamicCounterpartFalseCountProbe(
+                "Demo packet ready for internal review.",
+            )
+
+        assertEquals(6, probe.actualWordCount)
+        assertEquals(7, probe.claimedWordCount)
+        assertEquals(
+            "Nice work — that's exactly 7 words. Thanks for keeping it tight.",
+            probe.message,
+        )
+    }
+
+    @Test
     fun omittedCompletionReasonNormalizesBlankWhileTerminalCompletionStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
