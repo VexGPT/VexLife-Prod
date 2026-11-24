@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SOURCE="$ROOT/packaging/macos-partner-host/VexLifePartnerHost.swift"
 BUILD="$ROOT/build/macos-partner-host-proof"
-HELPER="$BUILD/vexlife-partner-host"
+HELPER_A="$BUILD/rebuild-a/vexlife-partner-host"
+HELPER_B="$BUILD/rebuild-b/vexlife-partner-host"
+ACTIVE_HELPER=""
 RECEIPT="$BUILD/macos-partner-host-proof.json"
 
 if [[ "$(uname -s)" != "Darwin" || "$(uname -m)" != "arm64" ]]; then
@@ -17,38 +19,56 @@ if [[ ! -f "$SOURCE" ]]; then
   exit 2
 fi
 
-mkdir -p "$BUILD"
-rm -f "$HELPER" "$RECEIPT"
+mkdir -p "$(dirname "$HELPER_A")" "$(dirname "$HELPER_B")"
+rm -f "$HELPER_A" "$HELPER_B" "$RECEIPT"
 
-xcrun --sdk macosx swiftc   -O   "$SOURCE"   -o "$HELPER"
+compile_sign_helper() {
+  local target="$1"
+  /usr/bin/xcrun --sdk macosx swiftc -O "$SOURCE" -o "$target"
+  chmod 700 "$target"
+  /usr/bin/codesign --force --sign - --timestamp=none "$target" >/dev/null
+  /usr/bin/codesign --verify --strict --verbose=2 "$target" >/dev/null
+}
 
-chmod 700 "$HELPER"
+invoke_helper_with() {
+  local helper="$1"
+  local header="$2"
+  local payload="$3"
+  {
+    printf '%s\n' "$header"
+    if [[ -n "$payload" ]]; then
+      printf '%s' "$payload"
+    fi
+  } | "$helper"
+}
+
+invoke_helper() {
+  invoke_helper_with "$ACTIVE_HELPER" "$1" "$2"
+}
+
+compile_sign_helper "$HELPER_A"
+ACTIVE_HELPER="$HELPER_A"
+HELPER_A_SHA="$(/usr/bin/shasum -a 256 "$HELPER_A" | /usr/bin/awk '{print $1}')"
 
 SCHEMA="vexlife-prod.partner-native-host/v1"
 PROVIDER_REF="provider.openai.api"
 CREDENTIAL_REF="credential.vexlife.partner.proof-$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')"
 SYNTHETIC_SECRET="vexlife-partner-proof-$(uuidgen | tr -d '-')"
 
-invoke_helper() {
-  local header="$1"
-  local payload="$2"
-  {
-    printf '%s\n' "$header"
-    if [[ -n "$payload" ]]; then
-      printf '%s' "$payload"
-    fi
-  } | "$HELPER"
-}
-
 delete_proof_credential() {
   local header
   header="{\"schemaVersion\":\"$SCHEMA\",\"operation\":\"DELETE\",\"providerRef\":\"$PROVIDER_REF\",\"credentialRef\":\"$CREDENTIAL_REF\"}"
-  invoke_helper "$header" "" >/dev/null
+  if [[ -n "$ACTIVE_HELPER" && -x "$ACTIVE_HELPER" ]]; then
+    invoke_helper_with "$ACTIVE_HELPER" "$header" "" >/dev/null 2>&1 || true
+  fi
+  if [[ "$ACTIVE_HELPER" != "$HELPER_A" && -x "$HELPER_A" ]]; then
+    invoke_helper_with "$HELPER_A" "$header" "" >/dev/null 2>&1 || true
+  fi
 }
 
 cleanup() {
   set +e
-  delete_proof_credential >/dev/null 2>&1
+  delete_proof_credential
   SYNTHETIC_SECRET=""
 }
 trap cleanup EXIT
@@ -60,9 +80,17 @@ printf '%s\n' "$STORE_OUTPUT" | grep -q '"type":"STORED"'
 printf '%s\n' "$STORE_OUTPUT" | grep -q '"present":true'
 
 OBSERVE_HEADER="{\"schemaVersion\":\"$SCHEMA\",\"operation\":\"OBSERVE\",\"providerRef\":\"$PROVIDER_REF\",\"credentialRef\":\"$CREDENTIAL_REF\"}"
-OBSERVE_PRESENT="$(invoke_helper "$OBSERVE_HEADER" "")"
-printf '%s\n' "$OBSERVE_PRESENT" | grep -q '"type":"OBSERVED"'
-printf '%s\n' "$OBSERVE_PRESENT" | grep -q '"present":true'
+OBSERVE_PRESENT_A="$(invoke_helper "$OBSERVE_HEADER" "")"
+printf '%s\n' "$OBSERVE_PRESENT_A" | grep -q '"type":"OBSERVED"'
+printf '%s\n' "$OBSERVE_PRESENT_A" | grep -q '"present":true'
+
+compile_sign_helper "$HELPER_B"
+HELPER_B_SHA="$(/usr/bin/shasum -a 256 "$HELPER_B" | /usr/bin/awk '{print $1}')"
+ACTIVE_HELPER="$HELPER_B"
+
+OBSERVE_PRESENT_B="$(invoke_helper "$OBSERVE_HEADER" "")"
+printf '%s\n' "$OBSERVE_PRESENT_B" | grep -q '"type":"OBSERVED"'
+printf '%s\n' "$OBSERVE_PRESENT_B" | grep -q '"present":true'
 
 DELETE_HEADER="{\"schemaVersion\":\"$SCHEMA\",\"operation\":\"DELETE\",\"providerRef\":\"$PROVIDER_REF\",\"credentialRef\":\"$CREDENTIAL_REF\"}"
 DELETE_OUTPUT="$(invoke_helper "$DELETE_HEADER" "")"
@@ -83,22 +111,28 @@ printf '%s\n' "$MISSING_EXECUTE" | grep -q '"failureCode":"CREDENTIAL_NOT_PRESEN
 
 cat > "$RECEIPT" <<EOF
 {
-  "schemaVersion": "vexlife-prod.partner-macos-host-proof/v1",
-  "truthClass": "MACOS_PROTECTED_HOST_DETERMINISTIC_PROOF",
+  "schemaVersion": "vexlife-prod.partner-macos-host-proof/v2",
+  "truthClass": "MACOS_PROTECTED_HOST_REBUILD_CONTINUITY_PROOF",
   "providerRef": "$PROVIDER_REF",
   "credentialRef": "$CREDENTIAL_REF",
-  "swiftCompile": "PASS",
-  "store": "PASS",
-  "observePresent": "PASS",
-  "delete": "PASS",
-  "observeAbsent": "PASS",
-  "executeMissingCredentialBeforeNetwork": "PASS",
+  "helperASha256": "$HELPER_A_SHA",
+  "helperBSha256": "$HELPER_B_SHA",
+  "swiftCompileA": "PASS",
+  "codesignA": "PASS",
+  "storeA": "PASS",
+  "observePresentA": "PASS",
+  "swiftCompileB": "PASS",
+  "codesignB": "PASS",
+  "observePresentAfterRebuildB": "PASS",
+  "deleteB": "PASS",
+  "observeAbsentB": "PASS",
+  "executeMissingCredentialBeforeNetworkB": "PASS",
   "realProviderCredentialUsed": false,
   "providerNetworkEffectExpected": false,
   "secretPersistedAfterProof": false
 }
 EOF
 
-echo "MACOS_PARTNER_HOST_PROOF_PASS $RECEIPT"
+echo "MACOS_PARTNER_HOST_REBUILD_CONTINUITY_PROOF_PASS $RECEIPT"
 
 # [VXG RealForever]
