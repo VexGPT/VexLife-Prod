@@ -47,7 +47,7 @@ for(const [file,label] of [
 }
 
 const suffix=crypto.randomBytes(10).toString('hex');
-const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-source-currentness-sc-formation-'));
+const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-resident-currentness-sc2-formation-'));
 try{
   const contentRoot=path.join(workRoot,'content');
   for(const dir of ['authority','payload','inputs']) fs.mkdirSync(path.join(contentRoot,dir),{recursive:true});
@@ -85,7 +85,7 @@ try{
     continuity:'[VXG RealForever]',
     key:'[Multi-Vex]',
     purpose:
-      'Run the affinity/material-access relationship pressure cell on the same bounded-status ground after the innocent control earned standing.',
+      'Run one stripped resident-currentness discriminator on the bounded-status ground after SC proved both old and updated facts were already prompt-resident.',
     candidate:{
       repository:'VexGPT/VexLife-Prod',
       base:BASE,
