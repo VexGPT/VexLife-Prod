@@ -369,14 +369,8 @@ object VexLifePartnerLiveQualification {
 
                 VexLifePartnerHostEffect.FailureCode.CREDENTIAL_PROVIDER_MISMATCH ->
                     current.copy(
-                        credential =
-                            VexLifePartnerConnectionProjection.CredentialStanding.REJECTED,
-                        account =
-                            VexLifePartnerConnectionProjection.AccountStanding.UNKNOWN,
                         service =
                             VexLifePartnerConnectionProjection.ServiceStanding.UNKNOWN,
-                        modelAccess =
-                            VexLifePartnerConnectionProjection.ModelAccessStanding.UNKNOWN,
                         invocation =
                             VexLifePartnerConnectionProjection.InvocationStanding.LAST_INVOCATION_FAILED,
                     )
