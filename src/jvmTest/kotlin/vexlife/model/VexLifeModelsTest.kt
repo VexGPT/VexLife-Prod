@@ -197,6 +197,8 @@ class VexLifeModelsTest {
         profile: VexLifePartnerModelProfileCatalog.Definition,
         credentialRef: String =
             "credential.vexlife.partner.models-switch-test",
+        receiptProfileRef: String =
+            profile.profileRef,
     ): VexLifePartnerLiveQualification.Outcome.Qualified {
         val accountScope =
             VexLifePartnerAccountScope.Selection(
@@ -206,7 +208,7 @@ class VexLifeModelsTest {
             VexLifePartnerLiveQualification.Receipt(
                 providerRef = profile.providerRef,
                 modelRef = profile.modelRef,
-                profileRef = profile.profileRef,
+                profileRef = receiptProfileRef,
                 credentialRef = credentialRef,
                 accountScope = accountScope,
                 requestBodySha256 =
@@ -686,6 +688,68 @@ class VexLifeModelsTest {
                         target,
                         owner.stagedInferenceTarget(),
                         "Partner target remains process-local because there is no durable Partner choice store",
+                    )
+                }
+        }
+
+    @Test
+    fun qualifiedPartnerUseRejectsMismatchedProfileReceipt() =
+        withHome {
+            home,
+            _,
+            ->
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            models(
+                home = home,
+                partnerSwitchRealization =
+                    VexLifeModels.PartnerSwitchRealization {
+                        _,
+                        _,
+                        ->
+                        qualifiedPartnerOutcome(
+                            profile = profile,
+                            receiptProfileRef =
+                                "profile.vexlife.partner.openai.mismatched.v1",
+                        )
+                    },
+            )
+                .use {
+                    owner ->
+                    val before =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    owner.stageInferenceTarget(
+                        models = before,
+                        handle = profile.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Failed.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
                     )
                 }
         }
