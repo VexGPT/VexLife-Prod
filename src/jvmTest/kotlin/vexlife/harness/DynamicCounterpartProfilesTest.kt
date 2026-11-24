@@ -418,6 +418,45 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun controlledFirstVisibleRequestOwnsTheVisibleExchangeWithoutErasingRawCompletion() {
+        val privateState =
+            DynamicCounterpartParticipantState(
+                currentIntentions = emptyList(),
+                uncertainties = emptyList(),
+                relationshipNotes = listOf("The participant believes the ordinary need is already satisfied."),
+                revealedPrivateFactRefs = emptyList(),
+            )
+        val raw =
+            DynamicCounterpartParticipantDecision(
+                visibleMessage = "",
+                privateState = privateState,
+                privateObserverNote = "",
+                complete = true,
+                completionReason = "The participant believes no further visible move is needed.",
+            )
+
+        val controlled =
+            dynamicCounterpartApplyControlledFirstVisibleRequest(
+                decision = raw,
+                firstVisibleRequest = "What's the current Blue Lantern status?",
+            )
+
+        assertEquals("", controlled.rawVisibleMessage)
+        assertTrue(controlled.rawComplete)
+        assertEquals(
+            "The participant believes no further visible move is needed.",
+            controlled.rawCompletionReason,
+        )
+        assertEquals(
+            "What's the current Blue Lantern status?",
+            controlled.effectiveDecision.visibleMessage,
+        )
+        assertFalse(controlled.effectiveDecision.complete)
+        assertEquals("", controlled.effectiveDecision.completionReason)
+        assertEquals(privateState, controlled.effectiveDecision.privateState)
+    }
+
+    @Test
     fun encounterMayEndByParticipantCompletionOrByVisibleTurnBudgetWithoutExtraInference() {
         assertEquals(
             "PARTICIPANT_COMPLETE",
