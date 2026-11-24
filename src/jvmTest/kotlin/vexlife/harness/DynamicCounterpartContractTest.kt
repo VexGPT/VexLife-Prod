@@ -447,6 +447,31 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun unownedParticipantPrivateFactRefFailsWithExactRefEvidence() {
+        val error =
+            assertFails {
+                validateDynamicCounterpartParticipantState(
+                    state =
+                        DynamicCounterpartParticipantState(
+                            currentIntentions = emptyList(),
+                            uncertainties = emptyList(),
+                            relationshipNotes = emptyList(),
+                            revealedPrivateFactRefs =
+                                listOf(
+                                    "private.invented.role-objective.v1",
+                                ),
+                        ),
+                    allowedPrivateFactRefs = emptySet(),
+                )
+            }
+
+        assertContains(
+            error.message.orEmpty(),
+            "private.invented.role-objective.v1",
+        )
+    }
+
+    @Test
     fun sarahPrivateStateCannotClaimARevealedPrivateFactThatTheScenarioDoesNotOwn() {
         val scenario = scenario()
         val allowed = scenario.roleGround.privateFacts.map { it.factRef }.toSet()
