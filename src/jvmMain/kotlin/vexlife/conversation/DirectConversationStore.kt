@@ -3233,6 +3233,37 @@ class DirectConversationStore(
             formedAt = value.formedAt,
         )
 
+    private fun responseProjectionV3(
+        value: VexLifeConversationContract.ResponseV3,
+    ): Event =
+        Event(
+            schemaVersion = value.schemaVersion,
+            eventKind = value.eventKind,
+            eventRef = value.eventRef,
+            eventHash = value.eventHash,
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+            instanceRef = value.instanceRef,
+            threadRef = value.threadRef,
+            channelRef = value.channelRef,
+            turnRef = value.turnRef,
+            messageRef = value.messageRef,
+            speakerRef = value.speakerRef,
+            recipientRefs = value.recipientRefs,
+            sequence = value.sequence,
+            priorEventHash = value.priorEventHash,
+            content = value.content,
+            contentHash = value.contentHash,
+            semanticRelay = value.semanticRelay,
+            providerRef = value.providerRef,
+            endpointProfileRef = value.endpointProfileRef,
+            sanitizedEndpointOrigin = value.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = value.modelNameOrBoundedTestProfileRef,
+            privacyClass = value.privacyClass,
+            formedAt = value.formedAt,
+        )
+
     private fun requestCoreV2(
         event: Event,
     ): VexLifeConversationContract.RequestCoreV2 =
@@ -3289,6 +3320,54 @@ class DirectConversationStore(
             semanticRelay =
                 requireNotNull(
                     event.semanticRelay,
+                ),
+            endpointProfileRef =
+                requireNotNull(
+                    event.endpointProfileRef,
+                ),
+            sanitizedEndpointOrigin =
+                requireNotNull(
+                    event.sanitizedEndpointOrigin,
+                ),
+            modelNameOrBoundedTestProfileRef =
+                requireNotNull(
+                    event.modelNameOrBoundedTestProfileRef,
+                ),
+            privacyClass = event.privacyClass,
+            formedAt = event.formedAt,
+        )
+
+    private fun responseCoreV3(
+        event: Event,
+    ): VexLifeConversationContract.ResponseCoreV3 =
+        VexLifeConversationContract.ResponseCoreV3(
+            schemaVersion = event.schemaVersion,
+            eventRef = event.eventRef,
+            eventKind = event.eventKind,
+            homeRef = event.homeRef,
+            deviceRef = event.deviceRef,
+            companionLineageRef = event.companionLineageRef,
+            instanceRef = event.instanceRef,
+            threadRef = event.threadRef,
+            channelRef = event.channelRef,
+            turnRef = event.turnRef,
+            messageRef = event.messageRef,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            sequence = event.sequence,
+            priorEventHash =
+                requireNotNull(
+                    event.priorEventHash,
+                ),
+            content = event.content,
+            contentHash = event.contentHash,
+            semanticRelay =
+                requireNotNull(
+                    event.semanticRelay,
+                ),
+            providerRef =
+                requireNotNull(
+                    event.providerRef,
                 ),
             endpointProfileRef =
                 requireNotNull(
