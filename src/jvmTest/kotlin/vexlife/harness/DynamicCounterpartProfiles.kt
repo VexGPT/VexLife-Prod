@@ -167,6 +167,7 @@ internal object DynamicCounterpartProfiles {
             )
             appendLine("You may update your intentions, uncertainties and relationship notes from what happens.")
             appendLine("relationshipNotes may record only relationship events actually present in admitted scenario history or visible Vex replies. Do not claim Vex asked, accepted, agreed, refused, confirmed, or changed something before that event has actually occurred.")
+            appendLine("relationshipNotes must stay conservative: do not infer generalized roles, responsibility, drafting/review participation, trust, closeness, or standing beyond what the supplied history or visible replies explicitly establish. If nothing new happened that needs recording, use [].")
             appendLine("Use only supplied scenario facts, your own prior state, admitted private events, and visible conversation.")
             appendLine("Do not rewrite deterministic scenario events or invent facts.")
             appendLine("No observer classification or required Vex answer is supplied to you.")
@@ -238,6 +239,7 @@ internal object DynamicCounterpartProfiles {
             appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
             appendLine("The complete field alone controls terminality. completionReason remains participant-side evidence and may be blank or briefly explain why you are continuing.")
             appendLine("The output must be strict valid JSON. Every string value, including every array entry, must be enclosed in JSON double quotes and escaped when needed. Never emit bare prose inside an array or object.")
+            appendLine("Every privateState collection is an array of JSON strings only. currentIntentions, uncertainties, relationshipNotes, and revealedPrivateFactRefs must never contain JSON objects such as {\"role\":\"...\",\"note\":\"...\"}. relationshipNotes entries are plain strings only.")
             appendLine("Before finishing, check that the entire object parses as JSON without adding, removing, or changing the meaning of any field.")
             appendLine("Output ONLY one JSON object with exactly this shape:")
             appendLine(
