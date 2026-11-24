@@ -105,11 +105,16 @@ LIVE QUALIFICATION FOR CREDENTIAL A
 
 HISTORICAL PROVIDER SUCCESS
 != CURRENT PROCESS QUALIFICATION
+
+QUALIFICATION FOR STAGED TARGET A
+!= PERMISSION TO PROMOTE AFTER MODELS TARGET CHANGES TO B
 ~~~
 
 The live qualification probe has no retry loop, no capability tools, no Conversation/Memory material,
 and no authority to promote a model into serving. Models-owned Use/Start remains the human semantic
-control.
+control. A successful asynchronous qualification is re-bound to the still-current staged Models
+target before promotion; a target change makes that earlier result stale and leaves prior serving
+truth unchanged.
 
 ## Credential and host boundary
 
