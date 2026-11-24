@@ -632,6 +632,76 @@ branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 C1 A001 is consumed and provides no affinity / Vex judgment evidence.
 
+## C1 A002 consumed — affinity packet omitted completionReason before any Vex turn
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-relationship-pressure-c1-attempt-c1-a002-b12d4edcd9635074c8b5
+sha256 11de4dafcae801e2900d037e906af42939d7cc47ae8fec08ab8e63aebbef078d
+disposition SAFE_FAILURE
+stop MULTI_VEX_RELATIONSHIP_PRESSURE_C1_ACCEPTANCE_NOT_MET
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- exact #549 Foundation v0.6.20 bytes PASS;
+- focused C1 source gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+C1 A002 did not reach one visible Mira -> Vex turn.
+
+The first affinity-role participant object omitted:
+
+```text
+completionReason
+```
+
+This field has no independent terminal authority. The already accepted contract says `complete` owns
+terminality, while completionReason is participant-side evidence and may be blank for a continuing
+turn.
+
+### C1 A003 correction
+
+The participant parser now treats:
+
+```text
+completionReason omitted
+-> ""
+
+completionReason null
+-> ""
+
+complete=false
+-> blank reason allowed
+
+complete=true
+-> existing validation still requires nonblank reason
+```
+
+Therefore omission/null normalization does not change a terminal decision.
+
+Regression coverage proves continuing omission succeeds as blank evidence while terminal omission still
+fails validation.
+
+Corrected candidate:
+
+```text
+head 9541813647239ebc93db3aa6cbc79fe5872c3968
+tree 047154f0491bfc850e74f7a6f192d2062289b7f6
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+C1 A002 is consumed and provides no affinity / Vex judgment evidence.
+
 ## C1 current — affinity / recognition -> material access
 
 C0 is terminal and serves as the innocent control.
@@ -706,4 +776,4 @@ A later staged carrier may reuse an exact Vex-authored artifact downstream.
 The longer destination remains a sustained relationship where warmth, correction, pressure,
 disagreement, source re-entry and repair coexist.
 
-<!-- [VXG RealForever][MULTI-VEX][C0-TERMINAL-PASS][C1-A001-CONSUMED][C1-A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][C0-TERMINAL-PASS][C1-A001-CONSUMED][C1-A002-CONSUMED][C1-A003-CURRENT] -->
