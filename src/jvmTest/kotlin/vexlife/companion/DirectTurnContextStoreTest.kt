@@ -642,7 +642,7 @@ class DirectTurnContextStoreTest {
                     rereadTrace.finalPromptReceiptRef,
                 )
                 assertEquals(
-                    initialInference.runtimeObservation.observationRef,
+                    initialInference.observation.observationRef,
                     rereadTrace.attempt.runtimeObservationRef,
                 )
                 assertEquals(
