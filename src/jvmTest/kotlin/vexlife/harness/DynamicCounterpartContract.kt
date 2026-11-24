@@ -2,6 +2,7 @@ package vexlife.harness
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -236,6 +237,7 @@ internal fun initialDynamicCounterpartParticipantState(
 
 internal fun parseDynamicCounterpartParticipantDecision(
     content: String,
+    allowedPrivateFactRefs: Set<String>? = null,
 ): DynamicCounterpartParticipantDecision {
     val trimmed = content.trim()
     val candidate =
@@ -255,7 +257,7 @@ internal fun parseDynamicCounterpartParticipantDecision(
                 candidate,
             )
             .jsonObject
-    val normalized =
+    val normalizedCompletion =
         if (
             parsed["completionReason"] ==
                 JsonNull
@@ -270,6 +272,38 @@ internal fun parseDynamicCounterpartParticipantDecision(
             )
         } else {
             parsed
+        }
+    val normalized =
+        if (
+            allowedPrivateFactRefs?.isEmpty() == true
+        ) {
+            val privateState =
+                normalizedCompletion["privateState"]
+                    ?.jsonObject
+            if (
+                privateState != null &&
+                "revealedPrivateFactRefs" !in privateState
+            ) {
+                JsonObject(
+                    normalizedCompletion.toMutableMap().apply {
+                        put(
+                            "privateState",
+                            JsonObject(
+                                privateState.toMutableMap().apply {
+                                    put(
+                                        "revealedPrivateFactRefs",
+                                        JsonArray(emptyList()),
+                                    )
+                                },
+                            ),
+                        )
+                    },
+                )
+            } else {
+                normalizedCompletion
+            }
+        } else {
+            normalizedCompletion
         }
     return DynamicCounterpartJson
         .decodeFromJsonElement<DynamicCounterpartParticipantDecision>(
