@@ -154,7 +154,7 @@ class VexLifePartnerWindowsHostSourceTest {
         )
         assertTrue(
             builder.contains(
-                "$APPDIR/partner-host/vexlife-partner-host.ps1",
+                "\$APPDIR/partner-host/vexlife-partner-host.ps1",
             ),
         )
     }
