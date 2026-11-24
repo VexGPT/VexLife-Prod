@@ -215,6 +215,27 @@ class DynamicCounterpartProfilesTest {
                 "ask Vex to help phrase",
             ),
         )
+        val groundPrompt =
+            DynamicCounterpartProfiles.scenarioGroundPrompt(
+                effective.first(),
+            )
+        assertContains(
+            groundPrompt,
+            "You currently own no private factRef.",
+        )
+        assertContains(
+            groundPrompt,
+            "revealedPrivateFactRefs must remain []",
+        )
+
+        val rolePrompt =
+            DynamicCounterpartProfiles.interactionRolePrompt(
+                effective.first(),
+            )
+        assertContains(
+            rolePrompt,
+            "private objective is task-side motivation, not a scenario private factRef",
+        )
     }
 
     @Test
