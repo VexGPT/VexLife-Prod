@@ -930,8 +930,10 @@ object DirectCompanionTurn {
                         currentConversationHeadSha256 = head.conversationHeadSha256,
                         contextPath = context.contextPath,
                                 promptContextReceipt = prompt.receipt,
-                                runtimeObservation = inference.requireLocalRuntimeObservation(),
-                                invocationEvidence = inference.requireLocalInvocationEvidence(),
+                                providerObservation = inference.observation,
+                                providerInvocationEvidence = inference.invocationEvidence,
+                                localRuntimeObservation = inference.localRuntimeObservation,
+                                localInvocationEvidence = inference.localInvocationEvidence,
                                 humanReasoning = inference.sealedHumanReasoning,
                                 providerRequests = providerTurn.providerRequests,
                                 capabilityUses = providerTurn.capabilityUses,
@@ -2338,8 +2340,10 @@ object DirectCompanionTurn {
                         .conversationHeadSha256,
                 contextPath = context.contextPath,
                 promptContextReceipt = context.promptContext,
-                runtimeObservation = context.runtimeObservation,
-                invocationEvidence = context.invocationEvidence,
+                providerObservation = context.providerObservation,
+                providerInvocationEvidence = context.providerInvocationEvidence,
+                localRuntimeObservation = context.localRuntimeObservation,
+                localInvocationEvidence = context.localInvocationEvidence,
                 capabilityUses =
                     context.capabilityTrace
                         ?.entries
