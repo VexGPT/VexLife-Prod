@@ -355,6 +355,45 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun missingDisclosureListDerivesEmptyOnlyWhenScenarioOwnsNoPrivateFacts() {
+        val content =
+            """
+            {
+              "visibleMessage":"Could you help me phrase this in seven words or fewer?",
+              "privateState":{
+                "currentIntentions":["Ask for bounded wording."],
+                "uncertainties":["I do not know what wording Vex will choose."],
+                "relationshipNotes":[]
+              },
+              "privateObserverNote":"",
+              "complete":false,
+              "completionReason":""
+            }
+            """
+                .trimIndent()
+
+        val emptyOwned =
+            parseDynamicCounterpartParticipantDecision(
+                content = content,
+                allowedPrivateFactRefs = emptySet(),
+            )
+
+        assertTrue(
+            emptyOwned.privateState.revealedPrivateFactRefs.isEmpty(),
+        )
+
+        assertFails {
+            parseDynamicCounterpartParticipantDecision(
+                content = content,
+                allowedPrivateFactRefs =
+                    setOf(
+                        "private.changed-plan.saturday-surprise.v1",
+                    ),
+            )
+        }
+    }
+
+    @Test
     fun nullCompletionReasonNormalizesBlankOnlyWhileCompleteStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
