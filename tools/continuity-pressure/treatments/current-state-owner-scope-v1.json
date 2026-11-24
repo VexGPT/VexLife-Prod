@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "vexlife.multivex.prompt-treatment/v1",
+  "treatmentRef": "treatment.multivex.current-state-owner-scope.v1",
+  "owner": "EXPERIMENT",
+  "target": "DirectPromptContext.CurrentStateLead",
+  "expected": [
+    "VEXLIFE_CURRENT_STATE/v1",
+    "From VexLife, not a message from the person: what is current at this request. It comes after the Conversation because it is current now. It is not a fact from the Conversation's beginning; earlier turns happened under whatever was current then."
+  ],
+  "replacement": [
+    "VEXLIFE_CURRENT_STATE/v1",
+    "From VexLife, not a message from the person: current host context for this request. Each section is current only for the owner and subject it names; being current here does not by itself state or explain a different person, project, or subject in the Conversation. It comes after the Conversation because it is current now; earlier turns happened under whatever host context was current then."
+  ],
+  "purpose": "Test whether truthful host self-location prevents VexLife-owned current context from becoming semantic authority over an unrelated Conversation subject without requiring the human to supply an owner-boundary cue.",
+  "standing": "EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY",
+  "automaticAcceptanceAllowed": false
+}
