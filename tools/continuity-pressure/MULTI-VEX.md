@@ -1868,3 +1868,35 @@ A002 keeps the exact same treatment sentence and fixes method only:
 5. no second participant inference can reintroduce the seven-word objective.
 
 The A001 F20 first answer is useful standalone evidence that v0.6.20 can preserve scope in at least one sample, but it does not answer the crossover question.
+
+## Held relational refinement — completion is not disengagement
+
+Victor observed that a technically complete answer can close too abruptly when the human's larger intention
+is still visibly alive.
+
+Preserve the distinction:
+```text
+CLOSED SENTENCE != COMPLETED HUMAN INTENTION
+COMPLETE ANSWER != RELATIONAL DISENGAGEMENT
+SUPPORT != GENERIC "LET ME KNOW"
+INITIATIVE != TAKING OVER THE HUMAN'S PATH
+```
+
+This is not a requirement to append advice or a next step to every answer.
+
+A later lived relationship proof should ask whether Vex can:
+- answer the immediate request first;
+- notice a concrete next edge already supported by the person's stated intention/context;
+- offer, ask, act, or remain quiet according to the actual situation;
+- avoid generic support-as-footer when nothing material remains;
+- stop naturally when the relationship is genuinely complete.
+
+Potential Foundation relationship to revisit later:
+```text
+completion = sufficiency
+not
+completion = disengagement
+```
+
+This refinement is HELD behind the current SE1 State/Effect scope crossover so it does not contaminate that
+treatment comparison.
