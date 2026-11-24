@@ -53,6 +53,7 @@ object VexLifeProdLocalSetup {
         val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val endpoint: String,
         val requestModel: String,
+        val promptCacheEntryLimit: Int? = null,
         val visualEnvironmentDisposition: String = "NOT_REQUESTED",
     )
 
@@ -81,6 +82,7 @@ object VexLifeProdLocalSetup {
                 state = result.state,
                 productHome = result.productHome,
                 qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+                promptCacheEntryLimit = result.promptCacheEntryLimit,
             )
 
         private val closed =
@@ -890,6 +892,7 @@ object VexLifeProdLocalSetup {
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
                     endpoint = qualifiedRuntimeEvidence.endpoint,
                     requestModel = qualifiedRuntimeEvidence.requestModel,
+                    promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
                     visualEnvironmentDisposition =
                         visualEnvironmentDisposition,
                 ),

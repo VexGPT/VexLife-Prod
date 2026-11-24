@@ -841,6 +841,7 @@ object DirectCompanionTurn {
                             promptContext = prompt.receipt,
                             runtimeObservation = inference.runtimeObservation,
                             invocationEvidence = inference.invocationEvidence,
+                            providerMeasurement = inference.measurement,
                             sourceReturnTrace = sourceReturnTrace,
                             capabilityTrace = capabilityTrace,
                             formedAt = hooks.now(),

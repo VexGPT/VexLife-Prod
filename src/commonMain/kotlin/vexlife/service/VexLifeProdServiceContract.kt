@@ -47,7 +47,24 @@ object VexLifeProdServiceContract {
         "workspace.status.sent-resource-review-failed"
 
     const val ConversationTurnProjectionSchema =
-        "vexlife-prod.local-service-conversation-turn-projection/v1"
+        "vexlife-prod.local-service-conversation-turn-projection/v2"
+
+    const val FollowUpReadinessUnavailable = "UNAVAILABLE"
+    const val FollowUpReadinessLowerMemory = "LOWER_MEMORY_REALIZATION"
+    const val FollowUpReadinessNotYetPrepared = "NOT_YET_PREPARED"
+    const val FollowUpReadinessPreparing = "PREPARING"
+    const val FollowUpReadinessSuccessorReset = "SUCCESSOR_RESET"
+    const val FollowUpReadinessFasterEnabled = "FASTER_FOLLOWUPS_ENABLED"
+
+    val FollowUpReadinessStates =
+        setOf(
+            FollowUpReadinessUnavailable,
+            FollowUpReadinessLowerMemory,
+            FollowUpReadinessNotYetPrepared,
+            FollowUpReadinessPreparing,
+            FollowUpReadinessSuccessorReset,
+            FollowUpReadinessFasterEnabled,
+        )
 
     const val AttachmentDraftProjectionSchema =
         "vexlife-prod.local-service-attachment-draft-projection/v1"
@@ -2204,6 +2221,69 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class ProviderMeasurementProjection(
+        val stop: String,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val prefillTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
+    ) {
+        init {
+            require(
+                stop.isNotBlank() &&
+                    listOfNotNull(
+                        promptTokens,
+                        cachedPromptTokens,
+                        prefillTokens,
+                        completionTokens,
+                    )
+                        .all {
+                            it >= 0
+                        } &&
+                    listOfNotNull(
+                        firstTokenMillis,
+                        firstAnswerMillis,
+                        totalMillis,
+                    )
+                        .all {
+                            it >= 0L
+                        } &&
+                    prefillTokens ==
+                    promptTokens
+                        ?.let {
+                            prompt ->
+                            prompt - (cachedPromptTokens ?: 0)
+                        } &&
+                    (
+                        promptTokens == null ||
+                            cachedPromptTokens == null ||
+                            cachedPromptTokens <= promptTokens
+                        )
+            ) {
+                "Conversation provider measurement projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class FollowUpReadinessProjection(
+        val state: String,
+        val lastCompletedProviderMeasurement: ProviderMeasurementProjection? = null,
+    ) {
+        init {
+            require(
+                state in FollowUpReadinessStates,
+            ) {
+                "Conversation follow-up readiness projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
     data class ConversationTurnProjection(
         val schemaVersion: String,
         val state: String,
@@ -2221,6 +2301,11 @@ object VexLifeProdServiceContract {
          * reusable-prefix state itself has been consumed.
          */
         val initialPromptPreparationForActiveTurn: Boolean = false,
+        /**
+         * Follow-up mode is Product/runtime truth. The nested measurement is observed completed-turn
+         * evidence only; neither field certifies invisible provider cache residency.
+         */
+        val followUpReadiness: FollowUpReadinessProjection? = null,
     ) {
         init {
             require(

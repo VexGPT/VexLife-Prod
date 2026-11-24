@@ -17,6 +17,7 @@ internal interface VexLifeProdRuntimeSession :
         val state: String,
         val productHome: String,
         val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val promptCacheEntryLimit: Int? = null,
     ) {
         init {
             require(
@@ -38,6 +39,12 @@ internal interface VexLifeProdRuntimeSession :
                     HereticRuntimeState.Qualified,
             ) {
                 "runtime session requires qualified realization evidence"
+            }
+            require(
+                promptCacheEntryLimit == null ||
+                    promptCacheEntryLimit > 0,
+            ) {
+                "runtime session prompt-cache entry limit must be absent or positive"
             }
         }
     }

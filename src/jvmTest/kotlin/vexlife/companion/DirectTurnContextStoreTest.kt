@@ -1049,6 +1049,7 @@ class DirectTurnContextStoreTest {
                         promptContext = prompt.receipt,
                         runtimeObservation = inference.runtimeObservation,
                         invocationEvidence = inference.invocationEvidence,
+                        providerMeasurement = inference.measurement,
                         formedAt = Instant.parse(
                             "2026-11-05T04:31:01Z",
                         ),
@@ -1072,6 +1073,34 @@ class DirectTurnContextStoreTest {
                 )
                 assertFalse(
                     reread.rawReportedModelPersisted,
+                )
+                val providerMeasurement =
+                    assertNotNull(
+                        reread.providerMeasurement,
+                    )
+                assertEquals(
+                    inference.measurement.stop.wire,
+                    providerMeasurement.stop,
+                )
+                assertEquals(
+                    inference.measurement.promptTokens,
+                    providerMeasurement.promptTokens,
+                )
+                assertEquals(
+                    inference.measurement.cachedPromptTokens,
+                    providerMeasurement.cachedPromptTokens,
+                )
+                assertEquals(
+                    inference.measurement.prefillTokens,
+                    providerMeasurement.prefillTokens,
+                )
+                assertEquals(
+                    inference.measurement.firstTokenMillis,
+                    providerMeasurement.firstTokenMillis,
+                )
+                assertEquals(
+                    inference.measurement.totalMillis,
+                    providerMeasurement.totalMillis,
                 )
                 assertEquals(
                     "LOCAL_PATH_LIKE",

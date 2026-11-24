@@ -72,6 +72,7 @@ import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.context.VexLifeContextProfileStore
@@ -121,6 +122,7 @@ class VexLifeProdLocalService private constructor(
         () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
+    private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
@@ -721,6 +723,12 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
+                servingPromptCacheEntryLimit = {
+                    sessionRef
+                        .get()
+                        .foundation
+                        .promptCacheEntryLimit
+                },
                 modelSwitchRealization = modelSwitchRealization,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
@@ -787,6 +795,7 @@ class VexLifeProdLocalService private constructor(
                 (() -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?)? =
                 null,
             servingRuntimeReceiptRef: (() -> String)? = null,
+            servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
@@ -808,6 +817,7 @@ class VexLifeProdLocalService private constructor(
                         state = setup.state,
                         productHome = setup.productHome,
                         qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                        promptCacheEntryLimit = setup.promptCacheEntryLimit,
                     ),
                 address =
                     InetSocketAddress(
@@ -846,6 +856,11 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
+                servingPromptCacheEntryLimit =
+                    servingPromptCacheEntryLimit
+                        ?: {
+                            setup.promptCacheEntryLimit
+                        },
                 modelSwitchRealization = modelSwitchRealization,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
@@ -880,6 +895,9 @@ class VexLifeProdLocalService private constructor(
                 },
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
+            },
+            servingPromptCacheEntryLimit: () -> Int? = {
+                startupSetup.promptCacheEntryLimit
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
@@ -989,6 +1007,7 @@ class VexLifeProdLocalService private constructor(
                             currentQualifiedVisualInputEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
+                        servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
@@ -2041,6 +2060,101 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun followUpReadinessProjection(
+        active: ActiveTurn?,
+    ): VexLifeProdServiceContract.FollowUpReadinessProjection {
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
+            )
+        val promptCacheEntryLimit =
+            servingPromptCacheEntryLimit()
+        val currentRuntimeReceiptRef =
+            servingRuntimeReceiptRef()
+        val latestCompletedResponse =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+                .canonicalEvents
+                .lastOrNull {
+                    it.eventKind ==
+                        VexLifeConversationContract.ResponseKind
+                }
+        val lastCompletedEvidence =
+            latestCompletedResponse
+                ?.turnRef
+                ?.let {
+                    turnRef ->
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .read(
+                            turnRef,
+                        )
+                }
+                ?.takeIf {
+                    it.runtimeObservation.runtimeReceiptRef ==
+                        currentRuntimeReceiptRef
+                }
+        val measurement =
+            lastCompletedEvidence
+                ?.providerMeasurement
+                ?.let {
+                    observed ->
+                    VexLifeProdServiceContract.ProviderMeasurementProjection(
+                        stop = observed.stop,
+                        finishReason = observed.finishReason,
+                        promptTokens = observed.promptTokens,
+                        cachedPromptTokens = observed.cachedPromptTokens,
+                        prefillTokens = observed.prefillTokens,
+                        completionTokens = observed.completionTokens,
+                        firstTokenMillis = observed.firstTokenMillis,
+                        firstAnswerMillis = observed.firstAnswerMillis,
+                        totalMillis = observed.totalMillis,
+                    )
+                }
+        val successorResetPending =
+            latestCompletedResponse
+                ?.let {
+                    response ->
+                    VexLifeWorkingContinuityOwner(
+                        productHome,
+                    )
+                        .readCurrent(
+                            lineageRef = response.companionLineageRef,
+                            threadRef = response.threadRef,
+                        )
+                        ?.commitReceipt
+                        ?.successorContextRequired
+                } ==
+            true
+        val state =
+            when {
+                promptCacheEntryLimit == null ->
+                    VexLifeProdServiceContract.FollowUpReadinessUnavailable
+
+                promptCacheEntryLimit < 2 ->
+                    VexLifeProdServiceContract.FollowUpReadinessLowerMemory
+
+                active != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessPreparing
+
+                successorResetPending ->
+                    VexLifeProdServiceContract.FollowUpReadinessSuccessorReset
+
+                measurement != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessFasterEnabled
+
+                else ->
+                    VexLifeProdServiceContract.FollowUpReadinessNotYetPrepared
+            }
+        return VexLifeProdServiceContract.FollowUpReadinessProjection(
+            state = state,
+            lastCompletedProviderMeasurement = measurement,
+        )
+    }
+
     private fun conversationTurnProjection():
         VexLifeProdServiceContract.ConversationTurnProjection {
         val state =
@@ -2064,6 +2178,10 @@ class VexLifeProdLocalService private constructor(
                 active
                     ?.initialPromptPreparationTurn ==
                     true,
+            followUpReadiness =
+                followUpReadinessProjection(
+                    active,
+                ),
         )
     }
 
