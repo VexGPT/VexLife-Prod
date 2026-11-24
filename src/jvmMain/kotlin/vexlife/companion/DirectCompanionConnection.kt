@@ -868,6 +868,25 @@ object DirectCompanionConnection {
         )
     }
 
+    internal fun providerNativeToolCarriageEnabled(
+        profile: HereticCompanionRepresentation.Profile,
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ): Boolean =
+        when (
+            profile.providerNativeToolStanding
+        ) {
+            HereticCompanionRepresentation.ProviderNativeToolStanding.NOT_REPRESENTED ->
+                false
+
+            HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD ->
+                runtime.qualification.providerNativeToolsQualificationRef ==
+                    HereticRuntimeQualification.ProviderNativeToolsQualificationRef
+
+            HereticCompanionRepresentation.ProviderNativeToolStanding.QUALIFIED ->
+                true
+        }
+
+
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -927,6 +946,11 @@ object DirectCompanionConnection {
                 HereticCompanionRepresentation.MessageProtocol.HARMONY
         val generation =
             profile.generation
+        val nativeTools =
+            providerNativeToolCarriageEnabled(
+                profile = profile,
+                runtime = runtime,
+            )
         val providerMessages =
             if (
                 profile.coalesceLeadingSystemMessages
@@ -954,8 +978,7 @@ object DirectCompanionConnection {
                             HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT &&
                             profile.reasoningRepresentation ==
                             HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS &&
-                            profile.capabilityRepresentation ==
-                            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT &&
+                            !nativeTools &&
                             !profile.coalesceLeadingSystemMessages
                     if (
                         !admitted
@@ -997,9 +1020,6 @@ object DirectCompanionConnection {
                 vexlifePromptCacheBoundaryMessageCount =
                     cacheBoundaryMessageCount,
             )
-        val nativeTools =
-            profile.capabilityRepresentation ==
-                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val providerTools =
             if (nativeTools) {
                 ProviderCapabilityTools.tools(
