@@ -2576,6 +2576,7 @@ class DirectConversationStore(
                     "unsupported canonical event schema/kind",
                 )
         }
+    }
 
     private fun writeImmutableHead(
         head: VexLifeConversationContract.Head,
