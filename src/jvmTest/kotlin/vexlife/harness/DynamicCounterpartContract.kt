@@ -2,6 +2,11 @@ package vexlife.harness
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 
 internal const val DynamicCounterpartCharacterSchema = "vexlife.dynamic-counterpart-character/v1"
 internal const val DynamicCounterpartScenarioSchema = "vexlife.dynamic-counterpart-scenario/v2"
@@ -244,9 +249,31 @@ internal fun parseDynamicCounterpartParticipantDecision(
             }
             trimmed.substring(first, last + 1)
         }
+    val parsed =
+        DynamicCounterpartJson
+            .parseToJsonElement(
+                candidate,
+            )
+            .jsonObject
+    val normalized =
+        if (
+            parsed["completionReason"] ==
+                JsonNull
+        ) {
+            JsonObject(
+                parsed.toMutableMap().apply {
+                    put(
+                        "completionReason",
+                        JsonPrimitive(""),
+                    )
+                },
+            )
+        } else {
+            parsed
+        }
     return DynamicCounterpartJson
-        .decodeFromString<DynamicCounterpartParticipantDecision>(
-            candidate,
+        .decodeFromJsonElement<DynamicCounterpartParticipantDecision>(
+            normalized,
         )
         .also {
             decision ->
