@@ -763,6 +763,169 @@ class VexLifeModelsTest {
         }
 
     @Test
+    fun qualifiedLocalSwitchClearsPartnerServingOnlyAfterLocalBecomesServing() =
+        withHome {
+            home,
+            _,
+            ->
+            val nine =
+                HereticModelCatalog.Models.Qwen9B
+            nine.members
+                .filter {
+                    it.expectedBytes <
+                        50_000_000
+                }
+                .forEach {
+                    place(
+                        home,
+                        nine,
+                        it.filename,
+                    )
+                }
+            val folder =
+                home.resolve(
+                    nine.modelRootRelativePath,
+                )
+                    .resolve(
+                        nine.providerRevision,
+                    )
+            nine.members
+                .filter {
+                    it.expectedBytes >=
+                        50_000_000
+                }
+                .forEach {
+                    member ->
+                    java.io.RandomAccessFile(
+                        folder.resolve(
+                            member.filename,
+                        )
+                            .toFile(),
+                        "rw",
+                    )
+                        .use {
+                            it.setLength(
+                                member.expectedBytes,
+                            )
+                        }
+                }
+
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            var localServing: String? =
+                HereticModelCatalog.Models.Qwen27B.modelRef
+            val localSwitch =
+                VexLifeModels.ModelSwitchRealization {
+                    realization,
+                    observe,
+                    ->
+                    observe(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                    )
+                    localServing =
+                        realization.modelRef
+                }
+            val partnerSwitch =
+                VexLifeModels.PartnerSwitchRealization {
+                    _,
+                    observe,
+                    ->
+                    observe(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                    )
+                    qualifiedPartnerOutcome(
+                        profile,
+                    )
+                }
+
+            models(
+                home = home,
+                serving = {
+                    localServing
+                },
+                modelSwitchRealization = localSwitch,
+                partnerSwitchRealization = partnerSwitch,
+            )
+                .use {
+                    owner ->
+                    val beforePartner =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    owner.stageInferenceTarget(
+                        models = beforePartner,
+                        handle = profile.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertEquals(
+                        profile.profileRef,
+                        owner.partnerServing()
+                            ?.coordinate
+                            ?.handle,
+                    )
+                    assertNull(
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.modelRef,
+                        localServing,
+                        "Partner serving does not kill or silently retarget the Local runtime",
+                    )
+
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        nine.handle,
+                    )
+                    owner.control(
+                        VexLifeModelsFamily.ControlUse,
+                        nine.handle,
+                    )
+                    owner.awaitIdle()
+
+                    assertEquals(
+                        nine.modelRef,
+                        localServing,
+                    )
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        nine.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertTrue(
+                        owner.projection()
+                            .models
+                            .single {
+                                it.handle ==
+                                    nine.handle
+                            }
+                            .serving,
+                    )
+                }
+        }
+
+    @Test
     fun removingAModelFreesItsFilesAndKeepsItOffered() = withHome { home, _ ->
         val four = HereticModelCatalog.Models.Qwen4B
         place(home, four, "config.json")
