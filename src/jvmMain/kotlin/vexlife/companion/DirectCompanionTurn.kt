@@ -665,6 +665,8 @@ object DirectCompanionTurn {
             null,
         visualInterpreter: VisualInterpreter? =
             null,
+        partnerTextTurn: PartnerTextTurn? =
+            null,
         initialPromptPreparation: VexLifeInitialPromptPreparation? =
             null,
     ): Result =
@@ -700,6 +702,7 @@ object DirectCompanionTurn {
                     progressObserver = progressObserver,
                     cancellation = cancellation,
                     visualInterpreter = visualInterpreter,
+                    partnerTextTurn = partnerTextTurn,
                     initialPromptPreparation =
                         initialPromptPreparation,
                 ),
