@@ -2360,6 +2360,7 @@ The bootstrap must:
 - leave semantic judgment in the RETURN for human/Godward review;
 - keep human-facing shell prose shell-safe: do not place prose containing apostrophes inside single-quoted shell literals; prefer double-quoted prose or a quoted heredoc.
 - eventless participant ground is valid. If the counterpart provider requires a user query, use one fact-free participant-turn trigger; do not invent a scenario event merely to satisfy transport shape.
+- participant inference count is not visible turn count. A final `complete=true` participant inference may carry `visibleMessage=""`; wrapper acceptance must compare visible transcript delivery, not require `participantInferences.size == vexInferences.size`.
 
 Default continuation for future instances:
 - read the latest consumed RETURN and this front door;
