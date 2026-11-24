@@ -1611,3 +1611,39 @@ Method-only corrections:
 
 No treatment meaning changed from A001.
 
+## SE1 A002 consumed before formation — static metadata quoting defect; A003 current
+
+Victor's A002 bootstrap stopped during the local payload syntax preflight:
+
+```text
+semanticJudgment:'... owner's F20 hash rule ...'
+SyntaxError: Unexpected identifier 's'
+```
+
+Exact cause:
+```text
+single-quoted JavaScript metadata string
++ apostrophe in owner's
+-> string terminates before s
+```
+
+Standing:
+- task formation NOT reached;
+- VexLocalBridge business execution NOT reached;
+- F20/F21 cells NOT reached;
+- no model/Foundation treatment evidence exists from A002.
+
+A003 changes only:
+- safe double-quoted semanticJudgment metadata string;
+- attempt/carrier identities A002 -> A003.
+
+The A002 semantic method remains unchanged:
+- canonical Foundation identity proof;
+- one participant request + one Vex response per cell;
+- exact v0.6.20 vs experiment-only derived v0.6.21;
+- old and corrected Blue Lantern source resident in both cells.
+
+Static audit on A003:
+- heuristic JavaScript syntax PASS for payload;
+- heuristic JavaScript syntax PASS for formation;
+- frozen bootstrap will still run authoritative Node --check on both before formation.
