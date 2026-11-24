@@ -107,6 +107,7 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             listOf(
                 VexLifeModelsFamily.ControlUse,
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
                 VexLifeModelsFamily.ControlRemove,
             ),
             controls(selected),
@@ -139,12 +140,12 @@ class VexLifeModelsFamilyTest {
         )
         assertEquals(
             listOf(
+                null,
                 "workspace.label.model-recommended",
-                "workspace.label.model-experimental",
                 "workspace.label.model-experimental",
             ),
             configurationChoices.map {
-                it.standing.key
+                it.standing?.key
             },
         )
         assertEquals(
@@ -213,7 +214,9 @@ class VexLifeModelsFamilyTest {
                 serving = true,
             )
         assertEquals(
-            emptyList(),
+            listOf(
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+            ),
             controls(current),
         )
         assertNull(
@@ -230,6 +233,7 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             listOf(
                 VexLifeModelsFamily.ControlUse,
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
             ),
             controls(changed),
         )
@@ -269,11 +273,12 @@ class VexLifeModelsFamilyTest {
             emptyList(),
             display.runtimeConfigurationChoices,
         )
-        assertNull(
+        assertEquals(
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
             VexLifeModelsFamily.resolve(
                 selected,
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
-            ),
+            )?.effect,
         )
         assertNull(
             VexLifeModelsFamily.resolve(
@@ -354,12 +359,11 @@ class VexLifeModelsFamilyTest {
                         model = HereticModelCatalog.Models.Qwen4B,
                     ),
             )
-        assertEquals(
-            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+        assertNull(
             VexLifeModelsFamily.resolve(
                 explicitTwo,
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
-            )?.effect,
+            ),
         )
     }
 
