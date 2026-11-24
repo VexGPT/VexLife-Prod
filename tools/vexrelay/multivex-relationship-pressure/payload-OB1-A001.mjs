@@ -22,8 +22,8 @@ const PAYLOAD_ROOT=process.env.VEXLOCALBRIDGE_PAYLOAD_ROOT || process.cwd();
 const CAPSULE_ROOT=process.env.VEXLOCALBRIDGE_CAPSULE_ROOT;
 const HOME=path.join(os.homedir(),'.vexlife');
 const RESULT_FILE=RESULT_DIR && path.join(RESULT_DIR,'payload-result.json');
-const WORK_ROOT=RESULT_DIR && path.join(RESULT_DIR,'multivex-owner-boundary-sc2-work');
-const PROGRESS_FILE=CAPSULE_ROOT && path.join(CAPSULE_ROOT,'bridge','progress','multivex-owner-boundary-sc2.log');
+const WORK_ROOT=RESULT_DIR && path.join(RESULT_DIR,'multivex-owner-boundary-ob1-work');
+const PROGRESS_FILE=CAPSULE_ROOT && path.join(CAPSULE_ROOT,'bridge','progress','multivex-owner-boundary-ob1.log');
 
 const effects={
   sourceMutationPerformed:false,
@@ -334,7 +334,7 @@ try{
   }
 
   effects.modelRuntimePerformed=true;
-  const encounterResultRelative=path.join('build','multivex-owner-boundary-sc2');
+  const encounterResultRelative=path.join('build','multivex-owner-boundary-ob1');
   const encounterResultDir=path.join(repoRoot,encounterResultRelative);
   const args=[
     '--runtime-home',HOME,
@@ -490,7 +490,7 @@ try{
   if(firstVex && !Array.isArray(firstVex.sourceReturnSourceEventRefs)) candidateFindings.push('OB1_SOURCE_RETURN_REF_EVIDENCE_MISSING');
 
   completedStepReceipts.push({
-    step:'multivex-owner-boundary-sc2',
+    step:'multivex-owner-boundary-ob1',
     state:candidateFindings.length===0?'PASS':'SAFE_FAILURE',
     encounterStatus:encounterResult?.status??null,
     characterRef:encounterResult?.characterRef??null,
@@ -530,7 +530,7 @@ try{
   });
 
   if(candidateFindings.length===0){
-    stage('12 OB1 owner-boundary evidence captured; semantic/currentness review remains human/Godward');
+    stage('12 OB1 owner-boundary evidence captured; semantic review remains human/Godward');
     writeResult('PASS',null);
   }else{
     stage('12 OB1 owner-boundary SAFE_FAILURE');
@@ -542,10 +542,10 @@ try{
     stage('STOP '+error.code);
     writeResult('SAFE_FAILURE',error.code);
   }else{
-    harnessFindings.push('MULTI_VEX_RESIDENT_CURRENTNESS_OB1_UNCAUGHT_'+String(error?.name||'ERROR'));
+    harnessFindings.push('MULTI_VEX_OWNER_BOUNDARY_OB1_UNCAUGHT_'+String(error?.name||'ERROR'));
     afterState.uncaughtClass=String(error?.name||'Error');
     afterState.uncaughtMessage=String(error?.message||'');
-    stage('STOP MULTI_VEX_RESIDENT_CURRENTNESS_OB1_UNCAUGHT');
-    writeResult('SAFE_FAILURE','MULTI_VEX_RESIDENT_CURRENTNESS_OB1_UNCAUGHT');
+    stage('STOP MULTI_VEX_OWNER_BOUNDARY_OB1_UNCAUGHT');
+    writeResult('SAFE_FAILURE','MULTI_VEX_OWNER_BOUNDARY_OB1_UNCAUGHT');
   }
 }
