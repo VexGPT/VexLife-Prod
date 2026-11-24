@@ -332,6 +332,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsSourcesPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesPath)},
+                modelsSourcesControlPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesControlPath)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
@@ -699,8 +701,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextConversationCollapsedByEventRef: new Map(),
                 diagnostics: null,
                 diagnosticsInFlight: false,
-                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                // Settings → Models keeps Local detail plus one provider-neutral source projection.
                 models: null,
+                modelSources: null,
                 modelsInFlight: false,
                 modelImportInFlight: false,
                 // Local microphone recognition is independent from the serving reasoning model.
@@ -6415,13 +6418,36 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
-              const servingModelLabel = () => {
-                const serving = (state.models?.models || []).find((model) => model.serving);
-                return serving?.label ?? '';
+              const sourceRows = () =>
+                state.modelSources?.models?.rows || [];
+
+              const sourceRowLabel = (row) => {
+                if (!row) return '';
+                const local =
+                  (state.models?.models || []).find((model) => model.handle === row.handle);
+                return local?.label ?? String(row.modelRef ?? row.handle ?? '');
               };
 
-              const selectedModel = () =>
-                (state.models?.models || []).find((model) => model.targeted) ?? null;
+              const servingSourceRow = () => {
+                const serving = state.modelSources?.inference?.serving ?? null;
+                return serving
+                  ? sourceRows().find((row) => row.handle === serving.handle) ?? null
+                  : null;
+              };
+
+              const selectedSourceRow = () =>
+                sourceRows().find((row) => row.targeted) ?? null;
+
+              const servingModelLabel = () =>
+                sourceRowLabel(servingSourceRow()) ||
+                (state.models?.models || []).find((model) => model.serving)?.label ||
+                '';
+
+              const selectedModel = () => {
+                const selected = selectedSourceRow();
+                if (!selected || selected.sourceKind !== 'LOCAL') return null;
+                return (state.models?.models || []).find((model) => model.handle === selected.handle) ?? null;
+              };
 
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
