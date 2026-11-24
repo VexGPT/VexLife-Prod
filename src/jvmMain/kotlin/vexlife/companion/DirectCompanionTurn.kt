@@ -1646,7 +1646,7 @@ object DirectCompanionTurn {
     private fun requestArtifactManifest(
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
-        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runtimeContextWindowTokens: Int?,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean,
         experimentEffectiveInputTokenBudget: Int?,
@@ -1660,7 +1660,7 @@ object DirectCompanionTurn {
         val maximumInlineContentTokens =
             VexLifeCompanionAttentionBudget.directArtifactTokenCeiling(
                 runtimeContextWindowTokens =
-                    runtimeEvidence.contextWindowTokens,
+                    runtimeContextWindowTokens,
                 requestedGrossInputTokenBudget =
                     requestedGrossInputTokenBudget,
                 capabilityRequestsAdmitted =
@@ -1698,7 +1698,7 @@ object DirectCompanionTurn {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
-        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
@@ -1722,8 +1722,8 @@ object DirectCompanionTurn {
                     productHome,
                 currentRequest =
                     currentRequest,
-                runtimeEvidence =
-                    runtimeEvidence,
+                runtimeContextWindowTokens =
+                    runtimeEvidence?.contextWindowTokens,
                 contextProfile =
                     contextProfile,
                 capabilityRequestsAdmitted =
@@ -1860,8 +1860,8 @@ object DirectCompanionTurn {
                     productHome,
                 currentRequest =
                     currentRequest,
-                runtimeEvidence =
-                    runtimeEvidence,
+                runtimeContextWindowTokens =
+                    runtimeEvidence?.contextWindowTokens,
                 contextProfile =
                     contextProfile,
                 capabilityRequestsAdmitted =
