@@ -56,6 +56,24 @@ internal fun dynamicCounterpartMessages(
         }
     }
 
+internal val DynamicCounterpartParticipantTurnTrigger =
+    listOf(
+        "DCP_PARTICIPANT_TURN/v1",
+        "Make your next participant-side decision from the supplied lived ground and role objective.",
+        "No new scenario fact is introduced by this turn trigger.",
+    ).joinToString("\n")
+
+internal fun dynamicCounterpartParticipantHistoryForInference(
+    history: List<Pair<String, String>>,
+): List<Pair<String, String>> =
+    if (history.isEmpty()) {
+        listOf(
+            "user" to DynamicCounterpartParticipantTurnTrigger,
+        )
+    } else {
+        history
+    }
+
 internal class DynamicCounterpartSarahRuntime private constructor(
     private val process: Process,
     val endpoint: String,
@@ -267,7 +285,10 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         val probe =
             probeParticipant(
                 systemParts = systemParts,
-                history = history,
+                history =
+                    dynamicCounterpartParticipantHistoryForInference(
+                        history,
+                    ),
             )
         require(probe.statusCode == 200) {
             "Counterpart runtime returned HTTP ${probe.statusCode}: ${probe.responseBody.take(4_000)}"
