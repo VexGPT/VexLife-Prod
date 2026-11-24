@@ -48,6 +48,7 @@ The provider participates in realization. It does not become the semantic owner 
 | What configured non-secret credential coordinate currently exists? | `VexLifePartnerConnectionSettings` + `VexLifePartnerConfiguredCurrentness` |
 | What does current provider/account/service/model standing mean? | `VexLifePartnerConnectionProjection` |
 | What support-proof threshold has been crossed? | `VexLifePartnerSupportQualification` |
+| Which accepted deterministic support evidence is current for the built-in profiles? | `VexLifePartnerDeterministicSupport` |
 | What exact live provider/model qualification exists in this process? | `VexLifePartnerLiveQualification` |
 | What exact non-secret network effect is intended? | `VexLifePartnerNetworkPlan` |
 | Who resolves the secret and performs HTTPS? | platform realization of `VexLifePartnerHostEffect` |
@@ -166,6 +167,7 @@ Start here, then descend only to the owner implicated by the question.
 ~~~text
 support/currentness
   src/commonMain/kotlin/vexlife/partner/
+    VexLifePartnerDeterministicSupport.kt
     VexLifePartnerSupportQualification.kt
     VexLifePartnerConnectionProjection.kt
     VexLifePartnerModelProfileCatalog.kt
