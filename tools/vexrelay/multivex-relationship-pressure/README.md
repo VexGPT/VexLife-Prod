@@ -2072,3 +2072,27 @@ VexLife mixing returns
 
 No semantic supersession owner, Score disposition, Memory acceptance, merge, or Product authority is granted
 by CH1 formation.
+
+## CH1 A001 terminal PASS — replicate unchanged
+
+Canonical RETURN:
+```text
+sha256 044bab3885635a8830e5a9cb881819695865f1d530003fd25fb6f5a07d1ef4de
+disposition PASS
+```
+
+Natural request + CS1 owner-scope + CH1 chronology self-location produced:
+```text
+The demo packet for the synthetic Blue Lantern project is currently ready for internal review.
+It was previously still being assembled, but the most recent update confirms it's now ready.
+```
+
+Both old and corrected turns were resident. No VexLife/system mixing appeared.
+
+Standing:
+```text
+one clean CH1 treatment signal = OBSERVED
+Product acceptance = NOT EARNED
+```
+
+A002 is an exact replication. Only attempt/carrier identity changes.
