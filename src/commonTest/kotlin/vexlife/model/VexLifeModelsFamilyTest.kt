@@ -185,6 +185,7 @@ class VexLifeModelsFamilyTest {
             )
         assertEquals(
             listOf(
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
                 VexLifeModelsFamily.ControlDownload,
                 VexLifeModelsFamily.ControlForgetImportedModel,
             ),
