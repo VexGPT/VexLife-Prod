@@ -117,6 +117,11 @@ $RuntimeDir = Join-Path $WorkRoot 'runtime'
 $ImageDest = Join-Path $WorkRoot 'image'
 $ZipStage = Join-Path $WorkRoot 'zip'
 $InitScript = Join-Path $RepositoryRoot 'tools\windows-preview\stage-preview.init.gradle'
+$PartnerHostSource = Join-Path $RepositoryRoot 'packaging\windows-partner-host\vexlife-partner-host.ps1'
+if (-not (Test-Path -LiteralPath $PartnerHostSource -PathType Leaf)) {
+    throw "WINDOWS_PARTNER_HOST_SOURCE_MISSING:$PartnerHostSource"
+}
+$PartnerHostSourceSha256 = (Get-FileHash -LiteralPath $PartnerHostSource -Algorithm SHA256).Hash.ToLowerInvariant()
 
 if (Test-Path -LiteralPath $WorkRoot) {
     Remove-Item -LiteralPath $WorkRoot -Recurse -Force
@@ -185,6 +190,8 @@ Add-Diagnostic "jlink=$Jlink"
 Add-Diagnostic "jpackage=$Jpackage"
 Add-Diagnostic "gradle=$Gradle"
 Add-Diagnostic "initScript=$InitScript"
+Add-Diagnostic "partnerHostSource=$PartnerHostSource"
+Add-Diagnostic "partnerHostSourceSha256=$PartnerHostSourceSha256"
 Add-Diagnostic "outputDirectory=$OutputDirectory"
 Add-Diagnostic "javaVersionExit=$JavaVersionExit"
 Add-Diagnostic "javaVersion=$($JavaVersion -replace '[\r\n]+',' | ')"
@@ -289,11 +296,12 @@ if (-not (Test-Path -LiteralPath $RuntimeJava -PathType Leaf)) {
 }
 
 $DebugLauncherProperties = Join-Path $WorkRoot 'VexLife-Debug.properties'
+$AppDirMacro = '$APPDIR'
 @"
 main-jar=$MainJarName
 main-class=vexlife.platform.windows.VexLifeProdWindowsPreviewKt
 win-console=true
-java-options=-Dvexlife.prod.sourceSha=$SourceSha
+java-options=-Dvexlife.prod.sourceSha=$SourceSha -Dvexlife.prod.partnerHost=$AppDirMacro/partner-host/vexlife-partner-host.ps1
 "@ | Set-Content -LiteralPath $DebugLauncherProperties -Encoding ASCII
 
 Write-Host 'VexLife Windows preview: forming VexLife.exe app image ...'
@@ -318,6 +326,8 @@ $JpackageArgs = @(
     'VexLife Windows setup preview',
     '--java-options',
     "-Dvexlife.prod.sourceSha=$SourceSha",
+    '--java-options',
+    '-Dvexlife.prod.partnerHost=$APPDIR/partner-host/vexlife-partner-host.ps1',
     '--add-launcher',
     "VexLife-Debug=$DebugLauncherProperties"
 )
@@ -333,6 +343,18 @@ if (-not (Test-Path -LiteralPath $DebugExe -PathType Leaf)) {
     throw "WINDOWS_PREVIEW_DEBUG_EXE_MISSING:$DebugExe"
 }
 
+$PartnerHostDirectory = Join-Path $AppImage 'app\partner-host'
+New-Item -ItemType Directory -Path $PartnerHostDirectory -Force | Out-Null
+$PartnerHost = Join-Path $PartnerHostDirectory 'vexlife-partner-host.ps1'
+Copy-Item -LiteralPath $PartnerHostSource -Destination $PartnerHost -Force
+if (-not (Test-Path -LiteralPath $PartnerHost -PathType Leaf)) {
+    throw "WINDOWS_PARTNER_HOST_PACKAGING_MISSING:$PartnerHost"
+}
+$PartnerHostSha256 = (Get-FileHash -LiteralPath $PartnerHost -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($PartnerHostSha256 -ne $PartnerHostSourceSha256) {
+    throw "WINDOWS_PARTNER_HOST_PACKAGING_DIGEST_MISMATCH:$PartnerHostSha256"
+}
+
 $Receipt = [ordered]@{
     schemaVersion = 'vexlife-prod.windows-lived-preview-receipt/v1'
     truthClass = 'SOURCE_BOUND_UNSIGNED_WINDOWS_LIVED_PREVIEW'
@@ -344,6 +366,9 @@ $Receipt = [ordered]@{
     applicationName = 'VexLife'
     entrypoint = 'VexLife.exe'
     diagnosticEntrypoint = 'VexLife-Debug.exe'
+    partnerHostRelativePath = 'app\partner-host\vexlife-partner-host.ps1'
+    partnerHostSystemProperty = 'vexlife.prod.partnerHost'
+    partnerHostSha256 = $PartnerHostSha256
     startupLog = '%LOCALAPPDATA%\VexLife\logs\windows-startup.log'
     productOrigin = 'http://127.0.0.1:18210'
     defaultHome = '~/.vexlife'
@@ -455,6 +480,8 @@ Add-Diagnostic "stage=COMPLETE"
 Add-Diagnostic "zip=$FinalZip"
 Add-Diagnostic "zipSha256=$ZipSha256"
 Add-Diagnostic "zipBytes=$ZipBytes"
+Add-Diagnostic "partnerHostRelativePath=app\partner-host\vexlife-partner-host.ps1"
+Add-Diagnostic "partnerHostSha256=$PartnerHostSha256"
 Flush-Diagnostic
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_DIAGNOSTIC=$DiagnosticPath"
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_ZIP_BYTES=$ZipBytes"

@@ -341,7 +341,7 @@ class VexLifePartnerNativeHostClient(
     override fun execute(
         plan: VexLifePartnerNetworkPlan.Plan,
     ): VexLifePartnerHostEffect.Result {
-        val (header, bodyBytes) =
+        val (header, requestBodyBytes) =
             VexLifePartnerNativeHostProtocol.executeHeader(
                 plan,
             )
@@ -349,11 +349,11 @@ class VexLifePartnerNativeHostClient(
             try {
                 processHost.run(
                     headerLine = header,
-                    payload = bodyBytes,
+                    payload = requestBodyBytes,
                     timeoutMs = RequestTimeoutMs,
                 )
             } finally {
-                bodyBytes.fill(
+                requestBodyBytes.fill(
                     0,
                 )
             }
@@ -481,7 +481,7 @@ class VexLifePartnerNativeHostClient(
         ) {
             "Partner native helper response exceeds the bounded transport size"
         }
-        val bodyBytes =
+        val responseBodyBytes =
             ByteArray(
                 total.toInt(),
             )
@@ -490,7 +490,7 @@ class VexLifePartnerNativeHostClient(
         bodyBytesObserved.forEach {
             chunk ->
             chunk.copyInto(
-                destination = bodyBytes,
+                destination = responseBodyBytes,
                 destinationOffset = offset,
             )
             offset +=
@@ -502,10 +502,10 @@ class VexLifePartnerNativeHostClient(
 
         val body =
             String(
-                bodyBytes,
+                responseBodyBytes,
                 StandardCharsets.UTF_8,
             )
-        bodyBytes.fill(
+        responseBodyBytes.fill(
             0,
         )
 
