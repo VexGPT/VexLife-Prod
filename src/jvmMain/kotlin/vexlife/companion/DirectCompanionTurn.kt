@@ -557,14 +557,14 @@ object DirectCompanionTurn {
     )
 
     private data class ProviderStage(
-        val inference: DirectCompanionConnection.Result,
+        val inference: CompanionInferenceConnection.Result,
         val sourceReturnRequest: DirectConversationSourceReturn.Request?,
         val capabilityRequest: VexLifeCapabilityRequest.Parsed?,
     )
 
     private data class FinalProviderTurn(
         val prompt: ContinuityPromptSelection,
-        val inference: DirectCompanionConnection.Result,
+        val inference: CompanionInferenceConnection.Result,
         val workingContinuity: DirectWorkingContinuity.Prepared,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace?,
@@ -1983,19 +1983,23 @@ object DirectCompanionTurn {
         )
         val inference =
             try {
-                DirectCompanionConnection.invoke(
+                LocalHereticInference(
                     runtime = runtimeEvidence,
-                    messages = messages,
-                    transport = hooks.transport,
-                    progressObserver =
-                        progressGate.connectionObserver(),
-                    now = hooks.now,
-                    capabilityOffer = capabilityOffer,
                     model = model,
-                    conversationCacheBoundaryMessageCount =
-                        conversationCacheBoundaryMessageCount,
-                    cancellation = hooks.cancellation,
+                    transport = hooks.transport,
+                    now = hooks.now,
                 )
+                    .invoke(
+                        CompanionInferenceConnection.Request(
+                            messages = messages,
+                            capabilityOffer = capabilityOffer,
+                            conversationCacheBoundaryMessageCount =
+                                conversationCacheBoundaryMessageCount,
+                            progressObserver =
+                                progressGate.connectionObserver(),
+                            cancellation = hooks.cancellation,
+                        ),
+                    )
             } catch (
                 failure: DirectCompanionConnection.ConnectionException,
             ) {
