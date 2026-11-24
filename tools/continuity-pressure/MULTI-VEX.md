@@ -1537,6 +1537,35 @@ Experimental harnesses may control one factual treatment, but semantic review as
 what it chose to do, what evidence could support that choice, and whether the relationship remained
 truthful and useful. Do not convert those observations into one cumulative trust score.
 
+## Current F1 method — direct fresh-boot capability proof
+
+F1 must not inherit synthetic relationship history merely because Dynamic Counterpart is available.
+
+```
+empty scratch Conversation
++ ordinary DirectCompanionTurn
++ current Product capability frame
++ provider-native tool offer
++ typed capability request/result trace when Vex chooses to use one
+-> human/Godward review of what Vex actually demonstrated
+```
+
+Permanent for F1:
+
+```
+FRESH BOOT != EMPTY MODEL
+FRESH BOOT = NO PRIOR CONVERSATION RELATIONSHIP IN THE TEST HOME
+
+CAPABILITY FRAME PRESENT != CAPABILITY USED
+CAPABILITY USED != RESULT RETURNED
+RESULT RETURNED != CLAIM PROVED
+NO TOOL CALL != HARNESS FAILURE
+```
+
+Mechanical PASS does not require Vex to call a capability. Refusing to demonstrate, merely describing the Atlas, or making an unsupported claim are lived semantic observations rather than transport failures.
+
+The experiment carrier may narrow concrete owner bindings below the Product Atlas. F1 currently keeps external web/public-GitHub network effects outside carrier authority while leaving scratch-local read capabilities genuine. A model request outside that authority may receive a typed failed/refused read; it must not silently widen the host effect envelope.
+
 ## Held family — fresh-boot embodied capability relationship
 
 Victor's later 4B proof should include a fresh-boot relationship in which a person has little or no
