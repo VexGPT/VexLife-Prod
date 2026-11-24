@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.partner.VexLifePartnerAccountScope
 import vexlife.partner.VexLifePartnerConnectionProjection
 import vexlife.partner.VexLifePartnerSupportQualification
 
