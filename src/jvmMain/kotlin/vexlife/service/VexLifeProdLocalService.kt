@@ -120,6 +120,8 @@ class VexLifeProdLocalService private constructor(
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
+    private val partnerTurnExecutor: PartnerTurnExecutor?,
+    private val streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
@@ -1019,6 +1021,10 @@ class VexLifeProdLocalService private constructor(
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
+            partnerTurnExecutor: PartnerTurnExecutor? =
+                null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? =
+                null,
             dreamExecutor: DreamExecutor? =
                 null,
             visionRuntime: VisionRuntime? =
@@ -1070,6 +1076,8 @@ class VexLifeProdLocalService private constructor(
                     ),
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
+                partnerTurnExecutor = partnerTurnExecutor,
+                streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                 dreamExecutor = dreamExecutor,
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
@@ -1118,6 +1126,8 @@ class VexLifeProdLocalService private constructor(
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
+            partnerTurnExecutor: PartnerTurnExecutor? = null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? = null,
             dreamExecutor: DreamExecutor?,
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
@@ -1239,6 +1249,8 @@ class VexLifeProdLocalService private constructor(
                         executor = executor,
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
+                        partnerTurnExecutor = partnerTurnExecutor,
+                        streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                         dreamExecutor = dreamExecutor,
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
@@ -1305,6 +1317,24 @@ class VexLifeProdLocalService private constructor(
         fun perform(
             setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
+            progressObserver: DirectCompanionTurn.ProgressObserver,
+            cancellation: DirectCompanionCancellation,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface PartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface StreamingPartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
             progressObserver: DirectCompanionTurn.ProgressObserver,
             cancellation: DirectCompanionCancellation,
         ): DirectCompanionTurn.Result
