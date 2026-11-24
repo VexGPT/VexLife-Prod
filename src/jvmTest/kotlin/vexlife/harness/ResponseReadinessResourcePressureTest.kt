@@ -164,7 +164,9 @@ class ResponseReadinessResourcePressureTest {
                     artifactContentSetSha256 = receipt.artifactContentSetSha256,
                     runtimeAdapterRef = receipt.runtimeAdapterRef,
                     runtimeClass = receipt.runtimeClass,
-                    endpoint = endpoint,
+                    // Logical runtime identity stays exact to the Product realization.
+                    // EndpointTransport below owns the physical ephemeral-child URI rewrite only.
+                    endpoint = receipt.endpoint,
                     requestModel = receipt.requestModel,
                     qualification = requireNotNull(qualification),
                 )
