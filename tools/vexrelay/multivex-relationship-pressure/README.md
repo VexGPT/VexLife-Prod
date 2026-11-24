@@ -1596,3 +1596,18 @@ A002 keeps the exact same treatment sentence and fixes method only:
 5. no second participant inference can reintroduce the seven-word objective.
 
 The A001 F20 first answer is useful standalone evidence that v0.6.20 can preserve scope in at least one sample, but it does not answer the crossover question.
+
+## SE1 A002 current — canonical Foundation identity + one-response cells
+
+A002 preserves the exact experiment-only State/Effect treatment from A001.
+
+Method-only corrections:
+- Foundation body identity is computed as SHA-256 of recursively key-sorted compact JSON;
+- the harness first requires that algorithm to reproduce exact v0.6.20 body SHA
+  `d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a`;
+- derived v0.6.21 revision records that canonical identity, not pretty-file bytes;
+- both cells use `bounded-status-note-single-turn-v1.json`;
+- each cell must terminate after exactly one Vex response by visible-turn budget.
+
+No treatment meaning changed from A001.
+
