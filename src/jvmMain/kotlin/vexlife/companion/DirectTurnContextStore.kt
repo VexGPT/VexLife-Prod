@@ -49,6 +49,11 @@ class DirectTurnContextStore(
         /** Current evidence: prior truth plus one bounded final provider-stage measurement. */
         const val RuntimeEvidenceSchemaV4 =
             "vexlife-prod.turn-runtime-evidence/v4"
+
+
+        /** Provider-neutral evidence for one deterministic external Partner text turn. */
+        const val ProviderRuntimeEvidenceSchemaV5 =
+            "vexlife-prod.turn-provider-evidence/v5"
     }
 
     @OptIn(
@@ -126,6 +131,46 @@ class DirectTurnContextStore(
     )
 
     @Serializable
+    private data class ProviderRuntimeEvidenceCoreV5(
+        val schemaVersion: String,
+        val truthClass: String,
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val responseEventRef: String,
+        val responseEventHash: String,
+        val promptContext: DirectPromptContext.Receipt,
+        val providerObservation: CompanionInferenceConnection.Observation,
+        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerMeasurement: ProviderMeasurement,
+        val rawProviderResponsePersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
+        val rawReportedModelPersisted: Boolean,
+        val formedAt: String,
+    )
+
+    @Serializable
+    private data class ProviderRuntimeEvidenceV5(
+        val schemaVersion: String,
+        val truthClass: String,
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val responseEventRef: String,
+        val responseEventHash: String,
+        val promptContext: DirectPromptContext.Receipt,
+        val providerObservation: CompanionInferenceConnection.Observation,
+        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerMeasurement: ProviderMeasurement,
+        val rawProviderResponsePersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
+        val rawReportedModelPersisted: Boolean,
+        val formedAt: String,
+        val evidenceRef: String,
+        val evidenceSha256: String,
+    )
+
+    @Serializable
     data class ProviderMeasurement(
         val stop: String,
         val finishReason: String?,
@@ -161,8 +206,10 @@ class DirectTurnContextStore(
         val responseEventSha256: String,
         val runtimeEvidenceRef: String,
         val promptContext: DirectPromptContext.Receipt,
-        val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
-        val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceConnection.Observation,
+        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val localRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
+        val localInvocationEvidence: DirectCompanionConnection.InvocationEvidence?,
         val providerMeasurement: ProviderMeasurement?,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
@@ -171,7 +218,25 @@ class DirectTurnContextStore(
         val rawReportedModelPersisted: Boolean,
         val privacyClass: String,
         val formedAt: String,
-    )
+    ) {
+        /** Source-compatible Local view for legacy callers; Partner records intentionally have none. */
+        val runtimeObservation: DirectCompanionConnection.RuntimeObservation
+            get() =
+                requireNotNull(
+                    localRuntimeObservation,
+                ) {
+                    "Partner turn evidence has no Local runtime observation"
+                }
+
+        /** Source-compatible Local view for legacy callers; Partner records intentionally have none. */
+        val invocationEvidence: DirectCompanionConnection.InvocationEvidence
+            get() =
+                requireNotNull(
+                    localInvocationEvidence,
+                ) {
+                    "Partner turn evidence has no Local invocation evidence"
+                }
+    }
 
     private val productHome =
         VexOwnedPath.requireRoot(
