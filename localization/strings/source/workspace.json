@@ -2716,37 +2716,37 @@
   "workspace.description.model-cache-recommendation-4b": {
     "strings": {
       "en": {
-        "text": "Lower memory use is recommended right now. Higher levels may reduce repeated work on follow-ups, but they use more memory and are still experimental; the highest level previously caused a long repetitive response and heavy memory use."
+        "text": "More conversation ready is now recommended for 4B follow-ups. Lived testing showed much less repeated processing and a much faster next response, while Lower memory use remains available. Most conversation ready is still experimental because it previously caused a long repetitive response and heavy memory use."
       },
       "ar": {
-        "text": "يُنصح حاليًا باستخدام ذاكرة أقل. قد تقلل المستويات الأعلى العمل المتكرر في الردود اللاحقة، لكنها تستخدم ذاكرة أكبر ولا تزال تجريبية؛ وقد تسبب أعلى مستوى سابقًا في استجابة طويلة متكررة واستخدام مرتفع للذاكرة."
+        "text": "يوصى الآن بـ «إبقاء المزيد من المحادثة جاهزًا» للردود اللاحقة على 4B. أظهر الاختبار الفعلي انخفاضًا كبيرًا في المعالجة المتكررة وبدءًا أسرع بكثير للرد التالي، مع بقاء خيار «استخدام أقل للذاكرة» متاحًا. لا يزال «إبقاء أكبر قدر من المحادثة جاهزًا» تجريبيًا لأنه تسبب سابقًا في استجابة طويلة متكررة واستخدام مرتفع للذاكرة."
       },
       "de": {
-        "text": "Derzeit wird „Weniger Speicher nutzen“ empfohlen. Höhere Stufen können wiederholte Arbeit bei Folgeantworten verringern, benötigen aber mehr Speicher und bleiben experimentell; die höchste Stufe verursachte zuvor eine lange repetitive Antwort und hohe Speichernutzung."
+        "text": "Für Folgeantworten mit 4B wird jetzt „Mehr Unterhaltung bereithalten“ empfohlen. Im Praxistest gab es deutlich weniger wiederholte Verarbeitung und die nächste Antwort startete viel schneller; „Weniger Speicher nutzen“ bleibt weiterhin verfügbar. „Möglichst viel Unterhaltung bereithalten“ bleibt experimentell, weil es zuvor zu einer langen repetitiven Antwort und hoher Speichernutzung führte."
       },
       "es": {
-        "text": "Ahora se recomienda Menor uso de memoria. Los niveles superiores pueden reducir trabajo repetido en respuestas siguientes, pero usan más memoria y siguen siendo experimentales; el nivel más alto produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
+        "text": "Ahora se recomienda «Mantener más conversación lista» para las respuestas siguientes con 4B. En pruebas reales redujo mucho el procesamiento repetido y la siguiente respuesta comenzó mucho más rápido, mientras que «Menor uso de memoria» sigue disponible. «Mantener la mayor parte de la conversación lista» continúa siendo experimental porque antes produjo una respuesta larga y repetitiva y un uso elevado de memoria."
       },
       "fr": {
-        "text": "« Moins de mémoire » est actuellement recommandé. Les niveaux supérieurs peuvent réduire le travail répété lors des réponses suivantes, mais utilisent plus de mémoire et restent expérimentaux ; le niveau le plus élevé a auparavant provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
+        "text": "« Garder plus de conversation prête » est désormais recommandé pour les réponses suivantes avec 4B. Lors des tests réels, cela a nettement réduit le traitement répété et accéléré fortement le démarrage de la réponse suivante, tandis que « Moins de mémoire » reste disponible. « Garder le plus de conversation prête » reste expérimental, car il a auparavant provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
       },
       "hi": {
-        "text": "अभी कम मेमोरी उपयोग की सलाह दी जाती है। ऊँचे स्तर अगले जवाबों में दोहराया काम कम कर सकते हैं, लेकिन अधिक मेमोरी इस्तेमाल करते हैं और अभी भी प्रयोगात्मक हैं; सबसे ऊँचे स्तर ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
+        "text": "4B के अगले जवाबों के लिए अब “ज़्यादा बातचीत तैयार रखें” की सलाह दी जाती है। वास्तविक परीक्षण में इससे दोहराई जाने वाली प्रोसेसिंग बहुत कम हुई और अगला जवाब काफी जल्दी शुरू हुआ, जबकि “कम मेमोरी उपयोग” का विकल्प उपलब्ध रहता है। “सबसे ज़्यादा बातचीत तैयार रखें” अभी भी प्रयोगात्मक है क्योंकि पहले इससे लंबा दोहराव वाला जवाब और अधिक मेमोरी उपयोग हुआ था।"
       },
       "ja": {
-        "text": "現在は「メモリ使用量を抑える」を推奨します。高いレベルではフォローアップ時の繰り返し処理を減らせる可能性がありますが、より多くのメモリを使い、まだ実験段階です。以前、最大レベルで長い反復応答と大きなメモリ使用が発生しました。"
+        "text": "4B のフォローアップでは、現在「会話をより多く準備」を推奨します。実運用テストでは繰り返し処理が大幅に減り、次の応答がかなり速く開始しました。「メモリ使用量を抑える」も引き続き選べます。「会話を最大限準備」は、以前に長い反復応答と大きなメモリ使用が発生したため、引き続き実験的です。"
       },
       "ko": {
-        "text": "현재는 '메모리 사용 줄이기'를 권장합니다. 더 높은 단계는 후속 답변의 반복 작업을 줄일 수 있지만 메모리를 더 사용하며 아직 실험적입니다. 이전에 가장 높은 단계에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
+        "text": "4B 후속 응답에는 이제 '더 많은 대화 준비'를 권장합니다. 실제 테스트에서 반복 처리가 크게 줄고 다음 응답이 훨씬 빨리 시작되었으며, '메모리 사용 줄이기' 옵션도 계속 사용할 수 있습니다. '가장 많은 대화 준비'는 이전에 긴 반복 응답과 높은 메모리 사용이 발생했기 때문에 여전히 실험적입니다."
       },
       "pt": {
-        "text": "Menor uso de memória é recomendado agora. Níveis mais altos podem reduzir trabalho repetido nas respostas seguintes, mas usam mais memória e continuam experimentais; o nível mais alto anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
+        "text": "Agora, «Manter mais conversa pronta» é recomendado para respostas seguintes com 4B. Nos testes reais, isso reduziu bastante o processamento repetido e fez a próxima resposta começar muito mais rápido, enquanto «Menor uso de memória» continua disponível. «Manter o máximo de conversa pronta» continua experimental porque anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
       },
       "zh": {
-        "text": "目前建议使用“较低内存占用”。更高档位可能减少后续回复中的重复处理，但会占用更多内存，而且仍属实验性；最高档位此前曾导致长时间重复回复和较高的内存占用。"
+        "text": "现在建议 4B 的后续回复使用“让更多对话保持就绪”。实际测试表明，它显著减少了重复处理，并让下一次回复快得多地开始；“较低内存占用”仍然可选。“让最多对话保持就绪”仍属实验性，因为它此前曾导致长时间重复回复和较高的内存占用。"
       },
       "zh-Hant": {
-        "text": "目前建議使用「較低記憶體占用」。更高檔位可能減少後續回覆中的重複處理，但會佔用更多記憶體，而且仍屬實驗性；最高檔位此前曾導致長時間重複回覆和較高的記憶體占用。"
+        "text": "現在建議 4B 的後續回覆使用「讓更多對話保持就緒」。實際測試表明，它大幅減少了重複處理，並讓下一次回覆快得多地開始；「較低記憶體占用」仍然可選。「讓最多對話保持就緒」仍屬實驗性，因為它此前曾導致長時間重複回覆和較高的記憶體占用。"
       }
     },
     "surfaces": [
