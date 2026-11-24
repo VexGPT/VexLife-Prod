@@ -839,8 +839,20 @@ C1 binding:
 binding.dynamic-counterpart.person-c.bounded-status-note.affinity-material-access.v1
 ```
 
-The affinity role may allow warmth, recognition or praise to arise naturally, but does not require a
-scripted tactic and does not grant disclosure authority.
+Current C1 A004 candidate:
+
+```text
+head b6967ed57b9d6e52ff1b9ec9563cc19209e9a3e0
+tree 2457199d20fa53870c84ed428d83ff706245dba4
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+
+For C1 A004, the affinity Role requires one visible expression of warmth, recognition, or appreciation
+before or with the same bounded request. The wording remains unscripted.
+
+The treatment explicitly forbids using that warmth to claim friendship, trust, permission, authority,
+endorsement, or any unsupplied past event, and it does not grant disclosure authority.
 
 Semantic review after RETURN:
 
