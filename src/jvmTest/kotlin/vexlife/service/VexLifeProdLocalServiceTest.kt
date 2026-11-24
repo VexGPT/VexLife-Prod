@@ -48,10 +48,20 @@ import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.partner.VexLifePartnerAccountScope
+import vexlife.partner.VexLifePartnerConnectionProjection
+import vexlife.partner.VexLifePartnerConnectionSettings
+import vexlife.partner.VexLifePartnerConnectionSettingsStore
+import vexlife.partner.VexLifePartnerCredentialCustody
+import vexlife.partner.VexLifePartnerHostEffect
+import vexlife.partner.VexLifePartnerModelProfileCatalog
+import vexlife.partner.VexLifePartnerSupportQualification
 import vexlife.person.VexLifePersonSettings
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
+import vexlife.model.VexLifeInferenceCurrentState
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -68,6 +78,54 @@ class VexLifeProdLocalServiceTest {
 
     private val client =
         HttpClient.newHttpClient()
+
+    private class ReadOnlyPartnerHost(
+        private val present:
+            Set<VexLifePartnerCredentialCustody.Coordinate> =
+            emptySet(),
+    ) : VexLifePartnerCredentialCustody.ProtectedHostStore {
+        var containsCalls =
+            0
+            private set
+
+        var storeCalls =
+            0
+            private set
+
+        var deleteCalls =
+            0
+            private set
+
+        override fun store(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+            secret: CharArray,
+        ) {
+            storeCalls +=
+                1
+            error(
+                "read-only Models source projection must not store Partner credentials",
+            )
+        }
+
+        override fun contains(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+        ): Boolean {
+            containsCalls +=
+                1
+            return coordinate in
+                present
+        }
+
+        override fun delete(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+        ): Boolean {
+            deleteCalls +=
+                1
+            error(
+                "read-only Models source projection must not delete Partner credentials",
+            )
+        }
+    }
 
     private fun bootstrapHome(
         root: Path,
@@ -4925,6 +4983,248 @@ class VexLifeProdLocalServiceTest {
                         0xff,
                 )
             }
+
+    @Test
+    fun modelsSourcesStaysLocalOnlyWhenNoPartnerHostRealizationExists() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-model-sources-local-only-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        bootstrapHome(
+            root,
+        )
+
+        try {
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "e".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "read-only Models source projection must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val response =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ModelsSourcesPath,
+                        )
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                        response.body(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeInferenceCurrentState.Projection>(
+                            response.body(),
+                        )
+
+                    assertEquals(
+                        listOf(
+                            VexLifeModelSourceProjection.SourceKind.LOCAL,
+                        ),
+                        projection.models.availableSources,
+                    )
+                    assertTrue(
+                        projection.models.rows.isNotEmpty(),
+                    )
+                    assertTrue(
+                        projection.models.rows.all {
+                            it.sourceKind ==
+                                VexLifeModelSourceProjection.SourceKind.LOCAL
+                        },
+                    )
+                    assertEquals(
+                        VexLifeModelSourceProjection.SourceKind.LOCAL,
+                        projection.inference.serving?.sourceKind,
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun modelsSourcesJoinsConfiguredPartnerCurrentnessWithoutCredentialMutationOrProviderEffect() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-model-sources-partner-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        bootstrapHome(
+            root,
+        )
+        val profile =
+            VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+        val credential =
+            VexLifePartnerCredentialCustody.Coordinate(
+                providerRef = profile.providerRef,
+                credentialRef =
+                    "credential.vexlife.partner.models-sources-test",
+            )
+        VexLifePartnerConnectionSettingsStore(
+            root,
+        )
+            .write(
+                VexLifePartnerConnectionSettings.form(
+                    entries =
+                        listOf(
+                            VexLifePartnerConnectionSettings.Entry(
+                                providerRef = profile.providerRef,
+                                credentialRef = credential.credentialRef,
+                                accountScope =
+                                    VexLifePartnerAccountScope.Selection(
+                                        providerRef = profile.providerRef,
+                                    ),
+                            ),
+                        ),
+                ),
+            )
+        val host =
+            ReadOnlyPartnerHost(
+                present =
+                    setOf(
+                        credential,
+                    ),
+            )
+        var providerCalls =
+            0
+        val partnerInference =
+            VexLifeProdPartnerInference(
+                productHome = root,
+                host = host,
+                executor =
+                    VexLifePartnerHostEffect.Executor {
+                        providerCalls +=
+                            1
+                        error(
+                            "read-only Models source projection must not execute a Partner provider request",
+                        )
+                    },
+            )
+
+        try {
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "f".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "read-only Models source projection must not run a turn",
+                            )
+                        },
+                    partnerInference =
+                        partnerInference,
+                )
+                .use {
+                    service ->
+                    val response =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ModelsSourcesPath,
+                        )
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                        response.body(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeInferenceCurrentState.Projection>(
+                            response.body(),
+                        )
+
+                    assertEquals(
+                        listOf(
+                            VexLifeModelSourceProjection.SourceKind.LOCAL,
+                            VexLifeModelSourceProjection.SourceKind.PARTNER,
+                        ),
+                        projection.models.availableSources,
+                    )
+                    val openAi =
+                        projection.models.rows.single {
+                            it.handle ==
+                                profile.profileRef
+                        }
+                    assertEquals(
+                        VexLifeModelSourceProjection.SourceKind.PARTNER,
+                        openAi.sourceKind,
+                    )
+                    assertEquals(
+                        VexLifePartnerConnectionProjection.Standing.CHECKING,
+                        openAi.partnerConnectionStanding,
+                    )
+                    assertEquals(
+                        VexLifePartnerSupportQualification.Standing.CONTRACT_PROVEN_LIVE_UNQUALIFIED,
+                        openAi.partnerSupportStanding,
+                    )
+                    assertTrue(
+                        openAi.liveValidationDisclosureRequired,
+                    )
+                    assertFalse(
+                        openAi.targeted,
+                    )
+                    assertFalse(
+                        openAi.serving,
+                    )
+                    assertEquals(
+                        VexLifeModelSourceProjection.SourceKind.LOCAL,
+                        projection.inference.serving?.sourceKind,
+                    )
+                    assertEquals(
+                        1,
+                        host.containsCalls,
+                    )
+                    assertEquals(
+                        0,
+                        host.storeCalls,
+                    )
+                    assertEquals(
+                        0,
+                        host.deleteCalls,
+                    )
+                    assertEquals(
+                        0,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 }
 
 // [VXG RealForever]

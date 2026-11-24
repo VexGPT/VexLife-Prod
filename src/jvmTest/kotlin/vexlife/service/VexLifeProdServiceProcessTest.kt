@@ -164,7 +164,7 @@ class VexLifeProdServiceProcessTest {
             arguments = arguments,
             hooks =
                 VexLifeProdServiceProcess.Hooks(
-                    resolveVisionRuntimeExecutablePath = {
+                    resolveRuntimeExecutablePaths = {
                         sourceSha ->
                         trace +=
                             "OBSERVE_IMAGE"
@@ -172,11 +172,20 @@ class VexLifeProdServiceProcessTest {
                             arguments.sourceSha,
                             sourceSha,
                         )
-                        productHomePath
-                            .resolve(
-                                "vision-runtime/bin/vexlife-vision-runtime",
-                            )
-                            .toString()
+                        VexLifeProdServiceProcess.RuntimeExecutablePaths(
+                            visionRuntimeExecutablePathOrNull =
+                                productHomePath
+                                    .resolve(
+                                        "vision-runtime/bin/vexlife-vision-runtime",
+                                    )
+                                    .toString(),
+                            partnerHostExecutablePathOrNull =
+                                productHomePath
+                                    .resolve(
+                                        "partner-host/vexlife-partner-host",
+                                    )
+                                    .toString(),
+                        )
                     },
                     establishSession = {
                         productHome,
@@ -198,6 +207,7 @@ class VexLifeProdServiceProcessTest {
                         sourceSha,
                         currentSession,
                         visionRuntimeExecutablePathOrNull,
+                        partnerHostExecutablePathOrNull,
                         ->
                         trace +=
                             "START"
@@ -216,6 +226,14 @@ class VexLifeProdServiceProcessTest {
                                 )
                                 .toString(),
                             visionRuntimeExecutablePathOrNull,
+                        )
+                        assertEquals(
+                            productHomePath
+                                .resolve(
+                                    "partner-host/vexlife-partner-host",
+                                )
+                                .toString(),
+                            partnerHostExecutablePathOrNull,
                         )
                         service
                     },
