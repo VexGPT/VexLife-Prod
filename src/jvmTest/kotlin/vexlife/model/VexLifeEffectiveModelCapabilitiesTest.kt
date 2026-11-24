@@ -12,7 +12,6 @@ import vexlife.model.heretic.HereticRuntimeState
 class VexLifeEffectiveModelCapabilitiesTest {
     private fun qualifiedRuntime(
         model: HereticModelCatalog.Entry,
-        providerNativeToolsQualified: Boolean = false,
     ): HereticModelConfiguration.QualifiedRuntimeEvidence {
         val realization =
             HereticRuntimeRealization.require(
@@ -31,16 +30,12 @@ class VexLifeEffectiveModelCapabilitiesTest {
             runtimeClass = realization.runtime.runtimeClass,
             endpoint = realization.runtime.endpoint,
             requestModel = realization.runtime.requestModel,
-            qualification =
-                HereticRuntimeQualification.qualified(
-                    providerNativeToolsQualified = providerNativeToolsQualified,
-                ),
+            qualification = HereticRuntimeQualification.qualified(),
         )
     }
 
     private fun project(
         profile: HereticCompanionRepresentation.Profile,
-        providerNativeToolsQualified: Boolean = false,
     ): VexLifeEffectiveModelCapabilities.Projection {
         val model =
             HereticModelCatalog.Models.Qwen27B
@@ -52,11 +47,7 @@ class VexLifeEffectiveModelCapabilitiesTest {
                     modelRef = model.modelRef,
                     target = HereticRuntimeRealization.MacArm64,
                 ),
-            qualifiedRuntime =
-                qualifiedRuntime(
-                    model = model,
-                    providerNativeToolsQualified = providerNativeToolsQualified,
-                ),
+            qualifiedRuntime = qualifiedRuntime(model),
         )
     }
 
@@ -89,31 +80,6 @@ class VexLifeEffectiveModelCapabilitiesTest {
             capabilities.vexReach,
         )
     }
-
-    @Test
-    fun exactRuntimeNativeToolQualificationPromotesRecognizedImportToAvailable() {
-        val profile =
-            HereticCompanionRepresentation.Profiles.importedQwen(
-                profileRef = "companion-profile.vexlife-prod.imported.test.qwen3.qualified.v1",
-                nativeToolCalling = true,
-            )
-        val capabilities =
-            project(
-                profile = profile,
-                providerNativeToolsQualified = true,
-            )
-
-        assertEquals(
-            HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD,
-            profile.providerNativeToolStanding,
-            "provider source recognition remains distinct from runtime qualification",
-        )
-        assertEquals(
-            VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
-            capabilities.providerNativeTools,
-        )
-    }
-
 
     @Test
     fun qualifiedBuiltInNativeToolCarriageRemainsAvailable() {

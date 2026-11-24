@@ -127,18 +127,7 @@ object VexLifeEffectiveModelCapabilities {
                         Standing.NOT_APPLICABLE
 
                     HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD ->
-                        if (
-                            exactQualifiedRuntime !=
-                                null &&
-                            qualifiedRuntime
-                                ?.qualification
-                                ?.providerNativeToolsQualificationRef ==
-                            vexlife.model.heretic.HereticRuntimeQualification.ProviderNativeToolsQualificationRef
-                        ) {
-                            Standing.AVAILABLE
-                        } else {
-                            Standing.HELD
-                        }
+                        Standing.HELD
 
                     HereticCompanionRepresentation.ProviderNativeToolStanding.QUALIFIED ->
                         represented(true)
