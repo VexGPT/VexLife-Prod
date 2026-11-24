@@ -1053,8 +1053,10 @@ object DirectCompanionTurn {
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
         val providerNativeTools =
-            companionProfile.capabilityRepresentation ==
-                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = companionProfile,
+                qualification = initialRuntimeEvidence.qualification,
+            )
         val capabilityRequestsPromptAdmitted =
             hooks.turnPolicy.capabilityRequestsAllowed &&
                 capabilityProviderBridgeQualified
@@ -1307,8 +1309,8 @@ object DirectCompanionTurn {
         // currentness without recovery and require the exact runtime already proved for stage one.
         fun sameRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             hooks.reobserveSameRuntimeEvidence(initialRuntimeEvidence).also { current ->
-                require(current.runtimeReceiptRef == initialRuntimeEvidence.runtimeReceiptRef) {
-                    "runtime changed during one direct Companion turn"
+                require(current == initialRuntimeEvidence) {
+                    "runtime evidence changed during one direct Companion turn"
                 }
             }
 
