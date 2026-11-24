@@ -3,6 +3,7 @@ package vexlife.model.heretic.runtime
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
@@ -11,11 +12,15 @@ import vexlife.model.heretic.HereticRuntimeQualification
 
 class MacHereticNativeToolQualificationTest {
     private class Runner(
-        private val qualificationStdout: String,
+        private val results: List<HereticPythonEnvironment.CommandResult>,
     ) :
         HereticPythonEnvironment.Runner {
         val calls =
             mutableListOf<List<String>>()
+        val timeouts =
+            mutableListOf<Long>()
+        private var next =
+            0
 
         override fun run(
             program: String,
@@ -23,13 +28,22 @@ class MacHereticNativeToolQualificationTest {
             timeoutMs: Long,
         ): HereticPythonEnvironment.CommandResult {
             calls += args
-            return HereticPythonEnvironment.CommandResult(
-                status = 0,
-                stdout = qualificationStdout,
-                stderr = "",
-            )
+            timeouts += timeoutMs
+            return results
+                .getOrNull(
+                    next++,
+                )
+                ?: error(
+                    "unexpected qualification command",
+                )
         }
     }
+
+    private data class ProbeRun(
+        val qualification: HereticRuntimeQualification,
+        val calls: List<List<String>>,
+        val timeouts: List<Long>,
+    )
 
     private fun recognizedModel(): HereticModelCatalog.Entry =
         HereticModelCatalog.Models.Qwen27B.copy(
@@ -119,8 +133,8 @@ class MacHereticNativeToolQualificationTest {
     }
 
     private fun qualify(
-        output: String,
-    ): Pair<HereticRuntimeQualification, List<String>> {
+        nativeProbeResult: HereticPythonEnvironment.CommandResult,
+    ): ProbeRun {
         val root =
             Files.createTempDirectory(
                 "vexlife-native-tool-qualification-",
@@ -128,7 +142,15 @@ class MacHereticNativeToolQualificationTest {
                 .toAbsolutePath()
         val runner =
             Runner(
-                qualificationStdout = output,
+                results =
+                    listOf(
+                        HereticPythonEnvironment.CommandResult(
+                            status = 0,
+                            stdout = "QUALIFIED\n",
+                            stderr = "",
+                        ),
+                        nativeProbeResult,
+                    ),
             )
         val platform =
             MacHereticRuntimePlatform(
@@ -137,12 +159,16 @@ class MacHereticNativeToolQualificationTest {
             )
 
         return try {
-            platform.qualify(
-                binding(
-                    root,
-                ),
-            ) to
-                runner.calls.single()
+            ProbeRun(
+                qualification =
+                    platform.qualify(
+                        binding(
+                            root,
+                        ),
+                    ),
+                calls = runner.calls.toList(),
+                timeouts = runner.timeouts.toList(),
+            )
         } finally {
             root
                 .toFile()
@@ -154,33 +180,60 @@ class MacHereticNativeToolQualificationTest {
     fun recognizedNativeToolProbeIsOptionalAndFailSoft() {
         val held =
             qualify(
-                "QUALIFIED\n",
+                HereticPythonEnvironment.CommandResult(
+                    status = null,
+                    stdout = "",
+                    stderr = "",
+                    timedOut = true,
+                ),
             )
         assertEquals(
             null,
-            held.first.providerNativeToolsQualificationRef,
-            "ordinary runtime qualification survives a held optional adapter",
+            held.qualification.providerNativeToolsQualificationRef,
+            "optional native-tool process timeout must not revoke ordinary runtime qualification",
         )
         assertEquals(
-            "true",
-            held.second.last(),
+            listOf(
+                180_000L,
+                300_000L,
+            ),
+            held.timeouts,
+        )
+        assertEquals(
+            2,
+            held.calls.size,
+        )
+        assertFalse(
+            held.calls[0][
+                1
+            ]
+                .contains(
+                    "vexlife_qualification_echo",
+                ),
+            "ordinary runtime qualification must complete independently of optional adapter probing",
         )
 
         val qualified =
             qualify(
-                "QUALIFIED_NATIVE_TOOLS\n",
+                HereticPythonEnvironment.CommandResult(
+                    status = 0,
+                    stdout = "QUALIFIED_NATIVE_TOOLS\n",
+                    stderr = "",
+                ),
             )
         assertEquals(
             HereticRuntimeQualification.ProviderNativeToolsQualificationRef,
-            qualified.first.providerNativeToolsQualificationRef,
+            qualified.qualification.providerNativeToolsQualificationRef,
         )
         assertEquals(
-            "true",
-            qualified.second.last(),
+            2,
+            qualified.calls.size,
         )
 
         val script =
-            qualified.second[
+            qualified.calls[
+                1
+            ][
                 1
             ]
         for (
