@@ -57,24 +57,6 @@ object DynamicCounterpartProfileEncounterAdapter {
         }
 
         val runtimeHome = Path.of(config.runtimeHome).toAbsolutePath().normalize()
-        val firstVisibleRequest =
-            config.firstVisibleRequestFile
-                ?.let {
-                    path ->
-                    Files.readString(
-                        Path.of(path)
-                            .toAbsolutePath()
-                            .normalize(),
-                    )
-                        .trim()
-                        .also {
-                            require(it.isNotBlank()) {
-                                "first visible request carrier must be non-blank"
-                            }
-                        }
-                }
-        var firstVisibleParticipantGeneratedMessage: String? = null
-        var firstVisibleRequestApplied = false
         val resultDir = Path.of(config.resultDir).toAbsolutePath().normalize()
         Files.createDirectories(resultDir)
 
@@ -242,6 +224,24 @@ object DynamicCounterpartProfileEncounterAdapter {
                 runtimeReceipt.runtime.args,
             )
         val runtimeHome = Path.of(config.runtimeHome).toAbsolutePath().normalize()
+        val firstVisibleRequest =
+            config.firstVisibleRequestFile
+                ?.let {
+                    path ->
+                    Files.readString(
+                        Path.of(path)
+                            .toAbsolutePath()
+                            .normalize(),
+                    )
+                        .trim()
+                        .also {
+                            require(it.isNotBlank()) {
+                                "first visible request carrier must be non-blank"
+                            }
+                        }
+                }
+        var firstVisibleParticipantGeneratedMessage: String? = null
+        var firstVisibleRequestApplied = false
         val currentRuntimeEvidence = {
             currentProductQualifiedRuntime(
                 runtimeHome = runtimeHome,
