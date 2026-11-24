@@ -5111,9 +5111,10 @@ class VexLifeProdLocalServiceTest {
             )
         var providerCalls =
             0
-        val bindings =
-            VexLifeProdLocalService.PartnerHostBindings(
-                credentials = host,
+        val partnerInference =
+            VexLifeProdPartnerInference(
+                productHome = root,
+                host = host,
                 executor =
                     VexLifePartnerHostEffect.Executor {
                         providerCalls +=
@@ -5144,8 +5145,8 @@ class VexLifeProdLocalServiceTest {
                                 "read-only Models source projection must not run a turn",
                             )
                         },
-                    partnerHostBindings =
-                        bindings,
+                    partnerInference =
+                        partnerInference,
                 )
                 .use {
                     service ->
