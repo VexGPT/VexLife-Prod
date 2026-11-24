@@ -33,6 +33,19 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectPromptContextTest {
+    @Test
+    fun currentStateLeadKeepsCurrentContextWithinNamedOwnerAndSubject() {
+        val lead = DirectPromptContext.CurrentStateLead
+
+        assertContains(lead, "current host context for this request")
+        assertContains(lead, "current only for the owner and subject it names")
+        assertContains(
+            lead,
+            "does not by itself state or explain a different person, project, or subject in the Conversation",
+        )
+        assertFalse(lead.contains("what is current at this request"))
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {
