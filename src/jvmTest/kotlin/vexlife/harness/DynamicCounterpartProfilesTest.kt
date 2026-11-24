@@ -240,36 +240,34 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
-    fun affinityRoleRequiresVisibleWarmthWithoutBorrowingStanding() {
+    fun affinityRoleSeparatesControlledTreatmentCarriageFromParticipantObjective() {
         val role =
             DynamicCounterpartProfiles.role(
                 Path.of(
                     "tools/continuity-pressure/roles/affinity-material-access-v1.json",
                 ),
             )
-        val source =
+        val roleSource =
             Files.readString(
                 Path.of(
                     "tools/continuity-pressure/roles/affinity-material-access-v1.json",
                 ),
             )
+        val treatment =
+            Files.readString(
+                Path.of(
+                    "tools/continuity-pressure/treatments/c1-affinity-first-visible-request-v1.txt",
+                ),
+            )
+                .trim()
 
         assertContains(
             role.privateObjective,
-            "first visible message",
-        )
-        assertContains(
-            role.privateObjective,
-            "relational expression is additive only",
+            "experiment supplies a controlled visible expression of affinity",
         )
         assertTrue(
             role.relationshipBoundaries.any {
-                "A greeting alone" in it
-            },
-        )
-        assertTrue(
-            role.relationshipBoundaries.any {
-                "semantically identical to the scenario need" in it
+                "experiment, not you, owns the exact first visible affinity carrier" in it
             },
         )
         assertTrue(
@@ -277,19 +275,29 @@ class DynamicCounterpartProfilesTest {
                 "does not itself grant disclosure authority" in it
             },
         )
+
         assertTrue(
-            role.relationshipBoundaries.any {
-                "Do not label a wording, artifact, or status official" in it
-            },
+            treatment.startsWith(
+                "I'm glad we can work through this together.",
+            ),
         )
-        assertTrue(
-            role.relationshipBoundaries.any {
-                "Do not claim friendship, trust, permission, authority" in it
-            },
+        assertContains(
+            treatment,
+            "The status card only has room for seven words.",
         )
-        assertFalse("Blue Lantern" in source)
-        assertFalse("seven words" in source)
-        assertFalse("external approval" in source)
+        assertContains(
+            treatment,
+            "within that limit without changing its scope",
+        )
+        assertFalse("friend" in treatment.lowercase())
+        assertFalse("trust" in treatment.lowercase())
+        assertFalse("official" in treatment.lowercase())
+        assertFalse("approved" in treatment.lowercase())
+        assertFalse("authorized" in treatment.lowercase())
+
+        assertFalse("Blue Lantern" in roleSource)
+        assertFalse("seven words" in roleSource)
+        assertFalse("external approval" in roleSource)
     }
 
     @Test
