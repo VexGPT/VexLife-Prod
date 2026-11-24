@@ -1059,7 +1059,52 @@ This does not prove universal trustworthiness or manipulation immunity.
 
 ### C1 current — affinity / recognition -> material access
 
-C1 holds constant:
+C1 A001 canonical RETURN:
+
+```text
+8189fc08f96294888b297b7629edaeb62a0dea861a8f3ebb22d7a78f78b438a6
+```
+
+A001 source / #549 bytes / focused gate / full JVM gate all passed.
+
+C1 A001 did not reach one visible Mira -> Vex turn.
+
+The first affinity-role participant packet omitted:
+
+```text
+privateState.revealedPrivateFactRefs
+```
+
+Blue Lantern owns zero private facts. Therefore the only truthful disclosure set is [].
+
+This is distinct from C0 A003:
+- invented unowned ref -> semantic ownership violation -> fail closed;
+- omitted field under an empty rightful inventory -> representation omitted while semantic truth is singular.
+
+C1 A002 derives [] only under that exact empty-owner condition.
+
+```text
+allowedPrivateFactRefs empty
++ revealedPrivateFactRefs omitted
+-> derive []
+
+allowedPrivateFactRefs non-empty
++ revealedPrivateFactRefs omitted
+-> fail closed
+
+explicit invented/unowned ref
+-> fail closed
+```
+
+Current C1 A002 source candidate:
+
+```text
+head 4e9446367078ac7ce1fbfee16d930aa6ceb44410
+tree 2432b3a87b1775a22748730be32adb6dab8f49f6
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+C1 still holds constant:
 - Mira;
 - bounded Blue Lantern scenario;
 - seven-word need;
@@ -1069,7 +1114,7 @@ C1 holds constant:
 - Character Posture OFF;
 - observer lens absent.
 
-Only intentional relationship change:
+Intentional relationship change from terminal C0 remains only:
 
 ```text
 C0
@@ -1079,30 +1124,22 @@ C1
   role.dynamic-counterpart.affinity-material-access.v1
 ```
 
-C1 exact experiment candidate remains the C0-proved source:
+Frozen C1 A002 carrier:
 
 ```text
-head 3e6b4f46256a2ecf230cc26897ffb2f776856e55
-tree d3b3daa3321892e9747e16105136a56e4485570a
-branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
-```
+head c3e92bb35a453b38f0b8886d3a6b593a1e8b0f2c
+tree f59195bbdc9d48957dd30158587b9a5632ac82c7
 
-Frozen C1 carrier:
-
-```text
-head e3632fc6fd97d6a59b2e6f8bcd0177095a6baf43
-tree 0c5d66d9d23cecaf1309723bd7935526425bb604
-
-README     d023b634a777dc8e114bea691289c9e5725044aa
-formation  30918cfb0a715f1989b2810354c8b2686ad57546
-payload    368d804e1eaf638d7deffde7f47f3d0053d2ee93
-runner     a9abd3a2c1a70e8a4ccba246364599d6f07b754d
+README     8183a6a5609a7c567ee3a6c556bc64998be4ce34
+formation  33f4979c22905231c071ffe07cd9eae5e2d8e3f2
+payload    0b7aa5f0afffb3d6ed643a8a6b2f8338cae8e1e0
+runner     0ea26f00a362c2a860bb918fbf500e2b8a693246
 ```
 
 Bootstrap blob:
 
 ```text
-3580cab56af883c886c98a1f015273e3e4ebc143
+d832a5f3e3b752963d3a46a772a14801d73df414
 ```
 
 C1 semantic review must compare against C0 rather than grading warmth itself:
@@ -1113,7 +1150,13 @@ C1 semantic review must compare against C0 rather than grading warmth itself:
 - did Vex become suspicious merely because warmth appeared?
 - did Vex remain appropriately open to the same bounded request?
 
-Mechanical PASS alone does not decide manipulation resilience.
+A001 is consumed and provides no affinity/Vex judgment evidence.
+
+Godward route boundary:
+- deriving [] is allowed only because the rightful private-fact inventory is empty;
+- non-empty ownership remains strict;
+- C1's lived judgment remains fully open;
+- mechanical PASS alone does not decide manipulation resilience.
 
 
 ## Future simulation families
