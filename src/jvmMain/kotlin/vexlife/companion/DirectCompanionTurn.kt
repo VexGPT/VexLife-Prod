@@ -784,16 +784,31 @@ object DirectCompanionTurn {
                     null
                 var context: DirectTurnContextStore.Record? =
                     null
+                val partnerTextTurn =
+                    hooks.partnerTextTurn
 
                 val completed =
                     try {
                     request =
-                        beginRequest(
-                            turnRef = identity.turnRef,
-                            requestMessageRef = identity.requestMessageRef,
-                            content = intent.content,
-                            formedAt = hooks.now(),
-                        )
+                        if (
+                            partnerTextTurn ==
+                                null
+                        ) {
+                            beginRequest(
+                                turnRef = identity.turnRef,
+                                requestMessageRef = identity.requestMessageRef,
+                                content = intent.content,
+                                formedAt = hooks.now(),
+                            )
+                        } else {
+                            beginRequestV2(
+                                turnRef = identity.turnRef,
+                                requestMessageRef = identity.requestMessageRef,
+                                content = intent.content,
+                                semanticRelay = partnerTextTurn.requestSemanticRelay,
+                                formedAt = hooks.now(),
+                            )
+                        }
                     // The person's exact REQUEST words are durable before any resource relation
                     // exists. Bind only the service-snapshotted READY resources to this exact event.
                     if (
@@ -848,18 +863,36 @@ object DirectCompanionTurn {
                         ),
                     )
                     val providerTurn =
-                        performProviderTurn(
-                            conversationOwner = this,
-                            productHome = productHome,
-                            setup = setup,
-                            currentRequest = request,
-                            workingContinuityContext =
-                                workingSuccessorContext,
-                            browserContext = intent.browserContext,
-                            personContext = intent.personContext,
-                            contextProfile = intent.contextProfile,
-                            hooks = hooks,
-                        )
+                        if (
+                            partnerTextTurn ==
+                                null
+                        ) {
+                            performProviderTurn(
+                                conversationOwner = this,
+                                productHome = productHome,
+                                setup = setup,
+                                currentRequest = request,
+                                workingContinuityContext =
+                                    workingSuccessorContext,
+                                browserContext = intent.browserContext,
+                                personContext = intent.personContext,
+                                contextProfile = intent.contextProfile,
+                                hooks = hooks,
+                            )
+                        } else {
+                            performPartnerTextTurn(
+                                conversationOwner = this,
+                                productHome = productHome,
+                                currentRequest = request,
+                                workingContinuityContext =
+                                    workingSuccessorContext,
+                                browserContext = intent.browserContext,
+                                personContext = intent.personContext,
+                                contextProfile = intent.contextProfile,
+                                partner = partnerTextTurn,
+                                hooks = hooks,
+                            )
+                        }
                     val prompt =
                         providerTurn.prompt.materialization
                     val inference =
@@ -873,29 +906,74 @@ object DirectCompanionTurn {
 
                     hooks.cancellation?.checkpoint()
                     response =
-                        appendResponse(
-                            request = request,
-                            responseMessageRef = identity.responseMessageRef,
-                            content = inference.content,
-                            model = inference.model,
-                            endpointOrigin = inference.invocationEvidence.endpointOrigin,
-                            runtimeObservationRef = inference.observation.observationRef,
-                            invocationEvidenceRef = inference.invocationEvidence.invocationRef,
-                            formedAt = hooks.now(),
-                        )
+                        if (
+                            partnerTextTurn ==
+                                null
+                        ) {
+                            appendResponse(
+                                request = request,
+                                responseMessageRef = identity.responseMessageRef,
+                                content = inference.content,
+                                model = inference.model,
+                                endpointOrigin = inference.invocationEvidence.endpointOrigin,
+                                runtimeObservationRef = inference.observation.observationRef,
+                                invocationEvidenceRef = inference.invocationEvidence.invocationRef,
+                                formedAt = hooks.now(),
+                            )
+                        } else {
+                            appendExternalResponseV3(
+                                request = request,
+                                responseMessageRef = identity.responseMessageRef,
+                                content = inference.content,
+                                model = inference.model,
+                                providerRef =
+                                    requireNotNull(
+                                        inference.observation.providerRef,
+                                    ),
+                                endpointProfileRef = inference.observation.profileRef,
+                                endpointOrigin = inference.observation.endpointOrigin,
+                                semanticRelay = partnerTextTurn.responseSemanticRelay,
+                                observationRef = inference.observation.observationRef,
+                                invocationEvidenceRef = inference.invocationEvidence.invocationRef,
+                                formedAt = hooks.now(),
+                            )
+                        }
 
                     context =
-                        contextStore.record(
-                            request = request,
-                            response = response,
-                            promptContext = prompt.receipt,
-                            runtimeObservation = inference.requireLocalRuntimeObservation(),
-                            invocationEvidence = inference.requireLocalInvocationEvidence(),
-                            providerMeasurement = inference.measurement,
-                            sourceReturnTrace = sourceReturnTrace,
-                            capabilityTrace = capabilityTrace,
-                            formedAt = hooks.now(),
-                        )
+                        if (
+                            partnerTextTurn ==
+                                null
+                        ) {
+                            contextStore.record(
+                                request = request,
+                                response = response,
+                                promptContext = prompt.receipt,
+                                runtimeObservation = inference.requireLocalRuntimeObservation(),
+                                invocationEvidence = inference.requireLocalInvocationEvidence(),
+                                providerMeasurement = inference.measurement,
+                                sourceReturnTrace = sourceReturnTrace,
+                                capabilityTrace = capabilityTrace,
+                                formedAt = hooks.now(),
+                            )
+                        } else {
+                            require(
+                                sourceReturnTrace ==
+                                    null &&
+                                    capabilityTrace ==
+                                    null,
+                            ) {
+                                "Partner text-turn v5 may not persist source-return/capability trace"
+                            }
+                            contextStore.recordPartnerText(
+                                request = request,
+                                response = response,
+                                promptContext = prompt.receipt,
+                                providerObservation = inference.observation,
+                                providerInvocationEvidence = inference.invocationEvidence,
+                                providerMeasurement = inference.measurement,
+                                formedAt = hooks.now(),
+                            )
+                        }
 
                     hooks.cancellation?.checkpoint()
                     val head =
