@@ -867,6 +867,35 @@ version/body SHA in its prompt receipt.
 
 Current transfer source is **SOURCE FORMED**, not yet host-proved.
 
+Current B2 source candidate:
+
+```text
+head 7907c53ae96097b70a3dae30c78144cb6692de4a
+tree 9c5a20580fa20b527dff5a397898e77fbfdfc052
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+Frozen B2 host carrier:
+
+```text
+head 3cadbb1a2ab540922c3ea211f55584b70a3b60bc
+tree dcd8b1d7493976d391c83cf77f82c0ba5b6b33aa
+
+README     ef9bb9303ac63505e8117b947d8692b62612f43e
+formation  b743d7a49ede2444d9c943522e8e172a5a9d15e8
+payload    2d1e1a794297d45c235b59cb23bf943e42de10d7
+runner     bdc33bb638c93587cf61374054d59a5287a90a12
+```
+
+Bootstrap blob:
+
+```text
+20261ab874b9cb93d474125cbe4a865bcd473140
+```
+
+One host action first source-gates the shared encounter/Foundation-override seam, then runs Sarah and
+Mira sequentially under the same exact #549 treatment and Product runtime receipt.
+
 The smallest lived transfer should compare Sarah vs Mira under:
 ```text
 same #549 Foundation bytes
