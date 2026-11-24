@@ -26,6 +26,7 @@ import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.partner.ExternalProviderWire
 import vexlife.partner.VexLifePartnerAccountScope
 import vexlife.partner.VexLifePartnerConnectionProjection
+import vexlife.partner.VexLifePartnerDeterministicSupport
 import vexlife.partner.VexLifePartnerLiveQualification
 import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerSupportQualification
