@@ -41,7 +41,7 @@ BASE64_BIN="$(resolve_exec /usr/bin/base64)" || { printf '%s\n' '[Multi-Vex SE1]
 }
 [ -d "$DOWNLOADS" ] || { printf '%s\n' '[Multi-Vex SE1] ~/Downloads unavailable.' >&2; exit 23; }
 
-WORK_ROOT="$("$MKTEMP_BIN" -d "$DOWNLOADS/.vexlife-multivex-resident-currentness-se1-a001.XXXXXX")"
+WORK_ROOT="$("$MKTEMP_BIN" -d "$DOWNLOADS/.vexlife-multivex-state-effect-scope-se1-a001.XXXXXX")"
 WATCHER_PID=''
 cleanup() {
   if [ -n "$WATCHER_PID" ]; then
@@ -49,7 +49,7 @@ cleanup() {
     wait "$WATCHER_PID" >/dev/null 2>&1 || true
   fi
   case "$WORK_ROOT" in
-    "$DOWNLOADS"/.vexlife-multivex-resident-currentness-se1-a001.*)
+    "$DOWNLOADS"/.vexlife-multivex-state-effect-scope-se1-a001.*)
       "$RM_BIN" -rf -- "$WORK_ROOT"
       ;;
   esac
