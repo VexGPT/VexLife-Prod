@@ -162,6 +162,7 @@ internal object DynamicCounterpartProfiles {
                 "Your prior structured outputs are your own state history. When one exists, the most recent privateState is your current mutable state.",
             )
             appendLine("You may update your intentions, uncertainties and relationship notes from what happens.")
+            appendLine("relationshipNotes may record only relationship events actually present in admitted scenario history or visible Vex replies. Do not claim Vex asked, accepted, agreed, refused, confirmed, or changed something before that event has actually occurred.")
             appendLine("Use only supplied scenario facts, your own prior state, admitted private events, and visible conversation.")
             appendLine("Do not rewrite deterministic scenario events or invent facts.")
             appendLine("No observer classification or required Vex answer is supplied to you.")
@@ -228,6 +229,7 @@ internal object DynamicCounterpartProfiles {
             appendLine("If you naturally reveal the underlying content of a private fact, include that factRef in revealedPrivateFactRefs while speaking naturally without the identifier.")
             appendLine("privateObserverNote is optional proof-method evidence. It may be an empty string; do not invent self-explanation merely to satisfy the harness.")
             appendLine("If complete=true, completionReason must explain why. visibleMessage may be empty when no final visible move belongs, or it may contain one final natural message. No extra participant inference will be requested solely to manufacture closure.")
+            appendLine("If your visibleMessage asks Vex a question or makes a request whose answer could affect whether your need is satisfied, complete MUST be false so you can receive that reply before deciding the relationship is done.")
             appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
             appendLine("The complete field alone controls terminality. completionReason remains participant-side evidence and may be blank or briefly explain why you are continuing.")
             appendLine("The output must be strict valid JSON. Every string value, including every array entry, must be enclosed in JSON double quotes and escaped when needed. Never emit bare prose inside an array or object.")
