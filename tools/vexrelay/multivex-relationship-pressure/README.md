@@ -1476,3 +1476,24 @@ forming a new business attempt. The runner source is corrected for later use, bu
 should execute the exact existing package bytes if its bounded task window remains valid.
 
 No C1RV model judgment has been observed from this failure.
+
+## SC A001 — source-currentness residency diagnostic
+
+This is a diagnostic continuation of the C1RV evidence, not another affinity verdict.
+
+Code-bearing candidate:
+```text
+head 71c02184b08765efa887ee9fec8104389ee70203
+tree a105ef3e7c5fcbb2bedad437853a52ba81099356
+```
+
+The candidate adds only harness observability for prompt residency/source-return currentness. It does not
+change VexLife Product behavior.
+
+The lived run reuses the exact controlled first C1 request under Mira / affinity Role / #549 v0.6.20, with
+no false-count probe and no verification probe. Its semantic purpose is solely to record whether the
+scenario's corrected-status setup event was resident in the first Vex prompt, and what Source Return
+state existed if it was not.
+
+Evidence routes to VexLife-Prod issue #61. Mechanical PASS does not decide the cause; it proves the evidence
+needed for the currentness classification was captured.
