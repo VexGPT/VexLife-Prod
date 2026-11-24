@@ -58,6 +58,31 @@ object HereticCompanionRepresentation {
         QUALIFIED,
     }
 
+    /**
+     * Actual provider-native tool carriage for one exact current runtime relationship.
+     *
+     * Static provider/template recognition is not enough. A RECOGNIZED_HELD profile promotes only
+     * when that exact runtime qualification carries the admitted native-tool qualification ref.
+     * Built-in QUALIFIED profiles keep their already-earned native carriage.
+     *
+     * This derives representation only. Capability admission/effects remain with the Atlas/Bridge.
+     */
+    fun providerNativeToolsActive(
+        profile: Profile,
+        qualification: HereticRuntimeQualification?,
+    ): Boolean =
+        when (profile.providerNativeToolStanding) {
+            ProviderNativeToolStanding.NOT_REPRESENTED ->
+                false
+
+            ProviderNativeToolStanding.RECOGNIZED_HELD ->
+                qualification?.providerNativeToolsQualificationRef ==
+                    HereticRuntimeQualification.ProviderNativeToolsQualificationRef
+
+            ProviderNativeToolStanding.QUALIFIED ->
+                true
+        }
+
     enum class ReachRepresentationStanding {
         /** This provider representation of Vex reach is qualified for ordinary Companion use. */
         QUALIFIED,

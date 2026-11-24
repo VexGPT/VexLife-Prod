@@ -699,6 +699,11 @@ object DirectCompanionConnection {
             )
         val generation =
             profile.generation
+        val nativeTools =
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = profile,
+                qualification = runtime.qualification,
+            )
         val payload =
             SystemPrefixPrefillRequestPayload(
                 model = runtime.requestModel,
@@ -954,8 +959,7 @@ object DirectCompanionConnection {
                             HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT &&
                             profile.reasoningRepresentation ==
                             HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS &&
-                            profile.capabilityRepresentation ==
-                            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT &&
+                            !nativeTools &&
                             !profile.coalesceLeadingSystemMessages
                     if (
                         !admitted
@@ -997,9 +1001,6 @@ object DirectCompanionConnection {
                 vexlifePromptCacheBoundaryMessageCount =
                     cacheBoundaryMessageCount,
             )
-        val nativeTools =
-            profile.capabilityRepresentation ==
-                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val providerTools =
             if (nativeTools) {
                 ProviderCapabilityTools.tools(

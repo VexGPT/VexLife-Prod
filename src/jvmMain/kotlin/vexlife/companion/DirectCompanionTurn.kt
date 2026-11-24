@@ -1053,8 +1053,10 @@ object DirectCompanionTurn {
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
         val providerNativeTools =
-            companionProfile.capabilityRepresentation ==
-                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = companionProfile,
+                qualification = initialRuntimeEvidence.qualification,
+            )
         val capabilityRequestsPromptAdmitted =
             hooks.turnPolicy.capabilityRequestsAllowed &&
                 capabilityProviderBridgeQualified
