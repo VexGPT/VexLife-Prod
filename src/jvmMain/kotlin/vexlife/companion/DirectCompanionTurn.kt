@@ -472,11 +472,17 @@ object DirectCompanionTurn {
         }
     }
 
+    internal fun interface SemanticRelayFactory {
+        fun form(
+            messageRef: String,
+        ): JsonObject
+    }
+
     internal data class PartnerTextTurn(
         val qualified: VexLifeInferenceSessionAdmission.Qualified,
         val executor: VexLifePartnerHostEffect.Executor,
-        val requestSemanticRelay: JsonObject,
-        val responseSemanticRelay: JsonObject,
+        val requestSemanticRelay: SemanticRelayFactory,
+        val responseSemanticRelay: SemanticRelayFactory,
     ) {
         init {
             require(
@@ -805,7 +811,10 @@ object DirectCompanionTurn {
                                 turnRef = identity.turnRef,
                                 requestMessageRef = identity.requestMessageRef,
                                 content = intent.content,
-                                semanticRelay = partnerTextTurn.requestSemanticRelay,
+                                semanticRelay =
+                                    partnerTextTurn.requestSemanticRelay.form(
+                                        identity.requestMessageRef,
+                                    ),
                                 formedAt = hooks.now(),
                             )
                         }
@@ -932,7 +941,10 @@ object DirectCompanionTurn {
                                     ),
                                 endpointProfileRef = inference.observation.profileRef,
                                 endpointOrigin = inference.observation.endpointOrigin,
-                                semanticRelay = partnerTextTurn.responseSemanticRelay,
+                                semanticRelay =
+                                    partnerTextTurn.responseSemanticRelay.form(
+                                        identity.responseMessageRef,
+                                    ),
                                 observationRef = inference.observation.observationRef,
                                 invocationEvidenceRef = inference.invocationEvidence.invocationRef,
                                 formedAt = hooks.now(),
