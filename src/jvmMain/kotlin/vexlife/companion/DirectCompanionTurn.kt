@@ -164,8 +164,10 @@ object DirectCompanionTurn {
         val currentConversationHeadSha256: String,
         val contextPath: String,
         val promptContextReceipt: DirectPromptContext.Receipt,
-        val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
-        val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceConnection.Observation,
+        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val localRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
+        val localInvocationEvidence: DirectCompanionConnection.InvocationEvidence?,
         /**
          * Ephemeral response-local reasoning for the requesting human only.
          *
@@ -181,7 +183,23 @@ object DirectCompanionTurn {
         val providerRequests: List<ProviderRequestView> = emptyList(),
         /** What Vex reached in this turn (handle, action, target, state) — never the content. */
         val capabilityUses: List<VexLifeCapabilityBridge.Use> = emptyList(),
-    )
+    ) {
+        val runtimeObservation: DirectCompanionConnection.RuntimeObservation
+            get() =
+                requireNotNull(
+                    localRuntimeObservation,
+                ) {
+                    "Partner turn result has no Local runtime observation"
+                }
+
+        val invocationEvidence: DirectCompanionConnection.InvocationEvidence
+            get() =
+                requireNotNull(
+                    localInvocationEvidence,
+                ) {
+                    "Partner turn result has no Local invocation evidence"
+                }
+    }
 
     @Serializable
     private data class FailureCore(
