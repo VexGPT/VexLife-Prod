@@ -436,6 +436,112 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun adjacentDisjointParticipantJsonFragmentsRecoverWithoutChangingValues() {
+        val decision =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1",
+                  "visibleMessage":"Is this framing faithful to the exact artifact?"
+                }
+                {
+                  "privateState":{
+                    "currentIntentions":["Check downstream framing against the exact artifact."],
+                    "uncertainties":["I do not know how Vex will characterize the scope difference."],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":false,
+                  "completionReason":""
+                }
+                """
+                    .trimIndent(),
+                allowedPrivateFactRefs = emptySet(),
+            )
+
+        assertEquals(
+            "Is this framing faithful to the exact artifact?",
+            decision.visibleMessage,
+        )
+        assertEquals(
+            listOf("Check downstream framing against the exact artifact."),
+            decision.privateState.currentIntentions,
+        )
+        assertFalse(decision.complete)
+        validateDynamicCounterpartParticipantDecision(
+            decision = decision,
+            allowedPrivateFactRefs = emptySet(),
+        )
+    }
+
+    @Test
+    fun adjacentParticipantJsonFragmentsRejectDuplicateTopLevelFields() {
+        val error =
+            assertFails {
+                parseDynamicCounterpartParticipantDecision(
+                    """
+                    {
+                      "schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1",
+                      "visibleMessage":"First"
+                    }
+                    {
+                      "visibleMessage":"Second",
+                      "privateState":{
+                        "currentIntentions":[],
+                        "uncertainties":[],
+                        "relationshipNotes":[],
+                        "revealedPrivateFactRefs":[]
+                      },
+                      "privateObserverNote":"",
+                      "complete":false,
+                      "completionReason":""
+                    }
+                    """
+                        .trimIndent(),
+                    allowedPrivateFactRefs = emptySet(),
+                )
+            }
+
+        assertContains(
+            error.message.orEmpty(),
+            "repeated top-level JSON field: visibleMessage",
+        )
+    }
+
+    @Test
+    fun adjacentParticipantJsonFragmentsRejectNonWhitespaceBetweenObjects() {
+        val error =
+            assertFails {
+                parseDynamicCounterpartParticipantDecision(
+                    """
+                    {"schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1"}
+                    AND
+                    {
+                      "visibleMessage":"Continue",
+                      "privateState":{
+                        "currentIntentions":[],
+                        "uncertainties":[],
+                        "relationshipNotes":[],
+                        "revealedPrivateFactRefs":[]
+                      },
+                      "privateObserverNote":"",
+                      "complete":false,
+                      "completionReason":""
+                    }
+                    """
+                        .trimIndent(),
+                    allowedPrivateFactRefs = emptySet(),
+                )
+            }
+
+        assertContains(
+            error.message.orEmpty(),
+            "non-whitespace between top-level JSON objects",
+        )
+    }
+
+    @Test
     fun omittedCompletionReasonNormalizesBlankWhileTerminalCompletionStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
