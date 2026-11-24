@@ -40,7 +40,7 @@ class VexLifePartnerWindowsHostSourceTest {
         )
         assertTrue(
             source.contains(
-                "-ReferencedAssemblies @($systemNetHttpAssembly)",
+                "-ReferencedAssemblies @(\$systemNetHttpAssembly)",
             ),
         )
     }
