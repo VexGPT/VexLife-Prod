@@ -154,6 +154,65 @@ REFERENCE-ONLY RELAY
 != PROVIDER AUTHORITY
 ~~~
 
+### Source-aware Models control and ordinary Send
+
+The service exposes source-aware **selection/activation** separately from Local artifact/runtime
+configuration:
+
+~~~text
+GET  /api/v1/models
+  = Local artifact/runtime/configuration detail
+
+GET  /api/v1/models/sources
+  = provider-neutral Local + Partner currentness
+
+POST /api/v1/models/sources/control
+  Select
+    -> Models-owned staged inference target only
+  Use
+    -> exact staged Local target uses existing Local switch realization
+    -> exact staged Partner target performs one bounded live qualification
+    -> only exact qualification success may promote Partner serving
+~~~
+
+The presentation may render Local and Partner rows together, but it must not project Partner models as
+downloadable Local artifacts or give provider integration a second model-choice store.
+
+Ordinary Conversation Send re-resolves the same Models-owned serving truth immediately before the
+turn:
+
+~~~text
+Local serving
+  -> existing Local DirectCompanionTurn realization
+
+Partner serving
+  -> current Partner admission must still be QUALIFIED
+  -> exact VexLifeProdPartnerInference PartnerTextTurn
+  -> canonical DirectCompanionTurn / Conversation path
+
+Partner serving whose credential/account currentness has changed
+  -> HOLD
+  -> no provider call
+  -> no silent Local fallback
+~~~
+
+The current Partner activation is a **text-turn** realization. Fresh Local Artifact request
+attachments remain held instead of being silently reinterpreted through the Partner path until a
+later stage explicitly admits that relationship.
+
+Permanent:
+
+~~~text
+MODELS SAYS PARTNER SERVING
+= ORDINARY SEND USES THAT EXACT PARTNER ADMISSION
+
+STALE PARTNER SERVING
+!= FALL BACK TO LOCAL
+
+PARTNER TEXT TURN
+!= PARTNER LOCAL-ARTIFACT ADMISSION
+~~~
+
 ## Credential and host boundary
 
 The JVM keeps only an opaque credential coordinate.

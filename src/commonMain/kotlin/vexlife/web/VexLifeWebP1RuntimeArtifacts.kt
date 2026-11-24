@@ -332,6 +332,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsSourcesPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesPath)},
+                modelsSourcesControlPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesControlPath)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
@@ -699,8 +701,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextConversationCollapsedByEventRef: new Map(),
                 diagnostics: null,
                 diagnosticsInFlight: false,
-                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                // Settings → Models keeps Local detail plus one provider-neutral source projection.
                 models: null,
+                modelSources: null,
                 modelsInFlight: false,
                 modelImportInFlight: false,
                 // Local microphone recognition is independent from the serving reasoning model.
@@ -6415,13 +6418,36 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
-              const servingModelLabel = () => {
-                const serving = (state.models?.models || []).find((model) => model.serving);
-                return serving?.label ?? '';
+              const sourceRows = () =>
+                state.modelSources?.models?.rows || [];
+
+              const sourceRowLabel = (row) => {
+                if (!row) return '';
+                const local =
+                  (state.models?.models || []).find((model) => model.handle === row.handle);
+                return local?.label ?? String(row.modelRef ?? row.handle ?? '');
               };
 
-              const selectedModel = () =>
-                (state.models?.models || []).find((model) => model.targeted) ?? null;
+              const servingSourceRow = () => {
+                const serving = state.modelSources?.inference?.serving ?? null;
+                return serving
+                  ? sourceRows().find((row) => row.handle === serving.handle) ?? null
+                  : null;
+              };
+
+              const selectedSourceRow = () =>
+                sourceRows().find((row) => row.targeted) ?? null;
+
+              const servingModelLabel = () =>
+                sourceRowLabel(servingSourceRow()) ||
+                (state.models?.models || []).find((model) => model.serving)?.label ||
+                '';
+
+              const selectedModel = () => {
+                const selected = selectedSourceRow();
+                if (!selected || selected.sourceKind !== 'LOCAL') return null;
+                return (state.models?.models || []).find((model) => model.handle === selected.handle) ?? null;
+              };
 
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
@@ -6443,8 +6469,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!projection) return;
 
                 const models = projection.models || [];
+                const sourceProjection = state.modelSources?.models ?? null;
+                const rows = sourceProjection?.rows ?? [];
+                const selectedSource = selectedSourceRow();
+                const servingSource = servingSourceRow();
                 const selected = selectedModel();
-                const serving = models.find((model) => model.serving) ?? null;
+                const serving =
+                  servingSource?.sourceKind === 'LOCAL'
+                    ? models.find((model) => model.handle === servingSource.handle) ?? null
+                    : null;
                 const modelImport = projection.modelImport ?? null;
 
                 if (ui.modelImportCheck) ui.modelImportCheck.disabled = state.modelImportInFlight;
@@ -6469,12 +6502,18 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.modelsCurrentState) {
                   const stateParts = [
-                    workspaceText('workspace.label.model-state-serving').replace('{model}', serving?.label ?? workspaceText('workspace.label.model-none'))
+                    workspaceText('workspace.label.model-state-serving').replace(
+                      '{model}',
+                      servingSource ? sourceRowLabel(servingSource) : workspaceText('workspace.label.model-none')
+                    )
                   ];
-                  if (selected && (!serving || selected.handle !== serving.handle)) {
+                  if (
+                    selectedSource &&
+                    (!servingSource || selectedSource.handle !== servingSource.handle)
+                  ) {
                     stateParts.push(
                       workspaceText('workspace.label.model-state-selected')
-                        .replace('{model}', selected.label)
+                        .replace('{model}', sourceRowLabel(selectedSource))
                     );
                   }
                   if (projection.switching) {
@@ -6486,27 +6525,35 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 if (ui.modelChoice) {
-                  const options = models.map((model) => {
+                  const options = rows.map((row) => {
                     const option = document.createElement('option');
-                    option.value = model.handle;
-                    const availability = resolveText(model.display.status);
-                    option.textContent = model.label + ' · ' + availability;
-                    option.selected = Boolean(model.targeted);
+                    option.value = row.handle;
+                    const local =
+                      row.sourceKind === 'LOCAL'
+                        ? models.find((model) => model.handle === row.handle) ?? null
+                        : null;
+                    const standing =
+                      local
+                        ? resolveText(local.display.status)
+                        : [row.providerRef, row.partnerConnectionStanding, row.partnerSupportStanding]
+                            .filter(Boolean)
+                            .join(' · ');
+                    option.textContent =
+                      [sourceRowLabel(row), standing]
+                        .filter(Boolean)
+                        .join(' · ');
+                    option.selected = Boolean(row.targeted);
                     return option;
                   });
                   ui.modelChoice.replaceChildren(...options);
-                  const anySelectableModel =
-                    models.some((model) =>
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    );
-                  ui.modelChoice.disabled = state.modelsInFlight || !anySelectableModel;
+                  ui.modelChoice.disabled =
+                    state.modelsInFlight ||
+                    Boolean(projection.switching) ||
+                    rows.length === 0;
                   ui.modelChoice.onchange = () => {
                     const handle = ui.modelChoice.value;
-                    const model = models.find((candidate) => candidate.handle === handle);
-                    if (
-                      model &&
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    ) {
+                    const row = rows.find((candidate) => candidate.handle === handle);
+                    if (row && !row.targeted) {
                       void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
                     }
                   };
@@ -6530,7 +6577,21 @@ object VexLifeWebP1RuntimeArtifacts {
                       selected.standing === 'CANDIDATE' && !selected.imported ? workspaceText('workspace.label.model-candidate') : ''
                     ].filter(Boolean).join(' · ');
                   }
-
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.modelRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent =
+                      selectedSource.liveValidationDisclosureRequired
+                        ? String(selectedSource.partnerSupportStanding ?? '')
+                        : '';
+                  }
                 } else {
                   if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
                   if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
@@ -6593,7 +6654,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
 
-                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selectedSource;
                 if (selected) {
                   const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
@@ -6665,6 +6726,40 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? resolveText(startControl.label)
                         : workspaceText('workspace.button.model-start');
                   }
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelConfigurationRecommendation) {
+                    ui.modelConfigurationRecommendation.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    ui.modelPromptCacheEntries.replaceChildren();
+                    ui.modelPromptCacheEntries.disabled = true;
+                    ui.modelPromptCacheEntries.onchange = null;
+                  }
+                  if (ui.modelUseRecommended) {
+                    ui.modelUseRecommended.hidden = true;
+                    ui.modelUseRecommended.disabled = true;
+                    ui.modelUseRecommended.onclick = null;
+                  }
+                  if (ui.modelStart) {
+                    const mayUse =
+                      selectedSource.targeted &&
+                      !selectedSource.serving &&
+                      !projection.switching;
+                    ui.modelStart.hidden = false;
+                    ui.modelStart.disabled = state.modelsInFlight || !mayUse;
+                    ui.modelStart.onclick = () => {
+                      if (!mayUse) return;
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlUse)},
+                        selectedSource.handle
+                      );
+                    };
+                    ui.modelStart.textContent = workspaceText('workspace.button.model-start');
+                  }
                 }
 
                 const lines = [];
@@ -6697,8 +6792,18 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadModels = async () => {
-                const response = await productFetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.models = await readJson(response);
+                const [localResponse, sourceResponse] = await Promise.all([
+                  productFetch(service.modelsPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  }),
+                  productFetch(service.modelsSourcesPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  })
+                ]);
+                state.models = await readJson(localResponse);
+                state.modelSources = await readJson(sourceResponse);
                 renderModels();
                 // Follow only active model work; nothing polls when the relationship is stable.
                 if (state.models?.downloading || state.models?.switching) {
@@ -6729,6 +6834,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
                   state.models = await readJson(response);
+                  await loadModels();
                 } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
               };
@@ -6742,12 +6848,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const body = { controlRef, handle };
                   if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
-                  const response = await effectFetch(service.modelsControlPath, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify(body)
-                  });
-                  state.models = await readJson(response);
+                  const sourceAware =
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)};
+                  const response = await effectFetch(
+                    sourceAware
+                      ? service.modelsSourcesControlPath
+                      : service.modelsControlPath,
+                    {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json', accept: 'application/json' },
+                      body: JSON.stringify(body)
+                    }
+                  );
+                  if (sourceAware) {
+                    state.modelSources = await readJson(response);
+                    await loadModels();
+                  } else {
+                    state.models = await readJson(response);
+                  }
                   if (
                     controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
                     controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||

@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
@@ -385,6 +387,121 @@ class DirectCompanionPartnerTextTurnTest {
             .use {
                 it.readText()
             }
+
+    @Test
+    fun partnerTextStageRejectsLocalArtifactAttachmentsBeforeConversationOrProviderEffects() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+            )
+        var hostCalls =
+            0
+        val partner =
+            DirectCompanionTurn.PartnerTextTurn(
+                qualified =
+                    qualifiedPartner(),
+                executor =
+                    VexLifePartnerHostEffect.Executor {
+                        hostCalls +=
+                            1
+                        error(
+                            "Partner text attachment hold must happen before provider execution",
+                        )
+                    },
+                requestSemanticRelay =
+                    DirectCompanionTurn.SemanticRelayFactory {
+                        messageRef,
+                        originatorRef,
+                        recipientRefs,
+                        ->
+                        relay(
+                            messageRef = messageRef,
+                            originatorRef = originatorRef,
+                            originatorKind = "HUMAN",
+                            recipientRef = recipientRefs.single(),
+                            targetAudienceRef = "audience.vex",
+                        )
+                    },
+                responseSemanticRelay =
+                    DirectCompanionTurn.SemanticRelayFactory {
+                        messageRef,
+                        originatorRef,
+                        recipientRefs,
+                        ->
+                        relay(
+                            messageRef = messageRef,
+                            originatorRef = originatorRef,
+                            originatorKind = "AI",
+                            recipientRef = recipientRefs.single(),
+                            targetAudienceRef = "audience.person",
+                        )
+                    },
+            )
+
+        try {
+            val error =
+                assertFailsWith<IllegalArgumentException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup,
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.partner-text-attachment-held.001",
+                                content =
+                                    "Do not send this attachment through the text-only Partner stage.",
+                                requestAttachments =
+                                    listOf(
+                                        VexLifeLocalArtifact.RequestAttachment(
+                                            artifactRef =
+                                                VexLifeLocalArtifact.ArtifactRefPrefix +
+                                                    "a".repeat(
+                                                        64,
+                                                    ),
+                                            projectionRef =
+                                                VexLifeLocalArtifact.ProjectionRefPrefix +
+                                                    "b".repeat(
+                                                        64,
+                                                    ),
+                                            displayName =
+                                                "held.txt",
+                                        ),
+                                    ),
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                partnerTextTurn = partner,
+                            ),
+                    )
+                }
+
+            assertTrue(
+                error.message
+                    ?.contains(
+                        "does not admit Local Artifact",
+                    ) ==
+                    true,
+            )
+            assertEquals(
+                0,
+                hostCalls,
+            )
+            assertTrue(
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .events
+                    .isEmpty(),
+                "Partner text attachment hold must precede canonical Conversation mutation",
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun qualifiedPartnerTextStageCompletesCanonicalV2V3TurnAndRecoversWithoutReplay() {

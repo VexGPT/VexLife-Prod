@@ -119,6 +119,14 @@ class VexLifeProdServiceContractTest {
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
         )
+        assertEquals(
+            "/api/v1/models/sources",
+            VexLifeProdServiceContract.ModelsSourcesPath,
+        )
+        assertEquals(
+            "/api/v1/models/sources/control",
+            VexLifeProdServiceContract.ModelsSourcesControlPath,
+        )
     }
 
     @Test

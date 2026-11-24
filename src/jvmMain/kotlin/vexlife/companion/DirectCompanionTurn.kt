@@ -665,6 +665,8 @@ object DirectCompanionTurn {
             null,
         visualInterpreter: VisualInterpreter? =
             null,
+        partnerTextTurn: PartnerTextTurn? =
+            null,
         initialPromptPreparation: VexLifeInitialPromptPreparation? =
             null,
     ): Result =
@@ -700,6 +702,7 @@ object DirectCompanionTurn {
                     progressObserver = progressObserver,
                     cancellation = cancellation,
                     visualInterpreter = visualInterpreter,
+                    partnerTextTurn = partnerTextTurn,
                     initialPromptPreparation =
                         initialPromptPreparation,
                 ),
@@ -794,6 +797,13 @@ object DirectCompanionTurn {
                     null
                 val partnerTextTurn =
                     hooks.partnerTextTurn
+                require(
+                    partnerTextTurn ==
+                        null ||
+                        intent.requestAttachments.isEmpty(),
+                ) {
+                    "Partner text-turn stage does not admit Local Artifact request attachments"
+                }
 
                 val completed =
                     try {

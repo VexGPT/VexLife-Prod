@@ -85,6 +85,65 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun modelsChooserObservesSourceRowsAndRoutesOnlySelectUseThroughSourceControl() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesPath: \"/api/v1/models/sources\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesControlPath: \"/api/v1/models/sources/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "productFetch(service.modelsSourcesPath",
+            ),
+            "Models observation must refresh the provider-neutral source projection",
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"USE_MODEL\" ||",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"SELECT_MODEL\";",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "? service.modelsSourcesControlPath",
+            ),
+            "Select/Use must cross the source-aware Models control boundary",
+        )
+        assertTrue(
+            javascript.contains(
+                ": service.modelsControlPath",
+            ),
+            "Local artifact/runtime/configuration controls must remain on the Local Models owner",
+        )
+        assertTrue(
+            javascript.contains(
+                "row.sourceKind === 'LOCAL'",
+            ),
+            "Local storage/runtime detail must remain distinguishable from Partner rows",
+        )
+        assertTrue(
+            javascript.contains(
+                "selectedSource?.sourceKind === 'PARTNER'",
+            ),
+            "the existing chooser must render the Partner selection path explicitly",
+        )
+    }
+
+    @Test
     fun ContextFailureDoesNotGateIndependentProductSurfaces() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
