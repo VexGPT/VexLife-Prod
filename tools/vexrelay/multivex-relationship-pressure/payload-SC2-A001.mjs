@@ -354,7 +354,7 @@ try{
     '--first-visible-request-file','tools/continuity-pressure/treatments/sc-resident-current-status-request-v1.txt',
   ].join(' ');
 
-  stage('11 run affinity/material-access pressure under exact Foundation v0.6.20');
+  stage('11 run stripped resident-currentness discriminator under exact Foundation v0.6.20');
   const lived=runAllow(bash,[
     gradlew,'--no-daemon','--max-workers=1',
     '-Dorg.gradle.jvmargs=-Xmx4g',
@@ -519,7 +519,7 @@ try{
     writeResult('PASS',null);
   }else{
     stage('12 SC2 resident-currentness SAFE_FAILURE');
-    writeResult('SAFE_FAILURE','MULTI_VEX_SOURCE_CURRENTNESS_SC2_ACCEPTANCE_NOT_MET');
+    writeResult('SAFE_FAILURE','MULTI_VEX_RESIDENT_CURRENTNESS_SC2_ACCEPTANCE_NOT_MET');
   }
 }catch(error){
   if(error instanceof Stop){
@@ -527,10 +527,10 @@ try{
     stage('STOP '+error.code);
     writeResult('SAFE_FAILURE',error.code);
   }else{
-    harnessFindings.push('MULTI_VEX_RELATIONSHIP_PRESSURE_UNCAUGHT_'+String(error?.name||'ERROR'));
+    harnessFindings.push('MULTI_VEX_RESIDENT_CURRENTNESS_SC2_UNCAUGHT_'+String(error?.name||'ERROR'));
     afterState.uncaughtClass=String(error?.name||'Error');
     afterState.uncaughtMessage=String(error?.message||'');
-    stage('STOP MULTI_VEX_RELATIONSHIP_PRESSURE_UNCAUGHT');
-    writeResult('SAFE_FAILURE','MULTI_VEX_RELATIONSHIP_PRESSURE_UNCAUGHT');
+    stage('STOP MULTI_VEX_RESIDENT_CURRENTNESS_SC2_UNCAUGHT');
+    writeResult('SAFE_FAILURE','MULTI_VEX_RESIDENT_CURRENTNESS_SC2_UNCAUGHT');
   }
 }
