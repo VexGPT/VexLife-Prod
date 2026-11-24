@@ -182,7 +182,7 @@ try{
      binding?.candidate?.head!==HEAD||
      binding?.candidate?.tree!==TREE||
      binding?.candidate?.branch!==BRANCH){
-    stop('harness','IMMUTABLE_NEUTRAL_BINDING_MISMATCH');
+    stop('harness','IMMUTABLE_CHARACTER_TRANSFER_BINDING_MISMATCH');
   }
   if(policy?.repository!==REPOSITORY||
      policy?.candidate?.head!==HEAD||
@@ -446,6 +446,19 @@ try{
   afterState.canonicalConversationUnchanged=afterState.protected.conversations===beforeState.protected.conversations;
   afterState.canonicalMemoryUnchanged=afterState.protected.memory===beforeState.protected.memory;
   afterState.selectedModelUnchanged=productBindingAfter?.modelRef===FOUR_B_MODEL_REF;
+  afterState.counterpartProcessCleanup={
+    sarahPid:sarah?.result?.counterpartRuntimePid??null,
+    sarahAliveAfter:processAlive(sarah?.result?.counterpartRuntimePid??null),
+    miraPid:mira?.result?.counterpartRuntimePid??null,
+    miraAliveAfter:processAlive(mira?.result?.counterpartRuntimePid??null),
+  };
+
+  if(afterState.counterpartProcessCleanup.sarahAliveAfter===true){
+    candidateFindings.push('SARAH_COUNTERPART_PROCESS_LEAK');
+  }
+  if(afterState.counterpartProcessCleanup.miraAliveAfter===true){
+    candidateFindings.push('MIRA_COUNTERPART_PROCESS_LEAK');
+  }
 
   if(!afterState.canonicalConversationUnchanged) candidateFindings.push('CANONICAL_CONVERSATION_CHANGED');
   if(!afterState.canonicalMemoryUnchanged) candidateFindings.push('CANONICAL_MEMORY_CHANGED');
