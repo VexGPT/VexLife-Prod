@@ -103,6 +103,7 @@ object VexLifeInferenceSessionAdmission {
 
     fun project(
         current: VexLifeInferenceCurrentState.Projection,
+        local: VexLifeModels.Projection,
         localRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         partner: VexLifePartnerModelsCurrentState.Projection,
     ): Projection {
@@ -119,6 +120,7 @@ object VexLifeInferenceSessionAdmission {
             VexLifeModelSourceProjection.SourceKind.LOCAL ->
                 local(
                     serving = serving,
+                    local = local,
                     evidence = localRuntimeEvidence,
                 )
 
@@ -132,6 +134,7 @@ object VexLifeInferenceSessionAdmission {
 
     private fun local(
         serving: VexLifeInferenceSelection.Coordinate,
+        local: VexLifeModels.Projection,
         evidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
     ): Projection {
         val currentEvidence =
@@ -140,10 +143,27 @@ object VexLifeInferenceSessionAdmission {
                     serving = serving,
                     reason = HoldReason.LOCAL_RUNTIME_EVIDENCE_MISSING,
                 )
+        val row =
+            local.models
+                .singleOrNull {
+                    it.handle ==
+                        serving.handle &&
+                        it.serving &&
+                        it.capabilities.modelRef ==
+                        serving.modelRef
+                }
+                ?: return held(
+                    serving = serving,
+                    reason = HoldReason.LOCAL_RUNTIME_IDENTITY_MISMATCH,
+                )
+        val capabilities =
+            row.capabilities
 
         if (
-            currentEvidence.modelRef !=
-            serving.modelRef
+            capabilities.runtime !=
+            VexLifeEffectiveModelCapabilities.RuntimeStanding.QUALIFIED_SERVING ||
+            capabilities.qualifiedRuntimeReceiptRef !=
+            currentEvidence.runtimeReceiptRef
         ) {
             return held(
                 serving = serving,
@@ -153,7 +173,7 @@ object VexLifeInferenceSessionAdmission {
 
         return qualified(
             serving = serving,
-            profileRef = currentEvidence.modelProfileRef,
+            profileRef = capabilities.profileRef,
             qualificationRef = currentEvidence.runtimeReceiptRef,
             contextWindowTokens = currentEvidence.contextWindowTokens,
         )
