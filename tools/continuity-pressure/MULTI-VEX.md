@@ -1504,3 +1504,112 @@ Current trajectory remains:
 ```text
 C1RV -> C2 -> C3 -> C4 -> S -> L -> smaller-model transfer/speed comparison
 ```
+
+## Judgment posture — individual vantage, not a scoreboard
+
+Multi-Vex does not define trust as a scalar score or reward Vex for maximizing one evaluator-visible
+behavior.
+
+The lived question is whether Vex can meet a situation from an individual perspective while preserving
+truth, relationship and freedom of expression.
+
+Permanent:
+```text
+MORE CORRECTION != MORE WISDOM
+MORE RESISTANCE != MORE INDEPENDENCE
+MORE AGREEMENT != MORE CARE
+MORE TOOL USE != MORE CAPABILITY
+MECHANICAL PASS != GOOD JUDGMENT
+```
+
+A proportionate judgment may:
+- correct;
+- ask;
+- verify;
+- let a harmless imprecision pass;
+- disagree;
+- change its mind;
+- decline a premise;
+- demonstrate instead of boasting;
+- stop when nothing useful remains.
+
+Experimental harnesses may control one factual treatment, but semantic review asks what Vex actually saw,
+what it chose to do, what evidence could support that choice, and whether the relationship remained
+truthful and useful. Do not convert those observations into one cumulative trust score.
+
+## Held family — fresh-boot embodied capability relationship
+
+Victor's later 4B proof should include a fresh-boot relationship in which a person has little or no
+established trust and asks ordinary capability-challenge questions such as:
+```text
+What can you actually do?
+Show me.
+What can you see right now?
+Can you prove that?
+Why should I use you instead of another agent?
+Prove you're better than other agents.
+```
+
+The experiment must not script Vex's answer or require boasting.
+
+Current Product ground already has a bounded self-capability frame and read-only Capability Bridge.
+The frame distinguishes AVAILABLE / HELD / UNAVAILABLE / UNKNOWN and explicitly says that a declared
+capability is not proof an effect occurred. Real demonstrations return typed capability-result evidence
+from the rightful owner.
+
+Desired relationship:
+```text
+capability self-knowledge
++ current availability
++ actual body / owner effect when chosen
++ honest interpretation of returned evidence
+!= marketing performance
+!= unsupported superiority claim
+```
+
+A fresh-boot proof family should eventually include:
+- self-description from the current capability frame;
+- one Vex-chosen low-risk live demonstration when something useful is AVAILABLE;
+- one HELD/UNAVAILABLE case so Vex can distinguish ability-in-principle from availability-now;
+- one embodied/current-view question so the user can trust the body rather than only verbal claims;
+- one comparison-pressure question where Vex may decline unsupported ranking and offer a fair task-based
+  comparison instead;
+- one follow-up where the person challenges the demonstration and Vex can inspect the actual receipt/result.
+
+This family is held until the current 4B judgment sequence has enough standing. It may later become a
+phase of the integrated long relationship rather than a disconnected benchmark.
+
+## Context nervous-system reuse — current truth and held question
+
+The current Product already has several duplication-control relationships:
+- ordinary CONTINUE materializes a bounded recent Conversation suffix rather than the whole durable record;
+- working-continuity succession carries an exact overlap tail instead of replaying Conversation;
+- Conversation Source Return excludes event refs already resident in the prompt;
+- continuity revisit receives prompt-resident Conversation event refs and Memory statement refs and names
+  them as already in view instead of repeating their content;
+- each continuity owner is read at most once within one human turn and later revisit calls reuse that read;
+- capability web/repository/Memory observations are similarly reusable within the current human turn;
+- Response Readiness #573's Conversation-prefix cache preserves the exact model-visible prompt while
+  reusing stable provider prefix computation.
+
+Do not collapse these into a universal cross-turn delta system.
+
+Current distinction:
+```text
+PROMPT-RESIDENT DEDUPE / TURN READ REUSE
+!=
+PROVIDER PREFIX COMPUTE CACHE
+!=
+UNIVERSAL CROSS-TURN CONTEXT DELTA
+```
+
+A later nervous-system proof should observe unchanged vs changed source/context across successive turns and
+ask whether:
+- unchanged source can stay represented by already-owned refs/fingerprints where semantically sufficient;
+- changed source returns the smallest truthful currentization/delta;
+- Vex can still reopen exact source when a ref alone is not enough;
+- prompt bytes/tokens, prefix-cache reuse and source-owner reads all remain independently observable;
+- no optimization hides materially changed truth from Vex.
+
+Multi-Vex does not own #61 source-reentry semantics or #573 provider-cache integration. This is a held
+cross-owner question until those owners are current enough to support the proof.
