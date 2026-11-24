@@ -38,6 +38,7 @@ object VexLifeInferenceSessionAdmission {
         PARTNER_CONNECTION_NOT_QUALIFIED,
         PARTNER_SUPPORT_NOT_LIVE_QUALIFIED,
         PARTNER_QUALIFICATION_RECEIPT_MISSING,
+        PARTNER_QUALIFICATION_CURRENTNESS_MISMATCH,
         PARTNER_PROFILE_IDENTITY_MISMATCH,
     }
 
@@ -295,6 +296,17 @@ object VexLifeInferenceSessionAdmission {
                     serving = serving,
                     reason = HoldReason.PARTNER_QUALIFICATION_RECEIPT_MISSING,
                 )
+        if (
+            offering.support.liveQualificationCredentialRef !=
+                configuredProvider.credentialRef ||
+            offering.support.liveQualificationAccountScope !=
+                configuredProvider.accountScope
+        ) {
+            return held(
+                serving = serving,
+                reason = HoldReason.PARTNER_QUALIFICATION_CURRENTNESS_MISMATCH,
+            )
+        }
         val profile =
             VexLifePartnerModelProfileCatalog.resolve(
                 providerRef = providerRef,
