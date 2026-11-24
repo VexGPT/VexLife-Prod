@@ -61,7 +61,12 @@ import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
+import vexlife.model.VexLifeInferenceCurrentState
+import vexlife.model.VexLifeInferenceSelection
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifePartnerModelInventory
+import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
@@ -69,6 +74,12 @@ import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
+import vexlife.partner.VexLifePartnerConnectionSettingsStore
+import vexlife.partner.VexLifePartnerCredentialCustody
+import vexlife.partner.VexLifePartnerDeterministicSupport
+import vexlife.partner.VexLifePartnerHostEffect
+import vexlife.partner.VexLifePartnerMacHostRealization
+import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -124,6 +135,7 @@ class VexLifeProdLocalService private constructor(
     private val servingRuntimeReceiptRef: () -> String,
     private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val partnerHostBindings: PartnerHostBindings?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -136,6 +148,11 @@ class VexLifeProdLocalService private constructor(
         ) -> VexLifeReleaseUpdates.ControlResult,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
+    internal data class PartnerHostBindings(
+        val credentials: VexLifePartnerCredentialCustody.ProtectedHostStore,
+        val executor: VexLifePartnerHostEffect.Executor,
+    )
+
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
@@ -249,6 +266,13 @@ class VexLifeProdLocalService private constructor(
             it.startObserving()
         }
 
+    private val partnerConnectionSettings =
+        VexLifePartnerConnectionSettingsStore(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+
     /** Settings → Models projects the current serving Session; runtime effects stay outside it. */
     private val models =
         VexLifeModels(
@@ -266,6 +290,119 @@ class VexLifeProdLocalService private constructor(
                     ),
                 ),
             modelSwitchRealization = modelSwitchRealization,
+        )
+
+    private fun partnerCoordinateOrNull(
+        coordinate: VexLifeInferenceSelection.Coordinate?,
+    ): VexLifePartnerModelInventory.Coordinate? =
+        coordinate
+            ?.takeIf {
+                it.sourceKind ==
+                    VexLifeModelSourceProjection.SourceKind.PARTNER
+            }
+            ?.let {
+                current ->
+                VexLifePartnerModelInventory.Coordinate(
+                    providerRef =
+                        requireNotNull(
+                            current.providerRef,
+                        ),
+                    modelRef = current.modelRef,
+                )
+            }
+
+    private fun currentPartnerModels(): VexLifePartnerModelsCurrentState.Projection {
+        val bindings =
+            partnerHostBindings
+                ?: return VexLifePartnerModelsCurrentState.Projection(
+                    configuredProviders = emptyList(),
+                    connectionByProfileRef = emptyMap(),
+                    offerings = emptyList(),
+                )
+        val currentServing =
+            models.partnerServing()
+        val base =
+            VexLifePartnerModelsCurrentState.project(
+                input =
+                    VexLifePartnerModelsCurrentState.Input(
+                        settings =
+                            partnerConnectionSettings.read(),
+                        support =
+                            VexLifePartnerDeterministicSupport.projections(),
+                        targeted =
+                            partnerCoordinateOrNull(
+                                models.stagedInferenceTarget(),
+                            ),
+                        serving =
+                            partnerCoordinateOrNull(
+                                currentServing?.coordinate,
+                            ),
+                    ),
+                host = bindings.credentials,
+            )
+
+        val serving =
+            currentServing
+                ?: return base
+        val providerState =
+            base.configuredProviders
+                .singleOrNull {
+                    it.providerRef ==
+                        serving.qualification.receipt.providerRef
+                }
+                ?: return base
+        val receipt =
+            serving.qualification.receipt
+        if (
+            providerState.credentialRef !=
+                receipt.credentialRef ||
+            providerState.accountScope !=
+                receipt.accountScope
+        ) {
+            return base
+        }
+
+        val handle =
+            serving.coordinate.handle
+        val qualified =
+            serving.qualification
+        return base.copy(
+            connectionByProfileRef =
+                base.connectionByProfileRef +
+                    (
+                        handle to
+                            qualified.connection
+                        ),
+            offerings =
+                base.offerings.map {
+                    offering ->
+                    if (
+                        offering.handle ==
+                        handle
+                    ) {
+                        offering.copy(
+                            connection =
+                                qualified.connection,
+                            support =
+                                qualified.support,
+                        )
+                    } else {
+                        offering
+                    }
+                },
+        )
+    }
+
+    private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection =
+        VexLifeInferenceCurrentState.project(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            local = models.projection(),
+            partner = currentPartnerModels(),
+            stagedTargetOrNull =
+                models.stagedInferenceTarget(),
         )
 
     private val privateCompletion =
@@ -465,6 +602,7 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String?,
         ): VexLifeProdLocalService {
             val visionRuntime =
                 visionRuntimeExecutablePathOrNull
@@ -551,6 +689,32 @@ class VexLifeProdLocalService private constructor(
                         }
                     },
                 )
+
+            val partnerHostBindings =
+                partnerHostExecutablePathOrNull
+                    ?.let {
+                        helperPath ->
+                        require(
+                            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                                vexlife.model.heretic.HereticRuntimeRealization.MacArm64,
+                        ) {
+                            "current Product source admits a packaged Partner helper only on macOS"
+                        }
+                        val plan =
+                            VexLifePartnerMacHostRealization.plan(
+                                helperPath,
+                            )
+                        val client =
+                            VexLifePartnerNativeHostClient(
+                                VexLifePartnerMacHostRealization.processHost(
+                                    plan,
+                                ),
+                            )
+                        PartnerHostBindings(
+                            credentials = client,
+                            executor = client,
+                        )
+                    }
 
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
@@ -730,6 +894,7 @@ class VexLifeProdLocalService private constructor(
                         .promptCacheEntryLimit
                 },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerHostBindings = partnerHostBindings,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
@@ -797,6 +962,7 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: (() -> String)? = null,
             servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerHostBindings: PartnerHostBindings? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -862,6 +1028,7 @@ class VexLifeProdLocalService private constructor(
                             setup.promptCacheEntryLimit
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerHostBindings = partnerHostBindings,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
@@ -900,6 +1067,7 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.promptCacheEntryLimit
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerHostBindings: PartnerHostBindings? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1009,6 +1177,7 @@ class VexLifeProdLocalService private constructor(
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
+                        partnerHostBindings = partnerHostBindings,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
@@ -1458,6 +1627,16 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ModelsPath -> {
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = models.projection())
+                }
+
+                VexLifeProdServiceContract.ModelsSourcesPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelsProjection(),
+                    )
                 }
 
                 VexLifeProdServiceContract.ModelsControlPath -> {
