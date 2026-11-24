@@ -890,6 +890,7 @@ class DirectTurnContextStore(
                 formedAt = canonical.formedAt,
             )
         }
+    }
 
     private fun validateTurnInputs(
         request: DirectConversationStore.Event,
