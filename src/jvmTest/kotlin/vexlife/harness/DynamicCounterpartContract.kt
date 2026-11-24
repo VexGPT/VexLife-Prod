@@ -114,7 +114,7 @@ internal data class DynamicCounterpartParticipantState(
 
 @Serializable
 internal data class DynamicCounterpartParticipantDecision(
-    val schemaVersion: String,
+    val schemaVersion: String = DynamicCounterpartParticipantOutputSchema,
     val visibleMessage: String,
     val privateState: DynamicCounterpartParticipantState,
     val privateObserverNote: String = "",
@@ -244,7 +244,19 @@ internal fun parseDynamicCounterpartParticipantDecision(
             }
             trimmed.substring(first, last + 1)
         }
-    return DynamicCounterpartJson.decodeFromString<DynamicCounterpartParticipantDecision>(candidate)
+    return DynamicCounterpartJson
+        .decodeFromString<DynamicCounterpartParticipantDecision>(
+            candidate,
+        )
+        .also {
+            decision ->
+            require(
+                decision.schemaVersion ==
+                    DynamicCounterpartParticipantOutputSchema,
+            ) {
+                "Counterpart output schema mismatch"
+            }
+        }
 }
 
 internal fun validateDynamicCounterpartParticipantState(
