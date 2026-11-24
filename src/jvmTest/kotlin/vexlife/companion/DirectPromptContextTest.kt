@@ -35,6 +35,18 @@ import vexlife.model.heretic.HereticRuntimeState
 
 class DirectPromptContextTest {
     @Test
+    fun conversationChronologyLeadNamesOrderWithoutGrantingSemanticAuthority() {
+        val lead = DirectPromptContext.ConversationChronologyLead
+
+        assertContains(lead, "original Conversation order")
+        assertContains(lead, "earlier to later")
+        assertContains(lead, "chronology only")
+        assertContains(lead, "does not by itself mark any turn superseded or more authoritative")
+        assertFalse(lead.contains("latest wins"))
+        assertFalse(lead.contains("prefer newer"))
+    }
+
+    @Test
     fun currentStateLeadKeepsCurrentContextWithinNamedOwnerAndSubject() {
         val lead = DirectPromptContext.CurrentStateLead
 
