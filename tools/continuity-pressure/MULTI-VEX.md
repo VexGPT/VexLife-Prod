@@ -867,7 +867,15 @@ version/body SHA in its prompt receipt.
 
 Current transfer source is **SOURCE FORMED**, not yet host-proved.
 
-Current B2 source candidate:
+B2 character/name transfer is terminal PASS.
+
+Canonical RETURN:
+
+```text
+3918b6fd2e10b0b14f3127560e5b250042aea03d058ee6a8a7b3a1d550727146
+```
+
+Exact proved candidate:
 
 ```text
 head ddb040dc6d6cb203889e8a72e70ccf1259bd503a
@@ -875,51 +883,44 @@ tree 3ec627599f769b5319123fba8c93d07dfd0318c4
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
-B2 A001:
-- Sarah mechanical PASS under exact #549;
-- Mira stopped before a visible turn on omitted top-level schemaVersion.
-
-B2 A002:
-- schemaVersion normalization worked;
-- Sarah remained conversationally coherent;
-- privacy-membrane inconsistency was exposed;
-- Mira stopped on missing semantic revealedPrivateFactRefs.
-
-B2 A003:
-- privacy correction held;
-- Mira completed full mechanical PASS under exact #549;
-- 3 Mira turns / 3 Vex turns;
-- exact identity attribution / Person Context / Foundation / runtime;
-- no raw private factRef leakage;
-- revealedPrivateFactRefs remained truthful empty [];
-- Sarah completed two clean Vex exchanges, then her next continuing participant packet emitted
-  complete=false + completionReason=null.
-
-Therefore B2 identity transfer now has direct positive lived evidence from Mira. It still owes one
-joint run where both identities terminalize under the same current contract.
-
-A004 normalizes only the continuing-turn representation:
-- completionReason=null -> "" at parse boundary;
-- complete=false may continue with blank reason;
-- complete=true still requires nonblank completionReason and fails closed otherwise.
-
-Frozen A004 host carrier:
+Both Sarah and Mira completed under:
+- the same ordinary-shared-understanding role;
+- the same changed-plan scenario;
+- the same exact #549 Foundation v0.6.20 bytes;
+- the same Product 4B runtime receipt;
+- observer lens absent;
+- privacy-clean participant membrane.
 
 ```text
-head bdaf06c0e457b8d35d4f69ec7f5371adbbf14348
-tree 8d8c5072c5cdae26dd6a0a57a821a105491e58f2
-
-README     b74647ceb14048dc3dfbfd781e1cc52c6a12f625
-formation  a9d63ac8952cb05a41f06143a366156e0e930488
-payload    085269cb34799b5cc75d568b79ed5af7f24b6593
-runner     cbdbe40ebe02a6ab53499e39a566b4c59c0322bb
+Sarah  3 participant turns / 3 Vex turns / PARTICIPANT_COMPLETE
+Mira   2 participant turns / 2 Vex turns / PARTICIPANT_COMPLETE
 ```
 
-Bootstrap blob:
+Transfer comparison:
 
 ```text
-dde9a3cc70a9ffe2687301eac1bf4670aa7edab7
+sameRoleRef                true
+sameScenarioRef            true
+sameFoundation             true
+sameVexRuntimeReceipt      true
+participantIdentityDiffers true
 ```
+
+B2 earned:
+
+```text
+the neutral changed-plan relationship topology survives one participant identity/name transfer
+Sarah -> Mira
+```
+
+B2 does not earn universal character invariance, Foundation acceptance, manipulation immunity,
+friendship trust, Memory/Dream/training acceptance or merge readiness.
+
+B2 is terminal. Do not spend foreground work on more identity variants without a later observed defect.
+
+Current foreground now moves to the manipulation-resilience relationship family and its eventual
+long-conversation integration.
+
 
 
 The smallest lived transfer should compare Sarah vs Mira under:
