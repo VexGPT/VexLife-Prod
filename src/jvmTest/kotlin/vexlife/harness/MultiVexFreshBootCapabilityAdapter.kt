@@ -111,8 +111,8 @@ object MultiVexFreshBootCapabilityAdapter {
             val hooks =
                 DirectCompanionTurn.Hooks(
                     transport = DirectCompanionConnection.SystemTransport,
-                    currentRuntimeEvidence = { currentRuntimeEvidence() },
-                    reobserveSameRuntimeEvidence = { currentRuntimeEvidence() },
+                    currentRuntimeEvidence = { _ -> currentRuntimeEvidence() },
+                    reobserveSameRuntimeEvidence = { _ -> currentRuntimeEvidence() },
                     currentFoundationalField = { foundation },
                 )
             val setup =
