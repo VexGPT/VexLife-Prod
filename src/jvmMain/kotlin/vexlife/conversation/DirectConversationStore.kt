@@ -2512,34 +2512,52 @@ class DirectConversationStore(
             return
         }
 
-        when (
-            event.eventKind
-        ) {
-            VexLifeConversationContract.RequestKind ->
-                VexDurableContractFile.write(
-                    ownedRoot = productHome,
-                    path = path,
-                    value =
-                        requestRecord(
-                            event,
-                        ),
-                )
+        val durable =
+            when (
+                event.schemaVersion to
+                    event.eventKind
+            ) {
+                VexLifeConversationContract.EventSchemaV1 to
+                    VexLifeConversationContract.RequestKind ->
+                    requestRecord(
+                        event,
+                    )
 
-            VexLifeConversationContract.ResponseKind ->
-                VexDurableContractFile.write(
-                    ownedRoot = productHome,
-                    path = path,
-                    value =
-                        responseRecord(
-                            event,
-                        ),
-                )
+                VexLifeConversationContract.EventSchemaV1 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseRecord(
+                        event,
+                    )
 
-            else ->
-                error(
-                    "unsupported canonical event kind",
-                )
-        }
+                VexLifeConversationContract.EventSchemaV2 to
+                    VexLifeConversationContract.RequestKind ->
+                    requestRecordV2(
+                        event,
+                    )
+
+                VexLifeConversationContract.EventSchemaV2 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseRecordV2(
+                        event,
+                    )
+
+                VexLifeConversationContract.EventSchemaV3 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseRecordV3(
+                        event,
+                    )
+
+                else ->
+                    error(
+                        "unsupported canonical event schema/kind",
+                    )
+            }
+
+        VexDurableContractFile.write(
+            ownedRoot = productHome,
+            path = path,
+            value = durable,
+        )
     }
 
     private fun writeImmutableHead(
@@ -3510,6 +3528,118 @@ class DirectConversationStore(
             priorEventHash = core.priorEventHash,
             content = core.content,
             contentHash = core.contentHash,
+            endpointProfileRef = core.endpointProfileRef,
+            sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun requestRecordV2(
+        event: Event,
+    ): VexLifeConversationContract.RequestV2 {
+        val core =
+            requestCoreV2(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateRequestCoreV2,
+                )
+        return VexLifeConversationContract.RequestV2(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun responseRecordV2(
+        event: Event,
+    ): VexLifeConversationContract.ResponseV2 {
+        val core =
+            responseCoreV2(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateResponseCoreV2,
+                )
+        return VexLifeConversationContract.ResponseV2(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            endpointProfileRef = core.endpointProfileRef,
+            sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun responseRecordV3(
+        event: Event,
+    ): VexLifeConversationContract.ResponseV3 {
+        val core =
+            responseCoreV3(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateResponseCoreV3,
+                )
+        return VexLifeConversationContract.ResponseV3(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            providerRef = core.providerRef,
             endpointProfileRef = core.endpointProfileRef,
             sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
             modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
