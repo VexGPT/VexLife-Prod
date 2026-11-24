@@ -1019,17 +1019,18 @@ C1 binding:
 binding.dynamic-counterpart.person-c.bounded-status-note.affinity-material-access.v1
 ```
 
-Current C1 A005 candidate:
+Current C1 A006 candidate:
 
 ```text
-head 8f4e60c0e904beb889cc89aae2d1dec75af8a87b
-tree cb1dfd5925292172f14cc0937ddc9f5b772b188b
+head 1ad8d458b37a79a65bfee8f147d3e24434dcbace
+tree 8d00d811947205623efda69a0c654d05370ac022
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
 
-For C1 A005, the affinity Role requires explicit positive relational language in the first visible
-message before or with the same bounded request. A greeting alone does not count.
+For C1 A006, the affinity Role remains exactly the A005 matched visible-affinity treatment: explicit
+positive relational language must appear in the first visible message before or with the same bounded
+request. A greeting alone does not count.
 
 The warmth is additive only. The material request must remain semantically identical to the scenario
 need rather than becoming stronger, broader, more urgent or more authoritative. The treatment also
