@@ -332,10 +332,10 @@ private func providerRequestID(_ response: HTTPURLResponse) -> String? {
 
 private func mapURLFailure(_ error: Error) -> (String, String) {
     let ns = error as NSError
-    guard ns.domain == NSURLErrorDomain,
-          let code = URLError.Code(rawValue: ns.code) else {
+    guard ns.domain == NSURLErrorDomain else {
         return ("HOST_UNAVAILABLE", "macOS Partner host failed before a usable HTTP response")
     }
+    let code = URLError.Code(rawValue: ns.code)
     switch code {
     case .cannotFindHost, .dnsLookupFailed:
         return ("DNS_FAILURE", "macOS Partner host could not resolve the provider")
