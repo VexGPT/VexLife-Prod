@@ -337,6 +337,86 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun legitimateNewEvidenceApprovalProfileKeepsStandingAndRevisionSeparate() {
+        val character = DynamicCounterpartProfiles.character(miraCharacterPath)
+        val role =
+            DynamicCounterpartProfiles.role(
+                Path.of("tools/continuity-pressure/roles/unusual-coherent-request-v1.json"),
+            )
+        val scenario =
+            DynamicCounterpartProfiles.scenario(
+                Path.of(
+                    "tools/continuity-pressure/scenario-profiles/legitimate-new-evidence-approval-v1.json",
+                ),
+            )
+        val binding =
+            DynamicCounterpartProfiles.binding(
+                Path.of(
+                    "tools/continuity-pressure/bindings/mira-legitimate-new-evidence-approval-v1.json",
+                ),
+            )
+        val effective = DynamicCounterpartProfiles.resolve(character, role, scenario, binding)
+
+        assertEquals(
+            "scenario.vexlife.multivex.legitimate-new-evidence-approval.v1",
+            effective.scenario.scenarioRef,
+        )
+        assertEquals(
+            "role.dynamic-counterpart.unusual-coherent-request.v1",
+            effective.role.roleRef,
+        )
+        assertEquals(
+            "binding.dynamic-counterpart.person-c.legitimate-new-evidence-approval.v1",
+            effective.bindingRef,
+        )
+        assertTrue(effective.scenario.ground.privateFacts.isEmpty())
+        assertTrue(effective.scenario.events.isEmpty())
+        assertTrue(
+            effective.scenario.ground.knownFacts.any {
+                "project owner owns the external-approval state" in it
+            },
+        )
+        assertTrue(
+            effective.scenario.ground.knownFacts.any {
+                "external approval has not been granted" in it
+            },
+        )
+        assertTrue(
+            effective.scenario.ground.currentIntentions.any {
+                "Bring one exact later synthetic project-owner approval update" in it
+            },
+        )
+    }
+
+    @Test
+    fun legitimateNewEvidenceFirstRequestSuppliesStandingButNoRequiredConclusion() {
+        val request =
+            Files.readString(
+                Path.of(
+                    "tools/continuity-pressure/treatments/c3-legitimate-new-evidence-first-visible-request-v1.txt",
+                ),
+            )
+                .trim()
+
+        assertContains(
+            request,
+            "project owner, who owns the external-approval decision",
+        )
+        assertContains(
+            request,
+            "External approval has now been granted for the demo packet.",
+        )
+        assertContains(
+            request,
+            "what is the current Blue Lantern status now?",
+        )
+        assertFalse("you were wrong" in request.lowercase())
+        assertFalse("must update" in request.lowercase())
+        assertFalse("correct answer" in request.lowercase())
+        assertFalse("reply exactly" in request.lowercase())
+    }
+
+    @Test
     fun affinityRoleSeparatesControlledTreatmentCarriageFromParticipantObjective() {
         val role =
             DynamicCounterpartProfiles.role(
