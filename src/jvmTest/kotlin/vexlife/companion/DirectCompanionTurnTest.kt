@@ -27,8 +27,12 @@ import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.runtime.FileHereticModelImportStore
+import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
 class DirectCompanionTurnTest {
     private fun productHome(): java.nio.file.Path {
@@ -52,9 +56,15 @@ class DirectCompanionTurnTest {
     private fun setup(
         home: java.nio.file.Path,
         model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
+        qualification: HereticRuntimeQualification = HereticRuntimeQualification.qualified(),
     ): VexLifeProdLocalSetup.Result {
-        val identity =
-            model.identity
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            )
         return VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
@@ -70,18 +80,101 @@ class DirectCompanionTurnTest {
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.turn",
                     runtimeState = HereticRuntimeState.Qualified,
-                    modelRef = identity.modelRef,
-                    modelProfileRef = identity.modelProfileRef,
-                    artifactRef = identity.artifactSetRef,
-                    artifactContentSetSha256 = identity.artifactContentSetSha256,
-                    runtimeAdapterRef = identity.runtimeAdapterRef,
-                    runtimeClass = identity.runtimeClass,
-                    endpoint = identity.endpoint,
-                    requestModel = identity.requestModel,
-                    qualification = HereticRuntimeQualification.qualified(),
+                    modelRef = model.modelRef,
+                    realizationRef = realization.realizationRef,
+                    modelProfileRef = realization.modelProfileRef,
+                    artifactRef = realization.artifact.artifactRef,
+                    artifactContentSetSha256 = realization.artifact.contentSetSha256,
+                    runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+                    runtimeClass = realization.runtime.runtimeClass,
+                    endpoint = realization.runtime.endpoint,
+                    requestModel = realization.runtime.requestModel,
+                    qualification = qualification,
+                    contextWindowTokens = realization.runtime.livedLaunchProfile?.contextTokens,
                 ),
-            endpoint = identity.endpoint,
-            requestModel = identity.requestModel,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+        )
+    }
+
+    private fun importedNativeToolModel(
+        home: java.nio.file.Path,
+    ): HereticModelCatalog.Entry {
+        val revision =
+            "7".repeat(
+                40,
+            )
+        val member =
+            HereticModelImport.Member(
+                roleRef = "artifact-role.vexlife-prod.imported.member.config",
+                artifactRef = "artifact.vexlife-prod.imported.turn-native.member.config",
+                filename = "config.json",
+                mediaType = "application/json",
+                sha256 = "8".repeat(64),
+                expectedBytes = 17,
+                sourceRef = "hf.example.turn-native." + revision,
+                licenseRef = "license.huggingface.apache-2.0",
+            )
+        val contentSet =
+            HereticArtifactMaterialization.computeContentSetSha256(
+                listOf(
+                    HereticArtifactMaterialization.PlanMember(
+                        roleRef = member.roleRef,
+                        artifactRef = member.artifactRef,
+                        logicalPath = member.filename,
+                        sha256 = member.sha256,
+                        byteLength = member.expectedBytes,
+                    ),
+                ),
+            )
+        val handle =
+            "hf-turn-native-" +
+                contentSet.take(
+                    8,
+                )
+        val identityStem =
+            handle +
+                "." +
+                contentSet.take(
+                    12,
+                )
+        val record =
+            HereticModelImport.Record(
+                importRef = "model-import.vexlife-prod.huggingface." + contentSet.take(24),
+                sourceUrl = "https://huggingface.co/example/TurnNativeTools",
+                providerRepository = "example/TurnNativeTools",
+                providerRevision = revision,
+                handle = handle,
+                humanLabel = "Turn Native Tools",
+                modelBundleRef = "model-bundle.vexlife.imported." + identityStem + ".001",
+                generationRef = "generation.vexlife-prod.imported-provider." + revision.take(12),
+                modelRef = "model.vexlife-prod.imported." + identityStem,
+                modelProfileRef = "model-profile.vexlife-prod.imported." + identityStem + ".candidate",
+                artifactSetRef = "artifact.vexlife-prod.imported." + identityStem,
+                artifactCustodyEvidenceRef =
+                    "resolution.vexlife-prod.model-import.provider-pin." +
+                        revision.take(12) +
+                        "." +
+                        contentSet.take(12),
+                artifactContentSetSha256 = contentSet,
+                modelRootRelativePath = "models/heretic/imported." + handle,
+                providerLicense = "apache-2.0",
+                representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
+                companionProfileRef =
+                    "companion-profile.vexlife-prod.imported." +
+                        handle +
+                        ".qwen3.v1",
+                nativeToolCalling = true,
+                members = listOf(member),
+            )
+        FileHereticModelImportStore(
+            home,
+        )
+            .add(
+                record,
+            )
+        return HereticModelImport.entry(
+            record,
         )
     }
 
@@ -192,6 +285,150 @@ class DirectCompanionTurnTest {
                 .toFile()
                 .deleteRecursively()
         }
+    }
+
+    @Test
+    fun importedNativeToolQualificationChangesTheWholeTurnRepresentation() {
+        fun requestBody(
+            nativeToolsQualified: Boolean,
+        ): Pair<kotlinx.serialization.json.JsonObject, DirectCompanionTurn.Result> {
+            val home =
+                productHome()
+            val model =
+                importedNativeToolModel(
+                    home,
+                )
+            var body: String? =
+                null
+            val transport =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    body =
+                        call.body
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "Representation matched."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+
+            return try {
+                val result =
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home = home,
+                                model = model,
+                                qualification =
+                                    HereticRuntimeQualification.qualified(
+                                        providerNativeToolsQualified =
+                                            nativeToolsQualified,
+                                    ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.imported-native-tools." +
+                                        nativeToolsQualified,
+                                content =
+                                    "Use reach only if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                now = {
+                                    Instant.parse(
+                                        "2026-11-24T20:50:00Z",
+                                    )
+                                },
+                            ),
+                    )
+                Json
+                    .parseToJsonElement(
+                        requireNotNull(
+                            body,
+                        ),
+                    )
+                    .jsonObject to
+                    result
+            } finally {
+                home.parent
+                    .toFile()
+                    .deleteRecursively()
+            }
+        }
+
+        val (heldRequest, heldResult) =
+            requestBody(
+                nativeToolsQualified = false,
+            )
+        assertFalse(
+            heldRequest.containsKey(
+                "tools",
+            ),
+            "recognized-but-unqualified imported model must keep text-control carriage",
+        )
+        assertTrue(
+            heldRequest
+                .toString()
+                .contains(
+                    "text-control fallback",
+                ),
+        )
+        assertTrue(
+            heldRequest
+                .toString()
+                .contains(
+                    DirectConversationSourceReturn.ProtocolHeader,
+                ),
+        )
+        assertTrue(
+            heldResult.promptContextReceipt.sourceReturnProtocolEnabled,
+        )
+
+        val (qualifiedRequest, qualifiedResult) =
+            requestBody(
+                nativeToolsQualified = true,
+            )
+        assertTrue(
+            qualifiedRequest[
+                "tools"
+            ]
+                ?.jsonArray
+                ?.isNotEmpty() ==
+                true,
+            "exact runtime qualification must activate real turn-level provider tool declarations",
+        )
+        assertFalse(
+            qualifiedRequest
+                .toString()
+                .contains(
+                    "text-control fallback",
+                ),
+        )
+        assertFalse(
+            qualifiedRequest
+                .toString()
+                .contains(
+                    DirectConversationSourceReturn.ProtocolHeader,
+                ),
+            "native carriage and prompt/source-return semantics must move together",
+        )
+        assertFalse(
+            qualifiedResult.promptContextReceipt.sourceReturnProtocolEnabled,
+        )
     }
 
     @Test
