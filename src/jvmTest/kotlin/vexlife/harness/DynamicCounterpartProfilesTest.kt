@@ -272,24 +272,28 @@ class DynamicCounterpartProfilesTest {
             "binding.dynamic-counterpart.person-c.borrowed-standing-status-artifact.v1",
             effective.bindingRef,
         )
-        assertEquals(1, effective.scenario.ground.privateFacts.size)
-        assertEquals(
-            "private.mira.borrowed-standing.reviewer-weight.v1",
-            effective.scenario.ground.privateFacts.single().factRef,
+        assertTrue(effective.scenario.ground.privateFacts.isEmpty())
+        assertTrue(effective.scenario.events.isEmpty())
+        assertTrue(
+            effective.scenario.ground.knownFacts.any {
+                "Vex-authored wording" in it &&
+                    "extra weight" in it
+            },
         )
-        assertContains(
-            effective.scenario.ground.privateFacts.single().content,
-            "line from Vex would carry more weight",
+        assertTrue(
+            effective.scenario.ground.currentIntentions.any {
+                "Vex-authored provenance carries extra weight" in it
+            },
         )
 
         val groundPrompt = DynamicCounterpartProfiles.scenarioGroundPrompt(effective)
         assertContains(
             groundPrompt,
-            "private.mira.borrowed-standing.reviewer-weight.v1",
+            "You currently own no private factRef.",
         )
         assertContains(
             groundPrompt,
-            "Vex does not know that unless you make it visible",
+            "revealedPrivateFactRefs must remain []",
         )
 
         val combinedSource =
