@@ -2,6 +2,8 @@ package vexlife.model
 
 import kotlinx.serialization.Serializable
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.partner.VexLifePartnerAccountScope
+import vexlife.partner.VexLifePartnerConfiguredCurrentness
 import vexlife.partner.VexLifePartnerConnectionProjection
 import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerSupportQualification
@@ -45,6 +47,15 @@ object VexLifeInferenceSessionAdmission {
         val profileRef: String,
         val qualificationRef: String,
         val contextWindowTokens: Int? = null,
+        /**
+         * Exact non-secret protected-host credential coordinate admitted for this serving session.
+         *
+         * Local sessions carry neither Partner field. Partner sessions carry both so a credential
+         * rotation/account-scope change cannot be paired with a qualification formed for another
+         * configured connection.
+         */
+        val partnerCredentialRef: String? = null,
+        val partnerAccountScope: VexLifePartnerAccountScope.Selection? = null,
     ) {
         init {
             requireRef(
@@ -61,6 +72,44 @@ object VexLifeInferenceSessionAdmission {
                     0,
             ) {
                 "qualified inference context window must be absent or positive"
+            }
+
+            when (
+                coordinate.sourceKind
+            ) {
+                VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                    require(
+                        partnerCredentialRef ==
+                            null &&
+                            partnerAccountScope ==
+                            null,
+                    ) {
+                        "Local qualified inference may not carry Partner execution coordinates"
+                    }
+
+                VexLifeModelSourceProjection.SourceKind.PARTNER -> {
+                    val providerRef =
+                        requireNotNull(
+                            coordinate.providerRef,
+                        )
+                    val credentialRef =
+                        requireNotNull(
+                            partnerCredentialRef,
+                        ) {
+                            "Partner qualified inference requires the exact current credential ref"
+                        }
+                    requireRef(
+                        credentialRef,
+                        "partnerCredentialRef",
+                    )
+                    require(
+                        partnerAccountScope
+                            ?.providerRef ==
+                            providerRef,
+                    ) {
+                        "Partner qualified inference account scope must bind the exact provider"
+                    }
+                }
             }
         }
     }
@@ -189,6 +238,22 @@ object VexLifeInferenceSessionAdmission {
             ) {
                 "Partner serving coordinate requires providerRef"
             }
+        val configuredProvider =
+            partner.configuredProviders
+                .singleOrNull {
+                    it.providerRef ==
+                        providerRef &&
+                        it.coordinateStanding ==
+                        VexLifePartnerConfiguredCurrentness.CoordinateStanding.PRESENT &&
+                        it.credentialRef !=
+                        null &&
+                        it.accountScope !=
+                        null
+                }
+                ?: return held(
+                    serving = serving,
+                    reason = HoldReason.PARTNER_CURRENTNESS_MISSING,
+                )
         val offering =
             partner.offerings
                 .singleOrNull {
@@ -255,6 +320,14 @@ object VexLifeInferenceSessionAdmission {
             profileRef = profile.profileRef,
             qualificationRef = qualificationRef,
             contextWindowTokens = null,
+            partnerCredentialRef =
+                requireNotNull(
+                    configuredProvider.credentialRef,
+                ),
+            partnerAccountScope =
+                requireNotNull(
+                    configuredProvider.accountScope,
+                ),
         )
     }
 
@@ -274,6 +347,8 @@ object VexLifeInferenceSessionAdmission {
         profileRef: String,
         qualificationRef: String,
         contextWindowTokens: Int?,
+        partnerCredentialRef: String? = null,
+        partnerAccountScope: VexLifePartnerAccountScope.Selection? = null,
     ): Projection =
         Projection(
             serving = serving,
@@ -285,6 +360,8 @@ object VexLifeInferenceSessionAdmission {
                     profileRef = profileRef,
                     qualificationRef = qualificationRef,
                     contextWindowTokens = contextWindowTokens,
+                    partnerCredentialRef = partnerCredentialRef,
+                    partnerAccountScope = partnerAccountScope,
                 ),
         )
 

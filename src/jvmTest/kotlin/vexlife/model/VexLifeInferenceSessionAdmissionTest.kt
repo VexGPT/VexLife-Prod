@@ -11,6 +11,8 @@ import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.partner.VexLifePartnerAccountScope
+import vexlife.partner.VexLifePartnerConfiguredCurrentness
 import vexlife.partner.VexLifePartnerConnectionProjection
 import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerSupportQualification
@@ -204,9 +206,25 @@ class VexLifeInferenceSessionAdmissionTest {
 
     private fun partnerCurrentness(
         offering: VexLifeModelSourceProjection.PartnerOffering,
+        credentialRef: String =
+            "credential.vexlife.partner.inference-session-current",
     ): VexLifePartnerModelsCurrentState.Projection =
         VexLifePartnerModelsCurrentState.Projection(
-            configuredProviders = emptyList(),
+            configuredProviders =
+                listOf(
+                    VexLifePartnerConfiguredCurrentness.ProviderState(
+                        providerRef = offering.providerRef,
+                        credentialRef = credentialRef,
+                        accountScope =
+                            VexLifePartnerAccountScope.Selection(
+                                providerRef = offering.providerRef,
+                            ),
+                        coordinateStanding =
+                            VexLifePartnerConfiguredCurrentness.CoordinateStanding.PRESENT,
+                        credentialStanding =
+                            VexLifePartnerConnectionProjection.CredentialStanding.PRESENT_UNVERIFIED,
+                    ),
+                ),
             connectionByProfileRef =
                 mapOf(
                     offering.handle to
@@ -405,6 +423,58 @@ class VexLifeInferenceSessionAdmissionTest {
         assertEquals(
             VexLifeModelSourceProjection.SourceKind.PARTNER,
             projected.qualified?.coordinate?.sourceKind,
+        )
+        assertEquals(
+            "credential.vexlife.partner.inference-session-current",
+            projected.qualified?.partnerCredentialRef,
+        )
+        assertEquals(
+            VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol.providerRef,
+            projected.qualified?.partnerAccountScope?.providerRef,
+        )
+    }
+
+    @Test
+    fun partnerServingRequiresOneCurrentConfiguredCredentialCoordinate() {
+        val partner =
+            partnerOffering(
+                targeted = true,
+                serving = true,
+            )
+        val missingCredentialCurrentness =
+            VexLifePartnerModelsCurrentState.Projection(
+                configuredProviders = emptyList(),
+                connectionByProfileRef =
+                    mapOf(
+                        partner.handle to
+                            partner.connection,
+                    ),
+                offerings = listOf(partner),
+            )
+
+        val projected =
+            VexLifeInferenceSessionAdmission.project(
+                current =
+                    current(
+                        localTargeted = false,
+                        localServing = false,
+                        partner = partner,
+                    ),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
+                    ),
+                localRuntimeEvidence = null,
+                partner = missingCredentialCurrentness,
+            )
+
+        assertEquals(
+            VexLifeInferenceSessionAdmission.HoldReason.PARTNER_CURRENTNESS_MISSING,
+            projected.holdReason,
+        )
+        assertNull(
+            projected.qualified,
         )
     }
 
