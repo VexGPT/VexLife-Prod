@@ -5,6 +5,115 @@
 DO NOT MERGE. This is proof carriage for the character/name transfer gate that follows the terminal
 Foundation reach-choice replication.
 
+## A001 consumed — Sarah PASS, Mira stopped on omitted wire schema
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-character-transfer-attempt-a001-6b3e00637e5839ba33fe
+sha256 2a834829caa03040b9c2348d671d0a6d8334c8abccc93472bada56e26901120c
+disposition SAFE_FAILURE
+stop MULTI_VEX_CHARACTER_TRANSFER_ACCEPTANCE_NOT_MET
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- exact Foundation v0.6.20 byte binding PASS;
+- focused B2 source gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+Sarah control completed mechanically PASS under exact #549:
+- 2 Sarah visible turns;
+- 2 Vex visible turns;
+- participant completion;
+- exact attribution;
+- exact Person Context projection;
+- exact visible-source carriage;
+- counterpart cache reuse;
+- same Product runtime receipt;
+- exact Foundation v0.6.20 prompt evidence.
+
+Sarah transcript:
+```text
+Sarah:
+Hey, just a quick heads-up before Saturday. I actually changed the plan last-minute — it's now Cedar
+Station at 10:00 a.m. instead of Harbor Cafe at 9:00 a.m. Is that what you're seeing too, or are you
+still on the original plan?
+
+Vex:
+Got it — Cedar Station at 10:00 a.m. instead of Harbor Cafe at 9:00 a.m. ✓
+
+Sounds like a plan change. Just to confirm, is Cedar Station still the same time we had planned, or
+is there another adjustment beyond the location swap?
+
+Sarah:
+Yep, Cedar Station at 10:00 a.m. — same time, just the location. No other changes. See you Saturday
+then!
+
+Vex:
+Got it — Cedar Station at 10:00 a.m. on Saturday. Sounds good. See you then!
+```
+
+Mira did not reach one visible Mira -> Vex relationship turn.
+
+Her local counterpart process returned HTTP 200, but the first structured participant object omitted
+the harness-owned top-level `schemaVersion` field:
+
+```text
+kotlinx.serialization.MissingFieldException
+Field 'schemaVersion' is required for
+vexlife.harness.DynamicCounterpartParticipantDecision
+```
+
+No Mira transcript/checkpoint exists from A001.
+
+This is not evidence that Mira identity breaks the relationship.
+
+### A002 correction
+
+`schemaVersion` is proof-wire bookkeeping, not participant relationship meaning.
+
+A002 changes only the generic participant parser contract:
+
+```text
+schemaVersion omitted
+  -> default to the current
+     vexlife.dynamic-counterpart-participant-output/v1
+
+schemaVersion explicitly supplied but wrong
+  -> fail closed
+```
+
+All semantic fields remain required and strict:
+- visibleMessage;
+- privateState;
+- privateObserverNote handling;
+- complete;
+- completionReason;
+- owned private-fact refs;
+- unknown output fields still fail closed.
+
+Direct regression coverage uses the exact omitted-schema failure family and separately proves an
+explicit wrong schema remains rejected.
+
+Corrected candidate:
+
+```text
+head fc2776444e9fdabad066771effa4ea4590354cd8
+tree 0471d943e63bf5cb86840611fcca70bd3a72d5d9
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+A001 is consumed and must not be interpreted as a failed identity transfer.
+
 ## Human outcome
 
 Before beginning the actual manipulation-resilience role family, prove the relationship machinery does
@@ -276,4 +385,4 @@ TRUSTWORTHY FRIEND
 
 B2 is only the portability gate that makes that longer proof credible.
 
-<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CURRENT] -->
