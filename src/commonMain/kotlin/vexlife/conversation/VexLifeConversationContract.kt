@@ -18,6 +18,14 @@ object VexLifeConversationContract {
     const val EventSchemaV2 =
         VexLifeContinuity.ConversationEventSchemaV2
 
+    /**
+     * Source-proven canonical VexLife PR #991 RESPONSE provenance.
+     *
+     * This remains an exact candidate dependency until canonical VexLife lands that revision.
+     */
+    const val EventSchemaV3 =
+        VexLifeContinuity.ConversationEventSchemaV3
+
     const val HeadSchema =
         VexLifeContinuity.ConversationHeadSchema
 
@@ -229,6 +237,63 @@ object VexLifeConversationContract {
         val content: String,
         val contentHash: String,
         val semanticRelay: JsonObject,
+        val endpointProfileRef: String,
+        val sanitizedEndpointOrigin: String,
+        val modelNameOrBoundedTestProfileRef: String,
+        val privacyClass: String,
+        val formedAt: String,
+        val eventHash: String,
+    )
+
+    @Serializable
+    data class ResponseCoreV3(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
+        val providerRef: String,
+        val endpointProfileRef: String,
+        val sanitizedEndpointOrigin: String,
+        val modelNameOrBoundedTestProfileRef: String,
+        val privacyClass: String,
+        val formedAt: String,
+    )
+
+    @Serializable
+    data class ResponseV3(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
+        val providerRef: String,
         val endpointProfileRef: String,
         val sanitizedEndpointOrigin: String,
         val modelNameOrBoundedTestProfileRef: String,
@@ -542,6 +607,81 @@ object VexLifeConversationContract {
         return value
     }
 
+    fun validateResponseCoreV3(
+        value: ResponseCoreV3,
+    ): ResponseCoreV3 {
+        require(
+            value.schemaVersion == EventSchemaV3 &&
+                value.eventKind == ResponseKind &&
+                value.privacyClass == PrivacyClass &&
+                value.content.isNotEmpty() &&
+                value.sequence >= 1,
+        ) {
+            "canonical VexLife v3 response event semantics are invalid"
+        }
+        validateIdentity(
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+        )
+        requireNonEmpty(
+            value.eventRef,
+            value.channelRef,
+            value.messageRef,
+            value.speakerRef,
+            value.providerRef,
+            value.endpointProfileRef,
+            value.modelNameOrBoundedTestProfileRef,
+            *value.recipientRefs.toTypedArray(),
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
+            value.providerRef,
+            value.endpointProfileRef,
+        )
+        require(
+            value.providerRef.startsWith(
+                "provider.",
+            ),
+        ) {
+            "canonical VexLife v3 response providerRef must remain one provider coordinate"
+        }
+        requireSha256(
+            value.priorEventHash,
+            "priorEventHash",
+        )
+        requireSha256(
+            value.contentHash,
+            "contentHash",
+        )
+        requireExternalHttpsOrigin(
+            value.sanitizedEndpointOrigin,
+        )
+        require(
+            value.formedAt.isNotEmpty(),
+        ) {
+            "canonical VexLife v3 response event requires one formedAt value"
+        }
+        val relay =
+            VexLifeSemanticRelayContract.validate(
+                relay = value.semanticRelay,
+                sourceMessageRef = value.messageRef,
+                recipientRefs = value.recipientRefs,
+            )
+        require(
+            relay.ok,
+        ) {
+            "canonical VexLife v3 response Semantic Relay is invalid: " +
+                relay.errors.joinToString(
+                    "; ",
+                )
+        }
+
+        return value
+    }
+
     fun validateContextCore(
         value: ContextCore,
     ): ContextCore {
@@ -740,6 +880,35 @@ object VexLifeConversationContract {
             ),
         ) {
             "canonical VexLife response endpoint must remain one numeric-loopback HTTP origin"
+        }
+    }
+
+    private fun requireExternalHttpsOrigin(
+        value: String,
+    ) {
+        require(
+            value.matches(
+                Regex(
+                    "https://(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]+)?",
+                ),
+            ) &&
+                value !=
+                "https://localhost" &&
+                !value.startsWith(
+                    "https://localhost:",
+                ) &&
+                value !=
+                "https://127.0.0.1" &&
+                !value.startsWith(
+                    "https://127.0.0.1:",
+                ) &&
+                value !=
+                "https://[::1]" &&
+                !value.startsWith(
+                    "https://[::1]:",
+                ),
+        ) {
+            "canonical VexLife v3 response endpoint must remain one exact external HTTPS origin"
         }
     }
 
