@@ -148,7 +148,7 @@ class VexLifeModelsTest {
         profile: VexLifePartnerModelProfileCatalog.Definition,
         partnerTargeted: Boolean,
         partnerServing: Boolean,
-        partnerConnection:
+        currentPartnerConnection:
             VexLifePartnerConnectionProjection.Projection =
             partnerConnection(
                 profile,
@@ -186,7 +186,7 @@ class VexLifeModelsTest {
                         modelRef = profile.modelRef,
                         targeted = partnerTargeted,
                         serving = partnerServing,
-                        connection = partnerConnection,
+                        connection = currentPartnerConnection,
                         support = partnerSupport,
                     ),
                 ),
