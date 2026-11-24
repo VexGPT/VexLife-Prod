@@ -1511,7 +1511,7 @@ class DirectCompanionTurnTest {
                 failure.cause
                     ?.message
                     ?.contains(
-                        "runtime changed during one direct Companion turn",
+                        "runtime evidence changed during one direct Companion turn",
                     ) ==
                     true,
             )
