@@ -2128,3 +2128,19 @@ stale Saturday plan + no VexLife mixing
 VexLife mixing
 -> owner/domain stability regressed
 ```
+
+## CH2 A001 terminal PASS — transfer observed
+
+Canonical RETURN:
+```text
+sha256 c1cefe1e14b0db3a9d894f0156bb2c722028adbeed73e89e550331933fa9f30c
+disposition PASS
+```
+
+The replicated CS1 owner-scope + CH1 chronology treatments transferred from Blue Lantern to a resident
+Saturday-plan update under a natural request.
+
+Vex selected Cedar Station at 10:00 a.m. and identified Harbor Cafe at 9:00 a.m. as the earlier plan.
+
+Next edge is acceptance review of the two bounded host presentation truths, not another automatic behavior
+test and not a semantic supersession store.
