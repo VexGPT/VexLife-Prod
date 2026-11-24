@@ -16,7 +16,7 @@ const native=require(path.join(sdkRoot,'lib/vexlocalbridge/vexrelay-task-archive
 const BASE='3a47bac8618c99214cfdb3d4396e626bc95b96ef';
 const HEAD='e67424a45bcbd304534759886a583fedd2573535';
 const TREE='5b7f5950aa8983fcf302d4d5583d2476edd848c1';
-const BRANCH='VXG-112226-chatgpt-settings-resource-pressure-a001';
+const BRANCH='VXG-112326-chatgpt-response-readiness-resource-pressure-a001';
 const BASE_BRANCH='VXG-112326-chatgpt-conversation-prefix-cache-a001';
 const CHANGED=[
   'src/jvmTest/kotlin/vexlife/harness/ResponseReadinessResourcePressureTest.kt'
