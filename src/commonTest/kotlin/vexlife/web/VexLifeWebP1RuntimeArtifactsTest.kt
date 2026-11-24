@@ -1469,6 +1469,127 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun lateWorkspaceTextCurrentnessRepaintsDynamicRoleLabelsAndFollowUpReadiness() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts.generate()
+                .javascript
+        val workspaceLoad =
+            javascript
+                .substringAfter(
+                    "const loadWorkspaceStrings = async () => {",
+                )
+                .substringBefore(
+                    "// The presentation reports",
+                )
+
+        assertTrue(
+            javascript.contains(
+                "const workspaceText = (key) => {",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "const t = (key) => {",
+            ),
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "renderTimeline();",
+            ),
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "renderComposer();",
+            ),
+            "ResponseProgress must repaint when async workspace localization becomes current",
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "if (state.app === apps.archives) renderArchives();",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceText('workspace.label.conversation-role-you')",
+            ) &&
+                javascript.contains(
+                    "workspaceText('workspace.label.conversation-role-vex')",
+                ),
+        )
+        assertFalse(
+            javascript.contains(
+                "who.textContent = 'Vex';",
+            ) ||
+                javascript.contains(
+                    "speaker.textContent = 'Vex';",
+                ),
+        )
+    }
+
+    @Test
+    fun followUpReadinessReusesResponseProgressWithoutProviderCacheInference() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"response-progress\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.conversationTurn?.followUpReadiness",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "ui.responseProgress.dataset.state = 'FollowUpReadiness'",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspace.label.model-prompt-cache-entries",
+            ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-1",
+                ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-2",
+                ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspace.description.follow-up-readiness-will-prepare",
+            ) &&
+                javascript.contains(
+                    "workspace.description.follow-up-readiness-preparing",
+                ) &&
+                javascript.contains(
+                    "workspace.description.follow-up-readiness-successor-reset",
+                ),
+        )
+        assertFalse(
+            javascript.contains(
+                "lastCompletedProviderMeasurement",
+            ),
+            "browser presentation must not infer readiness from provider measurements",
+        )
+        assertFalse(
+            javascript.contains(
+                "cachedPromptTokens",
+            ),
+            "provider cache counters must not become human presentation vocabulary",
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".response-progress[data-state=\"FollowUpReadiness\"]",
+            ),
+        )
+    }
+
+    @Test
     fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
         val sourceSha =
             "a".repeat(
