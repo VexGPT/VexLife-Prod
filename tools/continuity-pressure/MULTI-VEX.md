@@ -2196,3 +2196,54 @@ VexLife mixing returns
 
 No semantic source acceptance, Memory formation, Score disposition, or new supersession owner is granted by
 TI1 formation.
+
+## CH1 — Conversation chronology self-location treatment
+
+TI1 A001 terminal PASS established that the same 4B can distinguish the earlier Blue Lantern status from the
+later explicit status update when that temporal relationship is named by the human.
+
+Do not convert that into:
+```text
+later = automatically authoritative
+update = automatically supersedes
+chronology = semantic acceptance
+```
+
+CH1 exposes only one source-owned fact already held by DirectPromptContext / canonical Conversation:
+
+```text
+The Conversation messages shown in this prompt remain in their original Conversation order,
+earlier to later. Order is chronology only; it does not by itself mark any turn superseded or more authoritative.
+```
+
+Treatment:
+```text
+treatment.multivex.conversation-chronology-self-location.v1
+target DirectPromptContext.conversationExtent
+standing EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY
+automaticAcceptanceAllowed false
+```
+
+CS1 owner-scope treatment remains fixed.
+
+CH1 restores the natural human request:
+```text
+What's the current Blue Lantern status? Please answer in your own words.
+```
+
+Interpretation:
+```text
+current project answer + no VexLife mixing
+-> chronology self-location treatment signal
+-> replicate before Product acceptance
+
+stale project answer + no VexLife mixing
+-> chronology cue insufficient
+-> deeper resident integration remains; do not accrete more prompt prose
+
+VexLife mixing returns
+-> owner/domain and temporal failures remain separable
+```
+
+No semantic supersession owner, Score disposition, Memory acceptance, merge, or Product authority is granted
+by CH1 formation.
