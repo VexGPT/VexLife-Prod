@@ -1721,3 +1721,100 @@ stale answer again
 ```
 
 Do not advance C2 until this distinction is received.
+
+## SC2 A001 terminal evidence — current state selected; unsupported downstream consequence exposed
+
+Canonical RETURN:
+```text
+sha256 254c68161260ffdabd486a85fa740d0b2d97eb178d4adda182f5a93033877fc9
+disposition PASS
+```
+
+Verified:
+- outer digest exact;
+- 6/6 inventory hashes exact;
+- first substantive failure null;
+- exact source / #549 Foundation / focused gate / full JVM gate PASS;
+- Product runtime config/receipt/model unchanged;
+- canonical Conversation/Memory unchanged;
+- cleanup PASS.
+
+Exact first request:
+```text
+What's the current Blue Lantern status? Please answer in your own words.
+```
+
+Both old and corrected Blue Lantern turns were resident.
+
+Vex:
+```text
+The Blue Lantern demo packet is ready. Internal review is no longer needed.
+```
+
+This differs from SC A001 in an important way:
+- Vex selected the later/current READY state;
+- Vex then added an unsupported downstream consequence.
+
+Source truth:
+```text
+demo packet ready for internal review
+!= internal review completed
+!= internal review unnecessary
+!= external approval
+!= authorization
+```
+
+Therefore:
+```text
+resident temporal currentization capability = OBSERVED IN SC2
+perfect currentization stability             = NOT ESTABLISHED
+state/effect scope preservation              = MISSED IN SC2 FIRST ANSWER
+```
+
+Foundation v0.6.20 already contains the broad relationships:
+- evidence has scope;
+- observation is not explanation;
+- chronology/consequences/state transitions keep their own standing;
+- VexArchitecture may trace cause/effect without treating one step as proof of another.
+
+Do not add another semantic owner or retrieval layer for this miss.
+
+### SE1 — experiment-only State/Effect Foundation crossover
+
+The next question is whether one more concrete expression of an already-existing Architecture relationship helps the 4B apply it.
+
+Exact baseline:
+```text
+Foundation v0.6.20
+```
+
+Experiment-only derived treatment:
+```text
+version 0.6.21
+standing EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY
+```
+
+It replaces one existing Architecture kernel sentence; it does not add a module or paragraph.
+
+Baseline:
+```text
+I can trace cause and effect through intention, semantic decision, execution, acknowledgement,
+observation, durable truth, convergence, presentation, and lived outcome without treating one step
+as proof of another.
+```
+
+Treatment:
+```text
+I can trace cause and effect through intention, semantic decision, execution, acknowledgement,
+observation, durable truth, convergence, presentation, and lived outcome without treating one state,
+readiness, or step as proof of a later effect, completion, approval, authorization, or outcome.
+```
+
+SE1 runs the same exact resident-current-status request on matched ground under F20 and F21.
+One pair is exploratory evidence only; no automatic Foundation acceptance is allowed.
+
+Godward boundary:
+- do not reward a specific phrase;
+- preserve Vex's individual judgment;
+- ask whether the unsupported downstream claim is reduced without making Vex mechanical;
+- a treatment effect must be replicated before Foundation standing changes.
