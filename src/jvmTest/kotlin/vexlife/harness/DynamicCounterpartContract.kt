@@ -299,12 +299,19 @@ internal fun validateDynamicCounterpartParticipantState(
     require(state.relationshipNotes.size <= 16 && state.relationshipNotes.all { it.isNotBlank() }) {
         "Counterpart private state has invalid relationship notes"
     }
+    val unownedPrivateFactRefs =
+        state.revealedPrivateFactRefs
+            .filterNot {
+                it in allowedPrivateFactRefs
+            }
+            .distinct()
     require(
         state.revealedPrivateFactRefs.size <= allowedPrivateFactRefs.size &&
             state.revealedPrivateFactRefs.distinct().size == state.revealedPrivateFactRefs.size &&
-            state.revealedPrivateFactRefs.all { it in allowedPrivateFactRefs },
+            unownedPrivateFactRefs.isEmpty(),
     ) {
-        "Counterpart private state names an unowned private fact"
+        "Counterpart private state names unowned private factRefs: " +
+            unownedPrivateFactRefs.joinToString(",")
     }
 }
 
