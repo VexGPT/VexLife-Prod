@@ -755,6 +755,95 @@ class VexLifeModelsTest {
         }
 
     @Test
+    fun qualificationForSupersededPartnerTargetCannotBecomeServing() =
+        withHome {
+            home,
+            _,
+            ->
+            val first =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            val replacement =
+                VexLifePartnerModelProfileCatalog.AnthropicClaudeSonnet55
+            lateinit var ownerRef: VexLifeModels
+            val partnerSwitch =
+                VexLifeModels.PartnerSwitchRealization {
+                    target,
+                    _,
+                    ->
+                    assertEquals(
+                        first.profileRef,
+                        target.handle,
+                    )
+                    val nextTarget =
+                        ownerRef.stageInferenceTarget(
+                            models =
+                                combinedInferenceModels(
+                                    owner = ownerRef,
+                                    profile = replacement,
+                                    partnerTargeted = false,
+                                    partnerServing = false,
+                                ),
+                            handle = replacement.profileRef,
+                        )
+                    assertEquals(
+                        replacement.profileRef,
+                        nextTarget.handle,
+                    )
+                    qualifiedPartnerOutcome(
+                        first,
+                    )
+                }
+
+            models(
+                home = home,
+                partnerSwitchRealization = partnerSwitch,
+            )
+                .use {
+                    owner ->
+                    ownerRef = owner
+                    owner.stageInferenceTarget(
+                        models =
+                            combinedInferenceModels(
+                                owner = owner,
+                                profile = first,
+                                partnerTargeted = false,
+                                partnerServing = false,
+                            ),
+                        handle = first.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = first,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        replacement.profileRef,
+                        owner.stagedInferenceTarget()
+                            ?.handle,
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Failed.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
+                    )
+                }
+        }
+
+    @Test
     fun heldPartnerUseLeavesExistingLocalServingTruthUnchanged() =
         withHome {
             home,
