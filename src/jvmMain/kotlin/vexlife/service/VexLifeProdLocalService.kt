@@ -1809,6 +1809,27 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
 
+                VexLifeProdServiceContract.ModelsSourcesControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = decodeRequest<ModelControlRequest>(exchange)
+                    require(
+                        request.promptCacheEntries ==
+                            null,
+                    ) {
+                        "source-aware Models control does not own Local runtime configuration"
+                    }
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelControl(
+                                controlRef = request.controlRef,
+                                handle = request.handle,
+                            ),
+                    )
+                }
+
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
@@ -5422,6 +5443,24 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val partnerTextTurn =
+            try {
+                currentPartnerTextTurnOrNull()
+            } catch (
+                held: PartnerServingNotCurrent,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_SERVING_NOT_CURRENT",
+                    message =
+                        "The selected Partner model is no longer qualified for this Send (" +
+                            held.reason.name +
+                            "). Select or use a current model before sending.",
+                )
+                return
+            }
+
         val draftLeaseAttachments =
             attachmentDraft.beginSend()
         if (
@@ -5480,7 +5519,33 @@ class VexLifeProdLocalService private constructor(
                 requestAttachments = requestAttachments,
             )
         val streaming =
-            streamingTurnExecutor
+            if (
+                partnerTextTurn ==
+                null
+            ) {
+                streamingTurnExecutor
+            } else {
+                val partnerExecutor =
+                    requireNotNull(
+                        streamingPartnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one streaming Partner turn executor"
+                    }
+                StreamingTurnExecutor {
+                    setup,
+                    currentIntent,
+                    observer,
+                    cancellation,
+                    ->
+                    partnerExecutor.perform(
+                        setup = setup,
+                        intent = currentIntent,
+                        partnerTextTurn = partnerTextTurn,
+                        progressObserver = observer,
+                        cancellation = cancellation,
+                    )
+                }
+            }
         if (
             acceptsEventStream(
                 exchange,
@@ -5534,10 +5599,26 @@ class VexLifeProdLocalService private constructor(
             false
         try {
             val result =
-                turnExecutor.perform(
-                    startupSetup,
-                    intent,
-                )
+                if (
+                    partnerTextTurn ==
+                    null
+                ) {
+                    turnExecutor.perform(
+                        startupSetup,
+                        intent,
+                    )
+                } else {
+                    requireNotNull(
+                        partnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one Partner turn executor"
+                    }
+                        .perform(
+                            setup = startupSetup,
+                            intent = intent,
+                            partnerTextTurn = partnerTextTurn,
+                        )
+                }
             check(
                 attachmentDraft.completeSend(
                     draftLeaseAttachments,
