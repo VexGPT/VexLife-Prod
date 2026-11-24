@@ -5480,9 +5480,19 @@ class VexLifeProdLocalServiceTest {
                                 )
                                     .body(),
                             )
+                        val local =
+                            json.decodeFromString<vexlife.model.VexLifeModels.Projection>(
+                                get(
+                                    service.origin,
+                                    VexLifeProdServiceContract.ModelsPath,
+                                )
+                                    .body(),
+                            )
                         if (
                             current.inference.serving?.sourceKind ==
-                            VexLifeModelSourceProjection.SourceKind.PARTNER
+                                VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                            local.switching ==
+                                null
                         ) {
                             serving =
                                 current
