@@ -277,8 +277,8 @@ try{
     taskRef:formed.task.taskRef,
     attemptRef:formed.task.attemptRef,
     candidate:binding.candidate,
-    foundations:binding.foundations,
-    messageSources:binding.messageSources,
+    foundationTreatment:binding.foundationTreatment,
+    transfer:binding.transfer,
     carrier:binding.carrier,
   })+'\n');
 }finally{
