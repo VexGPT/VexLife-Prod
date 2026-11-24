@@ -799,7 +799,7 @@ object DirectConversationSourceReturn {
 
     fun formAttemptTrace(
         initialPrompt: DirectPromptContext.Receipt,
-        inference: DirectCompanionConnection.Result,
+        inference: CompanionInferenceConnection.Result,
         discovery: Discovery,
         projection: Projection,
     ): AttemptTrace {
