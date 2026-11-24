@@ -1810,3 +1810,52 @@ Pure unit proof:
 The compact v0.6.21 treatment is unchanged.
 No Product semantic, Home, retrieval, EvolveContext, Memory, or Foundation source mutation is part of this
 method correction.
+
+## OB1 — explicit owner-boundary discriminator
+
+SE1 A005 terminal matched evidence did not advance the compact Foundation State/Effect treatment.
+
+New foreground:
+```text
+VEXLIFE CURRENT STATE != BLUE LANTERN PROJECT STATE
+CURRENT SYSTEM CAPABILITY != EXPLANATION OF PROJECT STATUS
+CURRENT != UNIVERSAL AUTHORITY OVER EVERY SUBJECT DOMAIN
+```
+
+Before changing DirectPromptContext or current-state envelope wording, OB1 asks whether the same 4B can keep
+these owners distinct when the distinction itself is made explicit.
+
+Exact experiment-owned request:
+```text
+What's the current Blue Lantern status? Please keep Blue Lantern project facts separate from VexLife's own
+system, context, or capability state, and answer in your own words.
+```
+
+OB1 does not supply the target project status.
+
+Held constant:
+- exact old -> corrected -> two-background Blue Lantern chronology;
+- exact v0.6.20 Foundation baseline;
+- same Product 4B runtime;
+- single-turn scenario;
+- ordinary shared-understanding role;
+- Character Posture OFF;
+- observer absent;
+- controlled first visible request ownership repair;
+- exact old/corrected residency evidence.
+
+Interpretation:
+```text
+clean current project answer
+-> owner/domain separation capability is available when explicitly cued;
+-> next pressure belongs to self-location / prompt-owner boundary, not Foundation.
+
+stale project answer with no VexLife mixing
+-> temporal resident integration remains primary.
+
+VexLife system/capability mixing persists
+-> explicit owner distinction is insufficient;
+-> investigate deeper prompt/model integration before source wording changes.
+```
+
+No Product semantic mutation is authorized by OB1 formation.
