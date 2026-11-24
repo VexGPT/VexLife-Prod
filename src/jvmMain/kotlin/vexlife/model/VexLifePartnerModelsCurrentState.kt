@@ -184,5 +184,3 @@ object VexLifePartnerModelsCurrentState {
 }
 
 // [VXG RealForever]
-
-// [VXG RealForever]
