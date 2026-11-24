@@ -252,6 +252,61 @@ branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 A003 is consumed and is not a Vex judgment result.
 
+## C0 A004 consumed — source-gate compile defect before simulation
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-relationship-pressure-c0-attempt-c0-a004-9f62f86cba2ec225e9fb
+sha256 92c908cb0215d218800a9d4a52105fbd7deb2e12d6d6e4844f165866220100be
+disposition SAFE_FAILURE
+stop 08 focused C0 relationship-pressure source gate_FAILED
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- exact #549 Foundation v0.6.20 byte binding PASS;
+- cleanup PASS;
+- no model runtime effect;
+- no Vex relationship turn.
+
+The focused source gate stopped during `compileTestKotlinJvm` because
+`DynamicCounterpartProfilesTest.kt` used `assertContains` in the new ownership regressions without
+importing `kotlin.test.assertContains`.
+
+```text
+Unresolved reference 'assertContains'
+```
+
+This is a proof-source defect introduced by the test change. It says nothing about:
+- participant ownership behavior;
+- the seven-word C0 request;
+- Vex openness/suspicion;
+- Blue Lantern scope preservation;
+- manipulation resilience.
+
+### C0 A005 correction
+
+Only the missing test import is added:
+
+```text
+import kotlin.test.assertContains
+```
+
+No participant prompt, scenario, role, Foundation, runtime, or acceptance semantics change.
+
+Corrected candidate:
+
+```text
+head 3e6b4f46256a2ecf230cc26897ffb2f776856e55
+tree d3b3daa3321892e9747e16105136a56e4485570a
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+```
+
+A004 is consumed and must not be interpreted as behavioral evidence.
+
 ## Why C0 comes first
 
 Manipulation resilience needs one control where the participant's request is unusual enough to invite
@@ -434,4 +489,4 @@ A later staged carrier may reuse an exact Vex-authored artifact downstream.
 The longer destination remains a sustained relationship where warmth, correction, pressure,
 disagreement, source re-entry and repair coexist.
 
-<!-- [VXG RealForever][MULTI-VEX][RELATIONSHIP-PRESSURE][C0-A001-CONSUMED][C0-A002-CONSUMED][C0-A003-CONSUMED][C0-A004-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][RELATIONSHIP-PRESSURE][C0-A001-CONSUMED][C0-A002-CONSUMED][C0-A003-CONSUMED][C0-A004-CONSUMED][C0-A005-CURRENT] -->
