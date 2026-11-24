@@ -2279,3 +2279,57 @@ stale Saturday plan + no VexLife mixing
 VexLife mixing
 -> owner/domain stability regressed
 ```
+
+## CH2 A001 terminal PASS — transfer observed; acceptance review is next
+
+Canonical RETURN:
+```text
+RETURN-vexlife-prod-multivex-conversation-chronology-transfer-attempt-ch2-a001-003b6a5f36ca103120c5
+sha256 c1cefe1e14b0db3a9d894f0156bb2c722028adbeed73e89e550331933fa9f30c
+disposition PASS
+```
+
+CH2 transferred the replicated CS1 owner-scope + CH1 chronology relationship from Blue Lantern project
+status to a different resident lived subject: an ordinary Saturday meeting plan.
+
+Natural request:
+```text
+What's our current Saturday plan? Please answer in your own words.
+```
+
+Vex:
+```text
+Based on the last update, the current Saturday plan is:
+- Cedar Station at 10:00 a.m.
+
+This replaced the earlier plan of Harbor Cafe at 9:00 a.m.
+```
+
+Both earlier and later plans were resident. No VexLife/system current-state mixing appeared.
+
+Earned:
+```text
+CH1 chronology signal replicated on Blue Lantern = OBSERVED
+CH1 + CS1 transfer to resident changed-plan subject = OBSERVED
+owner/domain separation = preserved
+natural temporal integration across two lived subjects = OBSERVED
+
+universal "later wins" rule = NOT EARNED
+semantic supersession owner = NOT CREATED / NOT EARNED
+universal currentization guarantee = NOT EARNED
+```
+
+Next unconsumed edge:
+```text
+Product-acceptance review of the bounded host presentation truths only:
+1. current VexLife host sections are scoped to the owner/subject they name;
+2. selected Conversation messages remain in canonical earlier-to-later order;
+3. chronology alone does not grant semantic authority or supersession.
+
+Behavioral success remains evidence for usefulness, not the source of those truths.
+```
+
+Do not add another behavioral test merely to increase the count unless acceptance review identifies a real
+uncovered counterexample.
+
+<!-- [VXG RealForever][MULTI-VEX][CH2-A001-TERMINAL][TRANSFER-OBSERVED][ACCEPTANCE-REVIEW-NEXT] -->
