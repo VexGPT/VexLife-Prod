@@ -2140,3 +2140,59 @@ VexLife mixing persists
 ```
 
 No merge/acceptance is earned by CS1 formation.
+
+## TI1 — explicit temporal integration discriminator
+
+CS1 A002 terminal PASS established:
+- host current-state owner-scope treatment carried;
+- natural request restored;
+- no VexLife/system facts leaked into Blue Lantern status;
+- old + corrected project turns were resident;
+- Vex still selected the stale earlier status.
+
+Do not add a semantic supersession store from that result.
+
+Current Product source preserves exact chronology but does not own accepted semantic dispositions such as
+`superseded`. `VexLifeTurnNavigation` has narrow lexical correction/points-back cues only; the Blue Lantern
+turn begins `Update the synthetic Blue Lantern status:`, which is not a current correction cue and should
+not be reclassified as correcting the immediately prior Vex reply.
+
+TI1 asks whether the 4B can live the temporal relationship when it is explicitly named.
+
+Exact request:
+```text
+What's the current Blue Lantern status? Please distinguish the earlier project status from the later
+explicit status update and answer from the current one, in your own words.
+```
+
+The request does NOT supply the target Blue Lantern status.
+
+Held constant from CS1:
+- experiment-only current-state owner-scope host treatment;
+- exact Foundation v0.6.20;
+- exact old -> corrected -> two-background chronology;
+- same Product-qualified 4B;
+- single-turn scenario;
+- ordinary shared-understanding Role ON;
+- Character Posture OFF;
+- observer absent;
+- controlled-first-carrier ownership;
+- old/corrected prompt residency proof;
+- canonical Conversation/Memory unchanged.
+
+Interpretation:
+```text
+current project answer + no VexLife mixing
+-> temporal integration capability exists when explicitly cued
+-> next pressure may test a non-semantic chronology/self-location host cue
+
+stale project answer + no VexLife mixing
+-> explicit temporal cue insufficient
+-> deeper resident integration/model capacity question; do not accrete chronology prose
+
+VexLife mixing returns
+-> temporal cue destabilized owner separation; keep concerns separate
+```
+
+No semantic source acceptance, Memory formation, Score disposition, or new supersession owner is granted by
+TI1 formation.
