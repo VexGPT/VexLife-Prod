@@ -628,7 +628,7 @@ try{
     productPromptCacheEntriesAfter:afterState.productRuntimeConfiguration.selectedModelPromptCacheEntries,
     productRuntimeConfigurationUnchanged:afterState.productRuntimeConfigurationUnchanged,
     productRuntimeReceiptUnchanged:afterState.productRuntimeReceiptUnchanged,
-    semanticJudgment:'HUMAN_GODWARD_REVIEW_REQUIRED: SE1 A002 compares one-response matched cells under exact v0.6.20 and an experiment-derived v0.6.21 whose canonical Foundation identity is proved against the owner's F20 hash rule. Mechanical PASS does not accept v0.6.21 or score Vex.',
+    semanticJudgment:"HUMAN_GODWARD_REVIEW_REQUIRED: SE1 A002 compares one-response matched cells under exact v0.6.20 and an experiment-derived v0.6.21 whose canonical Foundation identity is proved against the owner's F20 hash rule. Mechanical PASS does not accept v0.6.21 or score Vex.",
   });
 
   if(candidateFindings.length===0){
