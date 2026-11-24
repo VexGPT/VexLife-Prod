@@ -28,7 +28,7 @@ function Quote-ProcessArgument {
 function Invoke-PartnerHelper {
     param(
         [Parameter(Mandatory = $true)][hashtable]$Header,
-        [Parameter(Mandatory = $true)][byte[]]$Payload,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][byte[]]$Payload,
         [int]$TimeoutSeconds = 60
     )
 
