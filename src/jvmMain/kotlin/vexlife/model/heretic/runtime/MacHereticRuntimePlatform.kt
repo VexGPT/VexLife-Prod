@@ -677,11 +677,15 @@ class MacHereticRuntimePlatform(
     override fun qualify(
         binding: HereticPersistentRuntime.Binding,
     ): HereticRuntimeQualification {
+        val probeNativeTools =
+            binding.model.companionProfile.providerNativeToolStanding ==
+                vexlife.model.heretic.HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD
         val script =
             """
             import json, pathlib, sys, urllib.request
 
-            origin, model_path, request_model = sys.argv[1:4]
+            origin, model_path, request_model, probe_native_tools = sys.argv[1:5]
+            probe_native_tools = probe_native_tools == "true"
 
             def read_json(request, timeout):
                 with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -699,6 +703,18 @@ class MacHereticRuntimePlatform(
                             "non-JSON HTTP 200 content-type=%s body=%r"
                             % (content_type, body[:512])
                         ) from error
+
+            def post_completion(payload, timeout=180):
+                request = urllib.request.Request(
+                    origin + "/v1/chat/completions",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                completion = read_json(request, timeout)
+                if completion.get("model") != request_model:
+                    raise RuntimeError("completion model does not match exact request model")
+                return completion
 
             health = read_json(origin + "/health", 5)
             if health.get("status") != "ok":
@@ -718,23 +734,14 @@ class MacHereticRuntimePlatform(
             if len(exact) != 1:
                 raise RuntimeError("exact model materialization is not exposed exactly once")
 
-            body = json.dumps({
+            completion = post_completion({
                 "model": request_model,
                 "messages": [{"role": "user", "content": "Reply with OK."}],
                 "max_tokens": 1,
                 "temperature": 0,
                 "stream": False,
                 "chat_template_kwargs": {"enable_thinking": False},
-            }).encode("utf-8")
-            request = urllib.request.Request(
-                origin + "/v1/chat/completions",
-                data=body,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            completion = read_json(request, 180)
-            if completion.get("model") != request_model:
-                raise RuntimeError("completion model does not match exact request model")
+            })
             choices = completion.get("choices")
             content = (
                 choices[0].get("message", {}).get("content")
@@ -744,7 +751,104 @@ class MacHereticRuntimePlatform(
             if not isinstance(content, str) or not content.strip():
                 raise RuntimeError("qualification completion returned empty content")
 
-            print("QUALIFIED")
+            native_tools_qualified = False
+            if probe_native_tools:
+                token = "vexlife-native-tool-roundtrip"
+                tool_name = "vexlife_qualification_echo"
+                user_message = {
+                    "role": "user",
+                    "content":
+                        "Call vexlife_qualification_echo with token " + token +
+                        ". Do not answer directly. After the tool result, reply exactly QUALIFIED.",
+                }
+                tools = [{
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "description": "Synthetic no-effect qualification tool.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "token": {"type": "string"},
+                            },
+                            "required": ["token"],
+                            "additionalProperties": False,
+                        },
+                    },
+                }]
+
+                try:
+                    first = post_completion({
+                        "model": request_model,
+                        "messages": [user_message],
+                        "tools": tools,
+                        "max_tokens": 64,
+                        "temperature": 0,
+                        "stream": False,
+                        "chat_template_kwargs": {"enable_thinking": True},
+                    })
+                    first_choices = first.get("choices")
+                    first_message = (
+                        first_choices[0].get("message", {})
+                        if isinstance(first_choices, list) and first_choices and isinstance(first_choices[0], dict)
+                        else {}
+                    )
+                    tool_calls = first_message.get("tool_calls")
+                    if not isinstance(tool_calls, list) or len(tool_calls) != 1:
+                        raise RuntimeError("native-tool qualification did not return exactly one tool call")
+                    tool_call = tool_calls[0]
+                    if not isinstance(tool_call, dict):
+                        raise RuntimeError("native-tool qualification tool call is not an object")
+                    function = tool_call.get("function")
+                    if not isinstance(function, dict) or function.get("name") != tool_name:
+                        raise RuntimeError("native-tool qualification called the wrong function")
+                    arguments = function.get("arguments")
+                    if isinstance(arguments, str):
+                        arguments = json.loads(arguments)
+                    if not isinstance(arguments, dict) or arguments.get("token") != token:
+                        raise RuntimeError("native-tool qualification arguments do not match")
+                    tool_call_id = tool_call.get("id")
+                    if not isinstance(tool_call_id, str) or not tool_call_id:
+                        raise RuntimeError("native-tool qualification call id is missing")
+
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": first_message.get("content"),
+                        "tool_calls": tool_calls,
+                    }
+                    second = post_completion({
+                        "model": request_model,
+                        "messages": [
+                            user_message,
+                            assistant_message,
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call_id,
+                                "content": json.dumps({"token": token}),
+                            },
+                        ],
+                        "tools": tools,
+                        "max_tokens": 16,
+                        "temperature": 0,
+                        "stream": False,
+                        "chat_template_kwargs": {"enable_thinking": True},
+                    })
+                    second_choices = second.get("choices")
+                    second_content = (
+                        second_choices[0].get("message", {}).get("content")
+                        if isinstance(second_choices, list) and second_choices and isinstance(second_choices[0], dict)
+                        else None
+                    )
+                    if not isinstance(second_content, str) or second_content.strip() != "QUALIFIED":
+                        raise RuntimeError("native-tool qualification continuation did not return QUALIFIED")
+                    native_tools_qualified = True
+                except Exception as error:
+                    print(
+                        "NATIVE_TOOL_HELD:%s" % str(error)[:512],
+                        file=sys.stderr,
+                    )
+
+            print("QUALIFIED_NATIVE_TOOLS" if native_tools_qualified else "QUALIFIED")
             """.trimIndent()
 
         val result =
@@ -758,20 +862,37 @@ class MacHereticRuntimePlatform(
                         HereticProductIdentity.Endpoint,
                         binding.modelPath,
                         HereticProductIdentity.RequestModel,
+                        probeNativeTools.toString(),
                     ),
                 timeoutMs =
-                    180_000L,
+                    if (
+                        probeNativeTools
+                    ) {
+                        300_000L
+                    } else {
+                        180_000L
+                    },
             )
 
+        val qualificationState =
+            result.stdout
+                .trim()
         require(
             result.status ==
                 0 &&
                 result.errorMessage ==
                 null &&
                 !result.timedOut &&
-                result.stdout
-                    .trim() ==
-                "QUALIFIED",
+                qualificationState in
+                setOf(
+                    "QUALIFIED",
+                    "QUALIFIED_NATIVE_TOOLS",
+                ) &&
+                (
+                    qualificationState !=
+                        "QUALIFIED_NATIVE_TOOLS" ||
+                        probeNativeTools
+                ),
         ) {
             "Heretic MLX runtime qualification failed: " +
                 (
@@ -783,7 +904,11 @@ class MacHereticRuntimePlatform(
                 )
         }
 
-        return HereticRuntimeQualification.qualified()
+        return HereticRuntimeQualification.qualified(
+            providerNativeToolsQualified =
+                qualificationState ==
+                    "QUALIFIED_NATIVE_TOOLS",
+        )
     }
 
     override fun cancellationRequested(): Boolean =
