@@ -590,7 +590,7 @@ try{
     stage('12 CH2 conversation chronology transfer evidence captured; semantic review remains human/Godward');
     writeResult('PASS',null);
   }else{
-    stage('12 CH2 conversation chronology SAFE_FAILURE');
+    stage('12 CH2 conversation chronology transfer SAFE_FAILURE');
     writeResult('SAFE_FAILURE','MULTI_VEX_CONVERSATION_CHRONOLOGY_TRANSFER_CH2_ACCEPTANCE_NOT_MET');
   }
 }catch(error){
