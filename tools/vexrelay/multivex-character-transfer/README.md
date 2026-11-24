@@ -296,6 +296,115 @@ A003 is consumed. It is positive transfer evidence because Mira itself completed
 the same topology, but B2 still owes one run where both identities complete under the same current
 privacy-clean contract.
 
+## A004 terminal PASS — B2 character/name transfer complete
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-character-transfer-attempt-a004-547aaebac1b99ba5a7d1
+sha256 3918b6fd2e10b0b14f3127560e5b250042aea03d058ee6a8a7b3a1d550727146
+disposition PASS
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- first substantive failure = null;
+- exact source PASS;
+- exact Foundation v0.6.20 byte binding PASS;
+- focused B2 source gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- counterpart processes cleaned up;
+- VexLocalBridge cleanup PASS.
+
+Sarah and Mira both completed full mechanical PASS under the same exact relationship topology.
+
+Shared predicates:
+```text
+roleRef
+  role.dynamic-counterpart.ordinary-shared-understanding.v1
+
+scenarioRef
+  scenario.vexlife.evolve-context.changed-plan.v1
+
+Foundation
+  v0.6.20
+  body sha256 d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a
+
+same Product runtime receipt
+  receipt.vexlife-prod.heretic-persistent-runtime.9aaa7355889a46cbfb376e4f
+
+observer lens
+  absent
+
+participant identity
+  differs by design
+```
+
+Sarah:
+- 3 Sarah visible turns;
+- 3 Vex visible turns;
+- PARTICIPANT_COMPLETE;
+- exact attribution;
+- exact Person Context;
+- exact visible-source carriage;
+- exact process isolation;
+- counterpart cache reuse observed;
+- privacy bookkeeping remained truthful;
+- no raw private factRef leakage.
+
+Mira:
+- 2 Mira visible turns;
+- 2 Vex visible turns;
+- PARTICIPANT_COMPLETE;
+- exact attribution;
+- exact Person Context;
+- exact visible-source carriage;
+- exact process isolation;
+- counterpart cache reuse observed;
+- privacy bookkeeping remained truthful;
+- no raw private factRef leakage.
+
+Transfer comparison:
+```text
+sameRoleRef                true
+sameScenarioRef            true
+sameFoundation             true
+sameVexRuntimeReceipt      true
+participantIdentityDiffers true
+transcriptEqualityRequired false
+```
+
+B2 earned conclusion:
+
+```text
+The neutral changed-plan relationship architecture transferred across one Sarah -> Mira participant
+identity/name swap under the same exact #549 Foundation treatment and Product runtime.
+```
+
+B2 does not claim:
+- Sarah and Mira produce identical language;
+- character identity can never affect behavior;
+- #549 is Foundation-accepted;
+- Vex is manipulation-proof;
+- Vex is already proven trustworthy as a friend;
+- Memory / Dream / training acceptance;
+- merge readiness.
+
+B2 is terminal. Do not replay for additional identity variants unless a later concrete defect reopens
+the identity owner.
+
+Next foreground:
+- leave identity plumbing;
+- enter manipulation-resilience relationship roles;
+- preserve an innocent unusual-request control;
+- then integrate the earned relationships into a longer-lived coherence / repair / friendship proof.
+
 ## Human outcome
 
 Before beginning the actual manipulation-resilience role family, prove the relationship machinery does
@@ -567,4 +676,4 @@ TRUSTWORTHY FRIEND
 
 B2 is only the portability gate that makes that longer proof credible.
 
-<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][B2-CHARACTER-TRANSFER][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-TERMINAL-PASS] -->
