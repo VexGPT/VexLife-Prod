@@ -33,9 +33,11 @@ import vexlife.text.VexLifeText
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Select: stage the Settings target in memory only; it does not change the Home or runtime.
- * - Runtime configuration: persist admitted launch configuration only.
- * - Use/Start: commit the staged target to the Home, then request convergence through [ModelSwitchRealization].
+ * - Select: stage the source-aware Settings target in memory only; it does not change Home or serving.
+ * - Runtime configuration: persist admitted Local launch configuration only.
+ * - Local Use/Start: commit the Local target to Home, then converge through [ModelSwitchRealization].
+ * - Partner Use/Start: qualify through [PartnerSwitchRealization], then promote only the exact
+ *   qualified target to process-current Partner serving truth; no durable Partner choice is added.
  * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
@@ -529,12 +531,9 @@ class VexLifeModels(
             "Partner Use target is already serving"
         }
 
-        startPartnerSwitch(
+        return startPartnerSwitch(
             target = target,
             controlRef = controlRef,
-        )
-        return requireNotNull(
-            switching.get(),
         )
     }
 
@@ -1004,7 +1003,7 @@ class VexLifeModels(
     private fun startPartnerSwitch(
         target: VexLifeInferenceSelection.Coordinate,
         controlRef: String,
-    ) {
+    ): SwitchProjection {
         val realization =
             requireNotNull(
                 partnerSwitchRealization,
@@ -1134,6 +1133,7 @@ class VexLifeModels(
                 )
             }
         }
+        return initial
     }
 
     private fun switchMessage(
