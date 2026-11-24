@@ -2362,6 +2362,7 @@ The bootstrap must:
 - fetch PR-owned bootstrap blobs to a temporary file and run `bash -n` before execution. The syntax preflight is part of the one-command human front door and must occur before clone/formation/runtime effects.
 - eventless participant ground is valid. If the counterpart provider requires a user query, use one fact-free participant-turn trigger; do not invent a scenario event merely to satisfy transport shape.
 - source-presence preflights over parsed scenario/profile text must not fail on irrelevant capitalization. Prefer typed field assertions; when a text-presence guard is still useful, normalize case before matching.
+- structured participant-output recovery may repair adjacent top-level JSON object fragments only when every fragment parses independently, only whitespace separates them, and top-level keys are disjoint. Preserve every supplied value unchanged; do not synthesize missing semantic fields or resolve duplicate/conflicting keys.
 - participant inference count is not visible turn count. A final `complete=true` participant inference may carry `visibleMessage=""`; wrapper acceptance must compare visible transcript delivery, not require `participantInferences.size == vexInferences.size`.
 
 Default continuation for future instances:
