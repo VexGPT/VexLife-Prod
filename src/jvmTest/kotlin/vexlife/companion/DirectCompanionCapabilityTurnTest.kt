@@ -373,7 +373,9 @@ class DirectCompanionCapabilityTurnTest {
                     .toList()
                     .joinToString("\n")
             }
-        assertTrue(evidenceText.contains("vexlife-prod.turn-runtime-evidence/v3"))
+        assertTrue(evidenceText.contains(DirectTurnContextStore.RuntimeEvidenceSchemaV4))
+        val providerMeasurement = assertNotNull(record.providerMeasurement)
+        assertTrue(providerMeasurement.totalMillis >= 0L)
         assertFalse(evidenceText.contains("Fly the kite on a 30 m line."))
 
         // A repeated send of the same attempt returns the durable result and its reach, without

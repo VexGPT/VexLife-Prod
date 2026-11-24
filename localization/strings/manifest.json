@@ -3496,6 +3496,81 @@
         "zh-Hant"
       ]
     },
+    "workspace.description.first-local-start-ready-to-send": {
+      "enHash": "fe023281b499",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.first-local-start-sent": {
+      "enHash": "45c28cd050d0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.follow-up-readiness-will-prepare": {
+      "enHash": "1f7dac3bbbbb",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.follow-up-readiness-preparing": {
+      "enHash": "b340dd883321",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.follow-up-readiness-successor-reset": {
+      "enHash": "79fe82109aa2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.description.local-asr": {
       "enHash": "9e2bd0afbe99",
       "langs": [
@@ -3572,7 +3647,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-27b": {
-      "enHash": "a944a835fd6d",
+      "enHash": "9ce9192a55f3",
       "langs": [
         "ar",
         "de",
@@ -3587,7 +3662,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-4b": {
-      "enHash": "9cb1c24ad939",
+      "enHash": "ab76a1af1b50",
       "langs": [
         "ar",
         "de",
@@ -3602,7 +3677,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-untuned": {
-      "enHash": "fa0ce59ca3aa",
+      "enHash": "216b1c95b596",
       "langs": [
         "ar",
         "de",
@@ -3632,7 +3707,7 @@
       ]
     },
     "workspace.description.model-prompt-cache-entries": {
-      "enHash": "8ac5f90c2e90",
+      "enHash": "24353a3f90e1",
       "langs": [
         "ar",
         "de",
@@ -3708,6 +3783,21 @@
     },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.heading.first-local-start": {
+      "enHash": "9a1750bc8359",
       "langs": [
         "ar",
         "de",
@@ -3992,7 +4082,7 @@
       ]
     },
     "workspace.label.model-cache-level-1": {
-      "enHash": "86b26ce74517",
+      "enHash": "662e97964d0a",
       "langs": [
         "ar",
         "de",
@@ -4007,7 +4097,7 @@
       ]
     },
     "workspace.label.model-cache-level-2": {
-      "enHash": "f8bd787e443c",
+      "enHash": "a87da99b350d",
       "langs": [
         "ar",
         "de",
@@ -4022,7 +4112,7 @@
       ]
     },
     "workspace.label.model-cache-level-3": {
-      "enHash": "1f6fdb29a89b",
+      "enHash": "4b91a61f0632",
       "langs": [
         "ar",
         "de",
@@ -4247,7 +4337,7 @@
       ]
     },
     "workspace.label.model-prompt-cache-entries": {
-      "enHash": "3d347a591354",
+      "enHash": "f0a32f3fa53e",
       "langs": [
         "ar",
         "de",
@@ -15423,6 +15513,51 @@
     },
     "workspace.label.conversation-persistence": {
       "enHash": "b243468438d7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.sent-resource-local-copy-unavailable": {
+      "enHash": "a7e6ba47de97",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.sent-resource-local-copy-invalid": {
+      "enHash": "5f3ad98850fb",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.sent-resource-review-failed": {
+      "enHash": "177c22c381fd",
       "langs": [
         "ar",
         "de",

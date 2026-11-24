@@ -153,7 +153,7 @@ object VexLifeModelsFamily :
     data class RuntimeConfigurationChoiceDisplay(
         val promptCacheEntries: Int,
         val label: VexLifeText,
-        val standing: VexLifeText,
+        val standing: VexLifeText?,
         val selected: Boolean,
         val controlRef: String?,
     )
@@ -426,12 +426,11 @@ object VexLifeModelsFamily :
                                 promptCacheEntries = value,
                                 label = VexLifeText(cacheLevelKey(value)),
                                 standing =
-                                    VexLifeText(
-                                        choiceStandingKey(
-                                            value = value,
-                                            runtimeConfiguration = configuration,
-                                        ),
-                                    ),
+                                    choiceStandingKey(
+                                        value = value,
+                                        runtimeConfiguration = configuration,
+                                    )
+                                        ?.let { VexLifeText(it) },
                                 selected = value == configuration.promptCacheEntries,
                                 controlRef =
                                     control.controlRef.takeIf {
@@ -484,13 +483,20 @@ object VexLifeModelsFamily :
     private fun choiceStandingKey(
         value: Int,
         runtimeConfiguration: HereticRuntimeConfiguration.Effective,
-    ): String =
+    ): String? =
         when {
             value == runtimeConfiguration.recommendedPromptCacheEntries ->
                 "workspace.label.model-recommended"
 
-            runtimeConfiguration.recommendationStanding ==
-                HereticRuntimeConfiguration.RecommendationHeldExperiment &&
+            value < runtimeConfiguration.recommendedPromptCacheEntries ->
+                null
+
+            (
+                runtimeConfiguration.recommendationStanding ==
+                    HereticRuntimeConfiguration.RecommendationHeldExperiment ||
+                    runtimeConfiguration.recommendationStanding ==
+                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate
+            ) &&
                 value > runtimeConfiguration.recommendedPromptCacheEntries ->
                 "workspace.label.model-experimental"
 

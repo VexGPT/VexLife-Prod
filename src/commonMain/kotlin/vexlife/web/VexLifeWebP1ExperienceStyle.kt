@@ -767,6 +767,50 @@ svg { display: block; }
 .bubble > p { margin: 0 0 0.6em; }
 .bubble > p:last-child { margin-bottom: 0; }
 
+.sent-resources {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border-subtle);
+  max-width: 100%; min-width: 0;
+}
+.sent-resource {
+  flex: 1 1 180px; min-width: min(180px, 100%); max-width: 100%;
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface-raised); overflow: hidden;
+}
+.sent-resource[data-state="invalid"],
+.sent-resource[data-state="error"] { border-style: dashed; }
+.sent-resource-summary {
+  display: grid; gap: var(--space-1); width: 100%; min-width: 0; padding: var(--space-2) var(--space-3);
+  border: 0; background: transparent; color: inherit; text-align: left;
+}
+.sent-resource-summary:hover:not(:disabled) { background: var(--bg-overlay); }
+.sent-resource-summary:disabled { cursor: progress; }
+.sent-resource-name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text-primary); font-size: var(--step--1); font-weight: 650;
+}
+.sent-resource-detail {
+  min-width: 0; color: var(--text-secondary); font-size: var(--step--2);
+  overflow-wrap: anywhere;
+}
+.sent-resource-preview {
+  margin: 0 var(--space-2) var(--space-2); padding: var(--space-2); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); background: var(--bg-surface); min-width: 0;
+}
+.sent-resource-preview[hidden] { display: none; }
+.sent-resource-thumbnail {
+  display: block; width: 100%; max-width: 320px; max-height: 240px; margin: 0 auto;
+  object-fit: contain; border-radius: var(--radius-sm);
+}
+.sent-resource-text-preview {
+  max-height: 220px; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  font-family: var(--font-mono); font-size: var(--step--2); line-height: 1.45;
+}
+@media (max-width: 520px) {
+  .sent-resource { flex-basis: 100%; }
+  .sent-resource-thumbnail { max-width: 100%; }
+}
+
 /* TextPresentation is shared by Vex replies and human-visible reasoning. Markdown is the current
    interpretation grammar; these rules are Web manifestation only. The host surface keeps scroll
    ownership: timeline for replies, .reasoning for thinking. Tables/code therefore wrap and never
@@ -955,6 +999,25 @@ svg { display: block; }
 }
 .response-progress { margin: 0 0 6px; color: var(--text-secondary); font-size: var(--step--1); }
 .response-progress[data-state="Failed"] { color: var(--status-critical); }
+.response-progress[data-state="FirstLocalStart"] {
+  display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 10px var(--space-3);
+  color: var(--text-primary); background: var(--bg-surface-raised);
+  border: 1px solid var(--status-caution); border-left-width: 4px; border-radius: var(--radius-md);
+}
+.response-progress[data-state="FollowUpReadiness"] {
+  display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 10px var(--space-3);
+  color: var(--text-primary); background: var(--bg-surface-raised);
+  border: 1px solid var(--border-strong); border-left-width: 4px; border-radius: var(--radius-md);
+}
+.response-progress[data-state="FollowUpReadiness"] .response-progress-title {
+  color: var(--text-primary);
+}
+.response-progress-title {
+  margin: 0; color: var(--status-caution); font-size: var(--step--1); font-weight: 700;
+}
+.response-progress-detail {
+  margin: 0; color: var(--text-secondary); font-size: var(--step--1); line-height: 1.4;
+}
 
 .ticket {
   position: relative;

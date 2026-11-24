@@ -16,8 +16,6 @@ object VexLifeAttachmentReach {
     const val MaximumReadLines = 1_000
     const val MaximumReturnBytes = 48 * 1024
 
-    private const val ResourceRefPrefix =
-        "request-resource.vexlife-prod."
     private val Sha256 =
         Regex(
             "[0-9a-f]{64}",
@@ -179,7 +177,7 @@ object VexLifeAttachmentReach {
                     "That request resource does not exist.",
                 )
         val expectedResourceRef =
-            resourceRefFor(
+            VexLifeLocalArtifact.requestResourceRef(
                 requestEventHash = requestEventHash,
                 ordinal = ordinal,
             )
@@ -302,7 +300,7 @@ object VexLifeAttachmentReach {
             )
                 ?: return null
         val resourceRef =
-            resourceRefFor(
+            VexLifeLocalArtifact.requestResourceRef(
                 requestEventHash = requestEventHash,
                 ordinal = ordinal,
             )
@@ -351,45 +349,17 @@ object VexLifeAttachmentReach {
         }
     }
 
-    internal fun resourceRefFor(
-        requestEventHash: String,
-        ordinal: Int,
-    ): String {
-        require(
-            Sha256.matches(requestEventHash) &&
-                ordinal in 1..VexLifeLocalArtifact.MaximumPerRequest
-        ) {
-            "request resource identity is invalid"
-        }
-        return ResourceRefPrefix +
-            requestEventHash +
-            "." +
-            ordinal
-    }
-
     private fun resourceOrdinal(
         requestEventHash: String,
         resourceRef: String?,
-    ): Int? {
-        if (resourceRef == null) {
-            return null
-        }
-        val prefix =
-            ResourceRefPrefix +
-                requestEventHash +
-                "."
-        if (!resourceRef.startsWith(prefix)) {
-            return null
-        }
-        val ordinal =
-            resourceRef
-                .removePrefix(prefix)
-                .toIntOrNull()
-                ?: return null
-        return ordinal.takeIf {
-            it in 1..VexLifeLocalArtifact.MaximumPerRequest
-        }
-    }
+    ): Int? =
+        resourceRef
+            ?.let {
+                VexLifeLocalArtifact.requestResourceOrdinal(
+                    requestEventHash = requestEventHash,
+                    resourceRef = it,
+                )
+            }
 }
 
 // [VXG RealForever]

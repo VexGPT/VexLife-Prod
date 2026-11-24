@@ -135,6 +135,7 @@ object VexLogger {
 
         // Prompt admission: numeric/structural facts only, never prompt text or reasoning.
         PromptAdmissionHeld(Owner.Prompt),
+        PromptPreparationObserved(Owner.Prompt),
 
         // Capability bridge: a request Vex made, and what its owner returned.
         CapabilityRequestObserved(Owner.Capability),

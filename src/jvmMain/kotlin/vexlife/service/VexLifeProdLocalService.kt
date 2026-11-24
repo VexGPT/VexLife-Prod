@@ -39,12 +39,14 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.VexLifeInitialPromptPreparation
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdMacRuntimeHandoff
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
@@ -61,12 +63,16 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
 import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.context.VexLifeContextProfileStore
@@ -116,9 +122,12 @@ class VexLifeProdLocalService private constructor(
         () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
+    private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
+    private val initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -130,6 +139,11 @@ class VexLifeProdLocalService private constructor(
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
+        /**
+         * True only when this active human turn began while the one initial Prompt Preparation
+         * window was still pending/reusable. It is not a second preparation owner.
+         */
+        val initialPromptPreparationTurn: Boolean,
     )
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
@@ -208,6 +222,14 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.productHome,
             ),
         )
+
+    private val sentResourceReview by lazy {
+        VexLifeSentResourceReview(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+    }
 
     private val attachmentDraft =
         VexLifeAttachmentDraftRuntime()
@@ -488,6 +510,9 @@ class VexLifeProdLocalService private constructor(
                     true,
                 )
 
+            val initialPromptPreparation =
+                VexLifeInitialPromptPreparation()
+
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
             ): T {
@@ -540,6 +565,9 @@ class VexLifeProdLocalService private constructor(
                     }
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    initialPromptPreparation.invalidateAndAwait(
+                        "MODEL_SWITCH",
                     )
                     val write =
                         sessionFence.writeLock()
@@ -622,6 +650,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
                             )
                         }
                     },
@@ -643,6 +673,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
                             )
                         }
                     },
@@ -691,11 +723,38 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
+                servingPromptCacheEntryLimit = {
+                    sessionRef
+                        .get()
+                        .foundation
+                        .promptCacheEntryLimit
+                },
                 modelSwitchRealization = modelSwitchRealization,
+                initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
                         .get()
                         .close()
+                },
+                runtimeSessionRelinquishForRestart = {
+                    if (
+                        vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                            vexlife.model.heretic.HereticRuntimeRealization.MacArm64
+                    ) {
+                        VexLifeProdMacRuntimeHandoff.consumeForServiceClose(
+                            productHome =
+                                Path.of(
+                                    sessionRef
+                                        .get()
+                                        .foundation
+                                        .productHome,
+                                ),
+                            serviceSourceSha =
+                                sourceSha,
+                        )
+                    } else {
+                        false
+                    }
                 },
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
@@ -736,10 +795,13 @@ class VexLifeProdLocalService private constructor(
                 (() -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?)? =
                 null,
             servingRuntimeReceiptRef: (() -> String)? = null,
+            servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -755,6 +817,7 @@ class VexLifeProdLocalService private constructor(
                         state = setup.state,
                         productHome = setup.productHome,
                         qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                        promptCacheEntryLimit = setup.promptCacheEntryLimit,
                     ),
                 address =
                     InetSocketAddress(
@@ -793,9 +856,17 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
+                servingPromptCacheEntryLimit =
+                    servingPromptCacheEntryLimit
+                        ?: {
+                            setup.promptCacheEntryLimit
+                        },
                 modelSwitchRealization = modelSwitchRealization,
+                initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                runtimeSessionRelinquishForRestart =
+                    runtimeSessionRelinquishForRestart,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -825,10 +896,15 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
+            servingPromptCacheEntryLimit: () -> Int? = {
+                startupSetup.promptCacheEntryLimit
+            },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -931,9 +1007,13 @@ class VexLifeProdLocalService private constructor(
                             currentQualifiedVisualInputEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
+                        servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
+                        initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        runtimeSessionRelinquishForRestart =
+                            runtimeSessionRelinquishForRestart,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
@@ -950,6 +1030,7 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
                 server.start()
+                service.startInitialPromptPreparation()
 
                 return service
             } catch (
@@ -1027,6 +1108,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        runCatching { initialPromptPreparation?.close() }
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
@@ -1050,16 +1132,31 @@ class VexLifeProdLocalService private constructor(
         )
         frameHost.close()
         executor.shutdownNow()
+        val runtimeReleaseRelinquished =
+            activeTurn.get() ==
+                null &&
+                runCatching {
+                    runtimeSessionRelinquishForRestart
+                        ?.invoke() ==
+                        true
+                }
+                    .getOrDefault(
+                        false,
+                    )
         var runtimeCloseFailure: Throwable? =
             null
-        try {
-            runtimeSessionClose
-                ?.invoke()
-        } catch (
-            error: Throwable,
+        if (
+            !runtimeReleaseRelinquished
         ) {
-            runtimeCloseFailure =
-                error
+            try {
+                runtimeSessionClose
+                    ?.invoke()
+            } catch (
+                error: Throwable,
+            ) {
+                runtimeCloseFailure =
+                    error
+            }
         }
 
         if (
@@ -1193,6 +1290,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.ConversationPath ->
                     handleConversation(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationResourceMetadataPath ->
+                    handleConversationResourceMetadata(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationResourceContentPath ->
+                    handleConversationResourceContent(
                         exchange,
                     )
 
@@ -1547,8 +1654,19 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val conversation =
-            conversationProjection()
+        // Service readiness/currentness must depend only on canonical Conversation ownership,
+        // never on optional historical resource projection. A malformed or unavailable resource
+        // sidecar is presentation history truth and must not keep a healthy source-bound service
+        // from becoming current.
+        val currentConversationHeadSha256 =
+            DirectConversationStore(
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            )
+                .current()
+                .head
+                ?.conversationHeadSha256
 
         respondJson(
             exchange = exchange,
@@ -1568,7 +1686,7 @@ class VexLifeProdLocalService private constructor(
                     startupQualifiedRuntimeReceiptRef =
                         servingRuntimeReceiptRef(),
                     currentConversationHeadSha256 =
-                        conversation.currentConversationHeadSha256,
+                        currentConversationHeadSha256,
                     effectsPerformed = false,
                 ),
         )
@@ -1942,10 +2060,107 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun followUpReadinessProjection(
+        active: ActiveTurn?,
+    ): VexLifeProdServiceContract.FollowUpReadinessProjection {
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
+            )
+        val promptCacheEntryLimit =
+            servingPromptCacheEntryLimit()
+        val currentRuntimeReceiptRef =
+            servingRuntimeReceiptRef()
+        val latestCompletedResponse =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+                .canonicalEvents
+                .lastOrNull {
+                    it.eventKind ==
+                        VexLifeConversationContract.ResponseKind
+                }
+        val lastCompletedEvidence =
+            latestCompletedResponse
+                ?.turnRef
+                ?.let {
+                    turnRef ->
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .read(
+                            turnRef,
+                        )
+                }
+                ?.takeIf {
+                    it.runtimeObservation.runtimeReceiptRef ==
+                        currentRuntimeReceiptRef
+                }
+        val measurement =
+            lastCompletedEvidence
+                ?.providerMeasurement
+                ?.let {
+                    observed ->
+                    VexLifeProdServiceContract.ProviderMeasurementProjection(
+                        stop = observed.stop,
+                        finishReason = observed.finishReason,
+                        promptTokens = observed.promptTokens,
+                        cachedPromptTokens = observed.cachedPromptTokens,
+                        prefillTokens = observed.prefillTokens,
+                        completionTokens = observed.completionTokens,
+                        firstTokenMillis = observed.firstTokenMillis,
+                        firstAnswerMillis = observed.firstAnswerMillis,
+                        totalMillis = observed.totalMillis,
+                    )
+                }
+        val successorResetPending =
+            latestCompletedResponse
+                ?.let {
+                    response ->
+                    VexLifeWorkingContinuityOwner(
+                        productHome,
+                    )
+                        .readCurrent(
+                            lineageRef = response.companionLineageRef,
+                            threadRef = response.threadRef,
+                        )
+                        ?.commitReceipt
+                        ?.successorContextRequired
+                } ==
+            true
+        val state =
+            when {
+                promptCacheEntryLimit == null ->
+                    VexLifeProdServiceContract.FollowUpReadinessUnavailable
+
+                promptCacheEntryLimit < 2 ->
+                    VexLifeProdServiceContract.FollowUpReadinessLowerMemory
+
+                active != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessPreparing
+
+                successorResetPending ->
+                    VexLifeProdServiceContract.FollowUpReadinessSuccessorReset
+
+                measurement != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessFasterEnabled
+
+                else ->
+                    VexLifeProdServiceContract.FollowUpReadinessNotYetPrepared
+            }
+        return VexLifeProdServiceContract.FollowUpReadinessProjection(
+            state = state,
+            lastCompletedProviderMeasurement = measurement,
+        )
+    }
+
     private fun conversationTurnProjection():
         VexLifeProdServiceContract.ConversationTurnProjection {
         val state =
             conversationTurnState()
+        val active =
+            activeTurn.get()
         return VexLifeProdServiceContract.ConversationTurnProjection(
             schemaVersion =
                 VexLifeProdServiceContract.ConversationTurnProjectionSchema,
@@ -1955,6 +2170,18 @@ class VexLifeProdLocalService private constructor(
                     state,
                 ),
             effectsPerformed = false,
+            initialPromptPreparationPendingForNextTurn =
+                initialPromptPreparation
+                    ?.firstLocalTurnPending() ==
+                    true,
+            initialPromptPreparationForActiveTurn =
+                active
+                    ?.initialPromptPreparationTurn ==
+                    true,
+            followUpReadiness =
+                followUpReadinessProjection(
+                    active,
+                ),
         )
     }
 
@@ -1988,6 +2215,168 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private data class ConversationResourceRequestIdentity(
+        val requestSequence: Long,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val resourceRef: String,
+    )
+
+    private fun conversationResourceRequestIdentity(
+        exchange: HttpExchange,
+    ): ConversationResourceRequestIdentity {
+        fun requiredHeader(
+            name: String,
+        ): String =
+            exchange.requestHeaders
+                .getFirst(
+                    name,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires $name",
+                )
+
+        val requestSequence =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceSequenceHeader,
+            )
+                .toLongOrNull()
+                ?.takeIf {
+                    it >=
+                        0
+                }
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires one non-negative request sequence",
+                )
+        val requestEventRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventRefHeader,
+            )
+        val requestEventHash =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventHashHeader,
+            )
+        require(
+            requestEventHash.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        ) {
+            "historical resource review request event hash must be one lowercase SHA-256"
+        }
+        val resourceRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceRefHeader,
+            )
+        VexLifeProdServiceContract.requirePortableRef(
+            resourceRef,
+            "resourceRef",
+        )
+
+        return ConversationResourceRequestIdentity(
+            requestSequence = requestSequence,
+            requestEventRef = requestEventRef,
+            requestEventHash = requestEventHash,
+            resourceRef = resourceRef,
+        )
+    }
+
+    private fun handleConversationResourceMetadata(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.metadata(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = lookup.value,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_ADMITTED",
+                    message = lookup.reason,
+                )
+        }
+    }
+
+    private fun handleConversationResourceContent(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.content(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondBytes(
+                    exchange = exchange,
+                    status = 200,
+                    bytes = lookup.value.bytes,
+                    contentType = lookup.value.contentType,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_AVAILABLE",
+                    message = lookup.reason,
+                )
+        }
+    }
+
     private fun handleContext(
         exchange: HttpExchange,
     ) {
@@ -2013,6 +2402,65 @@ class VexLifeProdLocalService private constructor(
             version = current?.body?.version,
             bodySha256 = current?.bodySha256,
         )
+    }
+
+    /**
+     * Starts one best-effort initial provider-prefix preparation only after the local service is
+     * listening. Failure or unsupported provider representation never controls Product availability.
+     */
+    private fun startInitialPromptPreparation() {
+        val preparation =
+            initialPromptPreparation
+                ?: return
+        try {
+            val productHome =
+                Path.of(
+                    startupSetup.productHome,
+                )
+            val runtime =
+                currentQualifiedRuntimeEvidence()
+            val entry =
+                HereticModelOfferings.requireEntry(
+                    productHome,
+                    runtime.modelRef,
+                )
+            val providerNativeTools =
+                entry.companionProfile.capabilityRepresentation ==
+                    HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+            val capabilityRequestsAdmitted =
+                entry.companionProfile.reachRepresentationStanding ==
+                    HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+            val prefix =
+                DirectPromptContext.projectInitialBootPrefix(
+                    foundationalField =
+                        VexLifeFoundationalField.readCurrent(),
+                    contextProfile =
+                        contextProfiles.readActive(
+                            productFoundationIdentity(),
+                        ),
+                    memoryProviderSelection =
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap =
+                                VexLifeMemoryContract.MaximumMemoryTokens,
+                        ),
+                    capabilityRequestsAdmitted =
+                        capabilityRequestsAdmitted,
+                    providerNativeTools =
+                        providerNativeTools,
+                )
+            preparation.start(
+                executor = executor,
+                runtime = runtime,
+                prefix = prefix,
+            )
+        } catch (
+            error: Throwable,
+        ) {
+            preparation.failBeforeStart(
+                error,
+            )
+        }
     }
 
     private fun contextProfilesProjection(
@@ -4888,6 +5336,10 @@ class VexLifeProdLocalService private constructor(
             ActiveTurn(
                 attempt = begin.attempt,
                 cancellation = cancellation,
+                initialPromptPreparationTurn =
+                    initialPromptPreparation
+                        ?.firstLocalTurnPending() ==
+                        true,
             )
         if (
             !activeTurn.compareAndSet(
@@ -5606,59 +6058,12 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection {
-        val snapshot =
-            DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
-            )
-                .current()
-
-        val messages =
-            snapshot.canonicalEvents
-                .map {
-                    event ->
-                    VexLifeProdServiceContract.ConversationMessage(
-                        eventRef = event.eventRef,
-                        eventSha256 = event.eventSha256,
-                        messageRef = event.messageRef,
-                        turnRef = event.turnRef,
-                        role =
-                            when (
-                                event.eventKind
-                            ) {
-                                "REQUEST" ->
-                                    "human"
-
-                                "RESPONSE" ->
-                                    "vex"
-
-                                else ->
-                                    error(
-                                        "canonical direct Conversation contains unsupported event kind",
-                                    )
-                            },
-                        content = event.content,
-                        sequence = event.sequence,
-                        formedAt = event.formedAt,
-                        model = event.model,
-                    )
-                }
-
-        return VexLifeProdServiceContract.ConversationProjection(
-            schemaVersion = VexLifeProdServiceContract.ConversationProjectionSchema,
-            projectRef = DirectConversationIdentity.ProjectRef,
-            threadRef = DirectConversationIdentity.ThreadRef,
-            channelRef = DirectConversationIdentity.ChannelRef,
-            currentConversationHeadSha256 =
-                snapshot.head
-                    ?.conversationHeadSha256,
-            messages = messages,
-            abandonedAttemptCount = snapshot.abandonedAttempts.size,
-            effectsPerformed = false,
+    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection =
+        VexLifeConversationServiceProjection.observe(
+            Path.of(
+                startupSetup.productHome,
+            ),
         )
-    }
 
     private fun requestHostAdmitted(
         exchange: HttpExchange,
@@ -5921,6 +6326,39 @@ class VexLifeProdLocalService private constructor(
 
         return bytes.toString(
             StandardCharsets.UTF_8,
+        )
+    }
+
+    private fun respondBytes(
+        exchange: HttpExchange,
+        status: Int,
+        bytes: ByteArray,
+        contentType: String,
+    ) {
+        require(
+            bytes.isNotEmpty() &&
+                contentType.isNotBlank(),
+        ) {
+            "byte response requires content and content type"
+        }
+        exchange.responseHeaders.set(
+            "content-type",
+            contentType,
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.responseHeaders.set(
+            "x-content-type-options",
+            "nosniff",
+        )
+        exchange.sendResponseHeaders(
+            status,
+            bytes.size.toLong(),
+        )
+        exchange.responseBody.write(
+            bytes,
         )
     }
 

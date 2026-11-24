@@ -317,6 +317,34 @@ class VexLifeProdServiceContractTest {
             projection.display.targetAttemptRef,
         )
 
+        val measurement =
+            VexLifeProdServiceContract.ProviderMeasurementProjection(
+                stop = "COMPLETED",
+                finishReason = "stop",
+                promptTokens = 12_000,
+                cachedPromptTokens = 8_000,
+                prefillTokens = 4_000,
+                completionTokens = 120,
+                firstTokenMillis = 3_500,
+                firstAnswerMillis = 3_900,
+                totalMillis = 4_200,
+            )
+        val followUp =
+            VexLifeProdServiceContract.FollowUpReadinessProjection(
+                state =
+                    VexLifeProdServiceContract.FollowUpReadinessFasterEnabled,
+                lastCompletedProviderMeasurement = measurement,
+            )
+        assertEquals(
+            8_000,
+            followUp.lastCompletedProviderMeasurement
+                ?.cachedPromptTokens,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.FollowUpReadinessFasterEnabled,
+            followUp.state,
+        )
+
         val response =
             VexLifeProdServiceContract.ConversationCancelResponse(
                 schemaVersion =

@@ -56,8 +56,18 @@ class VexLifePreviewUpdateTest {
     @Test
     fun sealedDiskImageStripsMountTimeBookkeeping() {
         assertContains(buildSource, "\".fseventsd\"")
+        assertContains(buildSource, "\"no_log\"")
         assertContains(buildSource, "\".Spotlight-V100\"")
         assertContains(buildSource, "\".Trashes\"")
+        val suppression = buildSource.indexOf("val fseventsNoLog =")
+        val finalCleanup = buildSource.indexOf("Final cleanup is deliberately adjacent to detach")
+        val detach = buildSource.indexOf("\"detach\",", finalCleanup)
+        kotlin.test.assertTrue(
+            suppression >= 0 &&
+                finalCleanup > suppression &&
+                detach > finalCleanup,
+            "FSEvents suppression must remain active through writable-volume changes and cleanup must stay immediately before detach",
+        )
     }
 
     @Test

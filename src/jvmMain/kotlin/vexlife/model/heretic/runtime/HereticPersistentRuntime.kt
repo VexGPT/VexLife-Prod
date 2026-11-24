@@ -57,16 +57,81 @@ object HereticPersistentRuntime {
         50L
 
     /**
-     * VexLife serves one human turn at a time. Keep only one mlx-lm prompt-cache entry:
-     * the immediate continuation benefits from a warm prefix, while older parallel-style cache
-     * entries only accumulate unified-memory pressure.
+     * Safety-floor cache count for a Home that has not explicitly chosen another admitted value.
      *
-     * This is the first bounded runtime-safety candidate earned by the lived 10-sequence/~20 GB
-     * cache failure. Active-KV/prefill controls remain unchanged until one-cache stress evidence
-     * proves they are also needed.
+     * One entry preserves the stable leading system prefix. Larger values remain explicit
+     * experimental choices until one exact provider boundary proves useful reuse without unsafe
+     * unified-memory pressure.
      */
     const val PromptCacheEntryLimit =
         1
+
+    /** Exact upstream mlx-lm server source admitted by Product-owned in-memory adapters. */
+    private const val MlxServerBlobShaV0320 =
+        "9462d6e57822df160adc260d9414838179b71907"
+
+    /**
+     * Historical #555 launch contract only. Kept so an exact currently-running #555 candidate can
+     * be recognized and retired by its rightful Product owner during this successor's convergence.
+     */
+    private val FinalPromptCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "src=textwrap.dedent(inspect.getsource(s.ResponseGenerator._generate))",
+            "needle=\"and not r.end_of_prompt\"",
+            "assert src.count(needle)==1,\"VexLife provider adapter: expected cache exclusion not found exactly once\"",
+            "ns={}",
+            "exec(compile(src.replace(needle,\"and True  # VexLife preserves final pre-generation cache\"),\"<vexlife-final-prompt-cache>\",\"exec\"),s.__dict__,ns)",
+            "s.ResponseGenerator._generate=ns[\"_generate\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
+
+    /**
+     * Project the already-owned append-only Conversation boundary into mlx-lm segmentation.
+     *
+     * The request carries only an exclusive provider-message count. The adapter:
+     * - requires the exact pinned mlx-lm server source;
+     * - leaves ordinary requests unchanged when the metadata is absent/invalid;
+     * - renders the supplied message prefix with the same pinned chat template;
+     * - uses the boundary only when those tokens are an exact prefix of the full request;
+     * - keeps the system and append-only Conversation as the only intermediate cacheable segments;
+     * - leaves every model-visible prompt token unchanged.
+     *
+     * The final mutable/current/request/thinking tail is one end-of-prompt segment, so stock mlx-lm
+     * does not retain it as a user cache. With cache=2 this allows system + Conversation history to
+     * circulate forward; the default cache=1 safety floor still keeps only system.
+     */
+    private val ConversationPrefixCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "hsrc=textwrap.dedent(inspect.getsource(s.APIHandler.handle_chat_completions))",
+            "hneedle=\"return CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\"",
+            "hrep=\"request = CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\\n    request._vexlife_prompt_cache_boundary_message_count = body.get(\\\"vexlife_prompt_cache_boundary_message_count\\\")\\n    return request\"",
+            "assert hsrc.count(hneedle)==1,\"VexLife provider adapter: chat request source drift\"",
+            "hns={}",
+            "exec(compile(hsrc.replace(hneedle,hrep),\"<vexlife-conversation-cache-handler>\",\"exec\"),s.__dict__,hns)",
+            "s.APIHandler.handle_chat_completions=hns[\"handle_chat_completions\"]",
+            "tsrc=textwrap.dedent(inspect.getsource(s.ResponseGenerator._tokenize))",
+            "tneedle=\"return prompt, segments, segment_types, initial_state\"",
+            "trep=\"boundary=getattr(request,\\\"_vexlife_prompt_cache_boundary_message_count\\\",None)\\n    if boundary is not None:\\n        valid=type(boundary) is int and 0 < boundary < len(messages) and messages[boundary-1].get(\\\"role\\\") == \\\"assistant\\\" and messages[boundary].get(\\\"role\\\") == \\\"user\\\"\\n        if valid:\\n            prefix_messages=messages[:boundary]\\n            user_probe=tokenizer.apply_chat_template(prefix_messages+[{'role':'user','content':''}],add_generation_prompt=False,**template_kwargs)\\n            assistant_probe=tokenizer.apply_chat_template(prefix_messages+[{'role':'assistant','content':''},{'role':'user','content':''}],add_generation_prompt=False,**template_kwargs)\\n            boundary_end=0\\n            for a,b in zip(user_probe,assistant_probe):\\n                if a != b:\\n                    break\\n                boundary_end += 1\\n            if 0 < sys_end < boundary_end < len(prompt) and prompt[:boundary_end] == user_probe[:boundary_end] and prompt[:boundary_end] == assistant_probe[:boundary_end]:\\n                next_segments=[]\\n                next_types=[]\\n                next_segments.append(prompt[:sys_end])\\n                next_types.append(\\\"system\\\")\\n                next_segments.append(prompt[sys_end:boundary_end])\\n                next_types.append(\\\"user\\\")\\n                next_segments.append(prompt[boundary_end:])\\n                next_types.append(\\\"assistant\\\")\\n                segments=next_segments\\n                segment_types=next_types\\n    return prompt, segments, segment_types, initial_state\"",
+            "assert tsrc.count(tneedle)==1,\"VexLife provider adapter: tokenizer return source drift\"",
+            "tns={}",
+            "exec(compile(tsrc.replace(tneedle,trep),\"<vexlife-conversation-cache-tokenize>\",\"exec\"),s.__dict__,tns)",
+            "s.ResponseGenerator._tokenize=tns[\"_tokenize\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
 
     private val RefPattern =
         Regex(
@@ -558,7 +623,16 @@ object HereticPersistentRuntime {
     }
 
     enum class ServerLaunchContract {
+        /** Current Product launch: pinned mlx-lm + append-only Conversation cache-boundary adapter. */
         CURRENT,
+
+        /** Historical #555 launch: final pre-generation cache adapter; accepted only for retirement. */
+        PRE_CONVERSATION_PREFIX_CACHE,
+
+        /** Earlier Product launch: direct mlx_lm.server with Product-owned --prompt-cache-size. */
+        PRE_FINAL_PROMPT_CACHE,
+
+        /** Oldest accepted Product launch: direct mlx_lm.server before prompt-cache sizing. */
         PRE_PROMPT_CACHE_LIMIT,
     }
 
@@ -611,21 +685,45 @@ object HereticPersistentRuntime {
             "Heretic runtime launch contract requires one model path"
         }
 
+        val providerEntry =
+            when (contract) {
+                ServerLaunchContract.CURRENT ->
+                    listOf(
+                        "-c",
+                        ConversationPrefixCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE ->
+                    listOf(
+                        "-c",
+                        FinalPromptCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+                ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+                ->
+                    listOf(
+                        "-m",
+                        "mlx_lm.server",
+                    )
+            }
         val base =
-            listOf(
-                "-m",
-                "mlx_lm.server",
-                "--model",
-                modelPath,
-                "--host",
-                "127.0.0.1",
-                "--port",
-                Port.toString(),
-                "--chat-template-args",
-                "{\"enable_thinking\":false}",
-            )
+            providerEntry +
+                listOf(
+                    "--model",
+                    modelPath,
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    Port.toString(),
+                    "--chat-template-args",
+                    "{\"enable_thinking\":false}",
+                )
         return when (contract) {
-            ServerLaunchContract.CURRENT ->
+            ServerLaunchContract.CURRENT,
+            ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
+            ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+            ->
                 base +
                     listOf(
                         "--prompt-cache-size",
@@ -658,32 +756,74 @@ object HereticPersistentRuntime {
         modelPath: String,
         args: List<String>,
     ): ServerLaunchContract? {
-        val predecessor =
+        val prePromptCache =
             serverArgs(
                 modelPath = modelPath,
                 contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
             )
-        if (args == predecessor) {
+        if (args == prePromptCache) {
             return ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT
         }
-        if (
-            args.size == predecessor.size + 2 &&
-            args.dropLast(2) == predecessor &&
-            args[args.lastIndex - 1] == "--prompt-cache-size" &&
-            args.last()
-                .toIntOrNull()
-                ?.let {
-                    runCatching {
-                        HereticRuntimeConfiguration.requirePromptCacheEntries(
-                            it,
-                        )
-                    }
-                        .isSuccess
-                } ==
+
+        fun matchesSizedLaunch(
+            base: List<String>,
+        ): Boolean =
+            args.size ==
+                base.size +
+                    2 &&
+                args.dropLast(
+                    2,
+                ) ==
+                base &&
+                args[
+                    args.lastIndex -
+                        1
+                ] ==
+                "--prompt-cache-size" &&
+                args.last()
+                    .toIntOrNull()
+                    ?.let {
+                        runCatching {
+                            HereticRuntimeConfiguration.requirePromptCacheEntries(
+                                it,
+                            )
+                        }
+                            .isSuccess
+                    } ==
                 true
+
+        if (
+            matchesSizedLaunch(
+                prePromptCache,
+            )
         ) {
-            return ServerLaunchContract.CURRENT
+            return ServerLaunchContract.PRE_FINAL_PROMPT_CACHE
         }
+
+        for (
+            priorContract in
+                listOf(
+                    ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
+                    ServerLaunchContract.CURRENT,
+                )
+        ) {
+            val base =
+                serverArgs(
+                    modelPath = modelPath,
+                    contract = priorContract,
+                )
+                    .dropLast(
+                        2,
+                    )
+            if (
+                matchesSizedLaunch(
+                    base,
+                )
+            ) {
+                return priorContract
+            }
+        }
+
         return null
     }
 

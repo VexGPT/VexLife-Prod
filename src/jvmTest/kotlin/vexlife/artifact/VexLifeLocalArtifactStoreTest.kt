@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -330,6 +331,116 @@ class VexLifeLocalArtifactStoreTest {
                     request.eventHash,
                 ),
                 "failed rebinding must preserve the original exact request-resource relationship",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalRequestBindingSurvivesLaterRawArtifactCustodyLoss() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-historical-binding-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-historical-binding",
+                lineageSuffix = "artifact-historical-binding",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val original =
+                store.storeOriginal(
+                    "historical resource bytes"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            val projection =
+                store.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = "historical resource bytes",
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.historical-binding.001",
+                            requestMessageRef =
+                                "message.local-artifact.human.historical-binding.001",
+                            content = "Keep showing what I sent even if I free the local bytes later.",
+                        )
+                    }
+            val bound =
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            VexLifeLocalArtifact.RequestAttachment(
+                                artifactRef = original.artifactRef,
+                                projectionRef = projection.projectionRef,
+                                displayName = "history.txt",
+                            ),
+                        ),
+                )
+
+            Files.delete(
+                home.resolve(
+                    original.custodyRelativePath,
+                ),
+            )
+
+            assertEquals(
+                projection,
+                store.historicalRequestProjection(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                ),
+                "historical presentation metadata must survive later original-byte custody loss",
+            )
+            assertIs<ExactArtifactFile.Classification.Missing>(
+                store.historicalOriginalFileClassification(
+                    original.artifactRef,
+                ),
+                "missing raw bytes must remain distinct from an invalid exact-file observation",
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.requestProjection(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                )
+            }
+            assertEquals(
+                bound,
+                store.historicalBindingFor(
+                    request.eventHash,
+                ),
+                "the immutable REQUEST -> resource relationship must survive later custody loss",
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.bindingFor(
+                    request.eventHash,
+                )
+            }
+            assertEquals(
+                "Keep showing what I sent even if I free the local bytes later.",
+                request.content,
+                "historical resource continuity must not rewrite canonical Conversation words",
             )
         } finally {
             parent

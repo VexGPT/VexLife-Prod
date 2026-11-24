@@ -139,7 +139,7 @@ class VexLifeWebP1ResponsiveLayoutTest {
         assertFalse(bundle.css.contains("mode status persistence vision settings"))
         assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
         assertTrue(
-            bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
+            bundle.javascript.contains("display ? resolveText(display.label) : workspaceText('workspace.button.vision-quick-access')") &&
                 bundle.javascript.contains("visionButton.disabled = !bound || state.visionInFlight;"),
         )
         assertFalse(bundle.javascript.contains("'Vision · Held'"))

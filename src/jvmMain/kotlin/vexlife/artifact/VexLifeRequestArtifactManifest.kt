@@ -1,7 +1,6 @@
 package vexlife.artifact
 
 import kotlinx.serialization.Serializable
-import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
@@ -162,7 +161,7 @@ object VexLifeRequestArtifactManifest {
                         "request artifact projection is not in exact Product custody"
                     }
                 val resourceRef =
-                    VexLifeAttachmentReach.resourceRefFor(
+                    VexLifeLocalArtifact.requestResourceRef(
                         requestEventHash = request.eventHash,
                         ordinal = index + 1,
                     )

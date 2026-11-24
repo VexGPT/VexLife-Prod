@@ -163,7 +163,7 @@ class HereticExecutionTopologyTest {
                 runtimeConfigurationValue = legacyRecommended,
             )
         assertEquals(
-            1,
+            2,
             legacyRecommendedTopology.runtime.promptCacheEntries.value,
         )
         assertEquals(
@@ -267,7 +267,7 @@ class HereticExecutionTopologyTest {
             promptCache.inheritedDefaultValue,
         )
         assertEquals(
-            "1",
+            "2",
             promptCache.recommendedValue,
         )
         assertEquals(

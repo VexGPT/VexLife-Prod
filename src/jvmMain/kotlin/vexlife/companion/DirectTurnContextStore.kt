@@ -45,6 +45,10 @@ class DirectTurnContextStore(
         /** v2 plus the capability exchange trace; written only when a turn made requests. */
         const val RuntimeEvidenceSchemaV3 =
             "vexlife-prod.turn-runtime-evidence/v3"
+
+        /** Current evidence: prior truth plus one bounded final provider-stage measurement. */
+        const val RuntimeEvidenceSchemaV4 =
+            "vexlife-prod.turn-runtime-evidence/v4"
     }
 
     @OptIn(
@@ -62,6 +66,11 @@ class DirectTurnContextStore(
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val providerMeasurement: ProviderMeasurement? =
+            null,
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
         )
@@ -96,6 +105,11 @@ class DirectTurnContextStore(
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
         )
+        val providerMeasurement: ProviderMeasurement? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val sourceReturnTrace: DirectConversationSourceReturn.Trace? =
             null,
         @EncodeDefault(
@@ -109,6 +123,19 @@ class DirectTurnContextStore(
         val formedAt: String,
         val evidenceRef: String,
         val evidenceSha256: String,
+    )
+
+    @Serializable
+    data class ProviderMeasurement(
+        val stop: String,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val prefillTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
     )
 
     data class PromptReceiptCompatibility(
@@ -136,6 +163,7 @@ class DirectTurnContextStore(
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        val providerMeasurement: ProviderMeasurement?,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
         val rawProviderResponsePersisted: Boolean,
@@ -311,6 +339,8 @@ class DirectTurnContextStore(
         promptContext: DirectPromptContext.Receipt,
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        providerMeasurement: DirectCompanionConnection.StageMeasurement? =
+            null,
         sourceReturnTrace: DirectConversationSourceReturn.Trace? =
             null,
         capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
@@ -335,6 +365,7 @@ class DirectTurnContextStore(
                 promptContext = promptContext,
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
+                providerMeasurement = providerMeasurement,
                 sourceReturnTrace = sourceReturnTrace,
                 capabilityTrace = capabilityTrace,
                 formedAt = formedAt,
@@ -556,6 +587,7 @@ class DirectTurnContextStore(
             promptContext = evidence.promptContext,
             runtimeObservation = evidence.runtimeObservation,
             invocationEvidence = evidence.invocationEvidence,
+            providerMeasurement = evidence.providerMeasurement,
             sourceReturnTrace = evidence.sourceReturnTrace,
             capabilityTrace = evidence.capabilityTrace,
             rawProviderResponsePersisted = evidence.rawProviderResponsePersisted,
@@ -679,13 +711,21 @@ class DirectTurnContextStore(
         promptContext: DirectPromptContext.Receipt,
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        providerMeasurement: DirectCompanionConnection.StageMeasurement?,
         sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         capabilityTrace: VexLifeCapabilityBridge.Trace?,
         formedAt: Instant,
     ): RuntimeEvidence {
         val core =
             RuntimeEvidenceCore(
-                schemaVersion = if (capabilityTrace != null) RuntimeEvidenceSchemaV3 else RuntimeEvidenceSchema,
+                schemaVersion =
+                    if (providerMeasurement != null) {
+                        RuntimeEvidenceSchemaV4
+                    } else if (capabilityTrace != null) {
+                        RuntimeEvidenceSchemaV3
+                    } else {
+                        RuntimeEvidenceSchema
+                    },
                 truthClass = "PRODUCT_RUNTIME_TURN_EVIDENCE",
                 turnRef = request.turnRef,
                 requestEventRef = request.eventRef,
@@ -695,6 +735,11 @@ class DirectTurnContextStore(
                 promptContext = promptContext,
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
+                providerMeasurement =
+                    providerMeasurement
+                        ?.let(
+                            ::normalizeProviderMeasurement,
+                        ),
                 sourceReturnTrace = sourceReturnTrace,
                 capabilityTrace = capabilityTrace,
                 rawProviderResponsePersisted = false,
@@ -718,6 +763,7 @@ class DirectTurnContextStore(
             promptContext = core.promptContext,
             runtimeObservation = core.runtimeObservation,
             invocationEvidence = core.invocationEvidence,
+            providerMeasurement = core.providerMeasurement,
             sourceReturnTrace = core.sourceReturnTrace,
             capabilityTrace = core.capabilityTrace,
             rawProviderResponsePersisted = core.rawProviderResponsePersisted,
@@ -736,6 +782,67 @@ class DirectTurnContextStore(
             )
     }
 
+    private fun normalizeProviderMeasurement(
+        measurement: DirectCompanionConnection.StageMeasurement,
+    ): ProviderMeasurement =
+        ProviderMeasurement(
+            stop = measurement.stop.wire,
+            finishReason = measurement.finishReason,
+            promptTokens = measurement.promptTokens,
+            cachedPromptTokens = measurement.cachedPromptTokens,
+            prefillTokens = measurement.prefillTokens,
+            completionTokens = measurement.completionTokens,
+            firstTokenMillis = measurement.firstTokenMillis,
+            firstAnswerMillis = measurement.firstAnswerMillis,
+            totalMillis = measurement.totalMillis,
+        )
+            .also(
+                ::validateProviderMeasurement,
+            )
+
+    private fun validateProviderMeasurement(
+        value: ProviderMeasurement,
+    ) {
+        require(
+            value.stop in
+                DirectCompanionConnection.StageStop.entries
+                    .map {
+                        it.wire
+                    }
+                    .toSet() &&
+                listOfNotNull(
+                    value.promptTokens,
+                    value.cachedPromptTokens,
+                    value.prefillTokens,
+                    value.completionTokens,
+                )
+                    .all {
+                        it >= 0
+                    } &&
+                listOfNotNull(
+                    value.firstTokenMillis,
+                    value.firstAnswerMillis,
+                    value.totalMillis,
+                )
+                    .all {
+                        it >= 0L
+                    } &&
+                value.prefillTokens ==
+                value.promptTokens
+                    ?.let {
+                        prompt ->
+                        prompt - (value.cachedPromptTokens ?: 0)
+                    } &&
+                (
+                    value.promptTokens == null ||
+                        value.cachedPromptTokens == null ||
+                        value.cachedPromptTokens <= value.promptTokens
+                    )
+        ) {
+            "product runtime turn provider measurement is invalid"
+        }
+    }
+
     private fun validateRuntimeEvidence(
         value: RuntimeEvidence,
     ) {
@@ -745,6 +852,7 @@ class DirectTurnContextStore(
                     RuntimeEvidenceSchemaV1,
                     RuntimeEvidenceSchema,
                     RuntimeEvidenceSchemaV3,
+                    RuntimeEvidenceSchemaV4,
                 ) &&
                 value.truthClass ==
                 "PRODUCT_RUNTIME_TURN_EVIDENCE" &&
@@ -770,6 +878,7 @@ class DirectTurnContextStore(
                 promptContext = value.promptContext,
                 runtimeObservation = value.runtimeObservation,
                 invocationEvidence = value.invocationEvidence,
+                providerMeasurement = value.providerMeasurement,
                 sourceReturnTrace = value.sourceReturnTrace,
                 capabilityTrace = value.capabilityTrace,
                 rawProviderResponsePersisted = value.rawProviderResponsePersisted,
@@ -781,12 +890,17 @@ class DirectTurnContextStore(
             (
                 value.schemaVersion ==
                     RuntimeEvidenceSchemaV1 &&
+                    value.providerMeasurement ==
+                    null &&
                     value.sourceReturnTrace ==
+                    null &&
+                    value.capabilityTrace ==
                     null
                 ) ||
                 (
                     value.schemaVersion ==
                         RuntimeEvidenceSchema &&
+                    value.providerMeasurement == null &&
                     value.capabilityTrace == null &&
                     requireSourceReturnTrace(
                         sourceReturnTrace =
@@ -800,8 +914,24 @@ class DirectTurnContextStore(
                     // and the prompt that carried them kept room for them.
                     value.schemaVersion ==
                         RuntimeEvidenceSchemaV3 &&
+                    value.providerMeasurement == null &&
                     value.capabilityTrace != null &&
                     value.promptContext.capabilityExchangeAllowanceTokens > 0 &&
+                    requireSourceReturnTrace(
+                        sourceReturnTrace =
+                            value.sourceReturnTrace,
+                        finalPrompt =
+                            value.promptContext,
+                    )
+                ) ||
+                (
+                    value.schemaVersion ==
+                        RuntimeEvidenceSchemaV4 &&
+                    value.providerMeasurement != null &&
+                    (
+                        value.capabilityTrace == null ||
+                            value.promptContext.capabilityExchangeAllowanceTokens > 0
+                        ) &&
                     requireSourceReturnTrace(
                         sourceReturnTrace =
                             value.sourceReturnTrace,
@@ -812,6 +942,11 @@ class DirectTurnContextStore(
         ) {
             "product runtime turn evidence source-return trace is invalid for its schema"
         }
+
+        value.providerMeasurement
+            ?.let(
+                ::validateProviderMeasurement,
+            )
 
         val hash =
             semanticHash(
