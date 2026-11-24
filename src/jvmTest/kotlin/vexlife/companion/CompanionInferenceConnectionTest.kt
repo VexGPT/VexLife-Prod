@@ -3,6 +3,7 @@ package vexlife.companion
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -180,11 +181,35 @@ class CompanionInferenceConnectionTest {
         )
         assertEquals(
             direct.runtimeObservation,
-            seam.runtimeObservation,
+            seam.localRuntimeObservation,
         )
         assertEquals(
             direct.invocationEvidence,
-            seam.invocationEvidence,
+            seam.localInvocationEvidence,
+        )
+        assertEquals(
+            VexLifeModelSourceProjection.SourceKind.LOCAL,
+            seam.observation.sourceKind,
+        )
+        assertEquals(
+            direct.runtimeObservation.observationRef,
+            seam.observation.observationRef,
+        )
+        assertEquals(
+            direct.runtimeObservation.semanticFingerprint,
+            seam.observation.semanticFingerprint,
+        )
+        assertEquals(
+            direct.invocationEvidence.requestBodySha256,
+            seam.invocationEvidence.requestBodySha256,
+        )
+        assertEquals(
+            direct.invocationEvidence.invocationRef,
+            seam.invocationEvidence.invocationRef,
+        )
+        assertEquals(
+            true,
+            seam.invocationEvidence.loopbackOnly,
         )
         assertEquals(
             direct.providerRequestBody,
