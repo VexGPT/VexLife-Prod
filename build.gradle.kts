@@ -3422,7 +3422,33 @@ tasks.register(
                 diskImageMount.toString(),
             ),
         )
+
+        val mountBookkeepingNames =
+            listOf(
+                ".fseventsd",
+                ".Spotlight-V100",
+                ".Trashes",
+            )
         try {
+            // Keep FSEvents from repopulating its journal while this writable image is mounted.
+            // The marker is mount-scoped only: final cleanup below removes the entire bookkeeping
+            // directory before detach so the sealed DMG contains no service metadata.
+            val fseventsNoLog =
+                diskImageMount
+                    .resolve(
+                        ".fseventsd",
+                    )
+                    .resolve(
+                        "no_log",
+                    )
+            Files.createDirectories(
+                fseventsNoLog.parent,
+            )
+            Files.writeString(
+                fseventsNoLog,
+                "",
+                StandardCharsets.UTF_8,
+            )
             val diskImageVolumeIcon =
                 diskImageMount.resolve(
                     macApplicationDiskImageVolumeIconName,
@@ -3496,30 +3522,29 @@ tasks.register(
                 ),
             )
 
-            // These are macOS mount-time bookkeeping directories, not VexLife payload.
-            // Remove any that were created while the writable image was mounted so the
-            // sealed DMG stays visually minimal when Finder hidden files are visible.
-            listOf(
-                ".fseventsd",
-                ".Spotlight-V100",
-                ".Trashes",
-            )
-                .forEach {
-                    bookkeepingName ->
-                    deleteTreeNoFollow(
-                        diskImageMount.resolve(
-                            bookkeepingName,
-                        ),
-                    )
-                }
         } finally {
-            runExactCommand(
-                listOf(
-                    "/usr/bin/hdiutil",
-                    "detach",
-                    diskImageMount.toString(),
-                ),
-            )
+            try {
+                // Final cleanup is deliberately adjacent to detach. The FSEvents no_log marker
+                // remains present through every intentional volume write, then the whole
+                // bookkeeping directory is removed only when no more Product writes remain.
+                mountBookkeepingNames
+                    .forEach {
+                        bookkeepingName ->
+                        deleteTreeNoFollow(
+                            diskImageMount.resolve(
+                                bookkeepingName,
+                            ),
+                        )
+                    }
+            } finally {
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/hdiutil",
+                        "detach",
+                        diskImageMount.toString(),
+                    ),
+                )
+            }
         }
 
         val diskImage =
