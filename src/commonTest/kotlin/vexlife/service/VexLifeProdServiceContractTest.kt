@@ -7,6 +7,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 class VexLifeProdServiceContractTest {
     @Test
@@ -78,6 +80,14 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/local-sources/control",
             VexLifeProdServiceContract.LocalSourcesControlPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-effects",
+            VexLifeProdServiceContract.WorkspaceEffectsPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-effects/control",
+            VexLifeProdServiceContract.WorkspaceEffectsControlPath,
         )
         assertEquals(
             "/api/v1/context",
@@ -593,6 +603,105 @@ class VexLifeProdServiceContractTest {
         assertEquals("c".repeat(64), projection.scoreSourceConversationHeadSha256)
         assertFalse(projection.effectsPerformed)
     }
+
+    @Test
+    fun workspaceEffectsContractKeepsStrongerAuthoritySeparateFromLocalSourceReadGrant() {
+        val sourceRef =
+            VexLifeLocalSourcesFamily.sourceRefForSha256(
+                "a".repeat(
+                    64,
+                ),
+            )
+        val grant =
+            VexLifeWorkspaceEffectsFamily.Grant(
+                grantRef =
+                    VexLifeWorkspaceEffectsFamily.GrantRefPrefix +
+                        "b".repeat(
+                            64,
+                        ),
+                sourceRef =
+                    sourceRef,
+                sourceGrantedAt =
+                    "2026-11-25T03:00:00Z",
+                grantedAt =
+                    "2026-11-25T03:01:00Z",
+            )
+        val projection =
+            VexLifeProdServiceContract.WorkspaceEffectsProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceEffectsProjectionSchema,
+                state =
+                    VexLifeWorkspaceEffectsFamily.StateGranted,
+                grants =
+                    listOf(
+                        grant,
+                    ),
+                effectsPerformed =
+                    false,
+            )
+        val request =
+            VexLifeProdServiceContract.WorkspaceEffectsControlRequest(
+                controlRef =
+                    VexLifeWorkspaceEffectsFamily.ControlRevoke,
+                sourceRef =
+                    sourceRef,
+            )
+        val response =
+            VexLifeProdServiceContract.WorkspaceEffectsControlResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlResponseSchema,
+                controlRef =
+                    request.controlRef,
+                sourceRef =
+                    request.sourceRef,
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED,
+                effects =
+                    VexLifeProdServiceContract.WorkspaceEffectsProjection(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceEffectsProjectionSchema,
+                        state =
+                            VexLifeWorkspaceEffectsFamily.StateEmpty,
+                        grants =
+                            emptyList(),
+                        effectsPerformed =
+                            false,
+                    ),
+                grantMutationPerformed =
+                    true,
+            )
+
+        assertEquals(
+            grant.sourceRef,
+            projection.grants.single().sourceRef,
+        )
+        assertEquals(
+            VexLifeWorkspaceEffectsFamily.ControlRevoke,
+            response.controlRef,
+        )
+        assertTrue(
+            response.grantMutationPerformed,
+        )
+        assertFalse(
+            response.effects.effectsPerformed,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            response.copy(
+                grantMutationPerformed =
+                    false,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeProdServiceContract.WorkspaceEffectsControlRequest(
+                controlRef =
+                    VexLifeLocalSourcesFamily.ControlRemove,
+                sourceRef =
+                    sourceRef,
+            )
+        }
+    }
+
 }
 
 // [VXG RealForever]
