@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "vexlife.continuity-pressure-scenario/v1",
+  "scenarioRef": "scenario.vexlife.evolution.dream-current-plan.v1",
+  "label": "Dream wake + corrected Saturday plan under rollover pressure",
+  "purpose": "Observe whether Vex can live one ordinary corrected-plan relationship after the correction is explicitly kept through the Product Memory Review owner, consolidated by deterministic G03 Dream immediately before the first ordinary background pressure turn, and later plan Conversation leaves ordinary recent view. The scenario reuses the historical A021 pressure shape for comparable pressure conditions: two plan turns, eight 8k ordinary-background turns, then the natural live request. A021 is provenance for this shape, not accepted evidence for A4. EvolveContext may return exact older source. The live request never asks Vex to explain context, Dream, retrieval, currentness, or VexLife machinery.",
+  "syntheticOnly": true,
+  "payloadSeed": 20261124,
+  "sets": [
+    {
+      "setRef": "set.plan",
+      "kind": "FORMATION",
+      "turns": [
+        {
+          "turnRef": "plan.old",
+          "input": "For Saturday, Sarah and I are meeting at Harbor Cafe at 9:00 a.m. That's the plan I have right now.",
+          "tags": [
+            "OLD_PLAN",
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "plan.current",
+          "input": "Actually Sarah just texted: change of plan for Saturday. We're meeting at Cedar Station at 10:00 a.m., not Harbor Cafe at 9:00.",
+          "tags": [
+            "CURRENT_PLAN",
+            "CORRECTION"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.pressure",
+      "kind": "PRESSURE",
+      "turns": [
+        {
+          "turnRef": "pressure.01",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": [],
+          "beforeTurnControls": [
+            {
+              "controlClass": "MEMORY_CORRECTION_KEEP_AND_DREAM",
+              "key": "subject.synthetic.saturday-plan",
+              "value": "The Saturday plan with Sarah was corrected from Harbor Cafe to Cedar Station.",
+              "sourceTurnRef": "plan.current"
+            }
+          ]
+        },
+        {
+          "turnRef": "pressure.02",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.03",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.04",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.05",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.06",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.07",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.08",
+          "input": "I'm saving unrelated rough word-association notes from another task so I don't lose them. No need to interpret them.",
+          "tags": [
+            "PRESSURE",
+            "ORDINARY_BACKGROUND"
+          ],
+          "payloadTargetTokens": 8000,
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.live",
+      "kind": "PROBE",
+      "turns": [
+        {
+          "turnRef": "live.01",
+          "input": "What did we decide about where and when I'm meeting Sarah on Saturday?",
+          "tags": [
+            "LIVE_MODEL_PROBE",
+            "ORDINARY_CURRENTIZATION"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": [
+            "assert.dream-current-plan-currentization"
+          ]
+        }
+      ]
+    }
+  ]
+}
