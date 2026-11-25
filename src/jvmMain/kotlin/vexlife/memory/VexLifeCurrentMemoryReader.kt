@@ -22,6 +22,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import vexlife.companion.DirectPromptContext
 import vexlife.continuity.VexLifeContinuityObservation
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
@@ -256,6 +257,29 @@ object VexLifeCurrentMemoryReader {
         val sourceScoreConversationHeadSha256: String?,
         val semanticAuthorityHeadSha256: String?,
         val statements: List<CurrentAcceptedStatement>,
+    )
+
+    /**
+     * Read-only lifecycle projection consumed by request-bound historical Conversation recall.
+     *
+     * Conversation still owns the source bytes. This projection says only whether current
+     * Score/semantic authority allows a source-bound event to participate in continuity recall, or
+     * whether an older source remains returnable only as historical evidence after correction /
+     * supersession.
+     */
+    internal data class ConversationRecallMembrane(
+        val bindingRef: String,
+        val blockedEventRefs: Set<String>,
+        val historicalCurrentizedEventRefs: Set<String>,
+    )
+
+    internal data class ConversationRecallStatementStanding(
+        val sourceEventRefs: Set<String>,
+        val current: Boolean,
+        val effectiveState: String,
+        val acceptedForContinuity: Boolean,
+        val consentState: String,
+        val currentAuthorityMember: Boolean,
     )
 
     @Serializable
@@ -847,6 +871,230 @@ object VexLifeCurrentMemoryReader {
                             statement.sourceConversationHeadSha256,
                     )
                 },
+        )
+    }
+
+    internal fun readConversationRecallMembrane(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): ConversationRecallMembrane {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Conversation recall membrane requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val coordinates =
+            readCurrentScoreCoordinates(
+                productHome = home,
+                threadRef = threadRef,
+            )
+
+        if (
+            coordinates.scoreHeadSha256 ==
+                null
+        ) {
+            require(
+                coordinates.semanticAuthorityHeadSha256 ==
+                    null
+            ) {
+                "empty Score coordinates cannot carry semantic recall authority"
+            }
+            return formConversationRecallMembrane(
+                scoreHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                statements = emptyList(),
+            )
+        }
+
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val semanticAuthorityHeadSha256 =
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        require(
+            score.head.string(
+                "scoreHeadSha256",
+            ) ==
+                coordinates.scoreHeadSha256 &&
+                score.head.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                coordinates.sourceConversationHeadSha256 &&
+                semanticAuthorityHeadSha256 ==
+                coordinates.semanticAuthorityHeadSha256
+        ) {
+            "Conversation recall membrane differs from current Score coordinates"
+        }
+
+        return formConversationRecallMembrane(
+            scoreHeadSha256 =
+                coordinates.scoreHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            statements =
+                score.statements.map {
+                    statement ->
+                    ConversationRecallStatementStanding(
+                        sourceEventRefs =
+                            statement.sourceBindings
+                                .map {
+                                    binding ->
+                                    binding.jsonObject.string(
+                                        "eventRef",
+                                    )
+                                }
+                                .toSet(),
+                        current =
+                            statement.current,
+                        effectiveState =
+                            statement.effectiveState,
+                        acceptedForContinuity =
+                            statement.acceptedForContinuity,
+                        consentState =
+                            statement.consentState,
+                        currentAuthorityMember =
+                            score.authority
+                                ?.let {
+                                    authority ->
+                                    authorityContains(
+                                        authority,
+                                        statement,
+                                    )
+                                }
+                                ?: false,
+                    )
+                },
+        )
+    }
+
+    internal fun formConversationRecallMembrane(
+        scoreHeadSha256: String?,
+        semanticAuthorityHeadSha256: String?,
+        statements: List<ConversationRecallStatementStanding>,
+    ): ConversationRecallMembrane {
+        scoreHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "Conversation recall Score head",
+                )
+            }
+        semanticAuthorityHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "Conversation recall semantic authority head",
+                )
+            }
+
+        val blocked =
+            mutableSetOf<String>()
+        val historical =
+            mutableSetOf<String>()
+
+        statements.forEach {
+            statement ->
+            require(
+                statement.sourceEventRefs.isNotEmpty() &&
+                    statement.sourceEventRefs.all(
+                        String::isNotBlank,
+                    )
+            ) {
+                "Conversation recall statement standing requires exact source event refs"
+            }
+            val blockedByLifecycle =
+                statement.effectiveState ==
+                    "RELEASED_OR_TOMBSTONED" ||
+                    !statement.acceptedForContinuity ||
+                    statement.consentState !in
+                    positiveConsent ||
+                    (
+                        statement.current &&
+                            !statement.currentAuthorityMember
+                    )
+            if (
+                blockedByLifecycle
+            ) {
+                blocked +=
+                    statement.sourceEventRefs
+            } else if (
+                !statement.current &&
+                    statement.effectiveState in
+                    setOf(
+                        "CORRECTED",
+                        "SUPERSEDED",
+                    )
+            ) {
+                historical +=
+                    statement.sourceEventRefs
+            }
+        }
+
+        historical -=
+            blocked
+
+        return ConversationRecallMembrane(
+            bindingRef =
+                if (
+                    scoreHeadSha256 ==
+                        null &&
+                    semanticAuthorityHeadSha256 ==
+                        null
+                ) {
+                    VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef
+                } else {
+                    "lifecycle.score." +
+                        (
+                            scoreHeadSha256
+                                ?.take(
+                                    16,
+                                )
+                                ?: "none"
+                            ) +
+                        "." +
+                        (
+                            semanticAuthorityHeadSha256
+                                ?.take(
+                                    16,
+                                )
+                                ?: "none"
+                            )
+                },
+            blockedEventRefs =
+                blocked.toSortedSet(),
+            historicalCurrentizedEventRefs =
+                historical.toSortedSet(),
         )
     }
 
