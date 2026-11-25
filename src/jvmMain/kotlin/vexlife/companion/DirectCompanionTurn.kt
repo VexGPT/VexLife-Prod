@@ -577,7 +577,7 @@ object DirectCompanionTurn {
          */
         val partnerTextTurn: PartnerTextTurn? =
             null,
-        val initialPromptPreparation: VexLifeInitialPromptPreparation? =
+        val promptPreparation: VexLifePromptPreparation? =
             null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings = VexLifeCapabilityBridge.OwnerBindings(),
@@ -696,7 +696,7 @@ object DirectCompanionTurn {
             null,
         partnerTextTurn: PartnerTextTurn? =
             null,
-        initialPromptPreparation: VexLifeInitialPromptPreparation? =
+        promptPreparation: VexLifePromptPreparation? =
             null,
         workspaceCheckRuntimeSource: VexLifeWorkspaceTextCheck.RuntimeSource? =
             null,
@@ -736,8 +736,8 @@ object DirectCompanionTurn {
                     cancellation = cancellation,
                     visualInterpreter = visualInterpreter,
                     partnerTextTurn = partnerTextTurn,
-                    initialPromptPreparation =
-                        initialPromptPreparation,
+                    promptPreparation =
+                        promptPreparation,
                     currentWorkspaceCheckRuntimeRef = {
                         runCatching {
                             workspaceCheckRuntimeSource
@@ -1436,9 +1436,9 @@ object DirectCompanionTurn {
         )
         val initialReceipt =
             initialPrompt.materialization.receipt
-        hooks.initialPromptPreparation
+        hooks.promptPreparation
             ?.awaitAndConsume(
-                VexLifeInitialPromptPreparation.Validation(
+                VexLifePromptPreparation.Validation(
                     runtime = initialRuntimeEvidence,
                     leadingMessage =
                         initialPrompt.materialization.messages
