@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.companion.DirectConversationSourceReturn
@@ -279,6 +280,189 @@ class DirectConversationContextProjectionTest {
                     before,
                     fixture.homeTree(),
                     "derived locator rebuild must not mutate canonical Home",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun lifecycleBindingDriftRebuildsBeforeBlockedSourceCanBecomeRecall() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "The withdrawn continuity token is crimson-delta-52.",
+                        vex = "historical",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            71
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-lifecycle-drift",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                    sourceLifecycleBindingRef =
+                        "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.locator-lifecycle-drift",
+                        requestMessageRef =
+                            "message.continuity.locator-lifecycle-drift",
+                        content =
+                            "Without guessing: what was crimson-delta-52?",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                val prepared =
+                    DirectConversationContextProjection.prepare(
+                        conversationOwner = this,
+                        currentRequest = current,
+                        excludedEventRefs =
+                            setOf(
+                                current.eventRef,
+                            ),
+                        locatorBackend = backend,
+                        sourceLifecycle = {
+                            DirectConversationContextProjection.SourceLifecycle(
+                                bindingRef =
+                                    "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                                blockedEventRefs =
+                                    setOf(
+                                        old.first.eventRef,
+                                        old.second.eventRef,
+                                    ),
+                            )
+                        },
+                    )
+
+                assertNull(
+                    prepared,
+                    "lifecycle-held source must not return through locator or canonical fallback",
+                )
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+                assertEquals(
+                    "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                    generation.sourceLifecycleBindingRef,
+                )
+                assertTrue(
+                    generation.entries.isEmpty(),
+                    "lifecycle rebuild must remove the held pair from derived candidate location",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun correctedSourceIsReturnedAsExplicitHistoricalCurrentizedEvidence() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "Earlier wording: the bronze compass belongs beside the willow gate.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            73
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-currentized",
+                )
+            val lifecycleBinding =
+                "lifecycle.score.1111111111111111.2222222222222222"
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                    sourceLifecycleBindingRef =
+                        lifecycleBinding,
+                )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.locator-currentized",
+                        requestMessageRef =
+                            "message.continuity.locator-currentized",
+                        content =
+                            "Earlier, what did I say about the bronze compass?",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                            sourceLifecycle = {
+                                DirectConversationContextProjection.SourceLifecycle(
+                                    bindingRef =
+                                        lifecycleBinding,
+                                    historicalCurrentizedEventRefs =
+                                        setOf(
+                                            old.first.eventRef,
+                                            old.second.eventRef,
+                                        ),
+                                )
+                            },
+                        ),
+                    )
+                val projection =
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = 8_000,
+                    )
+
+                assertEquals(
+                    setOf(
+                        old.first.eventRef,
+                        old.second.eventRef,
+                    ),
+                    projection.historicalCurrentizedEventRefs.toSet(),
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "historical source whose semantic relationship has since been corrected or superseded",
+                    ),
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "do not present them as current Memory or current accepted meaning",
+                    ),
                 )
             }
         }
