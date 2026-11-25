@@ -117,6 +117,174 @@ class DirectConversationContextProjectionTest {
     }
 
     @Test
+    fun currentLocatorPreparesExactOlderSourceWithoutWholeHistoryEnumeration() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "Experiment anchor: the silver lantern is beside the pine gate.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Unrelated later turn.",
+                        vex = "later",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                )
+                    .first()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            43
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-current",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                val current =
+                    beginRequest(
+                        turnRef = "turn.continuity.locator-current",
+                        requestMessageRef = "message.continuity.locator-current",
+                        content =
+                            "Without guessing: where was the silver lantern?",
+                        formedAt = Instant.parse("2026-11-20T10:00:00Z"),
+                    )
+                val before =
+                    fixture.homeTree()
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    DirectConversationContextProjection.SourcePreparation.LOCATOR_CURRENT,
+                    prepared.sourcePreparation,
+                )
+                assertFalse(
+                    prepared.discovery.wholeHistoryEventEnumerationPerformed,
+                )
+                assertTrue(
+                    prepared.exactEventFileReadCount >=
+                        2,
+                )
+                assertTrue(
+                    prepared.discovery.matches.any {
+                        it.requestEvent.eventRef ==
+                            old.first.eventRef
+                    },
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "current locator preparation must not mutate canonical Home",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun absentLocatorRebuildsOnceAndReturnsExactSourceThroughTheSamePacketContract() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human =
+                        "Experiment anchor: the copper telescope is beside the east window.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+                ContinuityTurnFixture.Line(
+                    human = "Unrelated later turn.",
+                    vex = "later",
+                    at = Instant.parse("2026-11-20T09:00:00Z"),
+                ),
+            )
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            47
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-rebuild",
+                )
+
+            fixture.store.withWriterLease {
+                val current =
+                    beginRequest(
+                        turnRef = "turn.continuity.locator-rebuild",
+                        requestMessageRef = "message.continuity.locator-rebuild",
+                        content =
+                            "Without guessing: where was the copper telescope?",
+                        formedAt = Instant.parse("2026-11-20T10:00:00Z"),
+                    )
+                val before =
+                    fixture.homeTree()
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                        ),
+                    )
+                val projection =
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = 8_000,
+                    )
+
+                assertEquals(
+                    DirectConversationContextProjection.SourcePreparation.LOCATOR_REBUILT,
+                    prepared.sourcePreparation,
+                )
+                assertFalse(
+                    prepared.discovery.wholeHistoryEventEnumerationPerformed,
+                )
+                assertTrue(
+                    prepared.exactEventFileReadCount >=
+                        2,
+                )
+                assertEquals(
+                    DirectConversationContextProjection.Returned,
+                    projection.state,
+                )
+                assertTrue(
+                    projection.systemContent.startsWith(
+                        DirectConversationContextProjection.ContextHeader,
+                    ),
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "derived locator rebuild must not mutate canonical Home",
+                )
+            }
+        }
+    }
+
+    @Test
     fun ordinaryForwardRequestDoesNotCreateAContinuationCue() {
         assertNull(
             DirectConversationContextProjection.cueOrNull(

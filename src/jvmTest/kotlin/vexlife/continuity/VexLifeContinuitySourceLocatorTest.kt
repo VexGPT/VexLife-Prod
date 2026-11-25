@@ -179,6 +179,112 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun appendOnlyCatchUpKeepsGenerationCurrentWithoutWholeHistoryRebuild() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            41
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.catch-up",
+                )
+            val first =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "The amber compass is beside the cedar map.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+
+            fixture.store.withWriterLease {
+                val receipt =
+                    VexLifeContinuitySourceLocator.catchUpCommittedTurn(
+                        committedHead =
+                            requireNotNull(
+                                current().head,
+                            ),
+                        request = first.first,
+                        response = first.second,
+                        backend = backend,
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.CatchUpState.UPDATED,
+                    receipt.state,
+                )
+                assertFalse(
+                    receipt.wholeHistoryEventEnumerationPerformed,
+                )
+                assertTrue(
+                    receipt.derivedBackendMutationPerformed,
+                )
+            }
+
+            val second =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "A later unrelated message.",
+                        vex = "later",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                )
+                    .single()
+
+            fixture.store.withWriterLease {
+                val receipt =
+                    VexLifeContinuitySourceLocator.catchUpCommittedTurn(
+                        committedHead =
+                            requireNotNull(
+                                current().head,
+                            ),
+                        request = second.first,
+                        response = second.second,
+                        backend = backend,
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.CatchUpState.UPDATED,
+                    receipt.state,
+                )
+                assertEquals(
+                    2,
+                    receipt.completedTurnCount,
+                )
+                assertFalse(
+                    receipt.wholeHistoryEventEnumerationPerformed,
+                )
+
+                val located =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "amber compass",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    first.first.eventRef,
+                    located.candidates
+                        .single()
+                        .requestEvent
+                        .eventRef,
+                )
+                assertFalse(
+                    located.wholeHistoryEventEnumerationPerformed,
+                )
+            }
+        }
+    }
+
+    @Test
     fun deletingDerivedLocatorIsRebuildableAndNeverDeletesConversation() {
         ContinuityTurnFixture().use {
             fixture ->

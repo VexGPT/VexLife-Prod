@@ -198,6 +198,21 @@ object VexLifeContinuitySourceLocator {
         val derivedBackendMutationPerformed: Boolean,
     )
 
+    enum class CatchUpState {
+        UPDATED,
+        FULL_REBUILD_REQUIRED,
+    }
+
+    data class CatchUpReceipt(
+        val state: CatchUpState,
+        val sourceConversationHeadSha256: String?,
+        val sourceEventCount: Int,
+        val completedTurnCount: Int,
+        val wholeHistoryEventEnumerationPerformed: Boolean = false,
+        val canonicalSourceMutationPerformed: Boolean = false,
+        val derivedBackendMutationPerformed: Boolean,
+    )
+
     data class ResolvedCandidate(
         val matchedTerms: List<String>,
         val requestEvent: DirectConversationStore.Event,
@@ -340,6 +355,171 @@ object VexLifeContinuitySourceLocator {
             derivedBackendMutationPerformed = true,
         )
     }
+
+    /**
+     * Advance one already-current derived generation after the canonical Conversation commits one
+     * exact completed turn.
+     *
+     * The locator is never allowed to guess across a missing predecessor. If the backend is absent
+     * for a non-genesis Conversation, corrupt, rebound to another fingerprint profile, or not bound
+     * to the exact prior Conversation head, this returns [CatchUpState.FULL_REBUILD_REQUIRED]
+     * without mutating the backend. The next request may then use the canonical rebuild/fallback
+     * path.
+     */
+    fun catchUpCommittedTurn(
+        committedHead: DirectConversationStore.Head,
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        backend: Backend,
+    ): CatchUpReceipt {
+        requireCompletedPair(
+            request = request,
+            response = response,
+        )
+        require(
+            committedHead.requestEventHash ==
+                request.eventHash &&
+                committedHead.eventHash ==
+                response.eventHash &&
+                committedHead.sequence ==
+                response.sequence &&
+                committedHead.turnRef ==
+                request.turnRef
+        ) {
+            "continuity source locator catch-up requires the exact committed Conversation pair/head"
+        }
+
+        val priorGeneration =
+            when (
+                val load =
+                    backend.load()
+            ) {
+                BackendLoad.Absent ->
+                    if (
+                        committedHead.priorConversationHeadSha256 ==
+                            null &&
+                        request.sequence ==
+                            0L
+                    ) {
+                        Generation(
+                            schemaVersion = GenerationSchema,
+                            sourceConversationHeadSha256 = null,
+                            sourceConversationSequence = null,
+                            fingerprintBindingRef =
+                                backend.fingerprintBindingRef,
+                            sourceEventCount = 0,
+                            completedTurnCount = 0,
+                            entries = emptyList(),
+                        )
+                    } else {
+                        return catchUpRebuildRequired()
+                    }
+
+                is BackendLoad.Corrupt ->
+                    return catchUpRebuildRequired()
+
+                is BackendLoad.Ready ->
+                    try {
+                        requireGeneration(
+                            load.generation,
+                        )
+                        load.generation
+                    } catch (
+                        _: RuntimeException,
+                    ) {
+                        return catchUpRebuildRequired()
+                    }
+            }
+
+        if (
+            priorGeneration.fingerprintBindingRef !=
+                backend.fingerprintBindingRef ||
+            priorGeneration.sourceConversationHeadSha256 !=
+                committedHead.priorConversationHeadSha256 ||
+            (
+                committedHead.priorConversationHeadSha256 ==
+                    null &&
+                    priorGeneration.sourceConversationSequence !=
+                    null
+            ) ||
+            (
+                committedHead.priorConversationHeadSha256 !=
+                    null &&
+                    priorGeneration.sourceConversationSequence !=
+                    request.sequence -
+                    1
+            )
+        ) {
+            return catchUpRebuildRequired()
+        }
+
+        val updated =
+            Generation(
+                schemaVersion = GenerationSchema,
+                sourceConversationHeadSha256 =
+                    committedHead.conversationHeadSha256,
+                sourceConversationSequence =
+                    committedHead.sequence,
+                fingerprintBindingRef =
+                    backend.fingerprintBindingRef,
+                sourceEventCount =
+                    priorGeneration.sourceEventCount +
+                        2,
+                completedTurnCount =
+                    priorGeneration.completedTurnCount +
+                        1,
+                entries =
+                    priorGeneration.entries +
+                        Entry(
+                            coordinates =
+                                SourceCoordinates(
+                                    request =
+                                        address(
+                                            request,
+                                        ),
+                                    response =
+                                        address(
+                                            response,
+                                        ),
+                                ),
+                            requestFingerprints =
+                                fingerprints(
+                                    request.content,
+                                    backend,
+                                ),
+                            responseFingerprints =
+                                fingerprints(
+                                    response.content,
+                                    backend,
+                                ),
+                        ),
+            )
+        requireGeneration(
+            updated,
+        )
+        backend.replace(
+            updated,
+        )
+        return CatchUpReceipt(
+            state = CatchUpState.UPDATED,
+            sourceConversationHeadSha256 =
+                updated.sourceConversationHeadSha256,
+            sourceEventCount =
+                updated.sourceEventCount,
+            completedTurnCount =
+                updated.completedTurnCount,
+            derivedBackendMutationPerformed = true,
+        )
+    }
+
+    private fun catchUpRebuildRequired(): CatchUpReceipt =
+        CatchUpReceipt(
+            state = CatchUpState.FULL_REBUILD_REQUIRED,
+            sourceConversationHeadSha256 = null,
+            sourceEventCount = 0,
+            completedTurnCount = 0,
+            derivedBackendMutationPerformed = false,
+        )
 
     /**
      * Locate through a current derived generation and reopen every nominated source through the
