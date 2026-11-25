@@ -19,6 +19,11 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.context.working-continuity",
         )
 
+    private val effectCapabilityRefs =
+        listOf(
+            VexLifeWorkspaceEffectDefinitions.WriteRef,
+        )
+
     private val reachCapabilityRefs =
         listOf(
             "capability.vexlife.atlas.describe",
@@ -185,7 +190,7 @@ class VexLifeCapabilityAtlasTest {
             registry.effectAuthorityGranted,
         )
         assertEquals(
-            (allCapabilityRefs + reachCapabilityRefs).sorted(),
+            (allCapabilityRefs + reachCapabilityRefs + effectCapabilityRefs).sorted(),
             registry.definitions
                 .map {
                     it.capabilityRef
@@ -203,7 +208,24 @@ class VexLifeCapabilityAtlasTest {
         assertTrue(
             registry.definitions
                 .filter { it.capabilityRef in reachCapabilityRefs }
-                .all { it.actions.isNotEmpty() && it.effectClass != "WRITE" },
+                .all { it.actions.isNotEmpty() && !it.effectClass.contains("WRITE") },
+        )
+        val workspaceWrite =
+            registry.definitions.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals(
+            "RECOVERY_GUARDED_LOCAL_WRITE",
+            workspaceWrite.effectClass,
+        )
+        assertEquals(
+            listOf("write"),
+            workspaceWrite.actions.map { it.action },
+        )
+        assertTrue(
+            VexLifeWorkspaceEffectDefinitions.WriteRef !in
+                VexLifeReachDefinitions.ProviderToolCapabilityRefs,
+            "W1 registers the effect meaning but W2 must earn ordinary-turn availability",
         )
         assertEquals(
             VexLifeReachDefinitions.ProviderToolCapabilityRefs.sorted(),
@@ -280,6 +302,48 @@ class VexLifeCapabilityAtlasTest {
         assertFalse(
             frame.coverage.truncated,
         )
+    }
+
+    @Test
+    fun effectCapabilityAvailabilityStillDoesNotGrantEffectAuthority() {
+        val frame =
+            VexLifeCapabilityAtlas.formFrame(
+                input(
+                    grants = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    relevant = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    resources =
+                        listOf(
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = VexLifeWorkspaceEffectDefinitions.ResourceRef,
+                                state = VexLifeCapabilityAtlas.ResourceState.AVAILABLE,
+                                sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                            )
+                        ),
+                    tokenBudget = 1_600,
+                )
+                    .copy(
+                        permissionFacts =
+                            listOf(
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef = VexLifeWorkspaceEffectDefinitions.PermissionRef,
+                                    state = VexLifeCapabilityAtlas.PermissionState.GRANTED,
+                                    sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                                )
+                            )
+                    )
+            )
+
+        assertEquals(
+            listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+            frame.availableCapabilityRefs,
+        )
+        val workspace =
+            frame.capabilityEntries.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals("RECOVERY_GUARDED_LOCAL_WRITE", workspace.effectClass)
+        assertFalse(workspace.effectAuthorityGranted)
+        assertFalse(frame.effectAuthorityGranted)
     }
 
     @Test
