@@ -1018,9 +1018,11 @@ object VexLifeCurrentMemoryReader {
                 )
             }
 
-        val blocked =
+        val currentAdmitted =
             mutableSetOf<String>()
-        val historical =
+        val historicalAdmitted =
+            mutableSetOf<String>()
+        val held =
             mutableSetOf<String>()
 
         statements.forEach {
@@ -1033,36 +1035,42 @@ object VexLifeCurrentMemoryReader {
             ) {
                 "Conversation recall statement standing requires exact source event refs"
             }
-            val blockedByLifecycle =
-                statement.effectiveState ==
-                    "RELEASED_OR_TOMBSTONED" ||
-                    !statement.acceptedForContinuity ||
-                    statement.consentState !in
-                    positiveConsent ||
-                    (
-                        statement.current &&
-                            !statement.currentAuthorityMember
-                    )
-            if (
-                blockedByLifecycle
-            ) {
-                blocked +=
-                    statement.sourceEventRefs
-            } else if (
+            val admitted =
+                statement.acceptedForContinuity &&
+                    statement.consentState in
+                    positiveConsent
+            when {
+                statement.current &&
+                    admitted &&
+                    statement.currentAuthorityMember &&
+                    statement.effectiveState !=
+                    "RELEASED_OR_TOMBSTONED" ->
+                    currentAdmitted +=
+                        statement.sourceEventRefs
+
                 !statement.current &&
+                    admitted &&
                     statement.effectiveState in
                     setOf(
                         "CORRECTED",
                         "SUPERSEDED",
-                    )
-            ) {
-                historical +=
-                    statement.sourceEventRefs
+                    ) ->
+                    historicalAdmitted +=
+                        statement.sourceEventRefs
+
+                else ->
+                    held +=
+                        statement.sourceEventRefs
             }
         }
 
-        historical -=
-            blocked
+        val historical =
+            historicalAdmitted -
+                currentAdmitted
+        val blocked =
+            held -
+                currentAdmitted -
+                historicalAdmitted
 
         return ConversationRecallMembrane(
             bindingRef =
