@@ -12,6 +12,7 @@ import vexlife.capability.VexLifeReachDefinitions
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeWorkspaceEffectDefinitions
 import vexlife.contract.VexContractJson
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -24,6 +25,8 @@ import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 /**
  * Bounded direct Companion prompt materialization.
@@ -1984,6 +1987,8 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
     ): Materialization =
         materializeContinuityAt(
             conversationOwner = conversationOwner,
@@ -2004,6 +2009,7 @@ object DirectPromptContext {
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = workspaceEffectGrants,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -2033,6 +2039,8 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -2079,6 +2087,7 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
                 successorBridgeInSuffix = false,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
@@ -2439,6 +2448,8 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
     ) =
         reverifyContinuityAt(
             materialization = materialization,
@@ -2460,6 +2471,7 @@ object DirectPromptContext {
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = workspaceEffectGrants,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -2484,6 +2496,8 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -2516,6 +2530,7 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
@@ -2802,6 +2817,8 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
         /**
          * Legacy successor bridge: the prior Vex reply alone, in the suffix. The continuity path
          * passes false and keeps an exact overlap tail of whole turns instead.
@@ -2978,6 +2995,7 @@ object DirectPromptContext {
                         runtimeEvidence = it,
                         capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                         providerNativeTools = providerNativeTools,
+                        workspaceEffectGrants = workspaceEffectGrants,
                     )
                 }
         val personContextContent = personContext?.let(::personContextSystemContent)
@@ -3414,11 +3432,31 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
     ): VerifiedCapabilityFrame {
         val memoryCurrent =
             memoryContext?.projectionState == "CURRENT" && memoryContext.projectionCurrentness == "CURRENT"
         val capabilityRefs =
-            if (capabilityRequestsAdmitted) DirectTurnCapabilityRefs + DirectTurnReachRefs else DirectTurnCapabilityRefs
+            if (
+                capabilityRequestsAdmitted
+            ) {
+                DirectTurnCapabilityRefs +
+                    DirectTurnReachRefs +
+                    DirectTurnEffectRefs
+            } else {
+                DirectTurnCapabilityRefs
+            }
+        val workspaceSourceRefs =
+            workspaceEffectGrants
+                .flatMap {
+                    listOf(
+                        it.sourceRef,
+                        it.grantRef,
+                    )
+                }
+                .distinct()
+                .sorted()
         val frame =
             VexLifeCapabilityAtlas.formFrame(
                 VexLifeCapabilityAtlas.FrameInput(
@@ -3426,10 +3464,56 @@ object DirectPromptContext {
                     platformRef = VexLifeCapabilityAtlas.MacPlatformRef,
                     projectGrantedCapabilityRefs = capabilityRefs,
                     relevantCapabilityRefs = capabilityRefs,
-                    permissionFacts = emptyList(),
+                    permissionFacts =
+                        if (
+                            capabilityRequestsAdmitted
+                        ) {
+                            listOf(
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef =
+                                        VexLifeWorkspaceEffectDefinitions.PermissionRef,
+                                    state =
+                                        if (
+                                            workspaceEffectGrants.isNotEmpty()
+                                        ) {
+                                            VexLifeCapabilityAtlas.PermissionState.GRANTED
+                                        } else {
+                                            VexLifeCapabilityAtlas.PermissionState.DENIED
+                                        },
+                                    sourceRefs =
+                                        workspaceSourceRefs,
+                                ),
+                            )
+                        } else {
+                            emptyList()
+                        },
                     tokenBudget = if (capabilityRequestsAdmitted) ReachFrameTokenBudget else 1_600,
                     resourceFacts =
                         (if (capabilityRequestsAdmitted) reachResourceFacts(currentRequest, memoryCurrent) else emptyList()) +
+                        (
+                            if (
+                                capabilityRequestsAdmitted
+                            ) {
+                                listOf(
+                                    VexLifeCapabilityAtlas.ResourceFact(
+                                        resourceRef =
+                                            VexLifeWorkspaceEffectDefinitions.ResourceRef,
+                                        state =
+                                            if (
+                                                workspaceEffectGrants.isNotEmpty()
+                                            ) {
+                                                VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                            } else {
+                                                VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                            },
+                                        sourceRefs =
+                                            workspaceSourceRefs,
+                                    ),
+                                )
+                            } else {
+                                emptyList()
+                            }
+                        ) +
                         listOf(
                             VexLifeCapabilityAtlas.ResourceFact(
                                 resourceRef = "resource.vexlife-prod.memory.current-context",
@@ -3512,9 +3596,15 @@ object DirectPromptContext {
 
     private const val ReachFrameTokenBudget = 6_000
 
-    /** Request/return reach admitted in an ordinary direct turn (VexLifeReachDefinitions). */
+    /** Request/return read reach admitted in an ordinary direct turn. */
     private val DirectTurnReachRefs =
         VexLifeReachDefinitions.ProviderToolCapabilityRefs
+
+    /** Effect capability remains descriptive in the frame; W1 owns every actual mutation. */
+    private val DirectTurnEffectRefs =
+        listOf(
+            VexLifeWorkspaceEffectDefinitions.WriteRef,
+        )
 
     /**
      * Current resource truth for reach. The bridges exist in this build and their own per-request
@@ -3647,6 +3737,30 @@ object DirectPromptContext {
                         .append('.')
                 }
                 append(" (").append(frame.selfCapabilityFrameRef).append(')')
+                frame.capabilityEntries
+                    .singleOrNull {
+                        it.capabilityRef ==
+                            VexLifeWorkspaceEffectDefinitions.WriteRef &&
+                            it.state ==
+                            VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                    }
+                    ?.sourceRefs
+                    ?.filter(
+                        VexLifeLocalSourcesFamily::isSourceRef,
+                    )
+                    ?.takeIf(
+                        List<String>::isNotEmpty,
+                    )
+                    ?.let {
+                        writable ->
+                        append(" Writable Local Sources — ")
+                            .append(
+                                writable.joinToString(
+                                    ", ",
+                                ),
+                            )
+                            .append('.')
+                    }
             }
         return reachInstructionSystemContent(providerNativeTools) to now
     }
