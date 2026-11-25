@@ -13,6 +13,7 @@ import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeWorkspaceEffectDefinitions
+import vexlife.capability.VexLifeWorkspaceCheckDefinitions
 import vexlife.contract.VexContractJson
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
