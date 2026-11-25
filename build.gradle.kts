@@ -1678,6 +1678,7 @@ tasks.register(
 
         val runtimeProviderModules =
             setOf(
+                "jdk.compiler",
                 "jdk.crypto.ec",
             )
         val moduleSet =
@@ -1695,10 +1696,12 @@ tasks.register(
                 moduleSet &&
                 "java.net.http" in
                 moduleSet &&
+                "jdk.compiler" in
+                moduleSet &&
                 "jdk.crypto.ec" in
                 moduleSet,
         ) {
-            "service runtime image must include jdk.httpserver + java.net.http + Java 21 SunEC provider"
+            "service runtime image must include jdk.httpserver + java.net.http + jdk.compiler + Java 21 SunEC provider"
         }
 
         val output =
