@@ -1210,6 +1210,9 @@ class VexLifeProdLocalService private constructor(
                         sessionRef.set(
                             next,
                         )
+                        initialPromptPreparation.startCurrent(
+                            next.foundation.qualifiedRuntimeEvidence,
+                        )
                     } finally {
                         write.unlock()
                     }
@@ -1708,6 +1711,18 @@ class VexLifeProdLocalService private constructor(
                         privateCompletionOverride = privateCompletion,
                     )
 
+                initialPromptPreparation
+                    ?.attach(
+                        executor = executor,
+                        prefixProvider =
+                            VexLifePromptPreparation.PrefixProvider {
+                                runtime ->
+                                service.currentPromptPreparationPrefix(
+                                    runtime,
+                                )
+                            },
+                    )
+
                 server.executor =
                     executor
                 server.createContext(
@@ -1719,7 +1734,7 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
                 server.start()
-                service.startInitialPromptPreparation()
+                service.startPromptPreparation()
 
                 return service
             } catch (
@@ -2939,7 +2954,7 @@ class VexLifeProdLocalService private constructor(
             effectsPerformed = false,
             initialPromptPreparationPendingForNextTurn =
                 initialPromptPreparation
-                    ?.firstLocalTurnPending() ==
+                    ?.nextTurnPreparationPending() ==
                     true,
             initialPromptPreparationForActiveTurn =
                 active
@@ -3172,62 +3187,55 @@ class VexLifeProdLocalService private constructor(
     }
 
     /**
-     * Starts one best-effort initial provider-prefix preparation only after the local service is
-     * listening. Failure or unsupported provider representation never controls Product availability.
+     * Re-form the exact current stable provider prefix for one qualified local runtime Session.
+     *
+     * The prefix is always read from current Foundation / Context Profile / Memory / representation
+     * owners. Prompt preparation may cache those exact bytes, but it never becomes their authority.
      */
-    private fun startInitialPromptPreparation() {
-        val preparation =
-            initialPromptPreparation
-                ?: return
-        try {
-            val productHome =
-                Path.of(
-                    startupSetup.productHome,
-                )
-            val runtime =
-                currentQualifiedRuntimeEvidence()
-            val entry =
-                HereticModelOfferings.requireEntry(
-                    productHome,
-                    runtime.modelRef,
-                )
-            val providerNativeTools =
-                entry.companionProfile.capabilityRepresentation ==
-                    HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
-            val capabilityRequestsAdmitted =
-                entry.companionProfile.reachRepresentationStanding ==
-                    HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
-            val prefix =
-                DirectPromptContext.projectInitialBootPrefix(
-                    foundationalField =
-                        VexLifeFoundationalField.readCurrent(),
-                    contextProfile =
-                        contextProfiles.readActive(
-                            productFoundationIdentity(),
-                        ),
-                    memoryProviderSelection =
-                        VexLifeCurrentMemoryProviderSelection.read(
-                            productHome = productHome,
-                            memoryTokenCap =
-                                VexLifeMemoryContract.MaximumMemoryTokens,
-                        ),
-                    capabilityRequestsAdmitted =
-                        capabilityRequestsAdmitted,
-                    providerNativeTools =
-                        providerNativeTools,
-                )
-            preparation.start(
-                executor = executor,
-                runtime = runtime,
-                prefix = prefix,
+    private fun currentPromptPreparationPrefix(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ): DirectPromptContext.InitialBootPrefix {
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
             )
-        } catch (
-            error: Throwable,
-        ) {
-            preparation.failBeforeStart(
-                error,
+        val entry =
+            HereticModelOfferings.requireEntry(
+                productHome,
+                runtime.modelRef,
             )
-        }
+        val providerNativeTools =
+            entry.companionProfile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val capabilityRequestsAdmitted =
+            entry.companionProfile.reachRepresentationStanding ==
+                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        return DirectPromptContext.projectInitialBootPrefix(
+            foundationalField =
+                VexLifeFoundationalField.readCurrent(),
+            contextProfile =
+                contextProfiles.readActive(
+                    productFoundationIdentity(),
+                ),
+            memoryProviderSelection =
+                VexLifeCurrentMemoryProviderSelection.read(
+                    productHome = productHome,
+                    memoryTokenCap =
+                        VexLifeMemoryContract.MaximumMemoryTokens,
+                ),
+            capabilityRequestsAdmitted =
+                capabilityRequestsAdmitted,
+            providerNativeTools =
+                providerNativeTools,
+        )
+    }
+
+    /** Best-effort preparation never controls Product availability. */
+    private fun startPromptPreparation() {
+        initialPromptPreparation
+            ?.startCurrent(
+                currentQualifiedRuntimeEvidence(),
+            )
     }
 
     private fun contextProfilesProjection(
@@ -6381,7 +6389,7 @@ class VexLifeProdLocalService private constructor(
                 cancellation = cancellation,
                 initialPromptPreparationTurn =
                     initialPromptPreparation
-                        ?.firstLocalTurnPending() ==
+                        ?.nextTurnPreparationPending() ==
                         true,
             )
         if (
