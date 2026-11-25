@@ -42,9 +42,8 @@ class VexLifeEffectiveModelCapabilitiesTest {
     private fun project(
         profile: HereticCompanionRepresentation.Profile,
         providerNativeToolsQualified: Boolean = false,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
     ): VexLifeEffectiveModelCapabilities.Projection {
-        val model =
-            HereticModelCatalog.Models.Qwen27B
         return VexLifeEffectiveModelCapabilities.project(
             modelRef = model.modelRef,
             profile = profile,
@@ -126,6 +125,79 @@ class VexLifeEffectiveModelCapabilitiesTest {
         assertEquals(
             VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
             capabilities.providerNativeTools,
+        )
+    }
+
+    @Test
+    fun capabilityDisplayFactsKeepHumanMeaningWithTheCapabilityProjectionOwner() {
+        val available =
+            project(
+                HereticCompanionRepresentation.Profiles.Qwen27B,
+            )
+                .displayFacts
+                .associateBy {
+                    it.label.key
+                }
+
+        val reach =
+            requireNotNull(
+                available[
+                    "workspace.label.model-capability-vex-reach"
+                ],
+            )
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+            reach.standing,
+        )
+        assertEquals(
+            "workspace.label.model-capability-vex-reach",
+            reach.label.key,
+        )
+        assertEquals(
+            "workspace.status.model-capability-available",
+            reach.status.key,
+        )
+
+        val noNativeTools =
+            project(
+                HereticCompanionRepresentation.Profiles.importedQwen(
+                    profileRef = "companion-profile.vexlife-prod.imported.test.display.no-tools.v1",
+                    nativeToolCalling = false,
+                ),
+            )
+                .displayFacts
+                .associateBy {
+                    it.label.key
+                }[
+                    "workspace.label.model-capability-provider-native-tools"
+                ]
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.NOT_APPLICABLE,
+            noNativeTools?.standing,
+        )
+        assertEquals(
+            "workspace.status.model-capability-not-applicable",
+            noNativeTools?.status?.key,
+        )
+
+        val heldReach =
+            project(
+                profile = HereticCompanionRepresentation.Profiles.Qwen4B,
+                model = HereticModelCatalog.Models.Qwen4B,
+            )
+                .displayFacts
+                .associateBy {
+                    it.label.key
+                }[
+                    "workspace.label.model-capability-vex-reach"
+                ]
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.HELD,
+            heldReach?.standing,
+        )
+        assertEquals(
+            "workspace.status.model-capability-held",
+            heldReach?.status?.key,
         )
     }
 

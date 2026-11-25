@@ -1080,6 +1080,20 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 javascript.contains("resolveText(startControl.label)"),
             "runtime configuration and optional standing wording must arrive through the Models projection",
         )
+        assertTrue(
+            javascript.contains("model?.capabilities?.displayFacts") &&
+                javascript.contains("resolveText(fact.label)") &&
+                javascript.contains("resolveText(fact.status)") &&
+                javascript.contains("...modelCapabilityFacts(selected)"),
+            "local capability wording must arrive through the effective capability projection and be manifested by Models",
+        )
+        assertFalse(
+            javascript.contains("fact.standing ===") ||
+                javascript.contains("capabilities.vexReach ===") ||
+                javascript.contains("capabilities.providerNativeTools ===") ||
+                javascript.contains("capabilities.visualInput ==="),
+            "VexWeb must not become a second capability-standing policy owner",
+        )
     }
 
     @Test

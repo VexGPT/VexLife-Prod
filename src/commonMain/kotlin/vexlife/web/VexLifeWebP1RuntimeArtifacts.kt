@@ -6523,6 +6523,13 @@ object VexLifeWebP1RuntimeArtifacts {
                       .replace('{memory}', gibText(model.recommendedMemoryBytes))
                       .replace('{fit}', workspaceText(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
 
+              const modelCapabilityFacts = (model) =>
+                (model?.capabilities?.displayFacts || []).map((fact) =>
+                  [resolveText(fact.label), resolveText(fact.status)]
+                    .filter(Boolean)
+                    .join(': ')
+                );
+
               const partnerProviderConfigured = (providerRef) =>
                 (state.modelSources?.models?.rows || []).some(
                   (row) =>
@@ -6802,6 +6809,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (ui.modelChoiceNotes) {
                     ui.modelChoiceNotes.textContent = [
                       ...(selected.display.notes || []).map(resolveText),
+                      ...modelCapabilityFacts(selected),
                       selected.imported ? workspaceText('workspace.label.model-imported') : '',
                       selected.standing === 'CANDIDATE' && !selected.imported ? workspaceText('workspace.label.model-candidate') : ''
                     ].filter(Boolean).join(' · ');
