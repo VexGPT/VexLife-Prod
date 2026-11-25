@@ -155,6 +155,11 @@ class VexLifeProdLocalService private constructor(
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
+        /**
+         * Presentation-only truth: this active turn is the one first local Send that began while
+         * Prompt Preparation was still pending/reusable. Later preparation generations never set it.
+         */
+        val initialPromptPreparationTurn: Boolean,
     )
 
     private class PartnerServingNotCurrent(
@@ -232,6 +237,16 @@ class VexLifeProdLocalService private constructor(
     private val activeTurn =
         AtomicReference<ActiveTurn?>(
             null,
+        )
+
+    /**
+     * One-way presentation history only. Prompt Preparation may re-arm for every future local
+     * Session; this bit never re-arms, so a later model switch cannot masquerade as first startup.
+     */
+    private val initialLocalStartPresentationPending =
+        AtomicBoolean(
+            promptPreparation !=
+                null,
         )
 
     private val localArtifactStore =
@@ -2947,6 +2962,15 @@ class VexLifeProdLocalService private constructor(
                     state,
                 ),
             effectsPerformed = false,
+            initialPromptPreparationPendingForNextTurn =
+                initialLocalStartPresentationPending.get() &&
+                    promptPreparation
+                        ?.nextTurnPreparationPending() ==
+                    true,
+            initialPromptPreparationForActiveTurn =
+                active
+                    ?.initialPromptPreparationTurn ==
+                    true,
             followUpReadiness =
                 followUpReadinessProjection(
                     active,
@@ -6202,6 +6226,12 @@ class VexLifeProdLocalService private constructor(
         var draftCompleted =
             false
         try {
+            // This is still the first canonical local Send even when the caller did not request the
+            // streaming presentation path. Retire only the presentation fact; preparation remains
+            // independently reusable for future Sessions.
+            initialLocalStartPresentationPending.set(
+                false,
+            )
             val result =
                 if (
                     partnerTextTurn ==
@@ -6370,10 +6400,17 @@ class VexLifeProdLocalService private constructor(
 
         val cancellation =
             DirectCompanionCancellation()
+        val initialPromptPreparationTurn =
+            initialLocalStartPresentationPending.get() &&
+                promptPreparation
+                    ?.nextTurnPreparationPending() ==
+                true
         val active =
             ActiveTurn(
                 attempt = begin.attempt,
                 cancellation = cancellation,
+                initialPromptPreparationTurn =
+                    initialPromptPreparationTurn,
             )
         if (
             !activeTurn.compareAndSet(
@@ -6392,6 +6429,12 @@ class VexLifeProdLocalService private constructor(
             )
             return
         }
+
+        // The first canonical local Send has now begun. Later model switches may re-arm provider
+        // preparation, but they may never re-arm the first-start presentation.
+        initialLocalStartPresentationPending.set(
+            false,
+        )
 
         check(
             conversationTurnState() ==
