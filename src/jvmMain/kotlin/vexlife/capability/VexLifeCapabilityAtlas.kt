@@ -418,7 +418,8 @@ object VexLifeCapabilityAtlas {
             ),
         ) +
             VexLifeReachDefinitions.Definitions +
-            VexLifeWorkspaceEffectDefinitions.Definitions
+            VexLifeWorkspaceEffectDefinitions.Definitions +
+            VexLifeWorkspaceCheckDefinitions.Definitions
 
     private val ReachableDefinitions =
         Definitions.sortedBy {

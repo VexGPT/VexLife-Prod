@@ -40,6 +40,9 @@ import vexlife.model.heretic.HereticModelOfferings
 import vexlife.partner.VexLifePartnerHostEffect
 import vexlife.workspace.VexLifeWorkspaceEffectStore
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceCheckStore
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.capability.VexLifeWorkspaceTextCheck
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -549,6 +552,18 @@ object DirectCompanionTurn {
             )
                 .currentGrants()
         },
+        val currentWorkspaceCheckGrants: (
+            productHome: Path,
+        ) -> List<VexLifeWorkspaceChecksFamily.Grant> = {
+            productHome ->
+            VexLifeWorkspaceCheckStore(
+                productHome,
+            )
+                .currentGrants()
+        },
+        val currentWorkspaceCheckRuntimeRef: () -> String? = {
+            null
+        },
         val progressObserver: ProgressObserver? =
             null,
         val turnPolicy: TurnPolicy =
@@ -624,6 +639,8 @@ object DirectCompanionTurn {
         val memoryContext: VexLifeMemoryContract.Context,
         val promptResidentMemoryStatementRefs: Set<String>,
         val workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant>,
+        val workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant>,
+        val workspaceCheckRuntimeRef: String?,
     )
 
     private data class ProviderStage(
@@ -681,6 +698,10 @@ object DirectCompanionTurn {
             null,
         initialPromptPreparation: VexLifeInitialPromptPreparation? =
             null,
+        workspaceCheckRuntimeSource: VexLifeWorkspaceTextCheck.RuntimeSource? =
+            null,
+        capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
+            VexLifeCapabilityBridge.OwnerBindings(),
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -717,6 +738,16 @@ object DirectCompanionTurn {
                     partnerTextTurn = partnerTextTurn,
                     initialPromptPreparation =
                         initialPromptPreparation,
+                    currentWorkspaceCheckRuntimeRef = {
+                        runCatching {
+                            workspaceCheckRuntimeSource
+                                ?.current()
+                                ?.runtimeRef
+                        }
+                            .getOrNull()
+                    },
+                    capabilityOwners =
+                        capabilityOwners,
                 ),
         )
 
@@ -1216,6 +1247,12 @@ object DirectCompanionTurn {
             hooks.currentWorkspaceEffectGrants(
                 productHome,
             )
+        val initialWorkspaceCheckGrants =
+            hooks.currentWorkspaceCheckGrants(
+                productHome,
+            )
+        val initialWorkspaceCheckRuntimeRef =
+            hooks.currentWorkspaceCheckRuntimeRef()
         val initialRuntimeEvidence =
             hooks.currentRuntimeEvidence(
                 setup,
@@ -1295,6 +1332,8 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
                 workspaceEffectGrants = initialWorkspaceEffectGrants,
+                workspaceCheckGrants = initialWorkspaceCheckGrants,
+                workspaceCheckRuntimeRef = initialWorkspaceCheckRuntimeRef,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
@@ -2078,6 +2117,10 @@ object DirectCompanionTurn {
         providerNativeTools: Boolean = true,
         workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
             emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
@@ -2149,6 +2192,8 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
                 workspaceEffectGrants = workspaceEffectGrants,
+                workspaceCheckGrants = workspaceCheckGrants,
+                workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -2191,6 +2236,8 @@ object DirectCompanionTurn {
             memoryContext = selectedMemory,
             promptResidentMemoryStatementRefs = promptResidentMemoryStatementRefs,
             workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
         )
     }
 
@@ -2282,6 +2329,8 @@ object DirectCompanionTurn {
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
             workspaceEffectGrants = selection.workspaceEffectGrants,
+            workspaceCheckGrants = selection.workspaceCheckGrants,
+            workspaceCheckRuntimeRef = selection.workspaceCheckRuntimeRef,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = maximumMemoryTokens,
         )
