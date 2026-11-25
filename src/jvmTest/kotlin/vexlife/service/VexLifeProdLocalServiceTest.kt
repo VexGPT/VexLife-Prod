@@ -63,7 +63,6 @@ import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
 import vexlife.model.VexLifeInferenceCurrentState
 import vexlife.model.VexLifeModelSourceProjection
-import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -6383,64 +6382,8 @@ class VexLifeProdLocalServiceTest {
                             ),
                     )
 
-                    val localHandle =
-                        requireNotNull(
-                            HereticModelCatalog.entry(
-                                currentSetup.qualifiedRuntimeEvidence.modelRef,
-                            ),
-                        )
-                            .handle
-                    val selectLocal =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.ModelsSourcesControlPath,
-                            """{"controlRef":"${vexlife.model.VexLifeModelsFamily.ControlSelect}","handle":"$localHandle"}""",
-                        )
-                    assertEquals(
-                        200,
-                        selectLocal.statusCode(),
-                        selectLocal.body(),
-                    )
-                    val useLocal =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.ModelsSourcesControlPath,
-                            """{"controlRef":"${vexlife.model.VexLifeModelsFamily.ControlUse}","handle":"$localHandle"}""",
-                        )
-                    assertEquals(
-                        200,
-                        useLocal.statusCode(),
-                        useLocal.body(),
-                    )
-                    var localServing =
-                        false
-                    for (
-                        attempt in
-                        0 until
-                            100
-                    ) {
-                        val current =
-                            json.decodeFromString<VexLifeInferenceCurrentState.Projection>(
-                                get(
-                                    service.origin,
-                                    VexLifeProdServiceContract.ModelsSourcesPath,
-                                ).body(),
-                            )
-                        if (
-                            current.inference.serving?.sourceKind ==
-                                VexLifeModelSourceProjection.SourceKind.LOCAL
-                        ) {
-                            localServing =
-                                true
-                            break
-                        }
-                        Thread.sleep(
-                            10,
-                        )
-                    }
-                    assertTrue(
-                        localServing,
-                        "the test never returned from Partner serving to Local",
+                    preparation.startCurrent(
+                        currentSetup.qualifiedRuntimeEvidence,
                     )
                     val firstLocalTurn =
                         json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
@@ -6453,7 +6396,6 @@ class VexLifeProdLocalServiceTest {
                         firstLocalTurn.initialPromptPreparationPendingForNextTurn,
                         "Partner turns must not consume the first canonical Local Send presentation",
                     )
-
                     assertEquals(
                         0,
                         localTurns,
