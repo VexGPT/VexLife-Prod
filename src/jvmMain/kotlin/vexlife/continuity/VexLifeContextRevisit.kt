@@ -148,7 +148,6 @@ object VexLifeContextRevisit {
         val promptResidentStatementRefs: Set<String> = emptySet(),
         val now: Instant,
         val conversationLifecycle: ConversationLifecycle? = null,
-        val conversationLifecycleGap: String? = null,
     )
 
     /**
@@ -261,11 +260,6 @@ object VexLifeContextRevisit {
                 conversationLifecycle =
                     lifecycleRead
                         ?.getOrNull(),
-                conversationLifecycleGap =
-                    lifecycleFailure
-                        ?.let(
-                            ::gap,
-                        ),
             )
         }
 
