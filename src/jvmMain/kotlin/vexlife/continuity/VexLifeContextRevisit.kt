@@ -122,6 +122,19 @@ object VexLifeContextRevisit {
         data class Refused(val reason: String) : Parsed
     }
 
+    /**
+     * Source-addressed semantic lifecycle standing for historical Conversation recall.
+     *
+     * Score/semantic authority owns the meaning. Revisit consumes only this bounded projection:
+     * which Conversation event refs are held, which remain historical/currentized, and the exact
+     * lifecycle frontier that produced the projection.
+     */
+    data class ConversationLifecycle(
+        val bindingRef: String,
+        val blockedEventRefs: Set<String>,
+        val historicalCurrentizedEventRefs: Set<String>,
+    )
+
     /** What the owners said when asked; a null value carries its reason in the matching gap. */
     data class Sources(
         val conversation: DirectConversationStore.Snapshot?,
@@ -134,6 +147,8 @@ object VexLifeContextRevisit {
         /** Memory statements this turn's prompt already carries; named, not repeated. */
         val promptResidentStatementRefs: Set<String> = emptySet(),
         val now: Instant,
+        val conversationLifecycle: ConversationLifecycle? = null,
+        val conversationLifecycleGap: String? = null,
     )
 
     /**
@@ -155,9 +170,11 @@ object VexLifeContextRevisit {
         private val promptResidentEventRefs: () -> Set<String>,
         private val promptResidentStatementRefs: () -> Set<String>,
         private val now: () -> Instant,
+        private val readConversationLifecycle: (() -> ConversationLifecycle)? = null,
     ) {
         private var conversation: kotlin.Result<DirectConversationStore.Snapshot>? = null
         private var working: kotlin.Result<WorkingDirectory?>? = null
+        private var conversationLifecycle: kotlin.Result<ConversationLifecycle>? = null
 
         /** Owner reads this turn has performed so far, and their total time. */
         var ownerReads: Int = 0
@@ -183,13 +200,53 @@ object VexLifeContextRevisit {
                 if (Scope.CONVERSATION in scopes)
                     once(conversation, readConversation).also { conversation = it }
                 else null
+            val lifecycleRead =
+                if (
+                    Scope.CONVERSATION in scopes &&
+                        readConversationLifecycle != null
+                ) {
+                    once(
+                        conversationLifecycle,
+                        readConversationLifecycle,
+                    )
+                        .also {
+                            conversationLifecycle =
+                                it
+                        }
+                } else {
+                    null
+                }
             val workingRead =
                 if (Scope.WORKING_CONTINUITY in scopes)
                     once(working, readWorking).also { working = it }
                 else null
+            val lifecycleFailure =
+                lifecycleRead
+                    ?.exceptionOrNull()
             return Sources(
-                conversation = conversationRead?.getOrNull(),
-                conversationGap = conversationRead?.exceptionOrNull()?.let(::gap),
+                conversation =
+                    if (
+                        lifecycleFailure ==
+                            null
+                    ) {
+                        conversationRead
+                            ?.getOrNull()
+                    } else {
+                        null
+                    },
+                conversationGap =
+                    lifecycleFailure
+                        ?.let {
+                            "semantic lifecycle " +
+                                gap(
+                                    it,
+                                )
+                        }
+                        ?: conversationRead
+                            ?.exceptionOrNull()
+                            ?.let(
+                                ::gap,
+                            ),
                 memory = memory(),
                 memoryGap = "no Memory projection is bound to this turn",
                 working = workingRead?.getOrNull(),
@@ -201,8 +258,21 @@ object VexLifeContextRevisit {
                 promptResidentEventRefs = promptResidentEventRefs(),
                 promptResidentStatementRefs = promptResidentStatementRefs(),
                 now = now(),
+                conversationLifecycle =
+                    lifecycleRead
+                        ?.getOrNull(),
+                conversationLifecycleGap =
+                    lifecycleFailure
+                        ?.let(
+                            ::gap,
+                        ),
             )
         }
+
+        fun conversationLifecycleBindingRefOrNull(): String? =
+            conversationLifecycle
+                ?.getOrNull()
+                ?.bindingRef
     }
 
     /**
@@ -374,9 +444,23 @@ object VexLifeContextRevisit {
 
     fun revisit(request: Request, sources: Sources, estimateTokens: (String) -> Int): Result {
         val conversationInScope = Scope.CONVERSATION in request.scopes
+        val blockedConversationEventRefs =
+            sources.conversationLifecycle
+                ?.blockedEventRefs
+                .orEmpty()
         val turns =
             if (conversationInScope && sources.conversation != null)
-                VexLifeTurnNavigation.project(sources.conversation.canonicalEvents)
+                VexLifeTurnNavigation
+                    .project(
+                        sources.conversation.canonicalEvents,
+                    )
+                    .filter {
+                        turn ->
+                        turn.request.eventRef !in
+                            blockedConversationEventRefs &&
+                            turn.response.eventRef !in
+                            blockedConversationEventRefs
+                    }
             else emptyList()
         val turnByRef = turns.associateBy { it.turnRef }
         val turnByEventRef =
@@ -555,6 +639,10 @@ object VexLifeContextRevisit {
                     cursors = cursors,
                     turnsAgo = lastOrdinal - turn.ordinal,
                     now = sources.now,
+                    historicalCurrentizedEventRefs =
+                        sources.conversationLifecycle
+                            ?.historicalCurrentizedEventRefs
+                            .orEmpty(),
                 )
             val cost = estimateTokens(rendered.text)
             if (tokens + cost > request.maxTokens && chosen.isNotEmpty()) {
@@ -727,6 +815,7 @@ object VexLifeContextRevisit {
         cursors: Map<String, Int>,
         turnsAgo: Int,
         now: Instant,
+        historicalCurrentizedEventRefs: Set<String>,
     ): Rendered {
         var cut = false
         fun side(event: DirectConversationStore.Event): String {
@@ -770,6 +859,33 @@ object VexLifeContextRevisit {
                 "· ${turn.turnRef} — ${minute(turn.requestedAt)} (${ago(turn.requestedAt, now, turnsAgo)})"
             )
             append(" — matched: ").append(routesLine(matches)).append('\n')
+            val historicalCurrentized =
+                listOf(
+                    turn.request.eventRef,
+                    turn.response.eventRef,
+                )
+                    .filter {
+                        it in
+                            historicalCurrentizedEventRefs
+                    }
+            if (
+                historicalCurrentized.isNotEmpty()
+            ) {
+                append(
+                    "  lifecycle: historical/currentized semantic relationship — exact Conversation refs ",
+                )
+                    .append(
+                        historicalCurrentized.joinToString(
+                            ", ",
+                        ),
+                    )
+                    .append(
+                        "; preserve as historical evidence, not current Memory or current accepted meaning",
+                    )
+                    .append(
+                        '\n',
+                    )
+            }
             append("  person: ").append(side(turn.request)).append('\n')
             append("  Vex: ").append(side(turn.response))
             relation.forEach { append("\n  ").append(it) }
