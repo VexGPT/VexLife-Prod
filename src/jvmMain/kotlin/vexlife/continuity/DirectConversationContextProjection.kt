@@ -94,7 +94,6 @@ object DirectConversationContextProjection {
         val speakerScope: String,
         val state: String,
         val matches: List<ProviderMatch>,
-        val historicalCurrentizedEventRefs: List<String>,
         val scannedCompletedTurnCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
         val effectAuthorityGranted: Boolean,
@@ -205,9 +204,9 @@ object DirectConversationContextProjection {
                                         ),
                                     backend = locatorBackend,
                                     excludedEventRefs =
-                                effectiveExcludedEventRefs,
-                            sourceLifecycleBindingRef =
-                                currentSourceLifecycle.bindingRef,
+                                        effectiveExcludedEventRefs,
+                                    sourceLifecycleBindingRef =
+                                        currentSourceLifecycle.bindingRef,
                                 )
                             }
                             .getOrNull()
@@ -637,19 +636,6 @@ object DirectConversationContextProjection {
                                 ),
                         )
                     },
-                historicalCurrentizedEventRefs =
-                    matches
-                        .flatMap {
-                            match ->
-                            listOf(
-                                match.requestEvent.eventRef,
-                                match.responseEvent.eventRef,
-                            )
-                        }
-                        .filter {
-                            it in
-                                prepared.historicalCurrentizedEventRefs
-                        },
                 scannedCompletedTurnCount =
                     prepared.discovery.scannedCompletedTurnCount,
                 wholeHistoryEventEnumerationPerformed =
@@ -673,18 +659,26 @@ object DirectConversationContextProjection {
                     )
             }
         val historicalCurrentizedReturned =
-            matches.any {
-                match ->
-                match.requestEvent.eventRef in
-                    prepared.historicalCurrentizedEventRefs ||
-                    match.responseEvent.eventRef in
-                    prepared.historicalCurrentizedEventRefs
-            }
+            matches
+                .flatMap {
+                    match ->
+                    listOf(
+                        match.requestEvent.eventRef,
+                        match.responseEvent.eventRef,
+                    )
+                }
+                .filter {
+                    it in
+                        prepared.historicalCurrentizedEventRefs
+                }
+                .distinct()
         val lifecycleTruth =
             if (
-                historicalCurrentizedReturned
+                historicalCurrentizedReturned.isNotEmpty()
             ) {
-                "LIFECYCLE TRUTH: one or more returned Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+                "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                    historicalCurrentizedReturned.joinToString(",") +
+                    ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
             } else {
                 "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
             }
