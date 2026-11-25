@@ -2072,6 +2072,8 @@ object DirectCompanionTurn {
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
@@ -2142,6 +2144,7 @@ object DirectCompanionTurn {
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -2183,6 +2186,7 @@ object DirectCompanionTurn {
             materialization = materialization,
             memoryContext = selectedMemory,
             promptResidentMemoryStatementRefs = promptResidentMemoryStatementRefs,
+            workspaceEffectGrants = workspaceEffectGrants,
         )
     }
 
@@ -2273,6 +2277,7 @@ object DirectCompanionTurn {
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = selection.workspaceEffectGrants,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = maximumMemoryTokens,
         )
