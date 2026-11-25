@@ -5521,6 +5521,73 @@ class VexLifeProdLocalServiceTest {
                         ),
                     )
 
+                    val anthropicProvider =
+                        VexLifePartnerModelProfileCatalog.AnthropicClaudeSonnet55.providerRef
+                    val anthropicSecret =
+                        "not-a-real-anthropic-secret"
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+                    val anthropicConnect =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+                            providerRef = anthropicProvider,
+                            workspaceId = "wrkspc_test_scope_001",
+                            body = anthropicSecret,
+                            contentType = "application/octet-stream",
+                        )
+                    assertEquals(
+                        200,
+                        anthropicConnect.statusCode(),
+                        anthropicConnect.body(),
+                    )
+                    val scopeUpdate =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.UpdateScope,
+                            providerRef = anthropicProvider,
+                            workspaceId = "wrkspc_test_scope_002",
+                        )
+                    assertEquals(
+                        200,
+                        scopeUpdate.statusCode(),
+                        scopeUpdate.body(),
+                    )
+                    assertEquals(
+                        "SCOPE_UPDATED",
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            scopeUpdate.body(),
+                        )
+                            .results
+                            .single()
+                            .state,
+                    )
+                    assertEquals(
+                        "wrkspc_test_scope_002",
+                        VexLifePartnerConnectionSettings.entryFor(
+                            VexLifePartnerConnectionSettingsStore(
+                                root,
+                            )
+                                .read(),
+                            anthropicProvider,
+                        )
+                            ?.accountScope
+                            ?.workspaceId,
+                    )
+                    assertEquals(
+                        200,
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Remove,
+                            providerRef = anthropicProvider,
+                        )
+                            .statusCode(),
+                    )
+
                     val recovered =
                         postPartnerConnectionControl(
                             origin = service.origin,
