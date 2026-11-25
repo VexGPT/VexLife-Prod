@@ -34241,5 +34241,445 @@
     "surfaces": [
       "workspace.conversation"
     ]
+  },
+  "workspace.heading.partner-api": {
+    "strings": {
+      "en": {
+        "text": "Partner APIs"
+      },
+      "ja": {
+        "text": "Partner API"
+      },
+      "zh": {
+        "text": "合作方 API"
+      },
+      "zh-Hant": {
+        "text": "合作方 API"
+      },
+      "ko": {
+        "text": "파트너 API"
+      },
+      "fr": {
+        "text": "API partenaires"
+      },
+      "de": {
+        "text": "Partner-APIs"
+      },
+      "es": {
+        "text": "API de socios"
+      },
+      "pt": {
+        "text": "APIs de parceiros"
+      },
+      "ar": {
+        "text": "واجهات API للشركاء"
+      },
+      "hi": {
+        "text": "पार्टनर API"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.partner-api": {
+    "strings": {
+      "en": {
+        "text": "Connect VexLife to a supported external model provider while Vex keeps owning your Conversation, Memory, and model choice."
+      },
+      "ja": {
+        "text": "Vex が会話、メモリ、モデル選択の所有者であり続けたまま、VexLife を対応する外部モデルプロバイダーに接続します。"
+      },
+      "zh": {
+        "text": "将 VexLife 连接到受支持的外部模型提供商，同时仍由 Vex 掌管你的对话、记忆和模型选择。"
+      },
+      "zh-Hant": {
+        "text": "將 VexLife 連接到支援的外部模型提供商，同時仍由 Vex 掌管你的對話、記憶和模型選擇。"
+      },
+      "ko": {
+        "text": "Vex가 대화, 메모리, 모델 선택의 소유권을 유지한 채 VexLife를 지원되는 외부 모델 제공자에 연결합니다."
+      },
+      "fr": {
+        "text": "Connectez VexLife à un fournisseur de modèle externe pris en charge tout en laissant Vex propriétaire de votre Conversation, de votre Mémoire et du choix du modèle."
+      },
+      "de": {
+        "text": "Verbinde VexLife mit einem unterstützten externen Modellanbieter, während Vex weiterhin deine Conversation, Memory und Modellauswahl besitzt."
+      },
+      "es": {
+        "text": "Conecta VexLife a un proveedor de modelos externo compatible mientras Vex sigue siendo el dueño de tu Conversation, Memory y elección de modelo."
+      },
+      "pt": {
+        "text": "Conecte o VexLife a um provedor de modelo externo compatível enquanto o Vex continua sendo o responsável pela sua Conversation, Memory e escolha de modelo."
+      },
+      "ar": {
+        "text": "اربط VexLife بموفّر نموذج خارجي مدعوم مع بقاء Vex مالكًا للمحادثة والذاكرة واختيار النموذج."
+      },
+      "hi": {
+        "text": "VexLife को किसी समर्थित बाहरी मॉडल प्रदाता से जोड़ें, जबकि Conversation, Memory और मॉडल चयन का स्वामित्व Vex के पास ही रहता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-provider": {
+    "strings": {
+      "en": {
+        "text": "Provider"
+      },
+      "ja": {
+        "text": "プロバイダー"
+      },
+      "zh": {
+        "text": "提供商"
+      },
+      "zh-Hant": {
+        "text": "提供商"
+      },
+      "ko": {
+        "text": "제공자"
+      },
+      "fr": {
+        "text": "Fournisseur"
+      },
+      "de": {
+        "text": "Anbieter"
+      },
+      "es": {
+        "text": "Proveedor"
+      },
+      "pt": {
+        "text": "Provedor"
+      },
+      "ar": {
+        "text": "الموفّر"
+      },
+      "hi": {
+        "text": "प्रदाता"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-key": {
+    "strings": {
+      "en": {
+        "text": "API key"
+      },
+      "ja": {
+        "text": "API キー"
+      },
+      "zh": {
+        "text": "API 密钥"
+      },
+      "zh-Hant": {
+        "text": "API 金鑰"
+      },
+      "ko": {
+        "text": "API 키"
+      },
+      "fr": {
+        "text": "Clé API"
+      },
+      "de": {
+        "text": "API-Schlüssel"
+      },
+      "es": {
+        "text": "Clave de API"
+      },
+      "pt": {
+        "text": "Chave de API"
+      },
+      "ar": {
+        "text": "مفتاح API"
+      },
+      "hi": {
+        "text": "API कुंजी"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-workspace": {
+    "strings": {
+      "en": {
+        "text": "Anthropic workspace ID (optional)"
+      },
+      "ja": {
+        "text": "Anthropic ワークスペース ID（任意）"
+      },
+      "zh": {
+        "text": "Anthropic 工作区 ID（可选）"
+      },
+      "zh-Hant": {
+        "text": "Anthropic 工作區 ID（選填）"
+      },
+      "ko": {
+        "text": "Anthropic 워크스페이스 ID(선택)"
+      },
+      "fr": {
+        "text": "ID d’espace de travail Anthropic (facultatif)"
+      },
+      "de": {
+        "text": "Anthropic-Workspace-ID (optional)"
+      },
+      "es": {
+        "text": "ID de espacio de trabajo de Anthropic (opcional)"
+      },
+      "pt": {
+        "text": "ID do workspace da Anthropic (opcional)"
+      },
+      "ar": {
+        "text": "معرّف مساحة عمل Anthropic (اختياري)"
+      },
+      "hi": {
+        "text": "Anthropic workspace ID (वैकल्पिक)"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.partner-api-connect": {
+    "strings": {
+      "en": {
+        "text": "Connect to API"
+      },
+      "ja": {
+        "text": "API に接続"
+      },
+      "zh": {
+        "text": "连接 API"
+      },
+      "zh-Hant": {
+        "text": "連接 API"
+      },
+      "ko": {
+        "text": "API에 연결"
+      },
+      "fr": {
+        "text": "Se connecter à l’API"
+      },
+      "de": {
+        "text": "Mit API verbinden"
+      },
+      "es": {
+        "text": "Conectar a la API"
+      },
+      "pt": {
+        "text": "Conectar à API"
+      },
+      "ar": {
+        "text": "الاتصال بواجهة API"
+      },
+      "hi": {
+        "text": "API से कनेक्ट करें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-held-funding": {
+    "strings": {
+      "en": {
+        "text": "Live API testing is paused for this phase."
+      },
+      "ja": {
+        "text": "このフェーズではライブ API テストを一時停止しています。"
+      },
+      "zh": {
+        "text": "此阶段的实时 API 测试已暂停。"
+      },
+      "zh-Hant": {
+        "text": "此階段的即時 API 測試已暫停。"
+      },
+      "ko": {
+        "text": "이 단계에서는 실시간 API 테스트가 일시 중지되었습니다."
+      },
+      "fr": {
+        "text": "Les tests API en direct sont en pause pour cette phase."
+      },
+      "de": {
+        "text": "Live-API-Tests sind für diese Phase pausiert."
+      },
+      "es": {
+        "text": "Las pruebas de API en vivo están pausadas en esta fase."
+      },
+      "pt": {
+        "text": "Os testes de API ao vivo estão pausados nesta fase."
+      },
+      "ar": {
+        "text": "اختبار API المباشر متوقف مؤقتًا في هذه المرحلة."
+      },
+      "hi": {
+        "text": "इस चरण के लिए लाइव API परीक्षण रोक दिया गया है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.partner-api-held-funding": {
+    "strings": {
+      "en": {
+        "text": "The connection path is built. We’re holding live provider testing because this phase isn’t funded for paid API testing yet. Connect will unlock after that testing is funded and passes."
+      },
+      "ja": {
+        "text": "接続経路は構築済みです。このフェーズでは有料 API のライブテスト予算がまだないため、プロバイダーのライブテストを保留しています。テストの資金が確保され、合格した後に接続を有効にします。"
+      },
+      "zh": {
+        "text": "连接路径已经构建完成。由于本阶段尚无付费 API 测试资金，我们暂缓实时提供商测试。等测试获得资金并通过后，“连接”将会开放。"
+      },
+      "zh-Hant": {
+        "text": "連接路徑已經建置完成。由於本階段尚無付費 API 測試資金，我們暫緩即時提供商測試。等測試獲得資金並通過後，「連接」將會開放。"
+      },
+      "ko": {
+        "text": "연결 경로는 이미 구축되어 있습니다. 이 단계에는 유료 API 테스트 예산이 아직 없어 실시간 제공자 테스트를 보류합니다. 테스트 자금이 확보되고 통과하면 연결 기능이 열립니다."
+      },
+      "fr": {
+        "text": "Le chemin de connexion est construit. Nous suspendons les tests fournisseur en direct car cette phase n’est pas encore financée pour les tests d’API payants. La connexion sera activée une fois ces tests financés et réussis."
+      },
+      "de": {
+        "text": "Der Verbindungspfad ist gebaut. Live-Anbietertests bleiben zurückgestellt, weil diese Phase noch nicht für kostenpflichtige API-Tests finanziert ist. Connect wird freigeschaltet, sobald diese Tests finanziert und bestanden sind."
+      },
+      "es": {
+        "text": "La ruta de conexión ya está construida. Mantenemos en pausa las pruebas en vivo con proveedores porque esta fase aún no tiene financiación para pruebas de API de pago. Conectar se habilitará cuando esas pruebas estén financiadas y aprobadas."
+      },
+      "pt": {
+        "text": "O caminho de conexão já está construído. Os testes ao vivo com provedores estão em espera porque esta fase ainda não tem financiamento para testes de API pagos. A conexão será liberada quando esses testes forem financiados e aprovados."
+      },
+      "ar": {
+        "text": "مسار الاتصال مبني بالفعل. نوقف اختبار الموفّر المباشر لأن هذه المرحلة لم تُموَّل بعد لاختبارات API المدفوعة. سيُفتح الاتصال بعد تمويل تلك الاختبارات واجتيازها."
+      },
+      "hi": {
+        "text": "कनेक्शन पथ बन चुका है। इस चरण में सशुल्क API परीक्षण के लिए अभी फंडिंग नहीं है, इसलिए लाइव प्रदाता परीक्षण रोका गया है। परीक्षण के लिए फंडिंग मिलने और उसके पास होने के बाद कनेक्ट अनलॉक होगा।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-ready": {
+    "strings": {
+      "en": {
+        "text": "Live API testing is available."
+      },
+      "ja": {
+        "text": "ライブ API テストを利用できます。"
+      },
+      "zh": {
+        "text": "实时 API 测试可用。"
+      },
+      "zh-Hant": {
+        "text": "即時 API 測試可用。"
+      },
+      "ko": {
+        "text": "실시간 API 테스트를 사용할 수 있습니다."
+      },
+      "fr": {
+        "text": "Les tests API en direct sont disponibles."
+      },
+      "de": {
+        "text": "Live-API-Tests sind verfügbar."
+      },
+      "es": {
+        "text": "Las pruebas de API en vivo están disponibles."
+      },
+      "pt": {
+        "text": "Os testes de API ao vivo estão disponíveis."
+      },
+      "ar": {
+        "text": "اختبار API المباشر متاح."
+      },
+      "hi": {
+        "text": "लाइव API परीक्षण उपलब्ध है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-connected": {
+    "strings": {
+      "en": {
+        "text": "Connection stored. Choose the Partner model and press Start to qualify it before use."
+      },
+      "ja": {
+        "text": "接続を保存しました。Partner モデルを選び、使用前に Start を押して認定してください。"
+      },
+      "zh": {
+        "text": "连接已保存。请选择 Partner 模型并按“启动”，在使用前完成资格验证。"
+      },
+      "zh-Hant": {
+        "text": "連接已儲存。請選擇 Partner 模型並按「啟動」，在使用前完成資格驗證。"
+      },
+      "ko": {
+        "text": "연결이 저장되었습니다. Partner 모델을 선택하고 사용 전에 Start를 눌러 검증하세요."
+      },
+      "fr": {
+        "text": "Connexion enregistrée. Choisissez le modèle Partner et appuyez sur Démarrer pour le qualifier avant utilisation."
+      },
+      "de": {
+        "text": "Verbindung gespeichert. Wähle das Partner-Modell und drücke Start, um es vor der Nutzung zu qualifizieren."
+      },
+      "es": {
+        "text": "Conexión guardada. Elige el modelo Partner y pulsa Iniciar para cualificarlo antes de usarlo."
+      },
+      "pt": {
+        "text": "Conexão salva. Escolha o modelo Partner e pressione Iniciar para qualificá-lo antes do uso."
+      },
+      "ar": {
+        "text": "تم حفظ الاتصال. اختر نموذج Partner واضغط «بدء» لتأهيله قبل الاستخدام."
+      },
+      "hi": {
+        "text": "कनेक्शन सेव हो गया। Partner मॉडल चुनें और उपयोग से पहले उसे क्वालिफ़ाई करने के लिए Start दबाएँ।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't update this API connection."
+      },
+      "ja": {
+        "text": "VexLife はこの API 接続を更新できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法更新此 API 连接。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 無法更新此 API 連接。"
+      },
+      "ko": {
+        "text": "VexLife가 이 API 연결을 업데이트하지 못했습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu mettre à jour cette connexion API."
+      },
+      "de": {
+        "text": "VexLife konnte diese API-Verbindung nicht aktualisieren."
+      },
+      "es": {
+        "text": "VexLife no pudo actualizar esta conexión de API."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu atualizar esta conexão de API."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife تحديث اتصال API هذا."
+      },
+      "hi": {
+        "text": "VexLife इस API कनेक्शन को अपडेट नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }

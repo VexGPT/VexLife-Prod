@@ -8,6 +8,7 @@ import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
+import vexlife.partner.VexLifePartnerProviderCatalog
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.person.VexLifePersonSettings
@@ -93,6 +94,48 @@ object VexLifeWebP1RuntimeArtifacts {
             )
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
+        val partnerProviders =
+            VexLifePartnerProviderCatalog
+                .definitions()
+                .joinToString(
+                    separator = ",",
+                    prefix = "[",
+                    postfix = "]",
+                ) {
+                    provider ->
+                    val label =
+                        when (
+                            provider.providerRef
+                        ) {
+                            VexLifePartnerProviderCatalog.OpenAiRef ->
+                                "OpenAI"
+
+                            VexLifePartnerProviderCatalog.AnthropicRef ->
+                                "Anthropic"
+
+                            VexLifePartnerProviderCatalog.KimiInternationalRef ->
+                                "Kimi Open Platform"
+
+                            else ->
+                                error(
+                                    "Partner provider display label is not source-owned",
+                                )
+                        }
+                    "Object.freeze({providerRef:" +
+                        jsString(
+                            provider.providerRef,
+                        ) +
+                        ",label:" +
+                        jsString(
+                            label,
+                        ) +
+                        ",workspaceOptional:" +
+                        (
+                            provider.accountScopeSelection ==
+                                VexLifePartnerProviderCatalog.AccountScopeSelection.WORKSPACE_ID_IF_CREDENTIAL_NOT_SCOPED
+                        ) +
+                        "})"
+                }
 
         fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
 
@@ -334,6 +377,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
                 modelsSourcesPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesPath)},
                 modelsSourcesControlPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesControlPath)},
+                partnerConnectionsPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsPath)},
+                partnerConnectionsControlPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsControlPath)},
+                partnerConnectionControlHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionControlHeader)},
+                partnerConnectionProviderRefHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionProviderRefHeader)},
+                partnerConnectionWorkspaceIdHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader)},
+                partnerConnectionControlConnect: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Connect.wire)},
+                partnerConnectionControlReplace: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Replace.wire)},
+                partnerConnectionHeldFunding: ${jsString(VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
@@ -342,6 +393,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
                 cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
+              const partnerProviders = Object.freeze($partnerProviders);
               const apps = Object.freeze({
                 keys: $workspaceApps,
                 sourceTemplate: ${jsString(VexLifeWorkspaceApp.SourceTemplate.key)},
@@ -611,6 +663,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelImportAdd: byId('model-import-add'),
                 modelImportResult: byId('model-import-result'),
                 modelImportFacts: byId('model-import-facts'),
+                partnerApiState: byId('partner-api-state'),
+                partnerApiProvider: byId('partner-api-provider'),
+                partnerApiCredential: byId('partner-api-credential'),
+                partnerApiWorkspaceField: byId('partner-api-workspace-field'),
+                partnerApiWorkspace: byId('partner-api-workspace'),
+                partnerApiConnect: byId('partner-api-connect'),
+                partnerApiStatus: byId('partner-api-status'),
+                partnerApiNote: byId('partner-api-note'),
                 modelConfiguration: byRef(${jsString(VexLifeWebP1.ModelConfiguration.identity.ref)}),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
@@ -706,6 +766,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelSources: null,
                 modelsInFlight: false,
                 modelImportInFlight: false,
+                partnerConnectionAvailability: null,
+                partnerConnectionInFlight: false,
                 // Local microphone recognition is independent from the serving reasoning model.
                 localAsr: null,
                 localAsrInFlight: false,
@@ -6460,6 +6522,166 @@ object VexLifeWebP1RuntimeArtifacts {
                       .replace('{memory}', gibText(model.recommendedMemoryBytes))
                       .replace('{fit}', workspaceText(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
 
+              const partnerProviderConfigured = (providerRef) =>
+                (state.modelSources?.models?.rows || []).some(
+                  (row) =>
+                    row.sourceKind === 'PARTNER' &&
+                    row.providerRef === providerRef &&
+                    row.partnerConnectionStanding &&
+                    row.partnerConnectionStanding !== 'NEEDS_CREDENTIAL'
+                );
+
+              const renderPartnerApiConnection = () => {
+                if (!ui.partnerApiProvider || !ui.partnerApiConnect) return;
+                const availability = state.partnerConnectionAvailability;
+                const currentProvider =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+                const selectedProviderRef = currentProvider?.providerRef ?? '';
+                const options = partnerProviders.map((provider) => {
+                  const option = document.createElement('option');
+                  option.value = provider.providerRef;
+                  option.textContent = provider.label;
+                  option.selected = provider.providerRef === selectedProviderRef;
+                  return option;
+                });
+                ui.partnerApiProvider.replaceChildren(...options);
+
+                const enabled =
+                  availability?.connectEnabled === true &&
+                  !state.partnerConnectionInFlight;
+                const selected =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+
+                ui.partnerApiProvider.disabled = !enabled;
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.disabled = !enabled;
+                }
+                if (ui.partnerApiWorkspaceField) {
+                  ui.partnerApiWorkspaceField.hidden = selected?.workspaceOptional !== true;
+                }
+                if (ui.partnerApiWorkspace) {
+                  ui.partnerApiWorkspace.disabled = !enabled || selected?.workspaceOptional !== true;
+                }
+
+                const hasCredential =
+                  Boolean(String(ui.partnerApiCredential?.value ?? ''));
+                ui.partnerApiConnect.disabled = !enabled || !hasCredential;
+                ui.partnerApiConnect.onclick = () => {
+                  if (!ui.partnerApiConnect.disabled) void connectPartnerApi();
+                };
+                ui.partnerApiProvider.onchange = () => renderPartnerApiConnection();
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.oninput = () => renderPartnerApiConnection();
+                }
+
+                if (availability?.state === service.partnerConnectionHeldFunding) {
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiNote) {
+                    ui.partnerApiNote.textContent = workspaceText('workspace.description.partner-api-held-funding');
+                  }
+                } else if (availability?.connectEnabled === true) {
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiStatus) {
+                    const row =
+                      (state.modelSources?.models?.rows || []).find(
+                        (candidate) =>
+                          candidate.sourceKind === 'PARTNER' &&
+                          candidate.providerRef === selected?.providerRef
+                      ) ?? null;
+                    ui.partnerApiStatus.textContent =
+                      row?.partnerConnectionStanding
+                        ? workspaceText('workspace.status.partner-api-ready') + ' · ' + row.partnerConnectionStanding
+                        : workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                } else {
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                }
+              };
+
+              const loadPartnerConnectionAvailability = async () => {
+                const response = await productFetch(
+                  service.partnerConnectionsPath,
+                  { headers: { accept: 'application/json' }, cache: 'no-store' }
+                );
+                state.partnerConnectionAvailability = await readJson(response);
+                renderPartnerApiConnection();
+                return state.partnerConnectionAvailability;
+              };
+
+              const connectPartnerApi = async () => {
+                if (state.partnerConnectionInFlight) return;
+                if (state.partnerConnectionAvailability?.connectEnabled !== true) return;
+                const provider =
+                  partnerProviders.find(
+                    (candidate) => candidate.providerRef === ui.partnerApiProvider?.value
+                  ) ?? null;
+                if (!provider || !ui.partnerApiCredential) return;
+
+                let secretText = String(ui.partnerApiCredential.value ?? '');
+                if (!secretText) return;
+                const secretBytes = new TextEncoder().encode(secretText);
+                secretText = '';
+                ui.partnerApiCredential.value = '';
+
+                const headers = new Headers({
+                  'content-type': 'application/octet-stream',
+                  accept: 'application/json'
+                });
+                headers.set(service.partnerConnectionControlHeader, partnerProviderConfigured(provider.providerRef)
+                  ? service.partnerConnectionControlReplace
+                  : service.partnerConnectionControlConnect);
+                headers.set(service.partnerConnectionProviderRefHeader, provider.providerRef);
+                const workspaceId = String(ui.partnerApiWorkspace?.value ?? '').trim();
+                if (provider.workspaceOptional && workspaceId) {
+                  headers.set(service.partnerConnectionWorkspaceIdHeader, workspaceId);
+                }
+
+                state.partnerConnectionInFlight = true;
+                renderPartnerApiConnection();
+                try {
+                  const response = await effectFetch(
+                    service.partnerConnectionsControlPath,
+                    { method: 'POST', headers, body: secretBytes }
+                  );
+                  await readJson(response);
+                  notify(workspaceText('workspace.status.partner-api-connected'));
+                  await Promise.all([
+                    loadPartnerConnectionAvailability(),
+                    loadModels()
+                  ]);
+                } catch (error) {
+                  notify(workspaceText('workspace.status.partner-api-unavailable'));
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent =
+                      error instanceof Error
+                        ? error.message
+                        : workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                } finally {
+                  secretBytes.fill(0);
+                  state.partnerConnectionInFlight = false;
+                  renderPartnerApiConnection();
+                }
+              };
+
               // Settings -> Models. Selection, launch configuration and activation remain separate
               // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
@@ -6775,6 +6997,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   lines.push(workspaceText('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
                 }
                 if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+                renderPartnerApiConnection();
                 if (projection.switching) {
                   setCompanionStatus(
                     'Checking',
@@ -8677,6 +8900,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
+                  void loadPartnerConnectionAvailability().catch(() => {
+                    state.partnerConnectionAvailability = null;
+                    renderPartnerApiConnection();
+                  });
                   // Release truth is outside Product startup truth. Observe it only after the core
                   // presentation is already usable; its own freshness policy suppresses redundant
                   // remote checks on later visibility opportunities.
