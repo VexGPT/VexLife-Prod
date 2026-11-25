@@ -1294,6 +1294,7 @@ object DirectCompanionTurn {
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = initialWorkspaceEffectGrants,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
@@ -1539,7 +1540,9 @@ object DirectCompanionTurn {
                         capabilityRequestAdmission,
                     capabilityOffer =
                         if (providerNativeTools) {
-                            offeredCapabilities()
+                            offeredCapabilities(
+                                base.materialization.receipt.capabilityFrameSnapshot,
+                            )
                         } else {
                             emptyList()
                         },
@@ -1708,6 +1711,7 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
+                    workspaceEffectGrants = initialWorkspaceEffectGrants,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
@@ -2287,8 +2291,12 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
-        VexLifeReachDefinitions.ProviderToolCapabilityRefs
+    private fun offeredCapabilities(
+        frame: VexLifeCapabilityAtlas.Frame?,
+    ): List<VexLifeCapabilityAtlas.Definition> =
+        frame
+            ?.availableCapabilityRefs
+            .orEmpty()
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
