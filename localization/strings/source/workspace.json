@@ -34681,5 +34681,285 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.label.model-capability-vex-reach": {
+    "strings": {
+      "en": {
+        "text": "Vex reach"
+      },
+      "ja": {
+        "text": "Vex のリーチ"
+      },
+      "zh": {
+        "text": "Vex 访问能力"
+      },
+      "zh-Hant": {
+        "text": "Vex 存取能力"
+      },
+      "ko": {
+        "text": "Vex 접근"
+      },
+      "fr": {
+        "text": "Accès de Vex"
+      },
+      "de": {
+        "text": "Vex-Zugriff"
+      },
+      "es": {
+        "text": "Alcance de Vex"
+      },
+      "pt": {
+        "text": "Alcance do Vex"
+      },
+      "ar": {
+        "text": "وصول Vex"
+      },
+      "hi": {
+        "text": "Vex पहुँच"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-provider-native-tools": {
+    "strings": {
+      "en": {
+        "text": "Provider-native tools"
+      },
+      "ja": {
+        "text": "プロバイダーのネイティブツール"
+      },
+      "zh": {
+        "text": "提供商原生工具"
+      },
+      "zh-Hant": {
+        "text": "提供商原生工具"
+      },
+      "ko": {
+        "text": "제공자 네이티브 도구"
+      },
+      "fr": {
+        "text": "Outils natifs du fournisseur"
+      },
+      "de": {
+        "text": "Anbieter-native Tools"
+      },
+      "es": {
+        "text": "Herramientas nativas del proveedor"
+      },
+      "pt": {
+        "text": "Ferramentas nativas do provedor"
+      },
+      "ar": {
+        "text": "أدوات الموفّر الأصلية"
+      },
+      "hi": {
+        "text": "प्रदाता-नेटिव टूल"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-reasoning-effort": {
+    "strings": {
+      "en": {
+        "text": "Reasoning effort"
+      },
+      "ja": {
+        "text": "推論の強度"
+      },
+      "zh": {
+        "text": "推理强度"
+      },
+      "zh-Hant": {
+        "text": "推理強度"
+      },
+      "ko": {
+        "text": "추론 강도"
+      },
+      "fr": {
+        "text": "Effort de raisonnement"
+      },
+      "de": {
+        "text": "Denkaufwand"
+      },
+      "es": {
+        "text": "Esfuerzo de razonamiento"
+      },
+      "pt": {
+        "text": "Esforço de raciocínio"
+      },
+      "ar": {
+        "text": "مستوى جهد الاستدلال"
+      },
+      "hi": {
+        "text": "रीज़निंग प्रयास"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-visual-input": {
+    "strings": {
+      "en": {
+        "text": "Visual input"
+      },
+      "ja": {
+        "text": "画像入力"
+      },
+      "zh": {
+        "text": "视觉输入"
+      },
+      "zh-Hant": {
+        "text": "視覺輸入"
+      },
+      "ko": {
+        "text": "시각 입력"
+      },
+      "fr": {
+        "text": "Entrée visuelle"
+      },
+      "de": {
+        "text": "Visuelle Eingabe"
+      },
+      "es": {
+        "text": "Entrada visual"
+      },
+      "pt": {
+        "text": "Entrada visual"
+      },
+      "ar": {
+        "text": "إدخال مرئي"
+      },
+      "hi": {
+        "text": "विज़ुअल इनपुट"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-available": {
+    "strings": {
+      "en": {
+        "text": "Available now"
+      },
+      "ja": {
+        "text": "今利用できます"
+      },
+      "zh": {
+        "text": "当前可用"
+      },
+      "zh-Hant": {
+        "text": "目前可用"
+      },
+      "ko": {
+        "text": "지금 사용 가능"
+      },
+      "fr": {
+        "text": "Disponible maintenant"
+      },
+      "de": {
+        "text": "Jetzt verfügbar"
+      },
+      "es": {
+        "text": "Disponible ahora"
+      },
+      "pt": {
+        "text": "Disponível agora"
+      },
+      "ar": {
+        "text": "متاح الآن"
+      },
+      "hi": {
+        "text": "अभी उपलब्ध"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-held": {
+    "strings": {
+      "en": {
+        "text": "Not active now"
+      },
+      "ja": {
+        "text": "現在は有効ではありません"
+      },
+      "zh": {
+        "text": "当前未启用"
+      },
+      "zh-Hant": {
+        "text": "目前未啟用"
+      },
+      "ko": {
+        "text": "현재 활성화되지 않음"
+      },
+      "fr": {
+        "text": "Non actif actuellement"
+      },
+      "de": {
+        "text": "Derzeit nicht aktiv"
+      },
+      "es": {
+        "text": "No está activo ahora"
+      },
+      "pt": {
+        "text": "Não está ativo agora"
+      },
+      "ar": {
+        "text": "غير نشط الآن"
+      },
+      "hi": {
+        "text": "अभी सक्रिय नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-not-applicable": {
+    "strings": {
+      "en": {
+        "text": "Not used by this model"
+      },
+      "ja": {
+        "text": "このモデルでは使用しません"
+      },
+      "zh": {
+        "text": "此模型不使用"
+      },
+      "zh-Hant": {
+        "text": "此模型不使用"
+      },
+      "ko": {
+        "text": "이 모델에서는 사용하지 않음"
+      },
+      "fr": {
+        "text": "Non utilisé par ce modèle"
+      },
+      "de": {
+        "text": "Von diesem Modell nicht verwendet"
+      },
+      "es": {
+        "text": "Este modelo no lo usa"
+      },
+      "pt": {
+        "text": "Este modelo não usa"
+      },
+      "ar": {
+        "text": "لا يستخدمه هذا النموذج"
+      },
+      "hi": {
+        "text": "यह मॉडल इसका उपयोग नहीं करता"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }

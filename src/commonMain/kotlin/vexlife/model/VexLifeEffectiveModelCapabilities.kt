@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeRealization
+import vexlife.text.VexLifeText
 
 /**
  * Read-only effective capability projection for one offered local model on the current Product
@@ -40,6 +41,13 @@ object VexLifeEffectiveModelCapabilities {
     }
 
     @Serializable
+    data class DisplayFact(
+        val label: VexLifeText,
+        val standing: Standing,
+        val status: VexLifeText,
+    )
+
+    @Serializable
     data class Projection(
         val modelRef: String,
         val profileRef: String,
@@ -50,7 +58,33 @@ object VexLifeEffectiveModelCapabilities {
         val providerNativeTools: Standing,
         val reasoningEffortControl: Standing,
         val visualInput: Standing,
+        val displayFacts: List<DisplayFact> = emptyList(),
     )
+
+    private fun displayFact(
+        labelKey: String,
+        standing: Standing,
+    ): DisplayFact =
+        DisplayFact(
+            label =
+                VexLifeText(
+                    labelKey,
+                ),
+            standing = standing,
+            status =
+                VexLifeText(
+                    when (standing) {
+                        Standing.AVAILABLE ->
+                            "workspace.status.model-capability-available"
+
+                        Standing.HELD ->
+                            "workspace.status.model-capability-held"
+
+                        Standing.NOT_APPLICABLE ->
+                            "workspace.status.model-capability-not-applicable"
+                    },
+                ),
+        )
 
     fun project(
         modelRef: String,
@@ -102,6 +136,46 @@ object VexLifeEffectiveModelCapabilities {
                 else -> Standing.HELD
             }
 
+        val vexReachStanding =
+            when (profile.reachRepresentationStanding) {
+                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED ->
+                    represented(true)
+
+                HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE ->
+                    Standing.HELD
+            }
+        val providerNativeToolsStanding =
+            when (profile.providerNativeToolStanding) {
+                HereticCompanionRepresentation.ProviderNativeToolStanding.NOT_REPRESENTED ->
+                    Standing.NOT_APPLICABLE
+
+                HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD ->
+                    if (
+                        exactQualifiedRuntime != null &&
+                        HereticCompanionRepresentation.providerNativeToolsActive(
+                            profile = profile,
+                            qualification = qualifiedRuntime?.qualification,
+                        )
+                    ) {
+                        Standing.AVAILABLE
+                    } else {
+                        Standing.HELD
+                    }
+
+                HereticCompanionRepresentation.ProviderNativeToolStanding.QUALIFIED ->
+                    represented(true)
+            }
+        val reasoningEffortControlStanding =
+            represented(
+                profile.generation.reasoningEffort != null,
+            )
+        val visualInputStanding =
+            if (exactQualifiedVisualInput != null) {
+                Standing.AVAILABLE
+            } else {
+                Standing.HELD
+            }
+
         return Projection(
             modelRef = modelRef,
             profileRef = profile.profileRef,
@@ -113,45 +187,29 @@ object VexLifeEffectiveModelCapabilities {
                         exactQualifiedRuntime != null
                     },
             runtime = runtimeStanding,
-            vexReach =
-                when (profile.reachRepresentationStanding) {
-                    HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED ->
-                        represented(true)
-
-                    HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE ->
-                        Standing.HELD
-                },
-            providerNativeTools =
-                when (profile.providerNativeToolStanding) {
-                    HereticCompanionRepresentation.ProviderNativeToolStanding.NOT_REPRESENTED ->
-                        Standing.NOT_APPLICABLE
-
-                    HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD ->
-                        if (
-                            exactQualifiedRuntime != null &&
-                            HereticCompanionRepresentation.providerNativeToolsActive(
-                                profile = profile,
-                                qualification = qualifiedRuntime?.qualification,
-                            )
-                        ) {
-                            Standing.AVAILABLE
-                        } else {
-                            Standing.HELD
-                        }
-
-                    HereticCompanionRepresentation.ProviderNativeToolStanding.QUALIFIED ->
-                        represented(true)
-                },
-            reasoningEffortControl =
-                represented(
-                    profile.generation.reasoningEffort != null,
+            vexReach = vexReachStanding,
+            providerNativeTools = providerNativeToolsStanding,
+            reasoningEffortControl = reasoningEffortControlStanding,
+            visualInput = visualInputStanding,
+            displayFacts =
+                listOf(
+                    displayFact(
+                        labelKey = "workspace.label.model-capability-vex-reach",
+                        standing = vexReachStanding,
+                    ),
+                    displayFact(
+                        labelKey = "workspace.label.model-capability-provider-native-tools",
+                        standing = providerNativeToolsStanding,
+                    ),
+                    displayFact(
+                        labelKey = "workspace.label.model-capability-reasoning-effort",
+                        standing = reasoningEffortControlStanding,
+                    ),
+                    displayFact(
+                        labelKey = "workspace.label.model-capability-visual-input",
+                        standing = visualInputStanding,
+                    ),
                 ),
-            visualInput =
-                if (exactQualifiedVisualInput != null) {
-                    Standing.AVAILABLE
-                } else {
-                    Standing.HELD
-                },
         )
     }
 }

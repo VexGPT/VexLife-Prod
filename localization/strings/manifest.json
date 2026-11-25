@@ -15735,6 +15735,111 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.label.model-capability-vex-reach": {
+      "enHash": "eef4c5ff4dc7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.model-capability-provider-native-tools": {
+      "enHash": "073808089fd9",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.model-capability-reasoning-effort": {
+      "enHash": "4fb252626b81",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.model-capability-visual-input": {
+      "enHash": "1467b663d0b0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.model-capability-available": {
+      "enHash": "e40184a50ad8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.model-capability-held": {
+      "enHash": "f983ba54bddd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.model-capability-not-applicable": {
+      "enHash": "0b1ca9c43d61",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     }
   }
 }
