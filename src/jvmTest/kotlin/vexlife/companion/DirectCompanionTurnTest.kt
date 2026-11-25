@@ -615,9 +615,9 @@ class DirectCompanionTurnTest {
         val preparationExecutor =
             Executors.newCachedThreadPool()
         val preparation =
-            VexLifeInitialPromptPreparation(
+            VexLifePromptPreparation(
                 providerPrefill =
-                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                    VexLifePromptPreparation.ProviderPrefill {
                         runtime,
                         _,
                         _,
@@ -712,7 +712,7 @@ class DirectCompanionTurnTest {
                 1,
                 providerCalls,
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Consumed>(
+            assertIs<VexLifePromptPreparation.State.Consumed>(
                 preparation.state(),
             )
             val snapshot =
@@ -768,9 +768,9 @@ class DirectCompanionTurnTest {
         val preparationExecutor =
             Executors.newCachedThreadPool()
         val preparation =
-            VexLifeInitialPromptPreparation(
+            VexLifePromptPreparation(
                 providerPrefill =
-                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                    VexLifePromptPreparation.ProviderPrefill {
                         runtime,
                         _,
                         _,
@@ -871,7 +871,7 @@ class DirectCompanionTurnTest {
             )
             assertEquals(
                 "PROVIDER_PREFIX_CHANGED",
-                assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+                assertIs<VexLifePromptPreparation.State.Invalidated>(
                         preparation.state(),
                     )
                     .reasonRef,
