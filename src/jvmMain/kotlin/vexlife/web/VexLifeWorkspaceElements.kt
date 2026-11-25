@@ -16,6 +16,7 @@ import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.vision.VexLifeVisionFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 /**
  * Every semantic ref a `workspace` or `release-alerts` key may present through its `dataKey`,
@@ -85,6 +86,7 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
         VexLifeMemoryFamily.StateRefs.forEach { add("memory:state:$it") }
         VexLifeLocalSourcesFamily.ControlRefs.forEach { add("local-sources:control:$it") }
+        VexLifeWorkspaceEffectsFamily.ControlRefs.forEach { add("workspace-effects:control:$it") }
         VexLifePrivateModeFamily.StateRefs.forEach { add("private-mode:state:$it") }
         VexLifePrivateModeFamily.ControlRefs.forEach { add("private-mode:control:$it") }
         VexLifeContextProfileFamily.StateRefs.forEach { add("context-profile:state:$it") }

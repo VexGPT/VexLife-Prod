@@ -22,6 +22,7 @@
       "private-mode": "VexLifePrivateModeFamily (state and control refs)",
       "context-profile": "VexLifeContextProfileFamily (state and control refs)",
       "local-sources": "VexLifeLocalSourcesFamily (control refs)",
+      "workspace-effects": "VexLifeWorkspaceEffectsFamily (explicit Allow/Revoke stronger change authority)",
       "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)"
     }
   },
@@ -7181,6 +7182,410 @@
       },
       "hi": {
         "text": "वह फ़ोल्डर पहले ही हटाया जा चुका है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-read-only": {
+    "strings": {
+      "en": {
+        "text": "Read only"
+      },
+      "ja": {
+        "text": "読み取りのみ"
+      },
+      "zh": {
+        "text": "只读"
+      },
+      "zh-Hant": {
+        "text": "唯讀"
+      },
+      "ko": {
+        "text": "읽기 전용"
+      },
+      "fr": {
+        "text": "Lecture seule"
+      },
+      "de": {
+        "text": "Nur lesen"
+      },
+      "es": {
+        "text": "Solo lectura"
+      },
+      "pt": {
+        "text": "Somente leitura"
+      },
+      "ar": {
+        "text": "قراءة فقط"
+      },
+      "hi": {
+        "text": "केवल पढ़ने योग्य"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-writable": {
+    "strings": {
+      "en": {
+        "text": "Changes allowed"
+      },
+      "ja": {
+        "text": "変更を許可"
+      },
+      "zh": {
+        "text": "允许更改"
+      },
+      "zh-Hant": {
+        "text": "允許變更"
+      },
+      "ko": {
+        "text": "변경 허용"
+      },
+      "fr": {
+        "text": "Modifications autorisées"
+      },
+      "de": {
+        "text": "Änderungen erlaubt"
+      },
+      "es": {
+        "text": "Cambios permitidos"
+      },
+      "pt": {
+        "text": "Alterações permitidas"
+      },
+      "ar": {
+        "text": "التغييرات مسموحة"
+      },
+      "hi": {
+        "text": "बदलाव की अनुमति"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-effects-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow changes"
+      },
+      "ja": {
+        "text": "変更を許可"
+      },
+      "zh": {
+        "text": "允许更改"
+      },
+      "zh-Hant": {
+        "text": "允許變更"
+      },
+      "ko": {
+        "text": "변경 허용"
+      },
+      "fr": {
+        "text": "Autoriser les modifications"
+      },
+      "de": {
+        "text": "Änderungen erlauben"
+      },
+      "es": {
+        "text": "Permitir cambios"
+      },
+      "pt": {
+        "text": "Permitir alterações"
+      },
+      "ar": {
+        "text": "السماح بالتغييرات"
+      },
+      "hi": {
+        "text": "बदलाव की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-effects:control:ALLOW_WORKSPACE_EFFECTS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-changes"
+  },
+  "workspace.button.workspace-effects-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop changes"
+      },
+      "ja": {
+        "text": "変更を停止"
+      },
+      "zh": {
+        "text": "停止更改"
+      },
+      "zh-Hant": {
+        "text": "停止變更"
+      },
+      "ko": {
+        "text": "변경 중지"
+      },
+      "fr": {
+        "text": "Arrêter les modifications"
+      },
+      "de": {
+        "text": "Änderungen stoppen"
+      },
+      "es": {
+        "text": "Detener cambios"
+      },
+      "pt": {
+        "text": "Parar alterações"
+      },
+      "ar": {
+        "text": "إيقاف التغييرات"
+      },
+      "hi": {
+        "text": "बदलाव रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-effects:control:REVOKE_WORKSPACE_EFFECTS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-changes"
+  },
+  "workspace.status.workspace-effects-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更を許可しました。"
+      },
+      "zh": {
+        "text": "已允许更改此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許變更此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경이 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten cambios en esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالتغييرات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-revoked": {
+    "strings": {
+      "en": {
+        "text": "Changes stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "変更を停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止更改。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止變更。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "변경이 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Modifications arrêtées. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Änderungen gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Cambios detenidos. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Alterações interrompidas. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف التغييرات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "बदलाव रोक दिए गए हैं। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更はすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许更改此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許變更此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경은 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont déjà autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Los cambios ya están permitidos para esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações já estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "التغييرات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव पहले से अनुमत हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更はすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的更改已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的變更已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경은 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont déjà arrêtées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Los cambios ya están detenidos para esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações já estão interrompidas para esta pasta."
+      },
+      "ar": {
+        "text": "التغييرات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव पहले से रोके गए हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Change access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、変更アクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予更改权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予變更權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 변경 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux modifications n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Änderungszugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de cambio porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de alteração porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية التغيير لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "बदलाव की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
       }
     },
     "surfaces": [

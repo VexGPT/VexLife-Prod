@@ -244,7 +244,10 @@ class DirectCompanionCapabilityTurnTest {
                         .content
                 }
         assertTrue("web_fetch" in firstToolNames)
-        assertTrue("memory_search" in firstToolNames)
+        assertFalse(
+            "memory_search" in firstToolNames,
+            "provider-native tools are projected from exact AVAILABLE refs; no current Memory means no memory_search offer",
+        )
         assertTrue("attachments_list" in firstToolNames)
         assertTrue("sources_list" in firstToolNames)
         assertTrue("sources_find" in firstToolNames)
@@ -821,11 +824,11 @@ class DirectCompanionCapabilityTurnTest {
                             DirectCompanionTurn.Hooks(
                                 transport = {
                                     call ->
-                                    assertTrue(
+                                    assertFalse(
                                         call.body.contains(
                                             "\"name\":\"web_fetch\"",
                                         ),
-                                        "native tool schema stays declared while Lab/turn policy holds the effect",
+                                        "turn policy hold removes provider-native offering; the model may still emit a textual capability request, which is then held visibly",
                                     )
                                     reply(fetchControl)
                                 },

@@ -38,6 +38,8 @@ import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.partner.VexLifePartnerHostEffect
+import vexlife.workspace.VexLifeWorkspaceEffectStore
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -538,6 +540,15 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
+        val currentWorkspaceEffectGrants: (
+            productHome: Path,
+        ) -> List<VexLifeWorkspaceEffectsFamily.Grant> = {
+            productHome ->
+            VexLifeWorkspaceEffectStore(
+                productHome,
+            )
+                .currentGrants()
+        },
         val progressObserver: ProgressObserver? =
             null,
         val turnPolicy: TurnPolicy =
@@ -612,6 +623,7 @@ object DirectCompanionTurn {
         val materialization: DirectPromptContext.Materialization,
         val memoryContext: VexLifeMemoryContract.Context,
         val promptResidentMemoryStatementRefs: Set<String>,
+        val workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant>,
     )
 
     private data class ProviderStage(
@@ -1200,6 +1212,10 @@ object DirectCompanionTurn {
             hooks.currentMemoryContext(
                 productHome,
             )
+        val initialWorkspaceEffectGrants =
+            hooks.currentWorkspaceEffectGrants(
+                productHome,
+            )
         val initialRuntimeEvidence =
             hooks.currentRuntimeEvidence(
                 setup,
@@ -1278,6 +1294,7 @@ object DirectCompanionTurn {
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = initialWorkspaceEffectGrants,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
@@ -1523,7 +1540,9 @@ object DirectCompanionTurn {
                         capabilityRequestAdmission,
                     capabilityOffer =
                         if (providerNativeTools) {
-                            offeredCapabilities()
+                            offeredCapabilities(
+                                base.materialization.receipt.capabilityFrameSnapshot,
+                            )
                         } else {
                             emptyList()
                         },
@@ -1692,6 +1711,7 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
+                    workspaceEffectGrants = initialWorkspaceEffectGrants,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
@@ -2056,6 +2076,8 @@ object DirectCompanionTurn {
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
@@ -2126,6 +2148,7 @@ object DirectCompanionTurn {
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -2167,6 +2190,7 @@ object DirectCompanionTurn {
             materialization = materialization,
             memoryContext = selectedMemory,
             promptResidentMemoryStatementRefs = promptResidentMemoryStatementRefs,
+            workspaceEffectGrants = workspaceEffectGrants,
         )
     }
 
@@ -2257,6 +2281,7 @@ object DirectCompanionTurn {
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = selection.workspaceEffectGrants,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = maximumMemoryTokens,
         )
@@ -2266,8 +2291,12 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
-        VexLifeReachDefinitions.ProviderToolCapabilityRefs
+    private fun offeredCapabilities(
+        frame: DirectPromptContext.CapabilityFrameSnapshot?,
+    ): List<VexLifeCapabilityAtlas.Definition> =
+        frame
+            ?.availableCapabilityRefs
+            .orEmpty()
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,

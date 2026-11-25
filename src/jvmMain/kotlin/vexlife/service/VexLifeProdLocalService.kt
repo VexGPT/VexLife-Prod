@@ -97,6 +97,8 @@ import vexlife.memory.VexLifeMemoryFamily
 import vexlife.sources.VexLifeLocalFolderPicker
 import vexlife.sources.VexLifeLocalSourceStore
 import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectStore
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -260,6 +262,16 @@ class VexLifeProdLocalService private constructor(
             Path.of(
                 startupSetup.productHome,
             ),
+        )
+
+    private val workspaceEffects =
+        VexLifeWorkspaceEffectStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
         )
 
     private val localSourcesMutationLock =
@@ -2318,6 +2330,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.LocalSourcesControlPath ->
                     handleLocalSourcesControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceEffectsPath ->
+                    handleWorkspaceEffects(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceEffectsControlPath ->
+                    handleWorkspaceEffectsControl(
                         exchange,
                     )
 
@@ -5253,6 +5275,182 @@ class VexLifeProdLocalService private constructor(
                         )
                 }
             }
+        }
+    }
+
+    private fun workspaceEffectsProjection(): VexLifeProdServiceContract.WorkspaceEffectsProjection {
+        val state =
+            workspaceEffects.state()
+        return VexLifeProdServiceContract.WorkspaceEffectsProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.WorkspaceEffectsProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceEffects(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceEffectsProjection(),
+        )
+    }
+
+    private fun handleWorkspaceEffectsControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceEffectsControlRequest>(
+                exchange,
+            )
+        val control =
+            when (
+                request.controlRef
+            ) {
+                VexLifeWorkspaceEffectsFamily.ControlAllow ->
+                    VexLifeWorkspaceEffectsFamily.Allow(
+                        request.sourceRef,
+                    )
+
+                VexLifeWorkspaceEffectsFamily.ControlRevoke ->
+                    VexLifeWorkspaceEffectsFamily.Revoke(
+                        request.sourceRef,
+                    )
+
+                else ->
+                    error(
+                        "Workspace Effects Control is unknown",
+                    )
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceEffectsControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceEffectsControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        effects = workspaceEffectsProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                VexLifeWorkspaceEffectsFamily.resolve(
+                    currentState =
+                        workspaceEffects.state(),
+                    control =
+                        control,
+                )
+                    ?.effect
+            }
+        if (
+            semanticEffect ==
+                null
+        ) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (
+                        control is
+                            VexLifeWorkspaceEffectsFamily.Allow
+                    ) {
+                        "workspace.status.workspace-effects-already-granted"
+                    } else {
+                        "workspace.status.workspace-effects-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                when (
+                    semanticEffect
+                ) {
+                    is VexLifeWorkspaceEffectsFamily.Effect.GrantWorkspace ->
+                        workspaceEffects.grant(
+                            semanticEffect.sourceRef,
+                        )
+
+                    is VexLifeWorkspaceEffectsFamily.Effect.RevokeWorkspace ->
+                        workspaceEffects.revoke(
+                            semanticEffect.sourceRef,
+                        )
+                }
+            }
+
+        when (
+            realized
+        ) {
+            is VexLifeWorkspaceEffectStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED,
+                    reasonKey =
+                        if (
+                            control is
+                                VexLifeWorkspaceEffectsFamily.Allow
+                        ) {
+                            "workspace.status.workspace-effects-granted"
+                        } else {
+                            "workspace.status.workspace-effects-revoked"
+                        },
+                )
+
+            is VexLifeWorkspaceEffectStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REFUSED,
+                    reasonKey =
+                        when (
+                            realized.reason
+                        ) {
+                            VexLifeWorkspaceEffectStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-effects-source-not-current"
+
+                            VexLifeWorkspaceEffectStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-effects-already-granted"
+
+                            VexLifeWorkspaceEffectStore.RefusedLimitReached ->
+                                "workspace.status.workspace-effects-limit-reached"
+
+                            else ->
+                                "workspace.status.workspace-effects-not-granted"
+                        },
+                )
         }
     }
 

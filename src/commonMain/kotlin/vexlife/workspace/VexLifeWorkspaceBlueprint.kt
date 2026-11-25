@@ -311,6 +311,15 @@ object VexLifeWorkspaceBlueprint :
         SettingsLocalSources.control(
             "add",
         )
+    /** Separate stronger authority for one existing Local Source; never implied by Add Folder. */
+    val LocalSourceAllowChanges =
+        SettingsLocalSources.control(
+            "allow-changes",
+        )
+    val LocalSourceStopChanges =
+        SettingsLocalSources.control(
+            "stop-changes",
+        )
 
     val SettingsContinuity =
         Settings.region(

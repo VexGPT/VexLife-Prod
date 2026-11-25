@@ -17,6 +17,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeWorkspaceEffectDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.contract.VexContractJson
@@ -32,6 +33,8 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 class DirectPromptContextTest {
     @Test
@@ -3409,6 +3412,145 @@ class DirectPromptContextTest {
                     assertTrue(
                         materialized.receipt.memoryIncluded,
                         "legacy Daily receipt fields stay bound to the Daily component",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workspaceWriteAvailabilityReportsCurrentGrantWithoutGrantingEffectAuthority() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-write-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-write",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-write",
+                            content =
+                                "Use only the workspace authority I actually granted.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "a".repeat(
+                                64,
+                            ),
+                        )
+                    val grant =
+                        VexLifeWorkspaceEffectsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceEffectsFamily.GrantRefPrefix +
+                                    "b".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-25T03:00:00Z",
+                            grantedAt =
+                                "2026-11-25T03:01:00Z",
+                        )
+
+                    fun materialize(
+                        grants: List<VexLifeWorkspaceEffectsFamily.Grant>,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            workspaceEffectGrants =
+                                grants,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+                            .receipt
+                            .capabilityFrameSnapshot
+                            .let(
+                                ::requireNotNull,
+                            )
+
+                    val held =
+                        materialize(
+                            emptyList(),
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.heldCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        held.effectAuthorityGranted,
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            available.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            available.heldCapabilityRefs,
+                    )
+                    assertFalse(
+                        available.effectAuthorityGranted,
                     )
                 }
         } finally {

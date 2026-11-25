@@ -104,6 +104,32 @@ object VexLifeCapabilityBridge {
         val readMemory: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
+        val writeWorkspace: (
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            relativePath: String,
+            content: String,
+            expectedPriorSha256: String?,
+        ) -> VexLifeWorkspaceWrite.Outcome = {
+            productHome,
+            operationRef,
+            sourceRef,
+            relativePath,
+            content,
+            expectedPriorSha256,
+            ->
+            VexLifeWorkspaceWrite(
+                productHome,
+            )
+                .write(
+                    operationRef = operationRef,
+                    sourceRef = sourceRef,
+                    relativePath = relativePath,
+                    content = content,
+                    expectedPriorSha256 = expectedPriorSha256,
+                )
+        },
         val now: () -> Instant = { Instant.now() },
     )
 
@@ -154,6 +180,14 @@ object VexLifeCapabilityBridge {
         val externalEffectsExecuted: Boolean,
         val effectAuthorityGranted: Boolean,
         /**
+         * True only when the owner cannot prove whether an attempted mutation landed.
+         *
+         * externalEffectsExecuted remains false until execution is verified; this separate bit
+         * prevents "not verified" from becoming the false claim "definitely did not happen".
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val externalEffectMayHaveExecuted: Boolean = false,
+        /**
          * Exact owner refs whose words came back (revisit: Conversation event refs and Memory
          * statement refs), so a later reader can walk from this turn to the source it used. Absent
          * from older traces and from reads that return no owner-addressed source.
@@ -185,10 +219,16 @@ object VexLifeCapabilityBridge {
             }
             require(
                 !rawResultContentPersisted &&
-                    !effectAuthorityGranted &&
-                    entries.none { it.externalEffectsExecuted || it.effectAuthorityGranted }
+                    effectAuthorityGranted ==
+                    entries.any {
+                        it.effectAuthorityGranted
+                    } &&
+                    entries.none {
+                        it.externalEffectsExecuted &&
+                            it.externalEffectMayHaveExecuted
+                    }
             ) {
-                "capability exchange trace may record read-only reach only"
+                "capability exchange trace effect truth is inconsistent"
             }
             require(entries.map { it.requestNumber } == (1..entries.size).toList()) {
                 "capability exchange trace entries must be numbered in order"
@@ -217,7 +257,10 @@ object VexLifeCapabilityBridge {
             maximumRequestsPerTurn = MaximumRequestsPerTurn,
             exchangeAllowanceTokens = ExchangeAllowanceTokens,
             rawResultContentPersisted = false,
-            effectAuthorityGranted = false,
+            effectAuthorityGranted =
+                entries.any {
+                    it.effectAuthorityGranted
+                },
         )
 
     /** Display text for one in-flight request, for the live thought stream. */
@@ -289,7 +332,7 @@ object VexLifeCapabilityBridge {
                         "No capability is named \"${requireNotNull(call).capability}\". " + handlesLine(),
                         untrusted = false,
                     )
-                definition.capabilityRef !in VexLifeReachDefinitions.EnvelopeCapabilityRefs ->
+                definition.capabilityRef !in RequestEnvelopeCapabilityRefs ->
                     Body(
                         ResultState.INVALID_REQUEST,
                         null,
@@ -303,7 +346,14 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call!!, admission, ownerBindings, estimateTokens)
+                else ->
+                    dispatch(
+                        definition = definition,
+                        call = call!!,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                        estimateTokens = estimateTokens,
+                    )
             }
 
         val maximumTokens =
@@ -335,8 +385,9 @@ object VexLifeCapabilityBridge {
                 effectClass = definition?.effectClass,
                 startedAt = startedAt.toString(),
                 completedAt = completedAt.toString(),
-                externalEffectsExecuted = false,
-                effectAuthorityGranted = false,
+                externalEffectsExecuted = body.externalEffectsExecuted,
+                effectAuthorityGranted = body.effectAuthorityGranted,
+                externalEffectMayHaveExecuted = body.externalEffectMayHaveExecuted,
                 sourceRefs = if (state == body.state) body.sourceRefs else emptyList(),
                 frontierRefs = if (state == body.state) body.frontierRefs else (body.frontierRefs + body.sourceRefs).distinct(),
                 hostScan = body.hostScan,
@@ -380,7 +431,15 @@ object VexLifeCapabilityBridge {
         val sourceRefs: List<String> = emptyList(),
         val frontierRefs: List<String> = emptyList(),
         val hostScan: VexLifeContextRevisit.HostScan? = null,
+        val externalEffectsExecuted: Boolean = false,
+        val effectAuthorityGranted: Boolean = false,
+        val externalEffectMayHaveExecuted: Boolean = false,
     )
+
+    private val RequestEnvelopeCapabilityRefs: Set<String> =
+        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            .toSet() +
+            VexLifeWorkspaceEffectDefinitions.WriteRef
 
     private const val FormReminder =
         "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
@@ -388,7 +447,7 @@ object VexLifeCapabilityBridge {
 
     private fun handlesLine(): String =
         "Capabilities: " +
-            VexLifeReachDefinitions.EnvelopeCapabilityRefs.mapNotNull {
+            RequestEnvelopeCapabilityRefs.mapNotNull {
                     VexLifeCapabilityAtlas.resolve(it)?.handle
                 }
                 .joinToString(", ") +
@@ -449,6 +508,13 @@ object VexLifeCapabilityBridge {
                 VexLifeReachDefinitions.LocalSourceRef -> localSources(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
+                VexLifeWorkspaceEffectDefinitions.WriteRef ->
+                    workspaceWrite(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
                 else ->
                     Body(
                         ResultState.INVALID_REQUEST,
@@ -458,14 +524,235 @@ object VexLifeCapabilityBridge {
                     )
             }
         } catch (error: Exception) {
-            // An owner that throws is a failed read, visible to Vex; it never fails the human's
-            // turn.
+            // Owner failure is returned to Vex as evidence; the human turn remains able to reason
+            // about the failed reach/effect rather than silently treating it as success.
             Body(
                 ResultState.FAILED,
                 targetOf(call),
-                "The read did not complete: " + (error.message ?: error.javaClass.simpleName),
+                "The capability owner did not complete: " +
+                    (error.message ?: error.javaClass.simpleName),
                 untrusted = false,
             )
+        }
+    }
+
+    private fun workspaceWrite(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (
+            action !=
+                "write"
+        ) {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                "workspace",
+                "workspace has no effect owner for action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string(
+                "source",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    "workspace",
+                    "workspace write requires one exact source ref.",
+                    untrusted = false,
+                )
+        val relativePath =
+            args.string(
+                "path",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace write requires one relative path.",
+                    untrusted = false,
+                )
+        val content =
+            args.rawString(
+                "content",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef + ":" + relativePath,
+                    "workspace write requires complete UTF-8 content.",
+                    untrusted = false,
+                )
+        val expectedPriorSha256 =
+            args.string(
+                "expectedSha256",
+            )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    sourceRef + ":" + relativePath,
+                    "workspace write requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val operationRef =
+            "operation.vexlife-prod.workspace-write." +
+                VexLifeCapabilityRequest
+                    .sha256(
+                        listOf(
+                            requestEventHash,
+                            VexLifeWorkspaceEffectDefinitions.WriteRef,
+                            action,
+                            VexContractJson.canonicalEncodeElement(
+                                args,
+                            ),
+                        )
+                            .joinToString(
+                                "\u0000",
+                            ),
+                    )
+
+        return when (
+            val outcome =
+                ownerBindings.writeWorkspace(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    relativePath,
+                    content,
+                    expectedPriorSha256,
+                )
+        ) {
+            is VexLifeWorkspaceWrite.Outcome.Completed -> {
+                val receipt =
+                    outcome.receipt
+                Body(
+                    state = ResultState.RETURNED,
+                    target =
+                        receipt.sourceRef +
+                            ":" +
+                            receipt.relativePath,
+                    text =
+                        when (
+                            receipt.disposition
+                        ) {
+                            VexLifeWorkspaceWrite.DispositionRecovered ->
+                                "The exact prior workspace-write intent is already satisfied. " +
+                                    "Its receipt was recovered without another write."
+
+                            else ->
+                                "The workspace write completed and the target was reobserved at the verified new SHA-256."
+                        },
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put(
+                                "receiptRef",
+                                receipt.receiptRef,
+                            )
+                            put(
+                                "intentRef",
+                                receipt.intentRef,
+                            )
+                            put(
+                                "disposition",
+                                receipt.disposition,
+                            )
+                            receipt.priorSha256
+                                ?.let {
+                                    put(
+                                        "priorSha256",
+                                        it,
+                                    )
+                                }
+                            put(
+                                "newSha256",
+                                receipt.newSha256,
+                            )
+                            put(
+                                "bytes",
+                                receipt.bytes.toString(),
+                            )
+                            put(
+                                "effectPerformedNow",
+                                outcome.effectPerformedNow.toString(),
+                            )
+                            put(
+                                "currentEffectAuthority",
+                                outcome.currentEffectAuthority.toString(),
+                            )
+                        },
+                    externalEffectsExecuted =
+                        outcome.effectPerformedNow,
+                    effectAuthorityGranted =
+                        outcome.effectPerformedNow &&
+                            outcome.currentEffectAuthority,
+                )
+            }
+
+            is VexLifeWorkspaceWrite.Outcome.Refused ->
+                Body(
+                    state = ResultState.REFUSED,
+                    target =
+                        sourceRef +
+                            ":" +
+                            relativePath,
+                    text =
+                        "The workspace write was refused: " +
+                            outcome.reason +
+                            ". No new write was performed.",
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            outcome.intentRef
+                                ?.let {
+                                    put(
+                                        "intentRef",
+                                        it,
+                                    )
+                                }
+                            outcome.observedSha256
+                                ?.let {
+                                    put(
+                                        "observedSha256",
+                                        it,
+                                    )
+                                }
+                        },
+                )
+
+            is VexLifeWorkspaceWrite.Outcome.UnknownAfterAttempt ->
+                Body(
+                    state = ResultState.FAILED,
+                    target =
+                        sourceRef +
+                            ":" +
+                            relativePath,
+                    text =
+                        "The workspace write result is uncertain after an attempted mutation. " +
+                            "Do not form a different write to compensate. Reissue the same exact " +
+                            "workspace write so the owner can reobserve/recover before any replay.",
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put(
+                                "intentRef",
+                                outcome.intentRef,
+                            )
+                            put(
+                                "reason",
+                                outcome.reason,
+                            )
+                            outcome.observedSha256
+                                ?.let {
+                                    put(
+                                        "observedSha256",
+                                        it,
+                                    )
+                                }
+                        },
+                    externalEffectMayHaveExecuted = true,
+                )
         }
     }
 
@@ -2345,6 +2632,20 @@ object VexLifeCapabilityBridge {
             ?: call.arguments.string("repository")?.let { repo ->
                 repo + (call.arguments.string("path")?.let { ":$it" } ?: "")
             }
+            ?: call.arguments.string("source")?.let {
+                source ->
+                source +
+                    (
+                        call.arguments
+                            .string(
+                                "path",
+                            )
+                            ?.let {
+                                ":$it"
+                            }
+                            ?: ""
+                    )
+            }
             ?: call.arguments.string("path")?.let { "home:$it" }
             ?: call.arguments.string("capability")
 
@@ -2354,6 +2655,13 @@ object VexLifeCapabilityBridge {
             ?.contentOrNull
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
+
+    private fun JsonObject.rawString(name: String): String? =
+        (this[name] as? JsonPrimitive)
+            ?.takeIf {
+                it.isString
+            }
+            ?.contentOrNull
 
     private fun JsonObject.integer(name: String): Int? =
         (this[name] as? JsonPrimitive)
