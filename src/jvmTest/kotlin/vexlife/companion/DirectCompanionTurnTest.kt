@@ -288,7 +288,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun importedNativeToolQualificationChangesTheWholeTurnRepresentation() {
+    fun importedNativeToolQualificationDoesNotBypassHeldVexReach() {
         fun requestBody(
             nativeToolsQualified: Boolean,
         ): Pair<kotlinx.serialization.json.JsonObject, DirectCompanionTurn.Result> {
@@ -407,36 +407,43 @@ class DirectCompanionTurnTest {
             heldResult.promptContextReceipt.sourceReturnProtocolEnabled,
         )
 
-        val (qualifiedRequest, qualifiedResult) =
+        val (nativeQualifiedRequest, nativeQualifiedResult) =
             requestBody(
                 nativeToolsQualified = true,
             )
-        assertTrue(
-            qualifiedRequest[
-                "tools"
-            ]
-                ?.jsonArray
-                ?.isNotEmpty() ==
-                true,
-            "exact runtime qualification must activate real turn-level provider tool declarations",
+        assertFalse(
+            nativeQualifiedRequest.containsKey(
+                "tools",
+            ),
+            "provider-native tool qualification must not bypass held Vex Reach",
         )
         assertFalse(
-            qualifiedRequest
+            nativeQualifiedRequest
                 .toString()
                 .contains(
                     "text-control fallback",
                 ),
+            "held imported reach must not advertise the unqualified text-control route",
+        )
+        assertTrue(
+            nativeQualifiedRequest
+                .toString()
+                .contains(
+                    "No outside-source capability reach is admitted in this turn.",
+                ),
+            "provider-native carriage qualification must preserve the held reach frame",
         )
         assertFalse(
-            qualifiedRequest
+            nativeQualifiedRequest
                 .toString()
                 .contains(
                     DirectConversationSourceReturn.ProtocolHeader,
                 ),
-            "native carriage and prompt/source-return semantics must move together",
+            "provider-native carriage keeps source-return representation disabled even while Vex Reach remains held",
         )
         assertFalse(
-            qualifiedResult.promptContextReceipt.sourceReturnProtocolEnabled,
+            nativeQualifiedResult.promptContextReceipt.sourceReturnProtocolEnabled,
+            "provider-native carriage qualification and Vex Reach authority remain independent",
         )
     }
 
