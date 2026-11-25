@@ -65,6 +65,8 @@ object DirectConversationContextProjection {
         val exactEventFileReadCount: Int,
         val historicalCurrentizedEventRefs: Set<String> =
             emptySet(),
+        val sourceLifecycleBindingRef: String =
+            VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
     )
 
     @Serializable
@@ -231,6 +233,8 @@ object DirectConversationContextProjection {
                             },
                         historicalCurrentizedEventRefs =
                             currentSourceLifecycle.historicalCurrentizedEventRefs,
+                        sourceLifecycleBindingRef =
+                            currentSourceLifecycle.bindingRef,
                     )
 
                 is VexLifeContinuitySourceLocator.LocateOutcome.CurrentMiss ->
@@ -263,6 +267,8 @@ object DirectConversationContextProjection {
             exactEventFileReadCount = 0,
             historicalCurrentizedEventRefs =
                 currentSourceLifecycle.historicalCurrentizedEventRefs,
+            sourceLifecycleBindingRef =
+                currentSourceLifecycle.bindingRef,
         )
     }
 
@@ -272,6 +278,7 @@ object DirectConversationContextProjection {
         located: VexLifeContinuitySourceLocator.LocateOutcome.Found,
         sourcePreparation: SourcePreparation,
         historicalCurrentizedEventRefs: Set<String>,
+        sourceLifecycleBindingRef: String,
     ): Prepared {
         val matches =
             located.candidates.map {
@@ -308,6 +315,8 @@ object DirectConversationContextProjection {
                 located.exactEventFileReadCount,
             historicalCurrentizedEventRefs =
                 historicalCurrentizedEventRefs,
+            sourceLifecycleBindingRef =
+                sourceLifecycleBindingRef,
         )
     }
 
