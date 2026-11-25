@@ -218,11 +218,14 @@ class DirectPromptContextTest {
                 val told = DirectPromptContext.materialize(prior = null, currentRequest = request, personContext = person)
                 // Current, not standing: the setting rides the current-state envelope right before
                 // the request, never the leading system block that precedes all history.
-                assertTrue(told.messages.none { it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v1" in it.content })
+                assertTrue(told.messages.none { it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v2" in it.content })
                 val current = told.messages[told.messages.size - 2]
                 assertEquals("user", current.role)
                 assertTrue(current.content.startsWith(DirectPromptContext.CurrentStateHeader))
-                assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in current.content)
+                assertTrue("VEXLIFE_PERSON_CONTEXT/v2" in current.content)
+                assertTrue("\"participantRef\":\"person.local-user\"" in current.content)
+                assertTrue("\"name\":null" in current.content)
+                assertTrue("\"nameStanding\":\"UNKNOWN\"" in current.content)
                 assertTrue("日本語" in current.content && "Victor is nervous about Friday." in current.content)
                 assertEquals(request.content, told.messages.last().content)
                 val person0 =

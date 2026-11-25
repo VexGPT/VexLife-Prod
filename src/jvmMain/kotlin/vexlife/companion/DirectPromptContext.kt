@@ -6,6 +6,7 @@ import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeReachDefinitions
@@ -824,6 +825,14 @@ object DirectPromptContext {
         val replyLanguage: String,
         val replyLanguageName: String,
         val privateConversations: List<PrivateGap>,
+        /**
+         * Optional human-readable identity claim for the exact current Conversation speaker.
+         *
+         * Absence means the participant coordinate is known but no human-readable name has been
+         * established. The claim never replaces Conversation speakerRef.
+         */
+        @Transient
+        val nameClaim: PersonNameClaim? = null,
     ) {
         init {
             require(
@@ -839,6 +848,40 @@ object DirectPromptContext {
             require(privateConversations.size <= MaximumPrivateGaps) { "too many private gaps in one prompt" }
         }
     }
+
+    @Serializable
+    enum class PersonNameStanding {
+        SELF_REPORTED,
+        PROFILE_DECLARED,
+        SOURCE_ESTABLISHED,
+    }
+
+    @Serializable
+    data class PersonNameClaim(
+        val name: String,
+        val standing: PersonNameStanding,
+        val sourceRefs: List<String>,
+    ) {
+        init {
+            require(name.isNotBlank() && name.length <= 120) {
+                "person name claim must be one bounded non-empty name"
+            }
+            require(sourceRefs.isNotEmpty() && sourceRefs.size <= 8 && sourceRefs.all { it.isNotBlank() }) {
+                "person name claim requires bounded source refs"
+            }
+        }
+    }
+
+    @Serializable
+    internal data class EffectivePersonContext(
+        val participantRef: String,
+        val name: String?,
+        val nameStanding: String,
+        val nameSourceRefs: List<String>,
+        val replyLanguage: String,
+        val replyLanguageName: String,
+        val privateConversations: List<PrivateGap>,
+    )
 
     @Serializable
     data class PrivateGap(
@@ -2998,7 +3041,15 @@ object DirectPromptContext {
                         workspaceEffectGrants = workspaceEffectGrants,
                     )
                 }
-        val personContextContent = personContext?.let(::personContextSystemContent)
+        val effectivePersonContext =
+            personContext?.let {
+                effectivePersonContext(
+                    currentRequest = currentRequest,
+                    context = it,
+                )
+            }
+        val personContextContent =
+            effectivePersonContext?.let(::personContextSystemContent)
         val conversationExtent =
             if (conversationExtentIncluded) {
                 conversationExtent(
@@ -3057,7 +3108,15 @@ object DirectPromptContext {
                         }
                 }
                 personContextContent?.let {
-                    add(Section(ComponentRefs.PersonContext, ComponentStability.MUTABLE_CURRENT, it))
+                    add(
+                        Section(
+                            ComponentRefs.PersonContext,
+                            ComponentStability.MUTABLE_CURRENT,
+                            it,
+                            listOf(currentRequest.eventRef) +
+                                effectivePersonContext.orEmptyNameSourceRefs(),
+                        ),
+                    )
                 }
                 conversationExtent?.let {
                     add(Section(ComponentRefs.ConversationExtent, ComponentStability.MUTABLE_CURRENT, it.systemContent))
@@ -3416,9 +3475,35 @@ object DirectPromptContext {
         )
     }
 
-    private fun personContextSystemContent(context: PersonContext): String =
+    internal fun effectivePersonContext(
+        currentRequest: DirectConversationStore.Event,
+        context: PersonContext,
+    ): EffectivePersonContext {
+        require(currentRequest.eventKind == "REQUEST") {
+            "person context requires one exact current REQUEST"
+        }
+        val claim = context.nameClaim
+        return EffectivePersonContext(
+            participantRef = currentRequest.speakerRef,
+            name = claim?.name,
+            nameStanding = claim?.standing?.name ?: "UNKNOWN",
+            nameSourceRefs = claim?.sourceRefs.orEmpty(),
+            replyLanguage = context.replyLanguage,
+            replyLanguageName = context.replyLanguageName,
+            privateConversations = context.privateConversations,
+        )
+    }
+
+    private fun EffectivePersonContext?.orEmptyNameSourceRefs(): List<String> =
+        this?.nameSourceRefs.orEmpty()
+
+    internal fun personContextSystemContent(context: EffectivePersonContext): String =
         listOf(
-            "VEXLIFE_PERSON_CONTEXT/v1",
+            "VEXLIFE_PERSON_CONTEXT/v2",
+            "The current participantRef comes from the exact canonical current REQUEST speakerRef.",
+            "participantRef is an address, not a human-readable name.",
+            "If nameStanding=UNKNOWN, do not infer the person's name from VexLife, an account, a device, or nearby product words.",
+            "A supplied name is only as strong as its named standing and source refs; it does not change speakerRef.",
             "Reply in the language named here unless the person writes to you in another and clearly wants that.",
             "Private conversations listed here happened and you do not have their content. Do not guess at it; only the kept notes are known.",
             VexContractJson.compactEncode(context),
