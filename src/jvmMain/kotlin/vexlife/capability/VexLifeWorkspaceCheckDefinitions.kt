@@ -190,7 +190,7 @@ object VexLifeWorkspaceCheckDefinitions {
                 capabilityRef = CapabilityRef,
                 handle = Handle,
                 purpose = "Run one Product-owned bounded UTF-8 text check inside one explicitly granted Local Source.",
-                defaultStage = VexLifeCapabilityAtlas.Stage.RUNTIME,
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = listOf(VexLifeCapabilityAtlas.CompanionRoleRef),
                 platformRefs = listOf(VexLifeCapabilityAtlas.MacPlatformRef),
                 permissionRef = PermissionRef,
