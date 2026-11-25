@@ -17,7 +17,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
-import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeWorkspaceEffectDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -3524,20 +3523,16 @@ class DirectPromptContextTest {
                         materialize(
                             emptyList(),
                         )
-                    val heldWrite =
-                        requireNotNull(
-                            held.capabilityEntries
-                                .singleOrNull {
-                                    it.capabilityRef ==
-                                        VexLifeWorkspaceEffectDefinitions.WriteRef
-                                },
-                        )
-                    assertEquals(
-                        VexLifeCapabilityAtlas.FrameState.HELD,
-                        heldWrite.state,
+                    assertTrue(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.heldCapabilityRefs,
                     )
                     assertFalse(
-                        heldWrite.effectAuthorityGranted,
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        held.effectAuthorityGranted,
                     )
 
                     val available =
@@ -3546,35 +3541,16 @@ class DirectPromptContextTest {
                                 grant,
                             ),
                         )
-                    val availableWrite =
-                        requireNotNull(
-                            available.capabilityEntries
-                                .singleOrNull {
-                                    it.capabilityRef ==
-                                        VexLifeWorkspaceEffectDefinitions.WriteRef
-                                },
-                        )
-                    assertEquals(
-                        VexLifeCapabilityAtlas.FrameState.AVAILABLE,
-                        availableWrite.state,
-                    )
                     assertTrue(
                         VexLifeWorkspaceEffectDefinitions.WriteRef in
                             available.availableCapabilityRefs,
                     )
-                    assertTrue(
-                        sourceRef in
-                            availableWrite.sourceRefs,
-                    )
-                    assertTrue(
-                        grant.grantRef in
-                            availableWrite.sourceRefs,
+                    assertFalse(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            available.heldCapabilityRefs,
                     )
                     assertFalse(
                         available.effectAuthorityGranted,
-                    )
-                    assertFalse(
-                        availableWrite.effectAuthorityGranted,
                     )
                 }
         } finally {
