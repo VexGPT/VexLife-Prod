@@ -433,16 +433,17 @@ class DirectCompanionTurnTest {
                 ),
             "provider-native carriage qualification must preserve the held reach frame",
         )
-        assertTrue(
+        assertFalse(
             nativeQualifiedRequest
                 .toString()
                 .contains(
                     DirectConversationSourceReturn.ProtocolHeader,
                 ),
-            "held reach keeps prompt/source-return semantics even when native carriage is qualified",
+            "provider-native carriage keeps source-return representation disabled even while Vex Reach remains held",
         )
-        assertTrue(
+        assertFalse(
             nativeQualifiedResult.promptContextReceipt.sourceReturnProtocolEnabled,
+            "provider-native carriage qualification and Vex Reach authority remain independent",
         )
     }
 
