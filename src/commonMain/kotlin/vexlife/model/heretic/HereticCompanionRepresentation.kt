@@ -313,10 +313,10 @@ object HereticCompanionRepresentation {
          * OpenAI-chat representation for one Home-imported Qwen3 MLX model.
          *
          * Import inspection records whether the exact pinned chat template exposes Qwen's native
-         * tool grammar. Recognition alone does not activate provider-native carriage: imported
-         * models keep the qualified VexLife text-control fallback until that exact native-tool
-         * relationship earns a separate qualification. VexLife's bridge still owns admission and
-         * effects in either representation.
+         * tool grammar. Recognition alone does not activate provider-native carriage. The imported
+         * model keeps the VexLife text-control representation, but reach itself remains held until
+         * that exact model/provider relationship earns its own reach qualification. VexLife's bridge
+         * still owns admission and effects in either representation.
          */
         fun importedQwen(
             profileRef: String,
@@ -335,7 +335,7 @@ object HereticCompanionRepresentation {
                     },
                 // The bridge owns admission/effects. Native-template recognition is retained as a
                 // held adapter candidate; it does not change ordinary carriage by itself.
-                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
+                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
