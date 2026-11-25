@@ -121,7 +121,25 @@ class VexLifeWorkspaceJavaTest internal constructor(
         val line: Long,
         val column: Long,
         val message: String,
-    )
+    ) {
+        init {
+            require(
+                kind.length <= 32 &&
+                    code.length <= 256 &&
+                    (
+                        sourcePath ==
+                            null ||
+                            validJavaPath(
+                                sourcePath,
+                            )
+                    ) &&
+                    message.length <=
+                    VexLifeWorkspaceJavaTestDefinitions.MaximumDiagnosticCharacters,
+            ) {
+                "workspace Java-test compiler diagnostic is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class RunnerRequest(
@@ -193,6 +211,14 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         it.message.length <=
                             VexLifeWorkspaceJavaTestDefinitions.MaximumDiagnosticCharacters
                     } &&
+                    testStdout.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ).size <=
+                    VexLifeWorkspaceJavaTestDefinitions.MaximumStdoutBytes &&
+                    testStderr.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ).size <=
+                    VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes &&
                     (
                         disposition ==
                             DispositionTimeout
@@ -926,9 +952,14 @@ class VexLifeWorkspaceJavaTest internal constructor(
                 temporary,
                 home,
             )
-                .forEach(
-                    Files::createDirectories,
-                )
+                .forEach {
+                    VexOwnedPath.ensureDirectory(
+                        root =
+                            scratch.path,
+                        directory =
+                            it,
+                    )
+                }
 
             captured.forEach {
                 source ->
@@ -937,8 +968,11 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         sourceRoot,
                         source.observation.path,
                     )
-                Files.createDirectories(
-                    target.parent,
+                VexOwnedPath.ensureParent(
+                    root =
+                        sourceRoot,
+                    file =
+                        target,
                 )
                 Files.write(
                     target,
@@ -957,6 +991,7 @@ class VexLifeWorkspaceJavaTest internal constructor(
                 ),
                 StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE_NEW,
+                StandardOpenOption.WRITE,
             )
 
             val runnerRequest =
@@ -1299,33 +1334,15 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         "workspace Java-test scratch root",
                     )
                 val parent =
-                    VexOwnedPath.resolveInside(
-                        ownedRoot,
-                        VexLifeWorkspaceJavaTestDefinitions.ScratchDirectoryName,
+                    VexOwnedPath.ensureDirectory(
+                        root =
+                            ownedRoot,
+                        directory =
+                            VexOwnedPath.resolveInside(
+                                ownedRoot,
+                                VexLifeWorkspaceJavaTestDefinitions.ScratchDirectoryName,
+                            ),
                     )
-                if (
-                    Files.exists(
-                        parent,
-                        LinkOption.NOFOLLOW_LINKS,
-                    )
-                ) {
-                    val attributes =
-                        Files.readAttributes(
-                            parent,
-                            BasicFileAttributes::class.java,
-                            LinkOption.NOFOLLOW_LINKS,
-                        )
-                    require(
-                        attributes.isDirectory &&
-                            !attributes.isSymbolicLink,
-                    ) {
-                        "workspace Java-test scratch parent is not an owned directory"
-                    }
-                } else {
-                    Files.createDirectory(
-                        parent,
-                    )
-                }
 
                 val operationName =
                     sha256(
@@ -1365,12 +1382,20 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         "workspace Java-test residual scratch could not be recovered"
                     }
                 }
-                Files.createDirectory(
-                    scratch,
+                val created =
+                    VexOwnedPath.ensureDirectory(
+                        root =
+                            parent,
+                        directory =
+                            scratch,
+                    )
+                VexOwnedPath.requireRoot(
+                    created,
+                    "workspace Java-test operation scratch",
                 )
                 Scratch(
                     path =
-                        scratch,
+                        created,
                     recoveredResidual =
                         recovered,
                 )
