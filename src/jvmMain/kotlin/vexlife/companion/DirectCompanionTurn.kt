@@ -2292,7 +2292,7 @@ object DirectCompanionTurn {
      * creates no capability meaning and grants no effect authority.
      */
     private fun offeredCapabilities(
-        frame: VexLifeCapabilityAtlas.Frame?,
+        frame: DirectPromptContext.CapabilityFrameSnapshot?,
     ): List<VexLifeCapabilityAtlas.Definition> =
         frame
             ?.availableCapabilityRefs
