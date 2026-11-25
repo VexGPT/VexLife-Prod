@@ -305,7 +305,14 @@ object VexLifeProdServiceContract {
     const val ModelsPath = "/api/v1/models"
     const val ModelsSourcesPath = "/api/v1/models/sources"
     const val ModelsSourcesControlPath = "/api/v1/models/sources/control"
+    const val PartnerConnectionsPath = "/api/v1/partner-connections"
     const val PartnerConnectionsControlPath = "/api/v1/partner-connections/control"
+    const val PartnerConnectionAvailabilitySchema =
+        "vexlife-prod.partner-connection-availability/v1"
+    const val PartnerConnectionAvailabilityHeldFunding =
+        "HELD_FUNDING"
+    const val PartnerConnectionAvailabilityReady =
+        "READY_FOR_LIVE_TESTING"
     const val PartnerConnectionControlSchema =
         "vexlife-prod.partner-connection-control-response/v1"
     const val PartnerConnectionControlHeader =
@@ -389,6 +396,32 @@ object VexLifeProdServiceContract {
 
     const val AttachmentNameHeader =
         "x-vexlife-attachment-name"
+
+    @Serializable
+    data class PartnerConnectionAvailabilityProjection(
+        val schemaVersion: String,
+        val state: String,
+        val connectEnabled: Boolean,
+        val liveProviderTestingFunded: Boolean,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    PartnerConnectionAvailabilitySchema &&
+                    state in
+                    setOf(
+                        PartnerConnectionAvailabilityHeldFunding,
+                        PartnerConnectionAvailabilityReady,
+                    ) &&
+                    connectEnabled ==
+                    liveProviderTestingFunded &&
+                    !effectsPerformed,
+            ) {
+                "Partner connection availability projection is invalid"
+            }
+        }
+    }
 
     enum class PartnerConnectionControl(
         val wire: String,

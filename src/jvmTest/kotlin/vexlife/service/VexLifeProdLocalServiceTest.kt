@@ -5311,6 +5311,125 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun partnerConnectionControlIsHeldBeforeSecretReadWhileLiveTestingIsUnfunded() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-partner-connection-funding-held-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        bootstrapHome(
+            root,
+        )
+        val profile =
+            VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+        val host =
+            ReadOnlyPartnerHost()
+        val composition =
+            VexLifeProdPartnerInference(
+                productHome = root,
+                host = host,
+                executor =
+                    VexLifePartnerHostEffect.Executor {
+                        error(
+                            "funding-held Partner connection must not execute a provider request",
+                        )
+                    },
+            )
+
+        try {
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "6".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "funding-held Partner connection must not run a Companion turn",
+                            )
+                        },
+                    partnerInference =
+                        composition,
+                )
+                .use {
+                    service ->
+                    val availability =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.PartnerConnectionsPath,
+                        )
+                    assertEquals(
+                        200,
+                        availability.statusCode(),
+                        availability.body(),
+                    )
+                    val projected =
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection>(
+                            availability.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                        projected.state,
+                    )
+                    assertFalse(
+                        projected.connectEnabled,
+                    )
+                    assertFalse(
+                        projected.liveProviderTestingFunded,
+                    )
+
+                    val held =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+                            providerRef = profile.providerRef,
+                            body =
+                                "this-secret-must-not-reach-custody"
+                                    .toByteArray(
+                                        StandardCharsets.UTF_8,
+                                    ),
+                            contentType = "application/octet-stream",
+                        )
+                    assertEquals(
+                        409,
+                        held.statusCode(),
+                        held.body(),
+                    )
+                    assertTrue(
+                        held.body()
+                            .contains(
+                                "PARTNER_CONNECTION_LIVE_TESTING_HELD",
+                            ),
+                    )
+                    assertEquals(
+                        0,
+                        host.storeCalls,
+                    )
+                    assertEquals(
+                        0,
+                        host.deleteCalls,
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun partnerConnectionControlUsesProtectedHostWithoutProjectingCredentialSecret() {
         val root =
             Files.createTempDirectory(
@@ -5366,6 +5485,7 @@ class VexLifeProdLocalServiceTest {
                         },
                     partnerInference =
                         composition,
+                    partnerConnectionLiveEffectsEnabled = true,
                 )
                 .use {
                     service ->

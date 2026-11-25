@@ -264,6 +264,41 @@ Send currentness law then holds rather than silently falling back to Local.
 This route is the first secure Product control surface for existing connection custody. Presentation
 may later invoke the same contract; it does not become credential authority by rendering it.
 
+### Current release funding gate
+
+The end-to-end connection contract remains present while paid live-provider qualification is paused.
+
+```text
+GET /api/v1/partner-connections
+-> state = HELD_FUNDING
+-> connectEnabled = false
+-> liveProviderTestingFunded = false
+```
+
+While that state is current, the POST control returns
+`PARTNER_CONNECTION_LIVE_TESTING_HELD` **before reading the request body**. Therefore the current
+release may expose the Settings connection UI without inviting a person to hand VexLife a credential
+that this phase is not funded to qualify.
+
+Permanent for this gate:
+
+```text
+UI VISIBLE
+!= LIVE EFFECT ENABLED
+
+CONNECTION SOURCE PRESENT
+!= PAID PROVIDER QUALIFICATION FUNDED
+
+HELD_FUNDING
+-> no secret body read
+-> no Keychain mutation
+-> no provider request
+```
+
+Reopening paid Partner testing is an intentional Product-source change, not a presentation-only
+toggle. The already-formed connection path remains underneath that gate so resumption does not require
+rebuilding the credential/currentness architecture.
+
 ## Credential and host boundary
 
 The JVM keeps only an opaque credential coordinate.

@@ -137,6 +137,7 @@ class VexLifeProdLocalService private constructor(
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
     private val partnerInference: VexLifeProdPartnerInference?,
+    private val partnerConnectionLiveEffectsEnabled: Boolean,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -451,6 +452,26 @@ class VexLifeProdLocalService private constructor(
             sourceAwareModelsProjection()
         }
 
+    private fun partnerConnectionAvailability():
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection =
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.PartnerConnectionAvailabilitySchema,
+            state =
+                if (
+                    partnerConnectionLiveEffectsEnabled
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityReady
+                } else {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding
+                },
+            connectEnabled =
+                partnerConnectionLiveEffectsEnabled,
+            liveProviderTestingFunded =
+                partnerConnectionLiveEffectsEnabled,
+            effectsPerformed = false,
+        )
+
     private fun handlePartnerConnectionControl(
         exchange: HttpExchange,
     ) {
@@ -458,6 +479,18 @@ class VexLifeProdLocalService private constructor(
             exchange,
             "POST",
         )
+        if (
+            !partnerConnectionLiveEffectsEnabled
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_CONNECTION_LIVE_TESTING_HELD",
+                message =
+                    "Partner API connection is built but live provider testing is paused for this phase while funding is unavailable.",
+            )
+            return
+        }
         val composition =
             requireNotNull(
                 partnerInference,
@@ -785,6 +818,17 @@ class VexLifeProdLocalService private constructor(
             }
 
     companion object {
+        /**
+         * Release gate for paid external-provider qualification.
+         *
+         * The Product/UI/service relationship is wired while this is false, but no credential body
+         * is read and no protected-host/provider effect is admitted from the human connection route.
+         * Reopening this gate requires an intentional source change after live-provider testing is
+         * funded and ready to resume.
+         */
+        private const val PartnerConnectionLiveEffectsEnabledForThisRelease =
+            false
+
         private const val MaxRequestBytes =
             256 * 1024
 
@@ -1336,6 +1380,8 @@ class VexLifeProdLocalService private constructor(
                 modelSwitchRealization = modelSwitchRealization,
                 partnerSwitchRealization = partnerSwitchRealization,
                 partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    partnerConnectionLiveEffectsEnabled,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
@@ -1409,6 +1455,7 @@ class VexLifeProdLocalService private constructor(
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean = false,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1520,6 +1567,8 @@ class VexLifeProdLocalService private constructor(
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean =
+                PartnerConnectionLiveEffectsEnabledForThisRelease,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1633,6 +1682,8 @@ class VexLifeProdLocalService private constructor(
                         modelSwitchRealization = modelSwitchRealization,
                         partnerSwitchRealization = partnerSwitchRealization,
                         partnerInference = partnerInference,
+                        partnerConnectionLiveEffectsEnabled =
+                            partnerConnectionLiveEffectsEnabled,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
@@ -2132,6 +2183,18 @@ class VexLifeProdLocalService private constructor(
                                 controlRef = request.controlRef,
                                 handle = request.handle,
                             ),
+                    )
+                }
+
+                VexLifeProdServiceContract.PartnerConnectionsPath -> {
+                    requireMethod(
+                        exchange,
+                        "GET",
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value = partnerConnectionAvailability(),
                     )
                 }
 
