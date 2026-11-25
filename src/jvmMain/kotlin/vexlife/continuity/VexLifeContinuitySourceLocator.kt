@@ -48,6 +48,7 @@ object VexLifeContinuitySourceLocator {
         CANDIDATE_SET_TOO_LARGE,
         FINGERPRINT_BINDING_MISMATCH,
         EXACT_VERIFICATION_MISS,
+        SOURCE_COORDINATE_MISMATCH,
     }
 
     data class SourceCoordinates(
@@ -546,9 +547,21 @@ object VexLifeContinuitySourceLocator {
                     it.sequence
                 }
         val exact =
-            conversationOwner.exactCommittedConversationEvents(
-                addresses,
-            )
+            try {
+                conversationOwner.exactCommittedConversationEvents(
+                    addresses,
+                )
+            } catch (
+                _: RuntimeException,
+            ) {
+                return LocateOutcome.FallbackRequired(
+                    reason =
+                        FallbackReason.SOURCE_COORDINATE_MISMATCH,
+                    currentConversationHeadSha256 = currentHeadSha,
+                    generationConversationHeadSha256 =
+                        generation.sourceConversationHeadSha256,
+                )
+            }
         val byRef =
             exact.events.associateBy(
                 DirectConversationStore.Event::eventRef,
