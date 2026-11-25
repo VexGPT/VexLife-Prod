@@ -15,6 +15,14 @@ object VexLifeContinuity {
     const val ReferenceRevision =
         "7d59753687ff12726b0d309ee2dde028b5f89e8a"
 
+    /**
+     * Exact source-proven canonical VexLife candidate for external RESPONSE provenance v3.
+     *
+     * This is deliberately separate from [ReferenceRevision] until canonical VexLife PR #991 lands.
+     */
+    const val ExternalResponseProvenanceV3ReferenceRevision =
+        "9cf1f7c4af94338f8bee9caf0931f8fd525bb2df"
+
     const val CanonicalMacHomeRelativeRoot =
         ".vexlife"
 
@@ -56,6 +64,9 @@ object VexLifeContinuity {
 
     const val ConversationEventSchemaV2 =
         "vexlife.lived-companion-event/v2"
+
+    const val ConversationEventSchemaV3 =
+        "vexlife.lived-companion-event/v3"
 
     const val ConversationHeadSchema =
         "vexlife.lived-companion-head/v1"
