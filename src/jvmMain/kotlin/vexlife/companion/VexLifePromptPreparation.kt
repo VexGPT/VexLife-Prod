@@ -816,6 +816,48 @@ internal class VexLifePromptPreparation(
                         interrupted,
                     )
                 }
+
+                // Provider completion may race the cancellation request:
+                //
+                // PREPARING
+                // -> cancellation requested
+                // -> provider returns successfully
+                // -> READY_REUSABLE
+                // -> completion fence opens
+                //
+                // Reconcile only this exact generation after the drain so a raced reusable result
+                // cannot survive MODEL_SWITCH. Never invalidate a newer generation that may have
+                // started after this attempt became terminal.
+                while (
+                    true
+                ) {
+                    val terminal =
+                        state.get()
+                    if (
+                        terminal !is
+                            State.ReadyReusable ||
+                        terminal.binding !=
+                            attempt.binding
+                    ) {
+                        break
+                    }
+                    val invalidated =
+                        State.Invalidated(
+                            binding = terminal.binding,
+                            reasonRef = reasonRef,
+                        )
+                    if (
+                        state.compareAndSet(
+                            terminal,
+                            invalidated,
+                        )
+                    ) {
+                        log(
+                            invalidated,
+                        )
+                        break
+                    }
+                }
             }
 
             is State.ReadyReusable -> {
