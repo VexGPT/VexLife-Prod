@@ -376,6 +376,196 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun fingerprintBindingChangeRequiresFallbackBeforeItCanBecomeCurrentMiss() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "The source token is mercury-bridge-42.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+            val original =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            31
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.binding-a",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = original,
+                )
+            }
+            val generation =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    original.load(),
+                )
+                    .generation
+
+            val rebound =
+                object : VexLifeContinuitySourceLocator.Backend {
+                    override val fingerprintBindingRef =
+                        "fingerprint.test.binding-b"
+
+                    override fun fingerprint(
+                        value: String,
+                    ): String =
+                        error(
+                            "fingerprint must not run after binding mismatch",
+                        )
+
+                    override fun load(): VexLifeContinuitySourceLocator.BackendLoad =
+                        VexLifeContinuitySourceLocator.BackendLoad.Ready(
+                            generation,
+                        )
+
+                    override fun replace(
+                        generation: VexLifeContinuitySourceLocator.Generation,
+                    ) =
+                        error(
+                            "replace must not be reached",
+                        )
+
+                    override fun clear() =
+                        Unit
+                }
+
+            fixture.store.withWriterLease {
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "mercury-bridge-42",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                            backend = rebound,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                    outcome.reason,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun malformedLoadedSourceCoordinatesAreCorruptNotAuthoritative() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "The source token is jade-harbor-17.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+            val original =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            37
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.malformed",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = original,
+                )
+            }
+            val generation =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    original.load(),
+                )
+                    .generation
+            val malformed =
+                generation.copy(
+                    entries =
+                        generation.entries.mapIndexed {
+                            index,
+                            entry,
+                            ->
+                            if (
+                                index ==
+                                    0
+                            ) {
+                                entry.copy(
+                                    coordinates =
+                                        entry.coordinates.copy(
+                                            request =
+                                                entry.coordinates.request.copy(
+                                                    eventHash = "not-a-sha256",
+                                                ),
+                                        ),
+                                )
+                            } else {
+                                entry
+                            }
+                        },
+                )
+            val backend =
+                object : VexLifeContinuitySourceLocator.Backend {
+                    override val fingerprintBindingRef =
+                        generation.fingerprintBindingRef
+
+                    override fun fingerprint(
+                        value: String,
+                    ): String =
+                        original.fingerprint(
+                            value,
+                        )
+
+                    override fun load(): VexLifeContinuitySourceLocator.BackendLoad =
+                        VexLifeContinuitySourceLocator.BackendLoad.Ready(
+                            malformed,
+                        )
+
+                    override fun replace(
+                        generation: VexLifeContinuitySourceLocator.Generation,
+                    ) =
+                        error(
+                            "replace must not be reached",
+                        )
+
+                    override fun clear() =
+                        Unit
+                }
+
+            fixture.store.withWriterLease {
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "jade-harbor-17",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.CORRUPT,
+                    outcome.reason,
+                )
+            }
+        }
+    }
+
+    @Test
     fun corruptOrUnsupportedLocatorNeverBecomesNotFound() {
         ContinuityTurnFixture().use {
             fixture ->
@@ -409,6 +599,9 @@ class VexLifeContinuitySourceLocatorTest {
 
                 val corruptBackend =
                     object : VexLifeContinuitySourceLocator.Backend {
+                        override val fingerprintBindingRef =
+                            "fingerprint.test.corrupt"
+
                         override fun fingerprint(
                             value: String,
                         ): String =
