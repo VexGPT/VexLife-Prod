@@ -2,6 +2,7 @@ package vexlife.continuity
 
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
+import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import vexlife.conversation.DirectConversationStore
@@ -45,6 +46,8 @@ object VexLifeContinuitySourceLocator {
         CORRUPT,
         UNSUPPORTED_QUERY,
         CANDIDATE_SET_TOO_LARGE,
+        FINGERPRINT_BINDING_MISMATCH,
+        EXACT_VERIFICATION_MISS,
     }
 
     data class SourceCoordinates(
@@ -73,6 +76,7 @@ object VexLifeContinuitySourceLocator {
         val schemaVersion: String,
         val sourceConversationHeadSha256: String?,
         val sourceConversationSequence: Long?,
+        val fingerprintBindingRef: String,
         val sourceEventCount: Int,
         val completedTurnCount: Int,
         val entries: List<Entry>,
@@ -97,6 +101,13 @@ object VexLifeContinuitySourceLocator {
      * without making that key, database or file format part of Product semantics.
      */
     interface Backend {
+        /**
+         * Non-secret identity of the exact algorithm/key-version binding that formed fingerprints.
+         *
+         * A persistent backend must change this ref when its fingerprint key or algorithm changes.
+         */
+        val fingerprintBindingRef: String
+
         fun fingerprint(value: String): String
 
         fun load(): BackendLoad
@@ -112,12 +123,24 @@ object VexLifeContinuitySourceLocator {
      */
     class InMemoryBackend(
         secret: ByteArray = SecureRandom().generateSeed(32),
+        override val fingerprintBindingRef: String =
+            "fingerprint.in-memory." +
+                UUID.randomUUID()
+                    .toString()
+                    .replace(
+                        "-",
+                        "",
+                    ),
     ) : Backend {
         private val secret: ByteArray =
             secret.copyOf().also {
                 require(it.size >= 32) {
                     "continuity source locator fingerprint secret must contain at least 32 bytes"
                 }
+                requirePortableRef(
+                    fingerprintBindingRef,
+                    "fingerprintBindingRef",
+                )
             }
 
         private var generation: Generation? = null
@@ -289,6 +312,8 @@ object VexLifeContinuitySourceLocator {
                 sourceConversationSequence =
                     snapshot.head
                         ?.sequence,
+                fingerprintBindingRef =
+                    backend.fingerprintBindingRef,
                 sourceEventCount = events.size,
                 completedTurnCount =
                     events.size /
@@ -399,6 +424,19 @@ object VexLifeContinuitySourceLocator {
                         )
                     }
             }
+
+        if (
+            generation.fingerprintBindingRef !=
+                backend.fingerprintBindingRef
+        ) {
+            return LocateOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                currentConversationHeadSha256 = currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
 
         if (
             generation.sourceConversationHeadSha256 !=
@@ -601,7 +639,8 @@ object VexLifeContinuitySourceLocator {
              * fingerprint collision/representation mismatch cannot create a false negative.
              */
             return LocateOutcome.FallbackRequired(
-                reason = FallbackReason.CORRUPT,
+                reason =
+                    FallbackReason.EXACT_VERIFICATION_MISS,
                 currentConversationHeadSha256 = currentHeadSha,
                 generationConversationHeadSha256 =
                     generation.sourceConversationHeadSha256,
@@ -636,6 +675,10 @@ object VexLifeContinuitySourceLocator {
         ) {
             "continuity source locator generation schema is not current"
         }
+        requirePortableRef(
+            generation.fingerprintBindingRef,
+            "generation fingerprintBindingRef",
+        )
         require(
             generation.sourceEventCount >=
                 0 &&
@@ -694,11 +737,25 @@ object VexLifeContinuitySourceLocator {
         generation.entries.forEach {
             entry ->
             require(
-                entry.coordinates.request.sequence <
+                entry.coordinates.request.sequence >=
+                    0 &&
+                    entry.coordinates.request.sequence <
                     entry.coordinates.response.sequence &&
                     entry.coordinates.response.sequence ==
                     entry.coordinates.request.sequence +
                         1 &&
+                    entry.coordinates.request.eventRef.isNotBlank() &&
+                    entry.coordinates.response.eventRef.isNotBlank() &&
+                    entry.coordinates.request.eventHash.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    entry.coordinates.response.eventHash.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
                     entry.requestFingerprints.all(
                         ::isFingerprint,
                     ) &&
@@ -708,6 +765,21 @@ object VexLifeContinuitySourceLocator {
             ) {
                 "continuity source locator entry is invalid"
             }
+        }
+    }
+
+    private fun requirePortableRef(
+        value: String,
+        field: String,
+    ) {
+        require(
+            value.matches(
+                Regex(
+                    "[a-z][a-z0-9.-]*",
+                ),
+            ),
+        ) {
+            "$field must be one portable ref"
         }
     }
 
