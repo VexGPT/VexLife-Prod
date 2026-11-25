@@ -26,6 +26,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -600,6 +601,13 @@ object DirectCompanionTurn {
          * callers keep false. This grants no semantic acceptance and performs no durable mutation.
          */
         val experimentConversationContextProjectionEnabled: Boolean = false,
+        /**
+         * Derived continuity source locator shared by the caller across related turns.
+         *
+         * null preserves the existing canonical full-scan route. This backend is only a candidate
+         * locator; Conversation remains the source owner and every hit is exact-reopened there.
+         */
+        val continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
         /**
          * Qualified static-image interpreter. null means this turn has no visual-input realization.
          *
@@ -1363,6 +1371,8 @@ object DirectCompanionTurn {
                                 receipt.sourceReturnSourceEventRefs
                         )
                             .toSet(),
+                    locatorBackend =
+                        hooks.continuitySourceLocatorBackend,
                 )
             } else {
                 null
