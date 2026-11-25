@@ -128,8 +128,25 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ModelsSourcesControlPath,
         )
         assertEquals(
+            "/api/v1/partner-connections",
+            VexLifeProdServiceContract.PartnerConnectionsPath,
+        )
+        assertEquals(
             "/api/v1/partner-connections/control",
             VexLifeProdServiceContract.PartnerConnectionsControlPath,
+        )
+        val held =
+            VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilitySchema,
+                state =
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                connectEnabled = false,
+                liveProviderTestingFunded = false,
+                effectsPerformed = false,
+            )
+        assertFalse(
+            held.connectEnabled,
         )
         assertEquals(
             "x-vexlife-partner-control",
