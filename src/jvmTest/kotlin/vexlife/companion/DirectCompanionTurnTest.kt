@@ -380,12 +380,21 @@ class DirectCompanionTurnTest {
             ),
             "recognized-but-unqualified imported model must keep text-control carriage",
         )
-        assertTrue(
+        assertFalse(
             heldRequest
                 .toString()
                 .contains(
                     "text-control fallback",
                 ),
+            "held imported reach must not advertise the unqualified text-control route",
+        )
+        assertTrue(
+            heldRequest
+                .toString()
+                .contains(
+                    "No outside-source capability reach is admitted in this turn.",
+                ),
+            "held imported reach must project the bounded capability frame instead of callable reach instructions",
         )
         assertTrue(
             heldRequest
