@@ -66,10 +66,15 @@ object VexLifeProdServiceProcess {
         val productHome: Path,
     )
 
+    internal data class RuntimeExecutablePaths(
+        val visionRuntimeExecutablePathOrNull: String?,
+        val partnerHostExecutablePathOrNull: String?,
+    )
+
     internal data class Hooks(
-        val resolveVisionRuntimeExecutablePath: (
+        val resolveRuntimeExecutablePaths: (
             sourceSha: String,
-        ) -> String? = {
+        ) -> RuntimeExecutablePaths = {
             sourceSha ->
             VexLifeProdPrivateServiceImage
                 .observe(
@@ -81,7 +86,15 @@ object VexLifeProdServiceProcess {
                             .normalize(),
                     expectedSourceSha = sourceSha,
                 )
-                .visionRuntimeExecutablePathOrNull
+                .let {
+                    observation ->
+                    RuntimeExecutablePaths(
+                        visionRuntimeExecutablePathOrNull =
+                            observation.visionRuntimeExecutablePathOrNull,
+                        partnerHostExecutablePathOrNull =
+                            observation.partnerHostExecutablePathOrNull,
+                    )
+                }
         },
         val establishSession: (
             productHome: Path,
@@ -103,16 +116,20 @@ object VexLifeProdServiceProcess {
             sourceSha: String,
             session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String?,
         ) -> AutoCloseable = {
             sourceSha,
             session,
             visionRuntimeExecutablePathOrNull,
+            partnerHostExecutablePathOrNull,
             ->
             VexLifeProdLocalService.start(
                 sourceSha = sourceSha,
                 session = session,
                 visionRuntimeExecutablePathOrNull =
                     visionRuntimeExecutablePathOrNull,
+                partnerHostExecutablePathOrNull =
+                    partnerHostExecutablePathOrNull,
             )
         },
         val reportReady: (
@@ -204,8 +221,8 @@ object VexLifeProdServiceProcess {
                 "VexLife-Prod service requires one exact current Home identity at admission"
             }
 
-        val visionRuntimeExecutablePathOrNull =
-            hooks.resolveVisionRuntimeExecutablePath(
+        val runtimeExecutablePaths =
+            hooks.resolveRuntimeExecutablePaths(
                 arguments.sourceSha,
             )
 
@@ -228,7 +245,8 @@ object VexLifeProdServiceProcess {
                 hooks.startService(
                     arguments.sourceSha,
                     session,
-                    visionRuntimeExecutablePathOrNull,
+                    runtimeExecutablePaths.visionRuntimeExecutablePathOrNull,
+                    runtimeExecutablePaths.partnerHostExecutablePathOrNull,
                 )
             } catch (error: Throwable) {
                 VexLogger.record(

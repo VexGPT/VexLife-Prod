@@ -303,6 +303,24 @@ object VexLifeProdServiceContract {
 
     /** Settings → Models: offered models as this Home holds them, and their Controls. */
     const val ModelsPath = "/api/v1/models"
+    const val ModelsSourcesPath = "/api/v1/models/sources"
+    const val ModelsSourcesControlPath = "/api/v1/models/sources/control"
+    const val PartnerConnectionsPath = "/api/v1/partner-connections"
+    const val PartnerConnectionsControlPath = "/api/v1/partner-connections/control"
+    const val PartnerConnectionAvailabilitySchema =
+        "vexlife-prod.partner-connection-availability/v1"
+    const val PartnerConnectionAvailabilityHeldFunding =
+        "HELD_FUNDING"
+    const val PartnerConnectionAvailabilityReady =
+        "READY_FOR_LIVE_TESTING"
+    const val PartnerConnectionControlSchema =
+        "vexlife-prod.partner-connection-control-response/v1"
+    const val PartnerConnectionControlHeader =
+        "x-vexlife-partner-control"
+    const val PartnerConnectionProviderRefHeader =
+        "x-vexlife-partner-provider-ref"
+    const val PartnerConnectionWorkspaceIdHeader =
+        "x-vexlife-partner-workspace-id"
     const val ModelsControlPath = "/api/v1/models/control"
     const val ModelsImportCheckPath = "/api/v1/models/import/check"
     const val ModelsImportAddPath = "/api/v1/models/import/add"
@@ -378,6 +396,106 @@ object VexLifeProdServiceContract {
 
     const val AttachmentNameHeader =
         "x-vexlife-attachment-name"
+
+    @Serializable
+    data class PartnerConnectionAvailabilityProjection(
+        val schemaVersion: String,
+        val state: String,
+        val connectEnabled: Boolean,
+        val liveProviderTestingFunded: Boolean,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    PartnerConnectionAvailabilitySchema &&
+                    state in
+                    setOf(
+                        PartnerConnectionAvailabilityHeldFunding,
+                        PartnerConnectionAvailabilityReady,
+                    ) &&
+                    connectEnabled ==
+                    liveProviderTestingFunded &&
+                    !effectsPerformed,
+            ) {
+                "Partner connection availability projection is invalid"
+            }
+        }
+    }
+
+    enum class PartnerConnectionControl(
+        val wire: String,
+    ) {
+        Connect("CONNECT"),
+        Replace("REPLACE"),
+        Remove("REMOVE"),
+        Recover("RECOVER"),
+        UpdateScope("UPDATE_SCOPE"),
+        ;
+
+        companion object {
+            fun forWire(
+                value: String,
+            ): PartnerConnectionControl? =
+                entries.firstOrNull {
+                    it.wire ==
+                        value
+                }
+        }
+    }
+
+    @Serializable
+    data class PartnerConnectionControlResult(
+        val providerRef: String,
+        val state: String,
+        val credentialRef: String?,
+        val recoveryPerformed: Boolean,
+    ) {
+        init {
+            require(
+                providerRef.isNotBlank() &&
+                    state.matches(
+                        Regex(
+                            "[A-Z][A-Z0-9_]*",
+                        ),
+                    ) &&
+                    (
+                        credentialRef ==
+                            null ||
+                            credentialRef.matches(
+                                Regex(
+                                    "credential\\.vexlife\\.partner\\.[a-z0-9][a-z0-9._-]{7,180}",
+                                ),
+                            )
+                    ),
+            ) {
+                "Partner connection control result is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class PartnerConnectionControlResponse(
+        val schemaVersion: String,
+        val control: String,
+        val results: List<PartnerConnectionControlResult>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    PartnerConnectionControlSchema &&
+                    PartnerConnectionControl.forWire(
+                        control,
+                    ) !=
+                    null &&
+                    effectsPerformed ==
+                    results.isNotEmpty(),
+            ) {
+                "Partner connection control response is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class SourceCurrentness(

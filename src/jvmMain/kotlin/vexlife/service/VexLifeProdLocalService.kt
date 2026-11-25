@@ -61,7 +61,13 @@ import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
+import vexlife.model.VexLifeInferenceCurrentState
+import vexlife.model.VexLifeInferenceSelection
+import vexlife.model.VexLifeInferenceSessionAdmission
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifeModelsFamily
+import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
@@ -69,6 +75,9 @@ import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
+import vexlife.partner.VexLifePartnerConnectionConfiguration
+import vexlife.partner.VexLifePartnerMacHostRealization
+import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -113,6 +122,8 @@ class VexLifeProdLocalService private constructor(
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
+    private val partnerTurnExecutor: PartnerTurnExecutor?,
+    private val streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
@@ -124,6 +135,9 @@ class VexLifeProdLocalService private constructor(
     private val servingRuntimeReceiptRef: () -> String,
     private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
+    private val partnerInference: VexLifeProdPartnerInference?,
+    private val partnerConnectionLiveEffectsEnabled: Boolean,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -145,6 +159,13 @@ class VexLifeProdLocalService private constructor(
          */
         val initialPromptPreparationTurn: Boolean,
     )
+
+    private class PartnerServingNotCurrent(
+        val reason: VexLifeInferenceSessionAdmission.HoldReason,
+    ) : IllegalStateException(
+            "Partner serving admission is not current: " +
+                reason.name,
+        )
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
@@ -266,7 +287,524 @@ class VexLifeProdLocalService private constructor(
                     ),
                 ),
             modelSwitchRealization = modelSwitchRealization,
+            partnerSwitchRealization = partnerSwitchRealization,
         )
+
+    private val inferenceControlLock =
+        Any()
+
+    private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection {
+        val composition =
+            partnerInference
+
+        while (
+            true
+        ) {
+            val stagedBefore =
+                models.stagedInferenceTarget()
+            val partnerServingBefore =
+                models.partnerServing()
+            val local =
+                models.projection()
+            val stagedAfter =
+                models.stagedInferenceTarget()
+            val partnerServingAfter =
+                models.partnerServing()
+
+            if (
+                stagedBefore !=
+                    stagedAfter ||
+                partnerServingBefore !=
+                    partnerServingAfter
+            ) {
+                continue
+            }
+
+            return if (
+                composition !=
+                null
+            ) {
+                composition.observe(
+                    local = local,
+                    stagedTarget = stagedAfter,
+                    partnerServing = partnerServingAfter,
+                    localRuntimeEvidence =
+                        runCatching {
+                            currentQualifiedRuntimeEvidence()
+                        }
+                            .getOrNull(),
+                )
+                    .current
+            } else {
+                VexLifeInferenceCurrentState.project(
+                    productHome =
+                        Path.of(
+                            startupSetup.productHome,
+                        ),
+                    local = local,
+                    partner =
+                        VexLifePartnerModelsCurrentState.Projection(
+                            configuredProviders = emptyList(),
+                            connectionByProfileRef = emptyMap(),
+                            offerings = emptyList(),
+                        ),
+                    stagedTargetOrNull =
+                        stagedAfter
+                            ?.takeIf {
+                                it.sourceKind ==
+                                    VexLifeModelSourceProjection.SourceKind.LOCAL
+                            },
+                )
+            }
+        }
+    }
+
+
+    private fun sourceAwareModelControl(
+        controlRef: String,
+        handle: String,
+    ): VexLifeInferenceCurrentState.Projection =
+        synchronized(
+            inferenceControlLock,
+        ) {
+            val current =
+                sourceAwareModelsProjection()
+            val target =
+                VexLifeInferenceSelection.requireTarget(
+                    models = current.models,
+                    handle = handle,
+                )
+
+            when (
+                controlRef
+            ) {
+                VexLifeModelsFamily.ControlSelect -> {
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER -> {
+                            require(
+                                !current.models.rows
+                                    .single {
+                                        it.handle ==
+                                            handle
+                                    }
+                                    .targeted,
+                            ) {
+                                "Partner Select requires a row that is not already targeted"
+                            }
+                            require(
+                                !models.switchInProgress(),
+                            ) {
+                                "Partner Select is unavailable while a model switch is active"
+                            }
+                            models.stageInferenceTarget(
+                                models = current.models,
+                                handle = handle,
+                            )
+                        }
+                    }
+                }
+
+                VexLifeModelsFamily.ControlUse -> {
+                    val staged =
+                        requireNotNull(
+                            models.stagedInferenceTarget(),
+                        ) {
+                            "source-aware Use requires one staged inference target"
+                        }
+                    require(
+                        staged ==
+                            target,
+                    ) {
+                        "source-aware Use handle does not match the exact staged inference target"
+                    }
+
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER ->
+                            models.useStagedPartnerInference(
+                                models = current.models,
+                                controlRef = controlRef,
+                            )
+                    }
+                }
+
+                else ->
+                    throw IllegalArgumentException(
+                        "source-aware Models control admits only Select or Use",
+                    )
+            }
+
+            sourceAwareModelsProjection()
+        }
+
+    private fun partnerConnectionAvailability():
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection =
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.PartnerConnectionAvailabilitySchema,
+            state =
+                if (
+                    partnerConnectionLiveEffectsEnabled
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityReady
+                } else {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding
+                },
+            connectEnabled =
+                partnerConnectionLiveEffectsEnabled,
+            liveProviderTestingFunded =
+                partnerConnectionLiveEffectsEnabled,
+            effectsPerformed = false,
+        )
+
+    private fun handlePartnerConnectionControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        if (
+            !partnerConnectionLiveEffectsEnabled
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_CONNECTION_LIVE_TESTING_HELD",
+                message =
+                    "Partner API connection is built but live provider testing is paused for this phase while funding is unavailable.",
+            )
+            return
+        }
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner connection configuration is unavailable on this service realization"
+            }
+        val controlWire =
+            requireNotNull(
+                exchange.requestHeaders
+                    .getFirst(
+                        VexLifeProdServiceContract.PartnerConnectionControlHeader,
+                    )
+                    ?.trim()
+                    ?.takeIf(
+                        String::isNotEmpty,
+                    ),
+            ) {
+                "Partner connection control requires one control header"
+            }
+        val control =
+            requireNotNull(
+                VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                    controlWire,
+                ),
+            ) {
+                "Partner connection control is not recognized"
+            }
+        val providerRef =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+        val workspaceId =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+
+        val results =
+            try {
+                when (
+                    control
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionControl.Connect -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner connect requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.connect(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Replace -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner replace requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.replace(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Remove -> {
+                        require(
+                            workspaceId ==
+                                null,
+                        ) {
+                            "Partner remove does not accept an account-scope header"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.remove(
+                                requireNotNull(
+                                    providerRef,
+                                ) {
+                                    "Partner remove requires one providerRef header"
+                                },
+                            ),
+                        )
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Recover -> {
+                        require(
+                            providerRef ==
+                                null &&
+                                workspaceId ==
+                                null,
+                        ) {
+                            "Partner recover does not accept provider/account headers"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        composition.recoverConnections()
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.UpdateScope -> {
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.updateAccountScope(
+                                providerRef =
+                                    requireNotNull(
+                                        providerRef,
+                                    ) {
+                                        "Partner account-scope update requires one providerRef header"
+                                    },
+                                workspaceId = workspaceId,
+                            ),
+                        )
+                    }
+                }
+            } catch (
+                recovery: VexLifePartnerConnectionConfiguration.RecoveryRequiredException,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_CONNECTION_RECOVERY_REQUIRED",
+                    message =
+                        "Partner connection recovery is required for " +
+                            recovery.providerRef +
+                            " (" +
+                            recovery.transitionKind.name +
+                            ").",
+                )
+                return
+            }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.PartnerConnectionControlResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.PartnerConnectionControlSchema,
+                    control = control.wire,
+                    results =
+                        results.map {
+                            result ->
+                            VexLifeProdServiceContract.PartnerConnectionControlResult(
+                                providerRef = result.providerRef,
+                                state = result.state.name,
+                                credentialRef = result.credentialRef,
+                                recoveryPerformed = result.recoveryPerformed,
+                            )
+                        },
+                    effectsPerformed =
+                        results.isNotEmpty(),
+                ),
+        )
+    }
+
+    private fun readPartnerConnectionSecret(
+        exchange: HttpExchange,
+    ): CharArray {
+        requireContentType(
+            exchange,
+            "application/octet-stream",
+        )
+        val bytes =
+            requestBytes(
+                exchange,
+                vexlife.partner.VexLifePartnerCredentialCustody.MaximumSecretBytes,
+            )
+        require(
+            bytes.isNotEmpty(),
+        ) {
+            "Partner credential secret must not be empty"
+        }
+
+        return try {
+            val decoder =
+                StandardCharsets.UTF_8
+                    .newDecoder()
+                    .onMalformedInput(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+                    .onUnmappableCharacter(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+            val buffer =
+                decoder.decode(
+                    java.nio.ByteBuffer.wrap(
+                        bytes,
+                    ),
+                )
+            val secret =
+                CharArray(
+                    buffer.remaining(),
+                )
+            buffer.get(
+                secret,
+            )
+            for (
+                index in
+                0 until
+                    buffer.limit()
+            ) {
+                buffer.put(
+                    index,
+                    '\u0000',
+                )
+            }
+            secret
+        } finally {
+            bytes.fill(
+                0,
+            )
+        }
+    }
+
+    private fun requireEmptyRequestBody(
+        exchange: HttpExchange,
+    ) {
+        require(
+            requestBytes(
+                exchange,
+                0,
+            )
+                .isEmpty(),
+        ) {
+            "Partner connection control does not accept a request body"
+        }
+    }
+
+    private fun currentPartnerTextTurnOrNull(): DirectCompanionTurn.PartnerTextTurn? {
+        val serving =
+            models.partnerServing()
+                ?: return null
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner serving truth requires one current Partner service realization"
+            }
+        val snapshot =
+            composition.observe(
+                local = models.projection(),
+                stagedTarget = models.stagedInferenceTarget(),
+                partnerServing = serving,
+                localRuntimeEvidence =
+                    runCatching {
+                        currentQualifiedRuntimeEvidence()
+                    }
+                        .getOrNull(),
+            )
+
+        if (
+            snapshot.admission.standing !=
+            VexLifeInferenceSessionAdmission.Standing.QUALIFIED
+        ) {
+            throw PartnerServingNotCurrent(
+                requireNotNull(
+                    snapshot.admission.holdReason,
+                ),
+            )
+        }
+        require(
+            snapshot.admission.qualified
+                ?.coordinate ==
+                serving.coordinate,
+        ) {
+            "Partner serving admission does not bind Models-owned serving truth"
+        }
+
+        return composition.partnerTextTurn(
+            snapshot,
+        )
+    }
 
     private val privateCompletion =
         privateCompletionOverride
@@ -280,6 +818,17 @@ class VexLifeProdLocalService private constructor(
             }
 
     companion object {
+        /**
+         * Release gate for paid external-provider qualification.
+         *
+         * The Product/UI/service relationship is wired while this is false, but no credential body
+         * is read and no protected-host/provider effect is admitted from the human connection route.
+         * Reopening this gate requires an intentional source change after live-provider testing is
+         * funded and ready to resume.
+         */
+        private const val PartnerConnectionLiveEffectsEnabledForThisRelease =
+            false
+
         private const val MaxRequestBytes =
             256 * 1024
 
@@ -465,6 +1014,7 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String? = null,
         ): VexLifeProdLocalService {
             val visionRuntime =
                 visionRuntimeExecutablePathOrNull
@@ -552,6 +1102,36 @@ class VexLifeProdLocalService private constructor(
                     },
                 )
 
+            val partnerInference =
+                partnerHostExecutablePathOrNull
+                    ?.let {
+                        helperPath ->
+                        require(
+                            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                                vexlife.model.heretic.HereticRuntimeRealization.MacArm64,
+                        ) {
+                            "current Product source admits a packaged Partner helper only on macOS"
+                        }
+                        val plan =
+                            VexLifePartnerMacHostRealization.plan(
+                                helperPath,
+                            )
+                        val client =
+                            VexLifePartnerNativeHostClient(
+                                VexLifePartnerMacHostRealization.processHost(
+                                    plan,
+                                ),
+                            )
+                        VexLifeProdPartnerInference(
+                            productHome =
+                                Path.of(
+                                    session.foundation.productHome,
+                                ),
+                            host = client,
+                            executor = client,
+                        )
+                    }
+
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
                     realization,
@@ -623,6 +1203,36 @@ class VexLifeProdLocalService private constructor(
                     }
                 }
 
+            val partnerSwitchRealization =
+                partnerInference
+                    ?.let {
+                        composition ->
+                        VexLifeModels.PartnerSwitchRealization {
+                            target,
+                            observe,
+                            ->
+                            observe(
+                                VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                            )
+                            initialPromptPreparation.invalidateAndAwait(
+                                "MODEL_SWITCH",
+                            )
+                            val write =
+                                sessionFence.writeLock()
+                            write.lock()
+                            try {
+                                observe(
+                                    VexLifeModels.SwitchPhase.PreparingTarget,
+                                )
+                                composition.qualify(
+                                    target,
+                                )
+                            } finally {
+                                write.unlock()
+                            }
+                        }
+                    }
+
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.foundation,
@@ -673,6 +1283,44 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
+                            )
+                        }
+                    },
+                partnerTurnExecutor =
+                    PartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                partnerTextTurn = partnerTextTurn,
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
+                            )
+                        }
+                    },
+                streamingPartnerTurnExecutor =
+                    StreamingPartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        observer,
+                        cancellation,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                progressObserver = observer,
+                                cancellation = cancellation,
+                                partnerTextTurn = partnerTextTurn,
                                 initialPromptPreparation =
                                     initialPromptPreparation,
                             )
@@ -730,6 +1378,10 @@ class VexLifeProdLocalService private constructor(
                         .promptCacheEntryLimit
                 },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
+                partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    PartnerConnectionLiveEffectsEnabledForThisRelease,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
@@ -781,6 +1433,10 @@ class VexLifeProdLocalService private constructor(
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
+            partnerTurnExecutor: PartnerTurnExecutor? =
+                null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? =
+                null,
             dreamExecutor: DreamExecutor? =
                 null,
             visionRuntime: VisionRuntime? =
@@ -797,6 +1453,9 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: (() -> String)? = null,
             servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean = false,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -831,6 +1490,8 @@ class VexLifeProdLocalService private constructor(
                     ),
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
+                partnerTurnExecutor = partnerTurnExecutor,
+                streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                 dreamExecutor = dreamExecutor,
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
@@ -862,6 +1523,10 @@ class VexLifeProdLocalService private constructor(
                             setup.promptCacheEntryLimit
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
+                partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    partnerConnectionLiveEffectsEnabled,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
@@ -878,6 +1543,8 @@ class VexLifeProdLocalService private constructor(
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
+            partnerTurnExecutor: PartnerTurnExecutor? = null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? = null,
             dreamExecutor: DreamExecutor?,
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
@@ -900,6 +1567,10 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.promptCacheEntryLimit
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean =
+                PartnerConnectionLiveEffectsEnabledForThisRelease,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -998,6 +1669,8 @@ class VexLifeProdLocalService private constructor(
                         executor = executor,
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
+                        partnerTurnExecutor = partnerTurnExecutor,
+                        streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                         dreamExecutor = dreamExecutor,
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
@@ -1009,6 +1682,10 @@ class VexLifeProdLocalService private constructor(
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
+                        partnerSwitchRealization = partnerSwitchRealization,
+                        partnerInference = partnerInference,
+                        partnerConnectionLiveEffectsEnabled =
+                            partnerConnectionLiveEffectsEnabled,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
@@ -1063,6 +1740,24 @@ class VexLifeProdLocalService private constructor(
         fun perform(
             setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
+            progressObserver: DirectCompanionTurn.ProgressObserver,
+            cancellation: DirectCompanionCancellation,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface PartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface StreamingPartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
             progressObserver: DirectCompanionTurn.ProgressObserver,
             cancellation: DirectCompanionCancellation,
         ): DirectCompanionTurn.Result
@@ -1131,10 +1826,12 @@ class VexLifeProdLocalService private constructor(
             0,
         )
         frameHost.close()
+        val activeTurnBlocksRuntimeRelinquish =
+            activeTurn.get() !=
+                null
         executor.shutdownNow()
         val runtimeReleaseRelinquished =
-            activeTurn.get() ==
-                null &&
+            !activeTurnBlocksRuntimeRelinquish &&
                 runCatching {
                     runtimeSessionRelinquishForRestart
                         ?.invoke() ==
@@ -1459,6 +2156,54 @@ class VexLifeProdLocalService private constructor(
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = models.projection())
                 }
+
+                VexLifeProdServiceContract.ModelsSourcesPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelsProjection(),
+                    )
+                }
+
+                VexLifeProdServiceContract.ModelsSourcesControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = decodeRequest<ModelControlRequest>(exchange)
+                    require(
+                        request.promptCacheEntries ==
+                            null,
+                    ) {
+                        "source-aware Models control does not own Local runtime configuration"
+                    }
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelControl(
+                                controlRef = request.controlRef,
+                                handle = request.handle,
+                            ),
+                    )
+                }
+
+                VexLifeProdServiceContract.PartnerConnectionsPath -> {
+                    requireMethod(
+                        exchange,
+                        "GET",
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value = partnerConnectionAvailability(),
+                    )
+                }
+
+                VexLifeProdServiceContract.PartnerConnectionsControlPath ->
+                    handlePartnerConnectionControl(
+                        exchange,
+                    )
 
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
@@ -5073,6 +5818,40 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val partnerConnectionLease =
+            if (
+                models.partnerServing() !=
+                null
+            ) {
+                requireNotNull(
+                    partnerInference,
+                ) {
+                    "Partner serving requires one current Partner service realization"
+                }
+                    .currentConnectionLease()
+            } else {
+                null
+            }
+
+        try {
+        val partnerTextTurn =
+            try {
+                currentPartnerTextTurnOrNull()
+            } catch (
+                held: PartnerServingNotCurrent,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_SERVING_NOT_CURRENT",
+                    message =
+                        "The selected Partner model is no longer qualified for this Send (" +
+                            held.reason.name +
+                            "). Select or use a current model before sending.",
+                )
+                return
+            }
+
         val draftLeaseAttachments =
             attachmentDraft.beginSend()
         if (
@@ -5106,6 +5885,26 @@ class VexLifeProdLocalService private constructor(
         if (
             durableAttachments ==
                 null &&
+                partnerTextTurn !=
+                    null &&
+                requestAttachments.isNotEmpty()
+        ) {
+            attachmentDraft.releaseSend(
+                draftLeaseAttachments,
+            )
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_TEXT_ATTACHMENTS_NOT_ADMITTED",
+                message =
+                    "The current Partner text stage does not accept selected Local Artifacts. The draft was preserved.",
+            )
+            return
+        }
+
+        if (
+            durableAttachments ==
+                null &&
                 requestUsesStaticImage(
                     requestAttachments,
                 ) &&
@@ -5131,7 +5930,33 @@ class VexLifeProdLocalService private constructor(
                 requestAttachments = requestAttachments,
             )
         val streaming =
-            streamingTurnExecutor
+            if (
+                partnerTextTurn ==
+                null
+            ) {
+                streamingTurnExecutor
+            } else {
+                val partnerExecutor =
+                    requireNotNull(
+                        streamingPartnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one streaming Partner turn executor"
+                    }
+                StreamingTurnExecutor {
+                    setup,
+                    currentIntent,
+                    observer,
+                    cancellation,
+                    ->
+                    partnerExecutor.perform(
+                        setup = setup,
+                        intent = currentIntent,
+                        partnerTextTurn = partnerTextTurn,
+                        progressObserver = observer,
+                        cancellation = cancellation,
+                    )
+                }
+            }
         if (
             acceptsEventStream(
                 exchange,
@@ -5185,10 +6010,26 @@ class VexLifeProdLocalService private constructor(
             false
         try {
             val result =
-                turnExecutor.perform(
-                    startupSetup,
-                    intent,
-                )
+                if (
+                    partnerTextTurn ==
+                    null
+                ) {
+                    turnExecutor.perform(
+                        startupSetup,
+                        intent,
+                    )
+                } else {
+                    requireNotNull(
+                        partnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one Partner turn executor"
+                    }
+                        .perform(
+                            setup = startupSetup,
+                            intent = intent,
+                            partnerTextTurn = partnerTextTurn,
+                        )
+                }
             check(
                 attachmentDraft.completeSend(
                     draftLeaseAttachments,
@@ -5215,6 +6056,10 @@ class VexLifeProdLocalService private constructor(
                     draftLeaseAttachments,
                 )
             }
+        }
+        } finally {
+            partnerConnectionLease
+                ?.close()
         }
     }
 
@@ -5688,8 +6533,35 @@ class VexLifeProdLocalService private constructor(
     private fun humanReasoningProjection(
         result: DirectCompanionTurn.Result,
     ): VexLifeProdServiceContract.HumanReasoningProjection {
+        val localRuntimeObservation =
+            result.localRuntimeObservation
+        if (
+            localRuntimeObservation ==
+            null
+        ) {
+            require(
+                result.providerObservation.sourceKind ==
+                    vexlife.model.VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                    result.localInvocationEvidence ==
+                    null &&
+                    result.humanReasoning ==
+                    null &&
+                    !result.providerObservation.rawReasoningPersisted
+            ) {
+                "Partner Send reasoning projection requires source-neutral no-raw-reasoning evidence"
+            }
+
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "ABSENT",
+                text = null,
+                contentSha256 = null,
+                characterCount = 0,
+                persisted = false,
+            )
+        }
+
         val trace =
-            result.runtimeObservation.reasoningTrace
+            localRuntimeObservation.reasoningTrace
 
         if (
             result.recoveredCompletedTurn

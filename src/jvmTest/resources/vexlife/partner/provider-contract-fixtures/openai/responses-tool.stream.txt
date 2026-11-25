@@ -1,0 +1,15 @@
+event: response.output_item.added
+data: {"type":"response.output_item.added","output_index":0,"item":{"id":"fc_stream_fixture","type":"function_call","status":"in_progress","arguments":"","call_id":"call_stream_fixture","name":"memory_search"}}
+
+event: response.function_call_arguments.delta
+data: {"type":"response.function_call_arguments.delta","item_id":"fc_stream_fixture","output_index":0,"delta":"{\"terms\":[","sequence_number":1}
+
+event: response.function_call_arguments.delta
+data: {"type":"response.function_call_arguments.delta","item_id":"fc_stream_fixture","output_index":0,"delta":"\"provider continuity\"]}","sequence_number":2}
+
+event: response.function_call_arguments.done
+data: {"type":"response.function_call_arguments.done","item_id":"fc_stream_fixture","output_index":0,"arguments":"{\"terms\":[\"provider continuity\"]}","sequence_number":3}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_stream_tool_fixture","status":"completed","usage":{"input_tokens":20,"output_tokens":8}}}
+

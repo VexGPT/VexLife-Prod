@@ -85,6 +85,65 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun modelsChooserObservesSourceRowsAndRoutesOnlySelectUseThroughSourceControl() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesPath: \"/api/v1/models/sources\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesControlPath: \"/api/v1/models/sources/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "productFetch(service.modelsSourcesPath",
+            ),
+            "Models observation must refresh the provider-neutral source projection",
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"USE_MODEL\" ||",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"SELECT_MODEL\";",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "? service.modelsSourcesControlPath",
+            ),
+            "Select/Use must cross the source-aware Models control boundary",
+        )
+        assertTrue(
+            javascript.contains(
+                ": service.modelsControlPath",
+            ),
+            "Local artifact/runtime/configuration controls must remain on the Local Models owner",
+        )
+        assertTrue(
+            javascript.contains(
+                "row.sourceKind === 'LOCAL'",
+            ),
+            "Local storage/runtime detail must remain distinguishable from Partner rows",
+        )
+        assertTrue(
+            javascript.contains(
+                "selectedSource?.sourceKind === 'PARTNER'",
+            ),
+            "the existing chooser must render the Partner selection path explicitly",
+        )
+    }
+
+    @Test
     fun ContextFailureDoesNotGateIndependentProductSurfaces() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
@@ -1021,6 +1080,120 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 javascript.contains("resolveText(startControl.label)"),
             "runtime configuration and optional standing wording must arrive through the Models projection",
         )
+    }
+
+    @Test
+    fun partnerApiSettingsStayVisibleButEffectHeldByServiceFundingGate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"partner-api-card\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-provider\" disabled",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-credential\" type=\"password\"",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-connect\"",
+                ),
+            "Settings must expose the Partner API connection surface while keeping effect controls fail-safe disabled in markup",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeProdServiceContract.PartnerConnectionsPath,
+            ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionsControlPath,
+                ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                ),
+            "the UI gate must consume Product service availability rather than invent a browser-only readiness flag",
+        )
+        assertTrue(
+            javascript.contains(
+                "ui.partnerApiCard.dataset.state = 'held'",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiState.dataset.state = 'held'",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-card[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-state[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    "var(--status-caution)",
+                ),
+            "the funding-held Partner API surface must visibly present caution without collapsing the hold into an error",
+        )
+        assertTrue(
+            javascript.contains(
+                "state.partnerConnectionAvailability?.connectEnabled !== true",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiConnect.disabled = !enabled || !hasCredential",
+                ),
+            "Connect must remain held until the service explicitly opens the live effect gate",
+        )
+        assertTrue(
+            javascript.contains(
+                "new TextEncoder().encode(secretText)",
+            ) &&
+                javascript.contains(
+                    "secretBytes.fill(0)",
+                ) &&
+                javascript.contains(
+                    "ui.partnerApiCredential.value = ''",
+                ),
+            "the future enabled route must clear the DOM value and encoded credential bytes after the loopback effect",
+        )
+        assertFalse(
+            javascript.contains(
+                "localStorage.setItem('partner-api",
+            ) ||
+                javascript.contains(
+                    "URLSearchParams(secret",
+                ),
+            "Partner credentials may not gain browser persistence or URL carriage",
+        )
+        assertTrue(
+            javascript.contains(
+                "partnerConnectionStanding !== 'NEEDS_CREDENTIAL'",
+            ) &&
+                javascript.contains(
+                    "partnerConnectionControlReplace",
+                ) &&
+                javascript.contains(
+                    "partnerConnectionControlConnect",
+                ),
+            "the wired future action must converge through the existing CONNECT/REPLACE service contract",
+        )
+        listOf(
+            "workspace.heading.partner-api",
+            "workspace.description.partner-api",
+            "workspace.status.partner-api-held-funding",
+            "workspace.description.partner-api-held-funding",
+            "workspace.button.partner-api-connect",
+        ).forEach {
+            key ->
+            assertTrue(
+                bundle.html.contains(
+                    key,
+                ) ||
+                    javascript.contains(
+                        key,
+                    ),
+                "Partner API presentation is missing localized key $key",
+            )
+        }
     }
 
     @Test

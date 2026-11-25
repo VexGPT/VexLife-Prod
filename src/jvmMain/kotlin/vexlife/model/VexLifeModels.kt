@@ -26,22 +26,27 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
+import vexlife.partner.VexLifePartnerLiveQualification
 import vexlife.text.VexLifeText
 
 /**
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Select: stage the Settings target in memory only; it does not change the Home or runtime.
- * - Runtime configuration: persist admitted launch configuration only.
- * - Use/Start: commit the staged target to the Home, then request convergence through [ModelSwitchRealization].
+ * - Select: stage the source-aware Settings target in memory only; it does not change Home or serving.
+ * - Runtime configuration: persist admitted Local launch configuration only.
+ * - Local Use/Start: commit the Local target to Home, then converge through [ModelSwitchRealization].
+ * - Partner Use/Start: qualify through [PartnerSwitchRealization], then promote only the exact
+ *   qualified target to process-current Partner serving truth; no durable Partner choice is added.
  * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
  *
- * The Family owns what Use means. [ModelSwitchRealization] is an injected realization seam:
- * Product construction delegates the effect to LocalSetup/runtime ownership and updates serving truth only after
- * the target runtime is qualified. This class never kills/spawns a model process itself.
+ * The Local Family owns Local control law. This Models owner carries the one source-aware staged
+ * target/serving transition. [ModelSwitchRealization] and [PartnerSwitchRealization] are injected
+ * realization seams: Product construction performs runtime/provider effects outside this owner, while
+ * Models updates serving truth only after the selected realization is qualified. This class never
+ * kills/spawns a model process or resolves a provider credential itself.
  *
  * Every artifact effect holds the Home's setup lease, so Setup and Settings never write model files at
  * once. One background model operation runs at a time. Lawfulness is VexLifeModelsFamily's,
@@ -57,6 +62,7 @@ class VexLifeModels(
     private val totalMemoryBytes: () -> Long?,
     private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
+    private val partnerSwitchRealization: PartnerSwitchRealization? = null,
     private val acquirer:
         (
             model: HereticModelCatalog.Entry,
@@ -91,6 +97,33 @@ class VexLifeModels(
             realization: HereticRuntimeRealization.Value,
             observe: (SwitchPhase) -> Unit,
         )
+    }
+
+    fun interface PartnerSwitchRealization {
+        fun switch(
+            target: VexLifeInferenceSelection.Coordinate,
+            observe: (SwitchPhase) -> Unit,
+        ): VexLifePartnerLiveQualification.Outcome
+    }
+
+    data class PartnerServing(
+        val coordinate: VexLifeInferenceSelection.Coordinate,
+        val qualification: VexLifePartnerLiveQualification.Outcome.Qualified,
+    ) {
+        init {
+            require(
+                coordinate.sourceKind ==
+                    VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                    coordinate.handle ==
+                    qualification.receipt.profileRef &&
+                    coordinate.providerRef ==
+                    qualification.receipt.providerRef &&
+                    coordinate.modelRef ==
+                    qualification.receipt.modelRef,
+            ) {
+                "Partner serving custody must bind one exact qualified target"
+            }
+        }
     }
 
     sealed interface SwitchPhase {
@@ -136,8 +169,16 @@ class VexLifeModels(
     )
 
     private val download = AtomicReference<Download?>(null)
-    /** Settings-stage target. Durable Home choice changes only when Start is accepted. */
-    private val targetModelRef = AtomicReference<String?>(null)
+    /**
+     * One process-local Settings-stage inference target across Local or Partner source.
+     *
+     * Durable Home choice still changes only when an admitted effect commits it. This coordinate is
+     * not provider/runtime authority and does not create a second model-choice store.
+     */
+    private val stagedInferenceTarget =
+        AtomicReference<VexLifeInferenceSelection.Coordinate?>(null)
+    private val partnerServing =
+        AtomicReference<PartnerServing?>(null)
     private val switching = AtomicReference<SwitchProjection?>(null)
     private val downloadedBytes = AtomicLong(0)
     private val lastOutcome = AtomicReference<Outcome?>(null)
@@ -262,8 +303,15 @@ class VexLifeModels(
 
     fun projection(): Projection {
         val chosen = chosenModelRef()
-        val target = targetModelRef.get() ?: chosen
-        val serving = servingModelRef()
+        val target = localTargetModelRef(chosen)
+        val partnerServingNow =
+            partnerServing.get()
+        val serving =
+            servingModelRef()
+                .takeIf {
+                    partnerServingNow ==
+                        null
+                }
         val running = download.get()
         val currentSwitch = switching.get()
         val memory = totalMemoryBytes()
@@ -410,6 +458,95 @@ class VexLifeModels(
         )
     }
 
+    /**
+     * Stage one exact current inference row without persisting Home choice or performing a switch.
+     *
+     * The caller supplies the current combined Models projection. This owner validates the handle
+     * against that projection, then retains the exact Local/Partner coordinate as the one
+     * process-local target.
+     */
+    fun stageInferenceTarget(
+        models: VexLifeModelSourceProjection.Projection,
+        handle: String,
+    ): VexLifeInferenceSelection.Coordinate {
+        val target =
+            VexLifeInferenceSelection.requireTarget(
+                models = models,
+                handle = handle,
+            )
+        stagedInferenceTarget.set(
+            target,
+        )
+        return target
+    }
+
+    fun stagedInferenceTarget(): VexLifeInferenceSelection.Coordinate? =
+        stagedInferenceTarget.get()
+
+    fun partnerServing(): PartnerServing? =
+        partnerServing.get()
+
+    fun useStagedPartnerInference(
+        models: VexLifeModelSourceProjection.Projection,
+        controlRef: String = VexLifeModelsFamily.ControlUse,
+    ): SwitchProjection {
+        val target =
+            requireNotNull(
+                stagedInferenceTarget.get(),
+            ) {
+                "Partner Use requires one staged inference target"
+            }
+        require(
+            target.sourceKind ==
+                VexLifeModelSourceProjection.SourceKind.PARTNER,
+        ) {
+            "Partner Use requires one staged Partner target"
+        }
+        val current =
+            VexLifeInferenceSelection.requireTarget(
+                models = models,
+                handle = target.handle,
+            )
+        require(
+            current ==
+                target,
+        ) {
+            "Partner Use target is stale or does not match the current Models row"
+        }
+        require(
+            models.rows
+                .single {
+                    it.handle ==
+                        target.handle
+                }
+                .targeted,
+        ) {
+            "Partner Use requires the exact current row to remain targeted"
+        }
+        require(
+            models.rows
+                .single {
+                    it.handle ==
+                        target.handle
+                }
+                .serving
+                .not(),
+        ) {
+            "Partner Use target is already serving"
+        }
+        require(
+            download.get() ==
+                null,
+        ) {
+            "Partner Use requires no active model download"
+        }
+
+        return startPartnerSwitch(
+            target = target,
+            controlRef = controlRef,
+        )
+    }
+
     fun checkImport(sourceUrl: String): Projection {
         return try {
             val candidate = inspectImport(sourceUrl)
@@ -515,8 +652,9 @@ class VexLifeModels(
         val chosen =
             chosenModelRef()
         val target =
-            targetModelRef.get()
-                ?: chosen
+            localTargetModelRef(
+                chosen,
+            )
         val serving =
             servingModelRef()
         val effectiveRuntimeConfiguration =
@@ -588,7 +726,11 @@ class VexLifeModels(
                     require(admittedState.targeted) {
                         "Models admitted State is not one staged target selection"
                     }
-                    targetModelRef.set(entry.modelRef)
+                    stagedInferenceTarget.set(
+                        localInferenceCoordinate(
+                            entry,
+                        ),
+                    )
                     remember(
                         entry,
                         controlRef,
@@ -606,7 +748,9 @@ class VexLifeModels(
                     require(!admittedState.targeted) {
                         "Models cleanup Control did not clear its staged target"
                     }
-                    targetModelRef.compareAndSet(entry.modelRef, null)
+                    clearLocalStagedTarget(
+                        entry.modelRef,
+                    )
                 }
 
                 else ->
@@ -830,9 +974,11 @@ class VexLifeModels(
                 ) {
                     "model switch completed without the target model becoming the serving Session"
                 }
-                targetModelRef.compareAndSet(
-                    entry.modelRef,
+                partnerServing.set(
                     null,
+                )
+                clearLocalStagedTarget(
+                    entry.modelRef,
                 )
                 remember(
                     entry,
@@ -864,13 +1010,164 @@ class VexLifeModels(
         }
     }
 
+    private fun startPartnerSwitch(
+        target: VexLifeInferenceSelection.Coordinate,
+        controlRef: String,
+    ): SwitchProjection {
+        val realization =
+            requireNotNull(
+                partnerSwitchRealization,
+            ) {
+                "Partner switch realization is unavailable"
+            }
+        val modelLabel =
+            target.modelRef
+        val startedAt =
+            now().toString()
+        val initial =
+            SwitchProjection(
+                handle = target.handle,
+                label = modelLabel,
+                phase = SwitchPhase.Requested.stateRef,
+                message =
+                    switchMessage(
+                        SwitchPhase.Requested,
+                        modelLabel,
+                    ),
+                startedAt = startedAt,
+            )
+        check(
+            switching.compareAndSet(
+                null,
+                initial,
+            ),
+        ) {
+            "another model switch is already active"
+        }
+        remember(
+            handle = target.handle,
+            controlRef = controlRef,
+            state = OutcomeState.Switching,
+            message = initial.message,
+        )
+
+        executor.execute {
+            try {
+                val outcome =
+                    realization.switch(
+                        target,
+                    ) {
+                        phase ->
+                        switching.set(
+                            SwitchProjection(
+                                handle = target.handle,
+                                label = modelLabel,
+                                phase = phase.stateRef,
+                                message =
+                                    switchMessage(
+                                        phase,
+                                        modelLabel,
+                                    ),
+                                startedAt = startedAt,
+                            ),
+                        )
+                    }
+
+                when (
+                    outcome
+                ) {
+                    is VexLifePartnerLiveQualification.Outcome.Qualified -> {
+                        require(
+                            stagedInferenceTarget.get() ==
+                                target,
+                        ) {
+                            "Partner qualification completed for a stale staged target"
+                        }
+                        val next =
+                            PartnerServing(
+                                coordinate = target,
+                                qualification = outcome,
+                            )
+                        partnerServing.set(
+                            next,
+                        )
+                        remember(
+                            handle = target.handle,
+                            controlRef = controlRef,
+                            state = OutcomeState.Switched,
+                            message =
+                                VexLifeText.text(
+                                    "workspace.status.model-switched",
+                                    "model" to modelLabel,
+                                ),
+                        )
+                    }
+
+                    is VexLifePartnerLiveQualification.Outcome.Held -> {
+                        val reason =
+                            outcome.providerFailure
+                                ?.meaning
+                                ?.name
+                                ?: outcome.transportFailure
+                                    ?.code
+                                    ?.name
+                                ?: "PARTNER_QUALIFICATION_HELD"
+                        remember(
+                            handle = target.handle,
+                            controlRef = controlRef,
+                            state = OutcomeState.Failed,
+                            message =
+                                VexLifeText.text(
+                                    "workspace.status.model-switch-failed",
+                                    "model" to modelLabel,
+                                    "reason" to reason,
+                                ),
+                        )
+                    }
+                }
+            } catch (
+                error: Exception,
+            ) {
+                remember(
+                    handle = target.handle,
+                    controlRef = controlRef,
+                    state = OutcomeState.Failed,
+                    message =
+                        VexLifeText.text(
+                            "workspace.status.model-switch-failed",
+                            "model" to modelLabel,
+                            "reason" to
+                                (
+                                    error.message
+                                        ?: error.javaClass.simpleName
+                                ),
+                        ),
+                )
+            } finally {
+                switching.set(
+                    null,
+                )
+            }
+        }
+        return initial
+    }
+
     private fun switchMessage(
         phase: SwitchPhase,
         entry: HereticModelCatalog.Entry,
     ): VexLifeText =
+        switchMessage(
+            phase,
+            entry.humanLabel,
+        )
+
+    private fun switchMessage(
+        phase: SwitchPhase,
+        modelLabel: String,
+    ): VexLifeText =
         VexLifeText.text(
             phase.messageKey,
-            "model" to entry.humanLabel,
+            "model" to modelLabel,
         )
 
     private fun startDownload(
@@ -986,9 +1283,23 @@ class VexLifeModels(
         state: OutcomeState,
         message: VexLifeText,
     ) {
+        remember(
+            handle = entry.handle,
+            controlRef = controlRef,
+            state = state,
+            message = message,
+        )
+    }
+
+    private fun remember(
+        handle: String,
+        controlRef: String,
+        state: OutcomeState,
+        message: VexLifeText,
+    ) {
         lastOutcome.set(
             Outcome(
-                handle = entry.handle,
+                handle = handle,
                 controlRef = controlRef,
                 state = state.stateRef,
                 message = message,
@@ -1085,6 +1396,64 @@ class VexLifeModels(
         }
     }
         .getOrNull()
+
+    private fun localTargetModelRef(
+        chosenModelRef: String?,
+    ): String? =
+        when (
+            val staged =
+                stagedInferenceTarget.get()
+        ) {
+            null ->
+                chosenModelRef
+
+            else ->
+                staged
+                    .takeIf {
+                        it.sourceKind ==
+                            VexLifeModelSourceProjection.SourceKind.LOCAL
+                    }
+                    ?.modelRef
+        }
+
+    private fun localInferenceCoordinate(
+        entry: HereticModelCatalog.Entry,
+    ): VexLifeInferenceSelection.Coordinate =
+        VexLifeInferenceSelection.Coordinate(
+            handle = entry.handle,
+            modelRef = entry.modelRef,
+            sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
+            providerRef = null,
+        )
+
+    private fun clearLocalStagedTarget(
+        modelRef: String,
+    ) {
+        while (
+            true
+        ) {
+            val current =
+                stagedInferenceTarget.get()
+            if (
+                current ==
+                    null ||
+                    current.sourceKind !=
+                    VexLifeModelSourceProjection.SourceKind.LOCAL ||
+                    current.modelRef !=
+                    modelRef
+            ) {
+                return
+            }
+            if (
+                stagedInferenceTarget.compareAndSet(
+                    current,
+                    null,
+                )
+            ) {
+                return
+            }
+        }
+    }
 
     private fun state(
         entry: HereticModelCatalog.Entry,

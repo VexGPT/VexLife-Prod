@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -639,12 +640,17 @@ class DirectConversationSourceReturnTest {
                         speakerScope =
                             DirectConversationSourceReturn.AnySpeaker,
                     )
+                val runtime =
+                    runtimeEvidence()
                 val inference =
-                    DirectCompanionConnection.invoke(
-                        runtime = runtimeEvidence(),
-                        messages =
-                            initialPrompt.messages +
-                                DirectConversationSourceReturn.protocolMessage(),
+                    LocalHereticInference(
+                        runtime = runtime,
+                        model =
+                            requireNotNull(
+                                HereticModelCatalog.entry(
+                                    runtime.modelRef,
+                                ),
+                            ),
                         transport =
                             DirectCompanionConnection.Transport {
                                 DirectCompanionConnection.HttpResult(
@@ -680,6 +686,17 @@ class DirectConversationSourceReturnTest {
                             )
                         },
                     )
+                        .invoke(
+                            CompanionInferenceConnection.Request(
+                                messages =
+                                    initialPrompt.messages +
+                                        DirectConversationSourceReturn.protocolMessage(),
+                                capabilityOffer = emptyList(),
+                                conversationCacheBoundaryMessageCount = null,
+                                progressObserver = null,
+                                cancellation = null,
+                            ),
+                        )
                 val request =
                     requireNotNull(
                         DirectConversationSourceReturn.parseRequestOrNull(
