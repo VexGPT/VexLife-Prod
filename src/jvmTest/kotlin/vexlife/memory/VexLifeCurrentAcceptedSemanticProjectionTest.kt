@@ -12,6 +12,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import vexlife.consideration.VexLifeConsiderationContract
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -29,6 +30,20 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
             assertEquals(null, projection.scoreHeadSha256)
             assertEquals(null, projection.semanticAuthorityHeadSha256)
             assertFalse(projection.effectsPerformed)
+            val membrane =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    home,
+                )
+            assertEquals(
+                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                membrane.bindingRef,
+            )
+            assertTrue(
+                membrane.blockedEventRefs.isEmpty(),
+            )
+            assertTrue(
+                membrane.historicalCurrentizedEventRefs.isEmpty(),
+            )
             assertEquals(before, after, "accepted-semantic projection must be read-only")
         }
     }
@@ -172,6 +187,22 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                 "Score has not advanced yet in this transition window",
             )
             assertEquals(corrected.semanticAuthorityHeadSha256, after.semanticAuthorityHeadSha256)
+
+            val membrane =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    home,
+                )
+            assertEquals(
+                setOf(
+                    conversation.request.eventRef,
+                    conversation.response.eventRef,
+                ),
+                membrane.blockedEventRefs,
+                "authority-ahead transition must hold the old source before Score catches up",
+            )
+            assertTrue(
+                membrane.historicalCurrentizedEventRefs.isEmpty(),
+            )
         }
     }
 
