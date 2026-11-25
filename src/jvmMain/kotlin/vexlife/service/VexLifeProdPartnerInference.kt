@@ -297,7 +297,7 @@ internal class VexLifeProdPartnerInference(
                         target.handle
                 }
 
-        return VexLifePartnerLiveQualification.qualify(
+        VexLifePartnerLiveQualification.qualify(
             profile = profile,
             configuredProvider = configuredProvider,
             connection = offering.connection,
