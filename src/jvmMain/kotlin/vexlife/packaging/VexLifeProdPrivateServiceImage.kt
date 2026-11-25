@@ -23,8 +23,11 @@ object VexLifeProdPrivateServiceImage {
     const val VisionSchema =
         "vexlife-prod.private-service-image/v4"
 
-    const val Schema =
+    const val LocalAsrSchema =
         "vexlife-prod.private-service-image/v5"
+
+    const val Schema =
+        "vexlife-prod.private-service-image/v6"
 
     const val TruthClass =
         "SOURCE_BOUND_PRIVATE_SERVICE_IMAGE"
@@ -46,6 +49,9 @@ object VexLifeProdPrivateServiceImage {
 
     const val SetupWindowRelativePath =
         "setup/vexlife-prod-setup-window.applescript"
+
+    const val PartnerHostExecutableRelativePath =
+        "bin/vexlife-partner-host"
 
     const val ManifestRelativePath =
         "service-image.json"
@@ -103,6 +109,12 @@ object VexLifeProdPrivateServiceImage {
     )
 
     @Serializable
+    data class PartnerHost(
+        val executable: String,
+        val executableSha256: String,
+    )
+
+    @Serializable
     data class LocalAsrProvider(
         val providerRef: String,
         val providerVersion: String,
@@ -144,6 +156,7 @@ object VexLifeProdPrivateServiceImage {
         val runtimeModules: List<String>,
         val payloadSha256: String,
         val artifacts: List<Artifact>,
+        val partnerHost: PartnerHost? = null,
         val localAsrProvider: LocalAsrProvider? = null,
         val visionRuntime: VisionRuntime? = null,
     )
@@ -157,6 +170,7 @@ object VexLifeProdPrivateServiceImage {
         val setupWindowPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
+        val partnerHostExecutablePathOrNull: String? = null,
         val localAsrProviderRootPathOrNull: String? = null,
         val localAsrProviderExecutablePathOrNull: String? = null,
         val localAsrProviderSourceCommitOrNull: String? = null,
@@ -327,6 +341,14 @@ object VexLifeProdPrivateServiceImage {
             }
         }
 
+        manifest.partnerHost?.let {
+            partnerHost ->
+            validatePartnerHostFiles(
+                root = root,
+                partnerHost = partnerHost,
+            )
+        }
+
         manifest.localAsrProvider?.let {
             localAsrProvider ->
             validateLocalAsrProviderFiles(
@@ -371,6 +393,14 @@ object VexLifeProdPrivateServiceImage {
             setupWindowPath = setupWindow.toString(),
             javaPath = java.toString(),
             runtimeModules = manifest.runtimeModules,
+            partnerHostExecutablePathOrNull =
+                manifest.partnerHost?.let {
+                    VexOwnedPath.resolveInside(
+                        root,
+                        it.executable,
+                    )
+                        .toString()
+                },
             localAsrProviderRootPathOrNull =
                 manifest.localAsrProvider?.let {
                     VexOwnedPath.resolveInside(
@@ -608,6 +638,7 @@ object VexLifeProdPrivateServiceImage {
                 setOf(
                     LegacySchema,
                     VisionSchema,
+                    LocalAsrSchema,
                     Schema,
                 ) &&
                 manifest.truthClass ==
@@ -709,19 +740,47 @@ object VexLifeProdPrivateServiceImage {
                 ) ||
                 (
                     manifest.schemaVersion ==
+                        LocalAsrSchema &&
+                        manifest.localAsrProvider !=
+                        null &&
+                        manifest.partnerHost ==
+                        null
+                ) ||
+                (
+                    manifest.schemaVersion ==
                         Schema &&
                         manifest.localAsrProvider !=
+                        null &&
+                        manifest.partnerHost !=
                         null
                 ),
         ) {
             "private service-image schema/runtime relationship is invalid"
         }
 
-        manifest.localAsrProvider?.let {
-            localAsrProvider ->
+        manifest.partnerHost?.let {
+            partnerHost ->
             require(
                 manifest.schemaVersion ==
                     Schema &&
+                    partnerHost.executable ==
+                    PartnerHostExecutableRelativePath &&
+                    Sha256.matches(
+                        partnerHost.executableSha256,
+                    )
+            ) {
+                "private service-image Partner host descriptor is invalid"
+            }
+        }
+
+        manifest.localAsrProvider?.let {
+            localAsrProvider ->
+            require(
+                manifest.schemaVersion in
+                    setOf(
+                        LocalAsrSchema,
+                        Schema,
+                    ) &&
                     localAsrProvider.providerRef ==
                     LocalAsrProviderRef &&
                     localAsrProvider.providerVersion ==
@@ -757,6 +816,7 @@ object VexLifeProdPrivateServiceImage {
                 manifest.schemaVersion in
                     setOf(
                         VisionSchema,
+                        LocalAsrSchema,
                         Schema,
                     ) &&
                     visionRuntime.truthClass ==
@@ -788,6 +848,33 @@ object VexLifeProdPrivateServiceImage {
             ) {
                 "private service-image Vision runtime descriptor is invalid"
             }
+        }
+    }
+
+    private fun validatePartnerHostFiles(
+        root: Path,
+        partnerHost: PartnerHost,
+    ) {
+        val executable =
+            VexOwnedPath.resolveInside(
+                root,
+                partnerHost.executable,
+            )
+        requireRegularFile(
+            root = root,
+            path = executable,
+            label = "private service-image Partner host",
+        )
+        require(
+            Files.isExecutable(
+                executable,
+            ) &&
+                sha256(
+                    executable,
+                ) ==
+                partnerHost.executableSha256,
+        ) {
+            "private service-image Partner host executable identity drift"
         }
     }
 

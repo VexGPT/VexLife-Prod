@@ -1,0 +1,72 @@
+{
+  "cases": [
+    {
+      "ref": "anthropic.authentication",
+      "httpStatus": 401,
+      "body": {
+        "type": "error",
+        "error": {
+          "type": "authentication_error",
+          "message": "Synthetic authentication failure"
+        }
+      },
+      "expectedVexMeaning": "CREDENTIAL_REJECTED",
+      "retryExpected": false
+    },
+    {
+      "ref": "anthropic.billing",
+      "httpStatus": 402,
+      "body": {
+        "type": "error",
+        "error": {
+          "type": "billing_error",
+          "message": "Synthetic billing failure"
+        }
+      },
+      "expectedVexMeaning": "ACCOUNT_OR_BILLING_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "anthropic.permission",
+      "httpStatus": 403,
+      "body": {
+        "type": "error",
+        "error": {
+          "type": "permission_error",
+          "message": "Synthetic permission failure"
+        }
+      },
+      "expectedVexMeaning": "PERMISSION_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "anthropic.rate-limit",
+      "httpStatus": 429,
+      "headers": {
+        "retry-after": "2"
+      },
+      "body": {
+        "type": "error",
+        "error": {
+          "type": "rate_limit_error",
+          "message": "Synthetic rate-limit failure"
+        }
+      },
+      "expectedVexMeaning": "RATE_LIMITED",
+      "retryExpected": true
+    },
+    {
+      "ref": "anthropic.overloaded",
+      "httpStatus": 529,
+      "body": {
+        "type": "error",
+        "error": {
+          "type": "overloaded_error",
+          "message": "Synthetic overload failure"
+        }
+      },
+      "expectedVexMeaning": "PROVIDER_OVERLOADED",
+      "retryExpected": true
+    }
+  ]
+}

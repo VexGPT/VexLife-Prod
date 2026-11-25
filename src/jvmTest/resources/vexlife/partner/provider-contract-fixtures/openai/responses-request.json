@@ -1,0 +1,30 @@
+{
+  "model": "provider-model-ref-fixture",
+  "input": "Use the smallest Vex-owned read capability if source is required.",
+  "tools": [
+    {
+      "type": "function",
+      "name": "memory_search",
+      "description": "Search the currently admitted Vex Memory projection.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "terms"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    }
+  ],
+  "tool_choice": "auto",
+  "parallel_tool_calls": false,
+  "stream": true
+}

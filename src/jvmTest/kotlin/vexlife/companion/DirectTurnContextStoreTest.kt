@@ -18,6 +18,7 @@ import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -451,10 +452,17 @@ class DirectTurnContextStoreTest {
                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
                         "\n" +
                         """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
+                val initialRuntime =
+                    runtime()
                 val initialInference =
-                    DirectCompanionConnection.invoke(
-                        runtime = runtime(),
-                        messages = initialPrompt.messages,
+                    LocalHereticInference(
+                        runtime = initialRuntime,
+                        model =
+                            requireNotNull(
+                                HereticModelCatalog.entry(
+                                    initialRuntime.modelRef,
+                                ),
+                            ),
                         transport =
                             DirectCompanionConnection.Transport {
                                 DirectCompanionConnection.HttpResult(
@@ -489,6 +497,15 @@ class DirectTurnContextStoreTest {
                             )
                         },
                     )
+                        .invoke(
+                            CompanionInferenceConnection.Request(
+                                messages = initialPrompt.messages,
+                                capabilityOffer = emptyList(),
+                                conversationCacheBoundaryMessageCount = null,
+                                progressObserver = null,
+                                cancellation = null,
+                            ),
+                        )
                 val sourceRequest =
                     requireNotNull(
                         DirectConversationSourceReturn.parseRequestOrNull(
@@ -625,7 +642,7 @@ class DirectTurnContextStoreTest {
                     rereadTrace.finalPromptReceiptRef,
                 )
                 assertEquals(
-                    initialInference.runtimeObservation.observationRef,
+                    initialInference.observation.observationRef,
                     rereadTrace.attempt.runtimeObservationRef,
                 )
                 assertEquals(

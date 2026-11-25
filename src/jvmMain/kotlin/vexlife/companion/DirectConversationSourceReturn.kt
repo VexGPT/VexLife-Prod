@@ -797,9 +797,9 @@ object DirectConversationSourceReturn {
         )
     }
 
-    fun formAttemptTrace(
+    internal fun formAttemptTrace(
         initialPrompt: DirectPromptContext.Receipt,
-        inference: DirectCompanionConnection.Result,
+        inference: CompanionInferenceConnection.Result,
         discovery: Discovery,
         projection: Projection,
     ): AttemptTrace {
@@ -826,20 +826,19 @@ object DirectConversationSourceReturn {
                 projection.discoveredMatchCount &&
                 !projection.effectAuthorityGranted &&
                 !projection.effectsPerformed &&
-                inference.runtimeObservation.contentSha256 ==
+                inference.observation.contentSha256 ==
                 sha256(
                     inference.content,
                 ) &&
-                inference.invocationEvidence.runtimeObservationRef ==
-                inference.runtimeObservation.observationRef &&
-                inference.invocationEvidence.runtimeObservationFingerprint ==
-                inference.runtimeObservation.semanticFingerprint &&
+                inference.invocationEvidence.observationRef ==
+                inference.observation.observationRef &&
+                inference.invocationEvidence.observationFingerprint ==
+                inference.observation.semanticFingerprint &&
                 inference.invocationEvidence.responseBodySha256 ==
-                inference.runtimeObservation.responseBodySha256 &&
+                inference.observation.responseBodySha256 &&
                 inference.invocationEvidence.actualHttpCall &&
-                inference.invocationEvidence.loopbackOnly &&
-                !inference.runtimeObservation.rawProviderResponsePersisted &&
-                !inference.runtimeObservation.reasoningTrace.rawPersisted,
+                !inference.observation.rawProviderResponsePersisted &&
+                !inference.observation.rawReasoningPersisted,
         ) {
             "Conversation source-return attempt evidence is not bound to one exact internal inference and source return"
         }
@@ -854,11 +853,11 @@ object DirectConversationSourceReturn {
                 initialPrompt.semanticFingerprint,
             request = request,
             modelOutputSha256 =
-                inference.runtimeObservation.contentSha256,
+                inference.observation.contentSha256,
             runtimeObservationRef =
-                inference.runtimeObservation.observationRef,
+                inference.observation.observationRef,
             runtimeObservationFingerprint =
-                inference.runtimeObservation.semanticFingerprint,
+                inference.observation.semanticFingerprint,
             invocationRef =
                 inference.invocationEvidence.invocationRef,
             invocationFingerprint =
