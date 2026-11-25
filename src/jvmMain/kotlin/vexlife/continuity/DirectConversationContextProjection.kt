@@ -123,8 +123,9 @@ object DirectConversationContextProjection {
         currentRequest: DirectConversationStore.Event,
         excludedEventRefs: Set<String> = emptySet(),
         locatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
-        sourceLifecycle: SourceLifecycle =
-            SourceLifecycle(),
+        sourceLifecycle: () -> SourceLifecycle = {
+            SourceLifecycle()
+        },
     ): Prepared? {
         require(currentRequest.eventKind == "REQUEST") {
             "direct Conversation context projection requires the exact current human request"
@@ -136,9 +137,11 @@ object DirectConversationContextProjection {
             return null
         }
         val speakerScope = speakerScope(currentRequest.content)
+        val currentSourceLifecycle =
+            sourceLifecycle()
         val effectiveExcludedEventRefs =
             excludedEventRefs +
-                sourceLifecycle.blockedEventRefs
+                currentSourceLifecycle.blockedEventRefs
         val request =
             DirectConversationSourceReturn.Request(
                 schemaVersion = DirectConversationSourceReturn.RequestSchema,
@@ -165,7 +168,7 @@ object DirectConversationContextProjection {
                             excludedEventRefs =
                                 effectiveExcludedEventRefs,
                             sourceLifecycleBindingRef =
-                                sourceLifecycle.bindingRef,
+                                currentSourceLifecycle.bindingRef,
                         )
                     }
                     .getOrNull()
@@ -182,7 +185,7 @@ object DirectConversationContextProjection {
                                 conversationOwner = conversationOwner,
                                 backend = locatorBackend,
                                 sourceLifecycleBindingRef =
-                                    sourceLifecycle.bindingRef,
+                                    currentSourceLifecycle.bindingRef,
                                 excludedEventRefs =
                                     effectiveExcludedEventRefs,
                             )
@@ -204,7 +207,7 @@ object DirectConversationContextProjection {
                                     excludedEventRefs =
                                 effectiveExcludedEventRefs,
                             sourceLifecycleBindingRef =
-                                sourceLifecycle.bindingRef,
+                                currentSourceLifecycle.bindingRef,
                                 )
                             }
                             .getOrNull()
@@ -228,7 +231,7 @@ object DirectConversationContextProjection {
                                 SourcePreparation.LOCATOR_CURRENT
                             },
                         historicalCurrentizedEventRefs =
-                            sourceLifecycle.historicalCurrentizedEventRefs,
+                            currentSourceLifecycle.historicalCurrentizedEventRefs,
                     )
 
                 is VexLifeContinuitySourceLocator.LocateOutcome.CurrentMiss ->
@@ -260,7 +263,7 @@ object DirectConversationContextProjection {
                 SourcePreparation.CANONICAL_SCAN,
             exactEventFileReadCount = 0,
             historicalCurrentizedEventRefs =
-                sourceLifecycle.historicalCurrentizedEventRefs,
+                currentSourceLifecycle.historicalCurrentizedEventRefs,
         )
     }
 
