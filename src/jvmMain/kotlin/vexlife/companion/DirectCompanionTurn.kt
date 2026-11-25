@@ -594,13 +594,13 @@ object DirectCompanionTurn {
          */
         val experimentEffectiveInputTokenBudget: Int? = null,
         /**
-         * Experiment-only Stage-A EvolveContext proof.
+         * Request-bound EvolveContext source preparation.
          *
          * When true, one explicit backward-looking request after a Working Continuity rollover may
-         * prepare exact older Conversation source before the first provider inference. Product
-         * callers keep false. This grants no semantic acceptance and performs no durable mutation.
+         * prepare exact older Conversation source before the first provider inference. This grants
+         * no semantic acceptance and performs no durable source mutation.
          */
-        val experimentConversationContextProjectionEnabled: Boolean = false,
+        val conversationContextProjectionEnabled: Boolean = false,
         /**
          * Derived continuity source locator shared by the caller across related turns.
          *
@@ -710,6 +710,7 @@ object DirectCompanionTurn {
             null,
         capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
             VexLifeCapabilityBridge.OwnerBindings(),
+        continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -756,6 +757,10 @@ object DirectCompanionTurn {
                     },
                     capabilityOwners =
                         capabilityOwners,
+                    conversationContextProjectionEnabled =
+                        continuitySourceLocatorBackend != null,
+                    continuitySourceLocatorBackend =
+                        continuitySourceLocatorBackend,
                 ),
         )
 
@@ -1366,7 +1371,7 @@ object DirectCompanionTurn {
             )
         val conversationContextPreparation =
             if (
-                hooks.experimentConversationContextProjectionEnabled &&
+                hooks.conversationContextProjectionEnabled &&
                 workingContinuityContext !=
                     null
             ) {
