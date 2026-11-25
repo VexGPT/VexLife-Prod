@@ -233,13 +233,30 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
 
-        VexLifeWorkspaceBlueprint.elements.forEach { element ->
-            assertTrue(
-                bundle.html.contains(
-                    "data-vex-ref=\"${element.ref}\"",
-                ),
-                "missing current Blueprint coordinate from product template: ${element.ref}",
+        val rowRuntimeCoordinates =
+            setOf(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
             )
+        VexLifeWorkspaceBlueprint.elements.forEach { element ->
+            if (
+                element.ref in
+                    rowRuntimeCoordinates
+            ) {
+                assertTrue(
+                    bundle.javascript.contains(
+                        element.ref,
+                    ),
+                    "missing row-runtime Blueprint coordinate from product runtime: ${element.ref}",
+                )
+            } else {
+                assertTrue(
+                    bundle.html.contains(
+                        "data-vex-ref=\"${element.ref}\"",
+                    ),
+                    "missing current Blueprint coordinate from product template: ${element.ref}",
+                )
+            }
         }
 
         assertTrue(
