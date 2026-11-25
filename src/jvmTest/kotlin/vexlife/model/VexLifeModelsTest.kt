@@ -1008,6 +1008,25 @@ class VexLifeModelsTest {
             )
                 .use {
                     owner ->
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        nine.handle,
+                    )
+                    owner.control(
+                        VexLifeModelsFamily.ControlUse,
+                        nine.handle,
+                    )
+                    owner.awaitIdle()
+                    assertEquals(
+                        nine.modelRef,
+                        localServing,
+                    )
+                    assertEquals(
+                        nine.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+
                     val beforePartner =
                         combinedInferenceModels(
                             owner = owner,
@@ -1040,9 +1059,9 @@ class VexLifeModelsTest {
                             .servingHandle,
                     )
                     assertEquals(
-                        HereticModelCatalog.Models.Qwen27B.modelRef,
+                        nine.modelRef,
                         localServing,
-                        "Partner serving does not kill or silently retarget the Local runtime",
+                        "Partner serving does not kill or silently retarget the retained Local runtime",
                     )
 
                     owner.control(

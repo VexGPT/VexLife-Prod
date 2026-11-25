@@ -5947,6 +5947,36 @@ class VexLifeProdLocalServiceTest {
         bootstrapHome(
             root,
         )
+        val currentSetup =
+            setup(
+                root,
+            )
+        val preparation =
+            VexLifePromptPreparation(
+                providerPrefill =
+                    VexLifePromptPreparation.ProviderPrefill {
+                        runtime,
+                        systemContent,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 =
+                                sha256(
+                                    systemContent,
+                                ),
+                            requestBodySha256 =
+                                "7".repeat(
+                                    64,
+                                ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 1L,
+                        )
+                    },
+            )
         val profile =
             VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
         val credential =
@@ -6031,9 +6061,7 @@ class VexLifeProdLocalServiceTest {
                             40,
                         ),
                     setup =
-                        setup(
-                            root,
-                        ),
+                        currentSetup,
                     turnExecutor =
                         VexLifeProdLocalService.TurnExecutor {
                             _,
@@ -6096,6 +6124,23 @@ class VexLifeProdLocalServiceTest {
                                     ),
                             )
                         },
+                    servingPromptCacheEntryLimit = {
+                        2
+                    },
+                    promptPreparation =
+                        preparation,
+                    modelSwitchRealization =
+                        vexlife.model.VexLifeModels.ModelSwitchRealization {
+                            _,
+                            observe,
+                            ->
+                            observe(
+                                vexlife.model.VexLifeModels.SwitchPhase.PreparingTarget,
+                            )
+                            preparation.startCurrent(
+                                currentSetup.qualifiedRuntimeEvidence,
+                            )
+                        },
                     partnerInference =
                         partnerInference,
                     partnerSwitchRealization =
@@ -6105,6 +6150,9 @@ class VexLifeProdLocalServiceTest {
                             ->
                             observe(
                                 vexlife.model.VexLifeModels.SwitchPhase.PreparingTarget,
+                            )
+                            preparation.invalidateAndAwait(
+                                "MODEL_SWITCH",
                             )
                             partnerInference.qualify(
                                 target,
@@ -6223,6 +6271,23 @@ class VexLifeProdLocalServiceTest {
                         "Partner Use performs exactly one live qualification before serving promotion",
                     )
 
+                    val partnerTurnProjection =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.FollowUpReadinessUnavailable,
+                        partnerTurnProjection.followUpReadiness?.state,
+                        "Partner serving must not project Local mlx-lm follow-up readiness",
+                    )
+                    assertFalse(
+                        partnerTurnProjection.initialPromptPreparationPendingForNextTurn,
+                        "invalidated Local preparation must not present while Partner serves",
+                    )
+
                     val ordinary =
                         postJson(
                             service.origin,
@@ -6317,6 +6382,20 @@ class VexLifeProdLocalServiceTest {
                             ),
                     )
 
+                    preparation.startCurrent(
+                        currentSetup.qualifiedRuntimeEvidence,
+                    )
+                    val firstLocalTurn =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertTrue(
+                        firstLocalTurn.initialPromptPreparationPendingForNextTurn,
+                        "Partner turns must not consume the first canonical Local Send presentation",
+                    )
                     assertEquals(
                         0,
                         localTurns,
@@ -6336,6 +6415,7 @@ class VexLifeProdLocalServiceTest {
                     )
                 }
         } finally {
+            preparation.close()
             root.parent
                 .toFile()
                 .deleteRecursively()

@@ -1795,6 +1795,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 ".response-progress[data-state=\"FollowUpReadiness\"]",
             ),
         )
+        assertTrue(
+            javascript.contains(
+                "const wasSwitching = Boolean(state.models?.switching);",
+            ) &&
+                javascript.contains(
+                    "if (wasSwitching && !switchingNow) {",
+                ) &&
+                javascript.contains(
+                    "void loadConversationTurn().catch(() => {});",
+                ),
+            "ResponseProgress currentness must refresh when model/source switching settles",
+        )
     }
 
     @Test

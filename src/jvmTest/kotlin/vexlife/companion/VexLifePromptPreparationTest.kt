@@ -622,6 +622,92 @@ class VexLifePromptPreparationTest {
     }
 
     @Test
+    fun invalidatedPendingGenerationCanRearmForTheStillCurrentRuntime() {
+        val runtime =
+            runtime(
+                "receipt.vexlife-prod.prompt-preparation.failed-switch-current",
+            )
+        val prefix =
+            prefix()
+        val calls =
+            AtomicInteger(
+                0,
+            )
+        val executor =
+            Executors.newCachedThreadPool()
+
+        try {
+            val preparation =
+                VexLifePromptPreparation(
+                    providerPrefill =
+                        VexLifePromptPreparation.ProviderPrefill {
+                            current,
+                            _,
+                            _,
+                            ->
+                            calls.incrementAndGet()
+                            performed(
+                                runtime = current,
+                                prefix = prefix,
+                            )
+                        },
+                )
+            preparation.attach(
+                executor = executor,
+                prefixProvider =
+                    VexLifePromptPreparation.PrefixProvider {
+                        prefix
+                    },
+            )
+            preparation.startCurrent(
+                runtime,
+            )
+            assertTrue(
+                preparation.nextTurnPreparationPending(),
+            )
+
+            preparation.invalidateAndAwait(
+                "MODEL_SWITCH",
+            )
+            assertFalse(
+                preparation.nextTurnPreparationPending(),
+            )
+
+            preparation.startCurrent(
+                runtime,
+            )
+            assertTrue(
+                preparation.nextTurnPreparationPending(),
+                "a failed switch may re-arm the exact still-current Local Session",
+            )
+            val restored =
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = runtime,
+                        prefix = prefix,
+                    ),
+                )
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
+                restored,
+            )
+            assertEquals(
+                runtime.runtimeReceiptRef,
+                restored.binding.runtimeReceiptRef,
+            )
+            assertEquals(
+                2,
+                calls.get(),
+            )
+        } finally {
+            executor.shutdownNow()
+            executor.awaitTermination(
+                5,
+                TimeUnit.SECONDS,
+            )
+        }
+    }
+
+    @Test
     fun consumedGenerationCanRearmForANewRuntimeReceipt() {
         val firstRuntime =
             runtime(
