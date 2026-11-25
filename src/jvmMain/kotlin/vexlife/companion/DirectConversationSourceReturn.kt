@@ -1036,7 +1036,7 @@ object DirectConversationSourceReturn {
                 }
                 .distinct()
         val lifecycleTruth =
-            sourceLifecycleBindingRef@ discovery.sourceLifecycleBindingRef
+            discovery.sourceLifecycleBindingRef
                 ?.let {
                     if (
                         historicalCurrentizedReturned.isNotEmpty()
