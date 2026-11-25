@@ -1228,11 +1228,16 @@ svg { display: block; }
 .local-sources { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
 .local-sources:empty { display: none; }
 .local-source {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content auto auto; gap: var(--space-2); align-items: center;
   padding: var(--space-2) var(--space-3); background: var(--bg-surface-raised);
   border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
 }
 .local-source-main { min-width: 0; }
+.local-source-authority {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--space-2);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
+  color: var(--text-secondary); font-size: var(--step--2); font-weight: 650; white-space: nowrap;
+}
 .local-source-name { display: block; color: var(--text-primary); font-weight: 600; }
 .local-source-path {
   display: block; margin-top: var(--space-1); color: var(--text-secondary); font-family: var(--font-mono);
