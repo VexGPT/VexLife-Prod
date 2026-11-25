@@ -1067,6 +1067,19 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    hooks.continuitySourceLocatorBackend
+                        ?.let {
+                            backend ->
+                            runCatching {
+                                VexLifeContinuitySourceLocator.catchUpCommittedTurn(
+                                    committedHead = head,
+                                    request = request,
+                                    response = response,
+                                    backend = backend,
+                                )
+                            }
+                        }
+
                     VexLogger.record(
                         VexLogger.Fact.TurnCompleted,
                         mapOf(
