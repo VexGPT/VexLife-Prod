@@ -9,14 +9,14 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
- * In-memory owner of the first reusable provider prefix prepared after Product startup.
+ * In-memory owner of reusable provider-prefix preparation for the exact current local runtime session.
  *
  * This owner retains only preparation/currentness of one exact provider prefix. It never owns
  * Foundation, Context Profile, Memory, Conversation, the human Send, runtime lifetime or
  * presentation. The semantic prompt owner forms the prefix; the provider adapter realizes cache
  * work; a real turn must re-materialize and prove exact currentness before consuming readiness.
  */
-internal class VexLifeInitialPromptPreparation(
+internal class VexLifePromptPreparation(
     private val providerPrefill: ProviderPrefill =
         ProviderPrefill {
             runtime,
@@ -35,7 +35,7 @@ internal class VexLifeInitialPromptPreparation(
 ) : AutoCloseable {
     companion object {
         /**
-         * Initial source candidate only. Lived provider evidence may tune these bounded timings;
+         * Provider-prefix preparation remains best-effort. Lived provider evidence may tune these bounded timings;
          * timers never create READY_REUSABLE.
          */
         const val MaximumPreparationMillis = 30_000L
@@ -49,6 +49,12 @@ internal class VexLifeInitialPromptPreparation(
             systemContent: String,
             cancellation: DirectCompanionCancellation,
         ): DirectCompanionConnection.SystemPrefixPrefillResult
+    }
+
+    internal fun interface PrefixProvider {
+        fun current(
+            runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        ): DirectPromptContext.ProviderPreparationPrefix
     }
 
     internal data class Binding(
@@ -150,18 +156,34 @@ internal class VexLifeInitialPromptPreparation(
         }
     }
 
+    private data class Attempt(
+        val binding: Binding,
+        val completion: CountDownLatch =
+            CountDownLatch(
+                1,
+            ),
+        val cancellation: DirectCompanionCancellation =
+            DirectCompanionCancellation(),
+        val cancellationReason: AtomicReference<String?> =
+            AtomicReference(
+                null,
+            ),
+    )
+
     private val state =
         AtomicReference<State>(
             State.Cold,
         )
-    private val completion =
-        CountDownLatch(
-            1,
+    private val currentAttempt =
+        AtomicReference<Attempt?>(
+            null,
         )
-    private val cancellation =
-        DirectCompanionCancellation()
-    private val cancellationReason =
-        AtomicReference<String?>(
+    private val executor =
+        AtomicReference<ExecutorService?>(
+            null,
+        )
+    private val prefixProvider =
+        AtomicReference<PrefixProvider?>(
             null,
         )
 
@@ -171,20 +193,91 @@ internal class VexLifeInitialPromptPreparation(
                 humanTurnWaitMillis >= 0L &&
                 cancellationDrainMillis > 0L,
         ) {
-            "initial prompt preparation timing bounds are invalid"
+            "prompt preparation timing bounds are invalid"
         }
     }
 
     internal fun state(): State =
         state.get()
 
+    internal fun attach(
+        executor: ExecutorService,
+        prefixProvider: PrefixProvider,
+    ) {
+        val priorExecutor =
+            this.executor.get()
+        require(
+            priorExecutor == null ||
+                priorExecutor ===
+                executor,
+        ) {
+            "prompt preparation execution custody cannot change while the service is alive"
+        }
+        this.executor.compareAndSet(
+            null,
+            executor,
+        )
+
+        val priorProvider =
+            this.prefixProvider.get()
+        require(
+            priorProvider == null ||
+                priorProvider ===
+                prefixProvider,
+        ) {
+            "prompt preparation prefix owner cannot change while the service is alive"
+        }
+        this.prefixProvider.compareAndSet(
+            null,
+            prefixProvider,
+        )
+    }
+
     /**
-     * Whether the next human turn still belongs to this service's one initial local-start window.
+     * Start one best-effort preparation generation for the exact current local runtime Session.
      *
-     * This is a presentation/currentness question only. It does not reserve Send, extend cache
-     * lifetime, or turn HELD/FAILED/INVALIDATED preparation into readiness.
+     * This may be called after Product startup and again after later model/runtime convergence.
+     * Terminal prior generations are provenance only; they do not prevent the current Session from
+     * preparing a fresh exact prefix.
      */
-    internal fun firstLocalTurnPending(): Boolean =
+    internal fun startCurrent(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ) {
+        val currentExecutor =
+            requireNotNull(
+                executor.get(),
+            ) {
+                "prompt preparation execution custody is not attached"
+            }
+        val currentPrefixProvider =
+            requireNotNull(
+                prefixProvider.get(),
+            ) {
+                "prompt preparation prefix owner is not attached"
+            }
+        try {
+            start(
+                executor = currentExecutor,
+                runtime = runtime,
+                prefix =
+                    currentPrefixProvider.current(
+                        runtime,
+                    ),
+            )
+        } catch (
+            error: Throwable,
+        ) {
+            failBeforeStart(
+                error,
+            )
+        }
+    }
+
+    /**
+     * Whether the next human turn still has one current preparation generation that may become
+     * reusable. This is not limited to Product boot; a successful model/runtime switch can re-arm it.
+     */
+    internal fun nextTurnPreparationPending(): Boolean =
         when (
             state.get()
         ) {
@@ -202,7 +295,7 @@ internal class VexLifeInitialPromptPreparation(
                 false
         }
 
-    /** Startup candidate formation is best-effort; failure never controls Product availability. */
+    /** Preparation formation is best-effort; failure never controls Product availability. */
     internal fun failBeforeStart(
         error: Throwable,
     ) {
@@ -211,24 +304,40 @@ internal class VexLifeInitialPromptPreparation(
                 binding = null,
                 failureClass = error.javaClass.simpleName,
             )
-        if (
-            state.compareAndSet(
-                State.Cold,
-                failed,
-            )
+        while (
+            true
         ) {
-            completion.countDown()
-            log(
-                failed,
-            )
+            val current =
+                state.get()
+            if (
+                current is State.Preparing ||
+                current is State.ReadyReusable
+            ) {
+                return
+            }
+            if (
+                state.compareAndSet(
+                    current,
+                    failed,
+                )
+            ) {
+                log(
+                    failed,
+                )
+                return
+            }
         }
     }
 
     internal fun start(
         executor: ExecutorService,
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
     ) {
+        this.executor.compareAndSet(
+            null,
+            executor,
+        )
         val message =
             prefix.messages.singleOrNull()
         val entry =
@@ -246,27 +355,38 @@ internal class VexLifeInitialPromptPreparation(
                     reasonRef =
                         when {
                             message == null ->
-                                "INITIAL_PREFIX_NOT_SINGLE_MESSAGE"
+                                "PREPARATION_PREFIX_NOT_SINGLE_MESSAGE"
 
                             message.role != "system" ->
-                                "INITIAL_PREFIX_NOT_SYSTEM"
+                                "PREPARATION_PREFIX_NOT_SYSTEM"
 
                             else ->
                                 "MODEL_NOT_PRODUCT_CATALOG"
                         },
                 )
-            if (
-                state.compareAndSet(
-                    State.Cold,
-                    held,
-                )
+            while (
+                true
             ) {
-                completion.countDown()
-                log(
-                    held,
-                )
+                val current =
+                    state.get()
+                if (
+                    current is State.Preparing ||
+                    current is State.ReadyReusable
+                ) {
+                    return
+                }
+                if (
+                    state.compareAndSet(
+                        current,
+                        held,
+                    )
+                ) {
+                    log(
+                        held,
+                    )
+                    return
+                }
             }
-            return
         }
 
         val field =
@@ -290,15 +410,46 @@ internal class VexLifeInitialPromptPreparation(
                 providerNativeTools = prefix.providerNativeTools,
                 leadingMessage = message,
             )
+        val attempt =
+            Attempt(
+                binding = binding,
+            )
+        val completion =
+            attempt.completion
+        val cancellation =
+            attempt.cancellation
+        val cancellationReason =
+            attempt.cancellationReason
         val preparing =
             State.Preparing(
                 binding,
             )
+        val admitted =
+            synchronized(
+                this,
+            ) {
+                val current =
+                    state.get()
+                if (
+                    current is State.Preparing ||
+                    current is State.ReadyReusable
+                ) {
+                    false
+                } else {
+                    // Publish the attempt fence before PREPARING becomes observable. A human turn
+                    // may therefore never observe PREPARING without the exact generation it must
+                    // wait on or invalidate.
+                    currentAttempt.set(
+                        attempt,
+                    )
+                    state.set(
+                        preparing,
+                    )
+                    true
+                }
+            }
         if (
-            !state.compareAndSet(
-                State.Cold,
-                preparing,
-            )
+            !admitted
         ) {
             return
         }
@@ -330,7 +481,7 @@ internal class VexLifeInitialPromptPreparation(
                                             provider.systemMessageSha256 ==
                                             binding.systemMessageSha256,
                                     ) {
-                                        "provider prefill result does not bind the exact initial prompt preparation"
+                                        "provider prefill result does not bind the exact prompt preparation"
                                     }
                                     val ready =
                                         State.ReadyReusable(
@@ -439,6 +590,7 @@ internal class VexLifeInitialPromptPreparation(
                         )
                     ) {
                         requestCancellation(
+                            attempt,
                             "MAXIMUM_LIFETIME",
                         )
                     }
@@ -455,6 +607,7 @@ internal class VexLifeInitialPromptPreparation(
             // watchdog could not start; cancel it and let the worker's own finally block publish
             // the terminal completion signal before any human turn may proceed.
             requestCancellation(
+                attempt,
                 "WATCHDOG_START_FAILED",
             )
         }
@@ -473,24 +626,37 @@ internal class VexLifeInitialPromptPreparation(
             current is
                 State.Preparing
         ) {
+            val attempt =
+                requireNotNull(
+                    currentAttempt.get(),
+                ) {
+                    "preparing prompt state has no active attempt"
+                }
+            require(
+                attempt.binding ==
+                    current.binding,
+            ) {
+                "preparing prompt attempt does not bind current preparation state"
+            }
             try {
                 if (
-                    !completion.await(
+                    !attempt.completion.await(
                         humanTurnWaitMillis,
                         TimeUnit.MILLISECONDS,
                     )
                 ) {
                     requestCancellation(
+                        attempt,
                         "HUMAN_TURN_WAIT_TIMEOUT",
                     )
                     if (
-                        !completion.await(
+                        !attempt.completion.await(
                             cancellationDrainMillis,
                             TimeUnit.MILLISECONDS,
                         )
                     ) {
                         throw IllegalStateException(
-                            "initial prompt preparation did not yield after bounded cancellation",
+                            "prompt preparation did not yield after bounded cancellation",
                         )
                     }
                 }
@@ -499,10 +665,11 @@ internal class VexLifeInitialPromptPreparation(
             ) {
                 Thread.currentThread().interrupt()
                 requestCancellation(
+                    attempt,
                     "HUMAN_TURN_INTERRUPTED",
                 )
                 throw IllegalStateException(
-                    "human turn was interrupted while waiting for initial prompt preparation",
+                    "human turn was interrupted while waiting for prompt preparation",
                     interrupted,
                 )
             }
@@ -613,18 +780,31 @@ internal class VexLifeInitialPromptPreparation(
             current
         ) {
             is State.Preparing -> {
+                val attempt =
+                    requireNotNull(
+                        currentAttempt.get(),
+                    ) {
+                        "preparing prompt state has no active attempt"
+                    }
+                require(
+                    attempt.binding ==
+                        current.binding,
+                ) {
+                    "preparing prompt attempt does not bind current preparation state"
+                }
                 requestCancellation(
+                    attempt,
                     reasonRef,
                 )
                 try {
                     if (
-                        !completion.await(
+                        !attempt.completion.await(
                             cancellationDrainMillis,
                             TimeUnit.MILLISECONDS,
                         )
                     ) {
                         throw IllegalStateException(
-                            "initial prompt preparation did not retire after invalidation",
+                            "prompt preparation did not retire after invalidation",
                         )
                     }
                 } catch (
@@ -632,7 +812,7 @@ internal class VexLifeInitialPromptPreparation(
                 ) {
                     Thread.currentThread().interrupt()
                     throw IllegalStateException(
-                        "initial prompt preparation invalidation was interrupted",
+                        "prompt preparation invalidation was interrupted",
                         interrupted,
                     )
                 }
@@ -668,13 +848,14 @@ internal class VexLifeInitialPromptPreparation(
     }
 
     private fun requestCancellation(
+        attempt: Attempt,
         reasonRef: String,
     ) {
-        cancellationReason.compareAndSet(
+        attempt.cancellationReason.compareAndSet(
             null,
             reasonRef,
         )
-        cancellation.request()
+        attempt.cancellation.request()
     }
 
     private fun mismatchReason(

@@ -19,7 +19,7 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
-class VexLifeInitialPromptPreparationTest {
+class VexLifePromptPreparationTest {
     private fun runtime(
         receiptRef: String =
             "receipt.vexlife-prod.prompt-preparation.test",
@@ -52,8 +52,8 @@ class VexLifeInitialPromptPreparationTest {
         )
     }
 
-    private fun prefix(): DirectPromptContext.InitialBootPrefix =
-        DirectPromptContext.projectInitialBootPrefix(
+    private fun prefix(): DirectPromptContext.ProviderPreparationPrefix =
+        DirectPromptContext.projectProviderPreparationPrefix(
             foundationalField =
                 VexLifeFoundationalFieldFixture.shipped,
             memoryContext =
@@ -66,13 +66,13 @@ class VexLifeInitialPromptPreparationTest {
 
     private fun validation(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
         leadingMessage: CompanionProviderMessage? =
             prefix.messages.single(),
         memoryFingerprint: String? =
             prefix.memoryContextFingerprint,
-    ): VexLifeInitialPromptPreparation.Validation =
-        VexLifeInitialPromptPreparation.Validation(
+    ): VexLifePromptPreparation.Validation =
+        VexLifePromptPreparation.Validation(
             runtime = runtime,
             leadingMessage = leadingMessage,
             foundationalFieldRef =
@@ -100,7 +100,7 @@ class VexLifeInitialPromptPreparationTest {
 
     private fun performed(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
     ): DirectCompanionConnection.SystemPrefixPrefillResult.Performed =
         DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
             runtimeReceiptRef = runtime.runtimeReceiptRef,
@@ -181,9 +181,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             _,
                             _,
                             cancellation,
@@ -230,12 +230,12 @@ class VexLifeInitialPromptPreparationTest {
 
             assertEquals(
                 "WATCHDOG_START_FAILED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+            assertIs<VexLifePromptPreparation.State.Invalidated>(
                 preparation.state(),
             )
         } finally {
@@ -258,9 +258,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             current,
                             _,
                             _,
@@ -279,8 +279,8 @@ class VexLifeInitialPromptPreparationTest {
             )
 
             assertTrue(
-                preparation.firstLocalTurnPending(),
-                "Cold/Preparing/Ready preparation still belongs to the one first local turn",
+                preparation.nextTurnPreparationPending(),
+                "Cold/Preparing/Ready preparation still belongs to the current preparation generation",
             )
 
             val first =
@@ -290,19 +290,19 @@ class VexLifeInitialPromptPreparationTest {
                         prefix = prefix,
                     ),
                 )
-            assertIs<VexLifeInitialPromptPreparation.Decision.Reusable>(
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
                 first,
             )
             assertEquals(
                 1,
                 calls.get(),
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Consumed>(
+            assertIs<VexLifePromptPreparation.State.Consumed>(
                 preparation.state(),
             )
             assertFalse(
-                preparation.firstLocalTurnPending(),
-                "Consumed preparation must not label later turns as first-local-start work",
+                preparation.nextTurnPreparationPending(),
+                "Consumed preparation must not label later turns as current preparation work",
             )
 
             val second =
@@ -317,7 +317,7 @@ class VexLifeInitialPromptPreparationTest {
             )
             assertEquals(
                 "PREPARATION_ALREADY_CONSUMED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         second,
                     )
                     .reasonRef,
@@ -342,9 +342,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             current,
                             _,
                             _,
@@ -377,12 +377,12 @@ class VexLifeInitialPromptPreparationTest {
                 )
             assertEquals(
                 "PROVIDER_PREFIX_CHANGED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+            assertIs<VexLifePromptPreparation.State.Invalidated>(
                 preparation.state(),
             )
         } finally {
@@ -401,9 +401,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             current,
                             _,
                             _,
@@ -433,7 +433,7 @@ class VexLifeInitialPromptPreparationTest {
                 )
             assertEquals(
                 "MEMORY_CHANGED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
@@ -454,9 +454,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             current,
                             _,
                             _,
@@ -485,7 +485,7 @@ class VexLifeInitialPromptPreparationTest {
                 )
             assertEquals(
                 "RUNTIME_RECEIPT_CHANGED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
@@ -506,9 +506,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             _,
                             _,
                             _,
@@ -533,12 +533,12 @@ class VexLifeInitialPromptPreparationTest {
 
             assertEquals(
                 "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Held>(
+            assertIs<VexLifePromptPreparation.State.Held>(
                 preparation.state(),
             )
         } finally {
@@ -557,9 +557,9 @@ class VexLifeInitialPromptPreparationTest {
 
         try {
             val preparation =
-                VexLifeInitialPromptPreparation(
+                VexLifePromptPreparation(
                     providerPrefill =
-                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                        VexLifePromptPreparation.ProviderPrefill {
                             _,
                             _,
                             cancellation,
@@ -607,19 +607,109 @@ class VexLifeInitialPromptPreparationTest {
                 )
             assertEquals(
                 "HUMAN_TURN_WAIT_TIMEOUT",
-                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                assertIs<VexLifePromptPreparation.Decision.Cold>(
                         decision,
                     )
                     .reasonRef,
             )
             assertTrue(
                 preparation.state() is
-                    VexLifeInitialPromptPreparation.State.Invalidated,
+                    VexLifePromptPreparation.State.Invalidated,
             )
         } finally {
             executor.shutdownNow()
         }
     }
+
+    @Test
+    fun consumedGenerationCanRearmForANewRuntimeReceipt() {
+        val firstRuntime =
+            runtime(
+                "receipt.vexlife-prod.prompt-preparation.generation-a",
+            )
+        val secondRuntime =
+            runtime(
+                "receipt.vexlife-prod.prompt-preparation.generation-b",
+            )
+        val prefix =
+            prefix()
+        val calls =
+            AtomicInteger(
+                0,
+            )
+        val executor =
+            Executors.newCachedThreadPool()
+
+        try {
+            val preparation =
+                VexLifePromptPreparation(
+                    providerPrefill =
+                        VexLifePromptPreparation.ProviderPrefill {
+                            current,
+                            _,
+                            _,
+                            ->
+                            calls.incrementAndGet()
+                            performed(
+                                runtime = current,
+                                prefix = prefix,
+                            )
+                        },
+                )
+
+            preparation.start(
+                executor = executor,
+                runtime = firstRuntime,
+                prefix = prefix,
+            )
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = firstRuntime,
+                        prefix = prefix,
+                    ),
+                ),
+            )
+            assertIs<VexLifePromptPreparation.State.Consumed>(
+                preparation.state(),
+            )
+
+            preparation.start(
+                executor = executor,
+                runtime = secondRuntime,
+                prefix = prefix,
+            )
+            assertTrue(
+                preparation.nextTurnPreparationPending(),
+                "a terminal prior generation must not prevent the new runtime from preparing",
+            )
+            val second =
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = secondRuntime,
+                        prefix = prefix,
+                    ),
+                )
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
+                second,
+            )
+            assertEquals(
+                secondRuntime.runtimeReceiptRef,
+                second.binding.runtimeReceiptRef,
+            )
+            assertEquals(
+                2,
+                calls.get(),
+            )
+        } finally {
+            executor.shutdownNow()
+            executor.awaitTermination(
+                5,
+                TimeUnit.SECONDS,
+            )
+        }
+    }
+
 }
 
 // [VXG RealForever]

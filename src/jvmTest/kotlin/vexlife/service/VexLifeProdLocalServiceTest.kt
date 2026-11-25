@@ -29,6 +29,7 @@ import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.VexLifePromptPreparation
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
@@ -5047,6 +5048,202 @@ class VexLifeProdLocalServiceTest {
             parent.toFile().deleteRecursively()
         }
     }
+    @Test
+    fun laterPreparationGenerationNeverRearmsFirstLocalStartPresentation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-preparation-presentation-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val entered =
+            CountDownLatch(
+                1,
+            )
+        val release =
+            CountDownLatch(
+                1,
+            )
+        val setup =
+            setup(
+                root,
+            )
+        val preparation =
+            VexLifePromptPreparation(
+                providerPrefill =
+                    VexLifePromptPreparation.ProviderPrefill {
+                        runtime,
+                        systemContent,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 =
+                                sha256(
+                                    systemContent,
+                                ),
+                            requestBodySha256 =
+                                "d".repeat(
+                                    64,
+                                ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 1L,
+                        )
+                    },
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "d".repeat(
+                            40,
+                        ),
+                    setup = setup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "preparation presentation regression uses only streaming Send",
+                            )
+                        },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor {
+                            _,
+                            _,
+                            _,
+                            _,
+                            ->
+                            entered.countDown()
+                            check(
+                                release.await(
+                                    5,
+                                    TimeUnit.SECONDS,
+                                ),
+                            ) {
+                                "first local Send was not released"
+                            }
+                            error(
+                                "first local Send intentionally terminates after presentation proof",
+                            )
+                        },
+                    promptPreparation =
+                        preparation,
+                )
+                .use {
+                    service ->
+                    fun turn() =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+
+                    assertTrue(
+                        turn().initialPromptPreparationPendingForNextTurn,
+                        "the one first local-start presentation is initially available",
+                    )
+
+                    val sendRequest =
+                        HttpRequest
+                            .newBuilder(
+                                URI(
+                                    service.origin +
+                                        VexLifeProdServiceContract.ConversationSendPath,
+                                ),
+                            )
+                            .header(
+                                "accept",
+                                "text/event-stream",
+                            )
+                            .header(
+                                "content-type",
+                                "application/json",
+                            )
+                            .POST(
+                                HttpRequest.BodyPublishers.ofString(
+                                    json.encodeToString(
+                                        VexLifeProdServiceContract.SendRequest(
+                                            idempotencyKey =
+                                                "send.preparation-presentation.first.001",
+                                            content =
+                                                "Begin the first local turn.",
+                                        ),
+                                    ),
+                                    StandardCharsets.UTF_8,
+                                ),
+                            )
+                            .build()
+                    val send =
+                        client.sendAsync(
+                            sendRequest,
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+
+                    assertTrue(
+                        entered.await(
+                            5,
+                            TimeUnit.SECONDS,
+                        ),
+                        "the first local Send never became active",
+                    )
+                    val active =
+                        turn()
+                    assertTrue(
+                        active.initialPromptPreparationForActiveTurn,
+                        "the active first local Send keeps the first-start explanation visible",
+                    )
+
+                    release.countDown()
+                    send.get(
+                        5,
+                        TimeUnit.SECONDS,
+                    )
+
+                    preparation.invalidateAndAwait(
+                        "TEST_SUCCESSOR_SESSION",
+                    )
+                    preparation.startCurrent(
+                        setup.qualifiedRuntimeEvidence,
+                    )
+                    assertTrue(
+                        preparation.nextTurnPreparationPending(),
+                        "the same preparation owner must re-arm for a later exact Session generation",
+                    )
+
+                    val rearmed =
+                        turn()
+                    assertFalse(
+                        rearmed.initialPromptPreparationPendingForNextTurn,
+                        "a later preparation generation must never masquerade as first local startup",
+                    )
+                    assertFalse(
+                        rearmed.initialPromptPreparationForActiveTurn,
+                    )
+                }
+        } finally {
+            release.countDown()
+            preparation.close()
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     private fun sha256(
         value: String,
     ): String =

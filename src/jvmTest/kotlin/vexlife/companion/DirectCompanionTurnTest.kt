@@ -591,7 +591,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun exactInitialPreparationIsConsumedAfterRequestBecomesCanonical() {
+    fun exactPreparationIsConsumedAfterRequestBecomesCanonical() {
         val home =
             productHome()
         val setup =
@@ -602,7 +602,7 @@ class DirectCompanionTurnTest {
         val memory =
             VexLifeMemoryContextFixture.current()
         val prefix =
-            DirectPromptContext.projectInitialBootPrefix(
+            DirectPromptContext.projectProviderPreparationPrefix(
                 foundationalField =
                     VexLifeFoundationalFieldFixture.shipped,
                 memoryContext =
@@ -615,9 +615,9 @@ class DirectCompanionTurnTest {
         val preparationExecutor =
             Executors.newCachedThreadPool()
         val preparation =
-            VexLifeInitialPromptPreparation(
+            VexLifePromptPreparation(
                 providerPrefill =
-                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                    VexLifePromptPreparation.ProviderPrefill {
                         runtime,
                         _,
                         _,
@@ -699,7 +699,7 @@ class DirectCompanionTurnTest {
                             currentFoundationalField = {
                                 VexLifeFoundationalFieldFixture.shipped
                             },
-                            initialPromptPreparation =
+                            promptPreparation =
                                 preparation,
                         ),
                 )
@@ -712,7 +712,7 @@ class DirectCompanionTurnTest {
                 1,
                 providerCalls,
             )
-            assertIs<VexLifeInitialPromptPreparation.State.Consumed>(
+            assertIs<VexLifePromptPreparation.State.Consumed>(
                 preparation.state(),
             )
             val snapshot =
@@ -753,7 +753,7 @@ class DirectCompanionTurnTest {
                 HereticModelCatalog.Models.Qwen4B,
             )
         val stalePrefix =
-            DirectPromptContext.projectInitialBootPrefix(
+            DirectPromptContext.projectProviderPreparationPrefix(
                 foundationalField =
                     null,
                 memoryContext =
@@ -768,9 +768,9 @@ class DirectCompanionTurnTest {
         val preparationExecutor =
             Executors.newCachedThreadPool()
         val preparation =
-            VexLifeInitialPromptPreparation(
+            VexLifePromptPreparation(
                 providerPrefill =
-                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                    VexLifePromptPreparation.ProviderPrefill {
                         runtime,
                         _,
                         _,
@@ -852,7 +852,7 @@ class DirectCompanionTurnTest {
                             currentFoundationalField = {
                                 VexLifeFoundationalFieldFixture.shipped
                             },
-                            initialPromptPreparation =
+                            promptPreparation =
                                 preparation,
                         ),
                 )
@@ -871,7 +871,7 @@ class DirectCompanionTurnTest {
             )
             assertEquals(
                 "PROVIDER_PREFIX_CHANGED",
-                assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+                assertIs<VexLifePromptPreparation.State.Invalidated>(
                         preparation.state(),
                     )
                     .reasonRef,
