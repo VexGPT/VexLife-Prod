@@ -25,8 +25,12 @@ class VexLifeCapabilityRevisitTest {
 
     private class Counting(private val home: Path) {
         var conversationReads = 0
+        var lifecycleReads = 0
 
-        fun sources(resident: Set<String> = emptySet()) =
+        fun sources(
+            resident: Set<String> = emptySet(),
+            lifecycle: VexLifeContextRevisit.ConversationLifecycle? = null,
+        ) =
             VexLifeContextRevisit.TurnSources(
                 readConversation = {
                     conversationReads += 1
@@ -37,6 +41,15 @@ class VexLifeCapabilityRevisitTest {
                 promptResidentEventRefs = { resident },
                 promptResidentStatementRefs = { emptySet() },
                 now = { Instant.parse("2026-11-16T20:00:00Z") },
+                readConversationLifecycle =
+                    lifecycle
+                        ?.let {
+                            value ->
+                            {
+                                lifecycleReads += 1
+                                value
+                            }
+                        },
             )
     }
 
@@ -175,6 +188,99 @@ class VexLifeCapabilityRevisitTest {
             assertEquals(2, secondScan.ownerReadsThisTurn)
             assertEquals(6, firstScan.conversationEventsRead)
             assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, second.entry.state)
+        }
+    }
+
+    @Test
+    fun lifecycleMembraneFiltersHeldConversationAndLabelsHistoricalSource() {
+        ContinuityTurnFixture().use { fixture ->
+            val turns = fixture.threeTurns()
+            val blocked =
+                turns[0]
+            val historical =
+                turns[1]
+            val counting =
+                Counting(
+                    fixture.home,
+                )
+            val sources =
+                counting.sources(
+                    lifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                            blockedEventRefs =
+                                setOf(
+                                    blocked.first.eventRef,
+                                    blocked.second.eventRef,
+                                ),
+                            historicalCurrentizedEventRefs =
+                                setOf(
+                                    historical.first.eventRef,
+                                    historical.second.eventRef,
+                                ),
+                        ),
+                )
+
+            val held =
+                perform(
+                    fixture.home,
+                    """{"queries":[{"terms":["Conversation stays separate"]}]}""",
+                    sources,
+                )
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.NOT_FOUND,
+                held.entry.state,
+            )
+            assertTrue(
+                blocked.first.eventRef !in
+                    held.entry.sourceRefs &&
+                    blocked.second.eventRef !in
+                    held.entry.sourceRefs,
+            )
+
+            val currentized =
+                perform(
+                    fixture.home,
+                    """{"queries":[{"terms":["Why separate"]}]}""",
+                    sources,
+                    requestNumber = 2,
+                )
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.RETURNED,
+                currentized.entry.state,
+            )
+            assertEquals(
+                setOf(
+                    historical.first.eventRef,
+                    historical.second.eventRef,
+                ),
+                currentized.entry.sourceRefs.toSet(),
+            )
+            assertTrue(
+                currentized.resultMessage.content.contains(
+                    "historical/currentized semantic relationship",
+                ),
+            )
+            assertTrue(
+                currentized.resultMessage.content.contains(
+                    "not current Memory or current accepted meaning",
+                ),
+            )
+            assertEquals(
+                1,
+                counting.conversationReads,
+                "Conversation remains one owner read for the whole turn",
+            )
+            assertEquals(
+                1,
+                counting.lifecycleReads,
+                "semantic lifecycle remains one owner read for the whole turn",
+            )
+            assertEquals(
+                "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                sources.conversationLifecycleBindingRefOrNull(),
+            )
         }
     }
 
