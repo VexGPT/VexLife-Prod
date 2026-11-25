@@ -10,7 +10,7 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.sources.VexLifeLocalSourceStore
 
-/** Durable custody for the person's separate bounded workspace-check grant. */
+/** Durable custody for the person's separate bounded project-run grant. */
 class VexLifeWorkspaceRunStore(
     productHome: Path,
     private val localSources: VexLifeLocalSourceStore =
