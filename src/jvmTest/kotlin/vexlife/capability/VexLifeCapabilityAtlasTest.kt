@@ -19,6 +19,11 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.context.working-continuity",
         )
 
+    private val effectCapabilityRefs =
+        listOf(
+            VexLifeWorkspaceEffectDefinitions.WriteRef,
+        )
+
     private val reachCapabilityRefs =
         listOf(
             "capability.vexlife.atlas.describe",
@@ -185,7 +190,7 @@ class VexLifeCapabilityAtlasTest {
             registry.effectAuthorityGranted,
         )
         assertEquals(
-            (allCapabilityRefs + reachCapabilityRefs).sorted(),
+            (allCapabilityRefs + reachCapabilityRefs + effectCapabilityRefs).sorted(),
             registry.definitions
                 .map {
                     it.capabilityRef
@@ -203,7 +208,24 @@ class VexLifeCapabilityAtlasTest {
         assertTrue(
             registry.definitions
                 .filter { it.capabilityRef in reachCapabilityRefs }
-                .all { it.actions.isNotEmpty() && it.effectClass != "WRITE" },
+                .all { it.actions.isNotEmpty() && !it.effectClass.contains("WRITE") },
+        )
+        val workspaceWrite =
+            registry.definitions.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals(
+            "RECOVERY_GUARDED_LOCAL_WRITE",
+            workspaceWrite.effectClass,
+        )
+        assertEquals(
+            listOf("write"),
+            workspaceWrite.actions.map { it.action },
+        )
+        assertTrue(
+            VexLifeWorkspaceEffectDefinitions.WriteRef !in
+                VexLifeReachDefinitions.ProviderToolCapabilityRefs,
+            "W1 registers the effect meaning but W2 must earn ordinary-turn availability",
         )
         assertEquals(
             VexLifeReachDefinitions.ProviderToolCapabilityRefs.sorted(),
