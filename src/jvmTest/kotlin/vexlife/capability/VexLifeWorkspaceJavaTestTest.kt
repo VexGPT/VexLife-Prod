@@ -321,6 +321,24 @@ class VexLifeWorkspaceJavaTestTest {
                                 spec.workingDirectory.toString(),
                             ),
                         )
+                        val spawnHelper =
+                            VexLifeWorkspaceJavaTest.javaSpawnHelperPath(
+                                Path.of(
+                                    expectedRuntime.javaPath,
+                                ),
+                            )
+                        assertTrue(
+                            profile.contains(
+                                "(literal \"" +
+                                    spawnHelper +
+                                    "\")",
+                            ),
+                        )
+                        assertFalse(
+                            profile.contains(
+                                "(literal \"/usr/bin/true\")",
+                            ),
+                        )
                         VexLifeWorkspaceJavaTest.ProcessResult(
                             started =
                                 true,

@@ -328,6 +328,39 @@ class VexLifeWorkspaceJavaTest internal constructor(
                 imageRoot
                     .toAbsolutePath()
                     .normalize()
+            val spawnHelper =
+                runCatching {
+                        javaSpawnHelperPath(
+                            Path.of(
+                                observation.javaPath,
+                            ),
+                        )
+                    }
+                    .getOrNull()
+                    ?: return null
+            val spawnHelperAttributes =
+                runCatching {
+                        Files.readAttributes(
+                            spawnHelper,
+                            BasicFileAttributes::class.java,
+                            LinkOption.NOFOLLOW_LINKS,
+                        )
+                    }
+                    .getOrNull()
+                    ?: return null
+            if (
+                !spawnHelper.startsWith(
+                    image,
+                ) ||
+                !spawnHelperAttributes.isRegularFile ||
+                spawnHelperAttributes.isSymbolicLink ||
+                !Files.isExecutable(
+                    spawnHelper,
+                )
+            ) {
+                return null
+            }
+
             val runtimeRef =
                 RuntimeRefPrefix +
                     sha256(
@@ -1541,6 +1574,32 @@ class VexLifeWorkspaceJavaTest internal constructor(
                             ".."
                     }
 
+        internal fun javaSpawnHelperPath(
+            javaPath: Path,
+        ): Path {
+            val java =
+                javaPath
+                    .toAbsolutePath()
+                    .normalize()
+            val bin =
+                requireNotNull(
+                    java.parent,
+                ) {
+                    "workspace Java-test java path has no bin parent"
+                }
+            val javaHome =
+                requireNotNull(
+                    bin.parent,
+                ) {
+                    "workspace Java-test java path has no runtime home"
+                }
+            return javaHome
+                .resolve(
+                    "lib/jspawnhelper",
+                )
+                .normalize()
+        }
+
         internal fun sandboxProfile(
             imageRoot: Path,
             scratch: Path,
@@ -1567,6 +1626,13 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         .normalize()
                         .toString(),
                 )
+            val spawnHelper =
+                sbpl(
+                    javaSpawnHelperPath(
+                        javaPath,
+                    )
+                        .toString(),
+                )
             return """
                 |(version 1)
                 |(deny default)
@@ -1588,7 +1654,9 @@ class VexLifeWorkspaceJavaTest internal constructor(
                 |(allow file-write*
                 |  (subpath "$scratchPath")
                 |  (literal "/dev/null"))
-                |(allow process-exec (literal "$java"))
+                |(allow process-exec
+                |  (literal "$java")
+                |  (literal "$spawnHelper"))
                 |(allow mach-lookup
                 |  (global-name "com.apple.system.logger")
                 |  (global-name "com.apple.system.opendirectoryd.libinfo"))
