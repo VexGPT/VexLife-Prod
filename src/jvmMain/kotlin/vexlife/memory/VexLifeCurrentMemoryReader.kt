@@ -1085,17 +1085,11 @@ object VexLifeCurrentMemoryReader {
                     "lifecycle.score." +
                         (
                             scoreHeadSha256
-                                ?.take(
-                                    16,
-                                )
                                 ?: "none"
                             ) +
                         "." +
                         (
                             semanticAuthorityHeadSha256
-                                ?.take(
-                                    16,
-                                )
                                 ?: "none"
                             )
                 },
