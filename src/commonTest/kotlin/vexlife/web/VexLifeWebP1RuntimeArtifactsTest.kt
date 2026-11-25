@@ -1600,7 +1600,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         }
     }
     @Test
-    fun promptPreparationStaysInternalInsteadOfCreatingABootOnlyPresentationState() {
+    fun firstLocalStartStatusExplainsTheOneInitialLocalTurnWithoutOwningSend() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts.generate(
                 presentationSourceSha =
@@ -1615,27 +1615,54 @@ class VexLifeWebP1RuntimeArtifactsTest {
                     VexLifeWorkspaceBlueprint.ResponseProgress.ref +
                     "\"",
             ),
-            "follow-up readiness still reuses the existing ResponseProgress coordinate",
+            "first local start reuses the existing ResponseProgress coordinate",
         )
-        assertFalse(
-            bundle.javascript.contains(
-                "initialPromptPreparation",
+        assertTrue(
+            bundle.html.contains(
+                "id=\"response-progress\"",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.javascript.contains(
-                "FirstLocalStart",
+                "initialPromptPreparationPendingForNextTurn",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.javascript.contains(
-                "first-local-start",
+                "initialPromptPreparationForActiveTurn",
             ),
         )
-        assertFalse(
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.heading.first-local-start",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-ready-to-send",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-sent",
+            ),
+        )
+        assertTrue(
             bundle.css.contains(
-                "FirstLocalStart",
+                ".response-progress[data-state=\"FirstLocalStart\"]",
             ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "var(--status-caution)",
+            ),
+            "first-local-start explanation uses the existing evidentiary caution token",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "FirstLocalStartStatus",
+            ),
+            "first-local-start explanation must not create a second Blueprint/VexWeb coordinate",
         )
         assertFalse(
             bundle.javascript.contains(
