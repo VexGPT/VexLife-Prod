@@ -408,6 +408,14 @@ val serviceImageJavaLauncher21 =
             )
         }
 
+tasks.named<org.gradle.api.tasks.testing.Test>(
+    "jvmTest",
+) {
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+}
+
 val serviceLauncherSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/bin/vexlife-prod-service",
