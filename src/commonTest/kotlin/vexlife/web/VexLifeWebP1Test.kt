@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            139,
+            141,
             blueprint.size,
         )
 
@@ -59,6 +59,20 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Refs.LocalSourcesCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref).binding as VexWeb.Binding.Capability).capabilityRef,
         )
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
+                    VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWebP1.Refs.WorkspaceEffectsCapability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
 
         val profileCapabilities =
             mapOf(
