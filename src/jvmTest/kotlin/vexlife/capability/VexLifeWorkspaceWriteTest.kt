@@ -79,6 +79,12 @@ class VexLifeWorkspaceWriteTest {
                 VexLifeWorkspaceWrite.DispositionCreated,
                 outcome.receipt.disposition,
             )
+            assertTrue(
+                outcome.effectPerformedNow,
+            )
+            assertTrue(
+                outcome.currentEffectAuthority,
+            )
             assertEquals(
                 "PRIVATE-CONTENT",
                 Files.readString(fixture.source.resolve("hello.txt")),
@@ -178,6 +184,8 @@ class VexLifeWorkspaceWriteTest {
                     )
                 )
             assertEquals(VexLifeWorkspaceWrite.DispositionRecovered, recovered.receipt.disposition)
+            assertTrue(!recovered.effectPerformedNow)
+            assertTrue(recovered.currentEffectAuthority)
             assertEquals(modifiedAt, Files.getLastModifiedTime(fixture.source.resolve("recover.txt")))
         }
 
@@ -212,6 +220,8 @@ class VexLifeWorkspaceWriteTest {
                     )
                 )
             assertEquals(VexLifeWorkspaceWrite.DispositionRecovered, recovered.receipt.disposition)
+            assertTrue(!recovered.effectPerformedNow)
+            assertTrue(!recovered.currentEffectAuthority)
 
             val refused =
                 assertIs<VexLifeWorkspaceWrite.Outcome.Refused>(
