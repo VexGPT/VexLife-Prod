@@ -7212,6 +7212,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadModels = async () => {
+                const wasSwitching = Boolean(state.models?.switching);
                 const [localResponse, sourceResponse] = await Promise.all([
                   productFetch(service.modelsPath, {
                     headers: { accept: 'application/json' },
@@ -7224,7 +7225,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 ]);
                 state.models = await readJson(localResponse);
                 state.modelSources = await readJson(sourceResponse);
+                const switchingNow = Boolean(state.models?.switching);
                 renderModels();
+                if (wasSwitching && !switchingNow) {
+                  void loadConversationTurn().catch(() => {});
+                }
                 // Follow only active model work; nothing polls when the relationship is stable.
                 if (state.models?.downloading || state.models?.switching) {
                   window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
