@@ -279,7 +279,7 @@ class VexLifePromptPreparationTest {
             )
 
             assertTrue(
-                preparation.firstLocalTurnPending(),
+                preparation.nextTurnPreparationPending(),
                 "Cold/Preparing/Ready preparation still belongs to the one first local turn",
             )
 
@@ -301,7 +301,7 @@ class VexLifePromptPreparationTest {
                 preparation.state(),
             )
             assertFalse(
-                preparation.firstLocalTurnPending(),
+                preparation.nextTurnPreparationPending(),
                 "Consumed preparation must not label later turns as first-local-start work",
             )
 
@@ -620,6 +620,95 @@ class VexLifePromptPreparationTest {
             executor.shutdownNow()
         }
     }
+    @Test
+    fun consumedGenerationCanRearmForANewRuntimeReceipt() {
+        val firstRuntime =
+            runtime(
+                "receipt.vexlife-prod.prompt-preparation.generation-a",
+            )
+        val secondRuntime =
+            runtime(
+                "receipt.vexlife-prod.prompt-preparation.generation-b",
+            )
+        val prefix =
+            prefix()
+        val calls =
+            AtomicInteger(
+                0,
+            )
+        val executor =
+            Executors.newCachedThreadPool()
+
+        try {
+            val preparation =
+                VexLifePromptPreparation(
+                    providerPrefill =
+                        VexLifePromptPreparation.ProviderPrefill {
+                            current,
+                            _,
+                            _,
+                            ->
+                            calls.incrementAndGet()
+                            performed(
+                                runtime = current,
+                                prefix = prefix,
+                            )
+                        },
+                )
+
+            preparation.start(
+                executor = executor,
+                runtime = firstRuntime,
+                prefix = prefix,
+            )
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = firstRuntime,
+                        prefix = prefix,
+                    ),
+                ),
+            )
+            assertIs<VexLifePromptPreparation.State.Consumed>(
+                preparation.state(),
+            )
+
+            preparation.start(
+                executor = executor,
+                runtime = secondRuntime,
+                prefix = prefix,
+            )
+            assertTrue(
+                preparation.nextTurnPreparationPending(),
+                "a terminal prior generation must not prevent the new runtime from preparing",
+            )
+            val second =
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = secondRuntime,
+                        prefix = prefix,
+                    ),
+                )
+            assertIs<VexLifePromptPreparation.Decision.Reusable>(
+                second,
+            )
+            assertEquals(
+                secondRuntime.runtimeReceiptRef,
+                second.binding.runtimeReceiptRef,
+            )
+            assertEquals(
+                2,
+                calls.get(),
+            )
+        } finally {
+            executor.shutdownNow()
+            executor.awaitTermination(
+                5,
+                TimeUnit.SECONDS,
+            )
+        }
+    }
+
 }
 
 // [VXG RealForever]
