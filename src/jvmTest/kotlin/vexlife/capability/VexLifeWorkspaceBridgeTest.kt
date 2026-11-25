@@ -23,8 +23,13 @@ class VexLifeWorkspaceBridgeTest {
                 64,
             )
 
+    private companion object {
+        const val PrivateWorkspaceBody =
+            "PRIVATE-WORKSPACE-BODY-DO-NOT-RETURN"
+    }
+
     private fun parsed(
-        content: String = "formed",
+        content: String = PrivateWorkspaceBody,
     ): VexLifeCapabilityRequest.Parsed =
         requireNotNull(
             VexLifeCapabilityRequest.parseOrNull(
@@ -133,7 +138,7 @@ class VexLifeWorkspaceBridgeTest {
                                 relativePath,
                             )
                             assertEquals(
-                                "formed",
+                                PrivateWorkspaceBody,
                                 writtenContent,
                             )
                             assertEquals(
@@ -198,7 +203,7 @@ class VexLifeWorkspaceBridgeTest {
         )
         assertFalse(
             exchange.resultMessage.content.contains(
-                "formed",
+                PrivateWorkspaceBody,
             ),
         )
         assertTrue(
