@@ -156,8 +156,8 @@ class VexLifeProdLocalService private constructor(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
         /**
-         * Presentation-only truth: this active turn is the one first local Send that began while
-         * Prompt Preparation was still pending/reusable. Later preparation generations never set it.
+         * Presentation-only truth for the one first canonical local Send. This does not mirror
+         * preparation lifetime and is never re-armed by later model/runtime switches.
          */
         val initialPromptPreparationTurn: Boolean,
     )
