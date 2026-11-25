@@ -1392,21 +1392,9 @@ object DirectCompanionTurn {
                     locatorBackend =
                         hooks.continuitySourceLocatorBackend,
                     sourceLifecycle = {
-                        VexLifeCurrentMemoryReader
-                            .readConversationRecallMembrane(
-                                productHome,
-                            )
-                            .let {
-                                membrane ->
-                                DirectConversationContextProjection.SourceLifecycle(
-                                    bindingRef =
-                                        membrane.bindingRef,
-                                    blockedEventRefs =
-                                        membrane.blockedEventRefs,
-                                    historicalCurrentizedEventRefs =
-                                        membrane.historicalCurrentizedEventRefs,
-                                )
-                            }
+                        conversationRecallSourceLifecycle(
+                            productHome,
+                        )
                     },
                 )
             } else {
@@ -1720,6 +1708,10 @@ object DirectCompanionTurn {
                 )
             }
 
+            val sourceReturnLifecycle =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    productHome,
+                )
             val excludedSourceRefs =
                 buildSet {
                     addAll(
@@ -1733,12 +1725,19 @@ object DirectCompanionTurn {
                         initialPrompt.materialization.receipt
                             .conversationContextProjectionSourceEventRefs,
                     )
+                    addAll(
+                        sourceReturnLifecycle.blockedEventRefs,
+                    )
                 }
             val discovery =
                 DirectConversationSourceReturn.discover(
                     conversationOwner = conversationOwner,
                     request = sourceReturnRequest,
                     excludedEventRefs = excludedSourceRefs,
+                    sourceLifecycleBindingRef =
+                        sourceReturnLifecycle.bindingRef,
+                    historicalCurrentizedEventRefs =
+                        sourceReturnLifecycle.historicalCurrentizedEventRefs,
                 )
 
             val finalMemoryAvailability =
@@ -2286,6 +2285,25 @@ object DirectCompanionTurn {
         )
     }
 
+    private fun conversationRecallSourceLifecycle(
+        productHome: Path,
+    ): DirectConversationContextProjection.SourceLifecycle =
+        VexLifeCurrentMemoryReader
+            .readConversationRecallMembrane(
+                productHome,
+            )
+            .let {
+                membrane ->
+                DirectConversationContextProjection.SourceLifecycle(
+                    bindingRef =
+                        membrane.bindingRef,
+                    blockedEventRefs =
+                        membrane.blockedEventRefs,
+                    historicalCurrentizedEventRefs =
+                        membrane.historicalCurrentizedEventRefs,
+                )
+            }
+
     private fun reverifyContinuityPrompt(
         selection: ContinuityPromptSelection,
         conversationOwner: DirectConversationStore.Locked,
@@ -2317,6 +2335,33 @@ object DirectCompanionTurn {
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
+        val expectedRecallLifecycleBindings =
+            listOfNotNull(
+                conversationContextPreparation
+                    ?.sourceLifecycleBindingRef,
+                sourceReturnDiscovery
+                    ?.sourceLifecycleBindingRef,
+            )
+                .distinct()
+        if (
+            expectedRecallLifecycleBindings.isNotEmpty()
+        ) {
+            val currentRecallLifecycleBinding =
+                VexLifeCurrentMemoryReader
+                    .readConversationRecallMembrane(
+                        productHome,
+                    )
+                    .bindingRef
+            require(
+                expectedRecallLifecycleBindings.all {
+                    it ==
+                        currentRecallLifecycleBinding
+                },
+            ) {
+                "Conversation recall lifecycle changed before the provider boundary"
+            }
+        }
+
         val requestArtifactManifest =
             requestArtifactManifest(
                 productHome =
