@@ -424,28 +424,34 @@ internal class VexLifePromptPreparation(
             State.Preparing(
                 binding,
             )
-        while (
-            true
+        val admitted =
+            synchronized(
+                this,
+            ) {
+                val current =
+                    state.get()
+                if (
+                    current is State.Preparing ||
+                    current is State.ReadyReusable
+                ) {
+                    false
+                } else {
+                    // Publish the attempt fence before PREPARING becomes observable. A human turn
+                    // may therefore never observe PREPARING without the exact generation it must
+                    // wait on or invalidate.
+                    currentAttempt.set(
+                        attempt,
+                    )
+                    state.set(
+                        preparing,
+                    )
+                    true
+                }
+            }
+        if (
+            !admitted
         ) {
-            val current =
-                state.get()
-            if (
-                current is State.Preparing ||
-                current is State.ReadyReusable
-            ) {
-                return
-            }
-            if (
-                state.compareAndSet(
-                    current,
-                    preparing,
-                )
-            ) {
-                currentAttempt.set(
-                    attempt,
-                )
-                break
-            }
+            return
         }
         log(
             preparing,
