@@ -1525,6 +1525,8 @@ class VexLifeProdLocalService private constructor(
                 modelSwitchRealization = modelSwitchRealization,
                 partnerSwitchRealization = partnerSwitchRealization,
                 partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    partnerConnectionLiveEffectsEnabled,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
