@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A003",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "f9a37bd8931d441760c19428ce3f6925e83d7d22",
+  "upstreamProofBase": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "predecessorAttempt": "A002",
+  "changeFromPredecessor": "Preserve host-vs-provider source-return origin across same-turn capability re-verification; currentize implementation cleanly onto latest #503 head.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A003/VEX-EVOLVECONTEXT-STAGE-A003-PROOF-20261121.zip",
+    "sha256": "4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319"
+  },
+  "return": {
+    "filename": "RETURN-VEX-EVOLVECONTEXT-STAGE-A003-20261121T175538Z.zip",
+    "sha256": "294f2422c96811cb6ef5f7aabe78f55ba3711ec3cc6be6fed95b7f8311ad1ad7",
+    "bytes": 24674,
+    "formedAtUtc": "2026-11-21T17:56:38Z",
+    "exactBinaryStoredInRepository": false,
+    "durableEvidencePath": "relay/evolve-context/proof-custody/attempts/A003/RETURN-EVIDENCE.md",
+    "note": "Exact user-returned archive hash verified in chat runtime. Larger binary was not retained after connector byte-verification failed; extracted status/JUnit evidence is durable."
+  },
+  "sourceBinding": {
+    "expectedHead": "f9a37bd8931d441760c19428ce3f6925e83d7d22",
+    "observedHead": "f9a37bd8931d441760c19428ce3f6925e83d7d22",
+    "cleanBefore": true,
+    "cleanAfter": true
+  },
+  "result": {
+    "state": "FAILED",
+    "exitCode": 1,
+    "compileJvmMain": "PASS",
+    "compileJvmTest": "PASS",
+    "focusedTestsCompleted": 5,
+    "focusedTestsFailed": 1,
+    "hostCueAndSourceTests": "4/4 PASS",
+    "controlRun": "COMPLETED_PARTIAL",
+    "treatmentRun": "ERROR_AT_ORDINAL_21",
+    "fullJvmRegressionRun": false,
+    "failure": "Treatment continuity-pressure projection stopped at ordinal 21: direct Companion turn failed: ADMISSION_FAILED."
+  },
+  "evidence": {
+    "baselineTurnCount": 30,
+    "baselineFirstWorkingRolloverTurn": 17,
+    "baselineProbe01Route": "HYDRATED_THIS_TURN",
+    "treatmentCompletedTurnCountBeforeFailure": 20,
+    "treatmentModelVisibleRevisitCallsBeforeFailure": 0,
+    "junitAndHtmlReportsCaptured": true
+  },
+  "nextDiagnosticNeed": "A004: capture nested exception chain, failed-turn provider-call count, and failed-turn chronology before another semantic change.",
+  "state": "RETURN_RECEIVED_FAILED_DIAGNOSTIC_NEXT"
+}

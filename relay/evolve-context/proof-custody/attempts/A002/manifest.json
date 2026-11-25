@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A002",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "a260b5f21a036aa86f8aa9c38b60dfa3390fed51",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A002/VEX-EVOLVECONTEXT-STAGE-A002-PROOF-20261121.zip",
+    "sha256": "0900ead88f16664e1e8a6f0762c26421007344dab0cba8be4b8c392eca803702"
+  },
+  "return": {
+    "path": "relay/evolve-context/proof-custody/attempts/A002/RETURN-VEX-EVOLVECONTEXT-STAGE-A002-20261121T174710Z.zip",
+    "sha256": "9b618854d1e8af2dabb05939d226cb77256166c3ddad03b57df397a660de6945",
+    "formedAtUtc": "2026-11-21T17:47:48Z"
+  },
+  "sourceBinding": {
+    "expectedHead": "a260b5f21a036aa86f8aa9c38b60dfa3390fed51",
+    "observedHead": "a260b5f21a036aa86f8aa9c38b60dfa3390fed51",
+    "cleanBefore": true
+  },
+  "result": {
+    "state": "FAILED",
+    "exitCode": 1,
+    "focusedTestsCompleted": 5,
+    "focusedTestsFailed": 1,
+    "compileJvmMain": "PASS",
+    "compileJvmTest": "PASS",
+    "fullJvmRegressionRun": false,
+    "failure": "ContinuityPressureAdapterTest.hostContinuationTreatmentPutsOlderExactSourceInTheFirstProviderCall failed because treatment run returned nonzero before provider-call assertions."
+  },
+  "diagnosisAfterReturn": {
+    "class": "SOURCE_RETURN_ORIGIN_CURRENTNESS",
+    "summary": "Host-prepared source origin was lost during later same-turn capability prompt re-verification, causing provider-native re-materialization to treat the discovery as provider-requested and change the prompt fingerprint."
+  }
+}
