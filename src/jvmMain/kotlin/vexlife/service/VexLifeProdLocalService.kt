@@ -1381,7 +1381,7 @@ class VexLifeProdLocalService private constructor(
                 partnerSwitchRealization = partnerSwitchRealization,
                 partnerInference = partnerInference,
                 partnerConnectionLiveEffectsEnabled =
-                    partnerConnectionLiveEffectsEnabled,
+                    PartnerConnectionLiveEffectsEnabledForThisRelease,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
