@@ -885,15 +885,15 @@ object DirectPromptContext {
     )
 
     /**
-     * Exact provider-leading system prefix that may be formed before the first human request.
+     * Exact provider-leading system prefix that may be formed before a local human request.
      *
      * This projection owns no Foundation, Memory, capability or provider meaning. It composes the
      * already-owned stable/current inputs exactly as [materialize] will place them at the beginning
-     * of a genesis turn. A later Send must re-materialize and compare exact provider bytes before
+     * of a local turn. A later Send must re-materialize and compare exact provider bytes before
      * any prepared cache may be treated as reusable.
      */
     @ConsistentCopyVisibility
-    data class InitialBootPrefix internal constructor(
+    data class ProviderPreparationPrefix internal constructor(
         val messages: List<CompanionProviderMessage>,
         val systemMessageSha256: String,
         val foundationalField: VexLifeFoundationalField.Evidence?,
@@ -1028,25 +1028,25 @@ object DirectPromptContext {
     }
 
     /**
-     * Forms only the exact leading system message that a normal first turn can reuse.
+     * Forms only the exact leading system message that a normal local turn can reuse.
      *
      * No synthetic user message is added. No provider call occurs. The projection deliberately
      * binds the current Memory snapshot and provider representation so a later human Send can
      * invalidate it if either changed before inference.
      */
-    internal fun projectInitialBootPrefix(
+    internal fun projectProviderPreparationPrefix(
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         memoryContext: VexLifeMemoryContract.Context? = null,
         memoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? = null,
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
-    ): InitialBootPrefix {
+    ): ProviderPreparationPrefix {
         require(
             memoryContext == null ||
                 memoryProviderSelection == null,
         ) {
-            "initial boot prefix accepts either one Memory context or one provider selection, not both"
+            "provider preparation prefix accepts either one Memory context or one provider selection, not both"
         }
 
         val memory =
@@ -1073,7 +1073,7 @@ object DirectPromptContext {
                 ?.effectAuthorityGranted !=
                 true,
         ) {
-            "initial boot prefix Foundation cannot grant effect authority"
+            "provider preparation prefix Foundation cannot grant effect authority"
         }
         val profileFoundation =
             contextProfile
@@ -1196,16 +1196,16 @@ object DirectPromptContext {
             requireNotNull(
                 messages.singleOrNull(),
             ) {
-                "initial boot prefix must form exactly one leading provider system message"
+                "provider preparation prefix must form exactly one leading provider system message"
             }
         require(
             systemMessage.role ==
                 "system",
         ) {
-            "initial boot prefix must remain one provider system message"
+            "provider preparation prefix must remain one provider system message"
         }
 
-        return InitialBootPrefix(
+        return ProviderPreparationPrefix(
             messages = messages,
             systemMessageSha256 =
                 sha256(
