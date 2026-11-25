@@ -1545,7 +1545,7 @@ class VexLifeWorkspaceJavaTest internal constructor(
             return """
                 |(version 1)
                 |(deny default)
-                |(allow process*)
+                |(allow process-fork)
                 |(allow signal (target self))
                 |(allow sysctl-read)
                 |(allow file-read-metadata)
@@ -1724,8 +1724,8 @@ class VexLifeWorkspaceJavaTest internal constructor(
                     "\\\\",
                 )
                 .replace(
-                    """,
-                    "\\"",
+                    "\"",
+                    "\\\"",
                 )
 
         private fun policyPath(
@@ -1737,8 +1737,8 @@ class VexLifeWorkspaceJavaTest internal constructor(
                     "\\\\",
                 )
                 .replace(
-                    """,
-                    "\\"",
+                    "\"",
+                    "\\\"",
                 )
     }
 }
