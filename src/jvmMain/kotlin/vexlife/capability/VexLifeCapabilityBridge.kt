@@ -130,6 +130,13 @@ object VexLifeCapabilityBridge {
                     expectedPriorSha256 = expectedPriorSha256,
                 )
         },
+        val checkWorkspace: ((
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            request: VexLifeWorkspaceTextCheck.Request,
+        ) -> VexLifeWorkspaceTextCheck.Outcome)? =
+            null,
         val now: () -> Instant = { Instant.now() },
     )
 
@@ -439,7 +446,10 @@ object VexLifeCapabilityBridge {
     private val RequestEnvelopeCapabilityRefs: Set<String> =
         VexLifeReachDefinitions.EnvelopeCapabilityRefs
             .toSet() +
-            VexLifeWorkspaceEffectDefinitions.WriteRef
+            setOf(
+                VexLifeWorkspaceEffectDefinitions.WriteRef,
+                VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            )
 
     private const val FormReminder =
         "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
@@ -510,6 +520,13 @@ object VexLifeCapabilityBridge {
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 VexLifeWorkspaceEffectDefinitions.WriteRef ->
                     workspaceWrite(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
+                VexLifeWorkspaceCheckDefinitions.CapabilityRef ->
+                    workspaceCheck(
                         action = action.action,
                         args = args,
                         admission = admission,
@@ -753,6 +770,144 @@ object VexLifeCapabilityBridge {
                         },
                     externalEffectMayHaveExecuted = true,
                 )
+        }
+    }
+
+
+    private fun workspaceCheck(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (action != "check") {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                null,
+                "workspace-check has no action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string("source")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    null,
+                    "workspace check requires one exact Local Source ref.",
+                    untrusted = false,
+                )
+        val relativePath =
+            args.string("path")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace check requires one relative text path.",
+                    untrusted = false,
+                )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$relativePath",
+                    "workspace check requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val owner =
+            ownerBindings.checkWorkspace
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$relativePath",
+                    "The Product-owned workspace check process is not available in this runtime.",
+                    untrusted = false,
+                )
+        val request =
+            VexLifeWorkspaceTextCheck.Request(
+                relativePath = relativePath,
+                requiredLiterals = args.stringArray("required"),
+                forbiddenLiterals = args.stringArray("forbidden"),
+            )
+        val operationRef =
+            "operation.vexlife-prod.workspace-check." +
+                VexLifeCapabilityRequest.sha256(
+                    requestEventHash +
+                        "\u0000" +
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef +
+                        "\u0000" +
+                        action +
+                        "\u0000" +
+                        VexContractJson.canonicalEncodeElement(args),
+                )
+        return when (
+            val outcome =
+                owner(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    request,
+                )
+        ) {
+            is VexLifeWorkspaceTextCheck.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    "$sourceRef:$relativePath",
+                    "The workspace check was refused before the Product-owned checker completed.",
+                    untrusted = false,
+                    facts = mapOf("reason" to outcome.reason),
+                )
+
+            is VexLifeWorkspaceTextCheck.Outcome.Completed -> {
+                val receipt = outcome.receipt
+                val state =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceTextCheck.DispositionCheckCompleted,
+                        VexLifeWorkspaceTextCheck.DispositionCheckFailed,
+                        -> ResultState.RETURNED
+                        VexLifeWorkspaceTextCheck.DispositionTimeout,
+                        VexLifeWorkspaceTextCheck.DispositionProcessFailed,
+                        -> ResultState.FAILED
+                        else -> ResultState.FAILED
+                    }
+                val text =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceTextCheck.DispositionCheckCompleted ->
+                            "The bounded workspace check completed and every requested assertion passed."
+                        VexLifeWorkspaceTextCheck.DispositionCheckFailed ->
+                            "The bounded workspace check completed and returned assertion/file evidence that did not pass."
+                        VexLifeWorkspaceTextCheck.DispositionTimeout ->
+                            "The bounded workspace check process timed out."
+                        else ->
+                            "The bounded workspace check process did not complete normally."
+                    }
+                Body(
+                    state,
+                    "$sourceRef:$relativePath",
+                    text,
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put("disposition", receipt.disposition)
+                            put("currentEffectAuthority", receipt.currentEffectAuthority.toString())
+                            put("runtimeRef", receipt.runtimeRef)
+                            put("checkGrantRef", receipt.checkGrantRef)
+                            put("timedOut", receipt.timedOut.toString())
+                            put("stdoutTruncated", receipt.stdoutTruncated.toString())
+                            put("stderrTruncated", receipt.stderrTruncated.toString())
+                            receipt.exitCode?.let { put("exitCode", it.toString()) }
+                            receipt.observedSha256?.let { put("observedSha256", it) }
+                            receipt.bytes?.let { put("bytes", it.toString()) }
+                            if (receipt.failures.isNotEmpty()) {
+                                put(
+                                    "failures",
+                                    receipt.failures.joinToString(";") {
+                                        it.code + (it.assertionIndex?.let { index -> ":$index" } ?: "")
+                                    },
+                                )
+                            }
+                        },
+                    externalEffectsExecuted = receipt.externalEffectsExecuted,
+                    effectAuthorityGranted = receipt.effectAuthorityGranted,
+                )
+            }
         }
     }
 
@@ -2662,6 +2817,17 @@ object VexLifeCapabilityBridge {
                 it.isString
             }
             ?.contentOrNull
+
+
+    private fun JsonObject.stringArray(name: String): List<String> =
+        (this[name] as? JsonArray)
+            ?.map {
+                require(it is JsonPrimitive && it.isString) {
+                    "$name must contain only strings"
+                }
+                (it as JsonPrimitive).content
+            }
+            .orEmpty()
 
     private fun JsonObject.integer(name: String): Int? =
         (this[name] as? JsonPrimitive)

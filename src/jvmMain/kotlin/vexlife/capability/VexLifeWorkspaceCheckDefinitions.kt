@@ -183,6 +183,72 @@ object VexLifeWorkspaceCheckDefinitions {
                 false,
         )
 
+
+    val Definitions =
+        listOf(
+            VexLifeCapabilityAtlas.Definition(
+                capabilityRef = CapabilityRef,
+                handle = Handle,
+                purpose = "Run one Product-owned bounded UTF-8 text check inside one explicitly granted Local Source.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = listOf(VexLifeCapabilityAtlas.CompanionRoleRef),
+                platformRefs = listOf(VexLifeCapabilityAtlas.MacPlatformRef),
+                permissionRef = PermissionRef,
+                resourceRef = ResourceRef,
+                effectClass = EffectClass,
+                resourceClass = ResourceClass,
+                modelParticipationClass = "REQUEST_RETURN_EFFECT",
+                sourcePath = "src/jvmMain/kotlin/vexlife/capability/VexLifeWorkspaceTextCheck.kt",
+                priority = 47,
+                actions =
+                    listOf(
+                        VexLifeCapabilityAtlas.Action(
+                            action = "check",
+                            purpose = "Check one bounded UTF-8 file for required and forbidden literal text.",
+                            arguments =
+                                listOf(
+                                    VexLifeCapabilityAtlas.Argument(
+                                        name = "source",
+                                        schema = VexLifeCapabilityAtlas.ValueSchema(type = "string"),
+                                        required = true,
+                                        meaning = "Exact Local Source ref whose current Check grant admits this check.",
+                                    ),
+                                    VexLifeCapabilityAtlas.Argument(
+                                        name = "path",
+                                        schema = VexLifeCapabilityAtlas.ValueSchema(type = "string"),
+                                        required = true,
+                                        meaning = "Relative UTF-8 text-file path inside that exact Local Source.",
+                                    ),
+                                    VexLifeCapabilityAtlas.Argument(
+                                        name = "required",
+                                        schema =
+                                            VexLifeCapabilityAtlas.ValueSchema(
+                                                type = "array",
+                                                items = VexLifeCapabilityAtlas.ValueSchema(type = "string"),
+                                            ),
+                                        required = false,
+                                        meaning = "Bounded literal strings that must be present.",
+                                    ),
+                                    VexLifeCapabilityAtlas.Argument(
+                                        name = "forbidden",
+                                        schema =
+                                            VexLifeCapabilityAtlas.ValueSchema(
+                                                type = "array",
+                                                items = VexLifeCapabilityAtlas.ValueSchema(type = "string"),
+                                            ),
+                                        required = false,
+                                        meaning = "Bounded literal strings that must be absent.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.local.sha256.<sha256>","path":"README.md","required":["ready"],"forbidden":["TODO"]}""",
+                            returns =
+                                "Typed CHECK_COMPLETED or CHECK_FAILED evidence with digest/byte count and assertion failures; never the source body.",
+                        ),
+                    ),
+            ),
+        )
+
     fun requireCommand(
         commandRef: String,
     ): CommandDefinition {

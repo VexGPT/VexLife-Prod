@@ -28,7 +28,7 @@ import vexlife.workspace.VexLifeWorkspaceCheckStore
  * environment key or timeout. Those are compiled from Product source and current host/source/grant
  * observations.
  */
-internal class VexLifeWorkspaceTextCheck(
+class VexLifeWorkspaceTextCheck internal constructor(
     productHome: Path,
     private val localSources: VexLifeLocalSourceStore =
         VexLifeLocalSourceStore(

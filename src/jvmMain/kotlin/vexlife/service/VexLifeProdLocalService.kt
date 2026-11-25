@@ -99,6 +99,10 @@ import vexlife.sources.VexLifeLocalSourceStore
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectStore
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceCheckStore
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.capability.VexLifeWorkspaceTextCheck
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -266,6 +270,16 @@ class VexLifeProdLocalService private constructor(
 
     private val workspaceEffects =
         VexLifeWorkspaceEffectStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
+        )
+
+    private val workspaceChecks =
+        VexLifeWorkspaceCheckStore(
             productHome =
                 Path.of(
                     startupSetup.productHome,
@@ -1245,6 +1259,37 @@ class VexLifeProdLocalService private constructor(
                         }
                     }
 
+            val workspaceCheckRuntimeSource =
+                VexLifeWorkspaceTextCheck.PrivateServiceImageRuntimeSource(
+                    imageRoot =
+                        Path.of(
+                            "",
+                        )
+                            .toAbsolutePath()
+                            .normalize(),
+                    expectedSourceSha =
+                        sourceSha,
+                )
+            val workspaceCheckCapabilityOwners =
+                VexLifeCapabilityBridge.OwnerBindings(
+                    checkWorkspace = {
+                        productHome,
+                        operationRef,
+                        sourceRef,
+                        request,
+                        ->
+                        VexLifeWorkspaceTextCheck(
+                            productHome = productHome,
+                            runtimeSource = workspaceCheckRuntimeSource,
+                        )
+                            .check(
+                                operationRef = operationRef,
+                                sourceRef = sourceRef,
+                                request = request,
+                            )
+                    },
+                )
+
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.foundation,
@@ -1274,6 +1319,10 @@ class VexLifeProdLocalService private constructor(
                                     ),
                                 initialPromptPreparation =
                                     initialPromptPreparation,
+                                workspaceCheckRuntimeSource =
+                                    workspaceCheckRuntimeSource,
+                                capabilityOwners =
+                                    workspaceCheckCapabilityOwners,
                             )
                         }
                     },
@@ -1297,6 +1346,10 @@ class VexLifeProdLocalService private constructor(
                                     ),
                                 initialPromptPreparation =
                                     initialPromptPreparation,
+                                workspaceCheckRuntimeSource =
+                                    workspaceCheckRuntimeSource,
+                                capabilityOwners =
+                                    workspaceCheckCapabilityOwners,
                             )
                         }
                     },
@@ -2340,6 +2393,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.WorkspaceEffectsControlPath ->
                     handleWorkspaceEffectsControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceChecksPath ->
+                    handleWorkspaceChecks(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceChecksControlPath ->
+                    handleWorkspaceChecksControl(
                         exchange,
                     )
 
@@ -5449,6 +5512,160 @@ class VexLifeProdLocalService private constructor(
 
                             else ->
                                 "workspace.status.workspace-effects-not-granted"
+                        },
+                )
+        }
+    }
+
+
+    private fun workspaceChecksProjection(): VexLifeProdServiceContract.WorkspaceChecksProjection {
+        val state =
+            workspaceChecks.state()
+        return VexLifeProdServiceContract.WorkspaceChecksProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.WorkspaceChecksProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceChecks(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceChecksProjection(),
+        )
+    }
+
+    private fun handleWorkspaceChecksControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceChecksControlRequest>(
+                exchange,
+            )
+        val control =
+            when (request.controlRef) {
+                VexLifeWorkspaceChecksFamily.ControlAllow ->
+                    VexLifeWorkspaceChecksFamily.Allow(
+                        request.sourceRef,
+                    )
+                VexLifeWorkspaceChecksFamily.ControlRevoke ->
+                    VexLifeWorkspaceChecksFamily.Revoke(
+                        request.sourceRef,
+                    )
+                else ->
+                    error(
+                        "Workspace Checks Control is unknown",
+                    )
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceChecksControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceChecksControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceChecksControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        checks = workspaceChecksProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                VexLifeWorkspaceChecksFamily.resolve(
+                    currentState =
+                        workspaceChecks.state(),
+                    control =
+                        control,
+                )
+                    ?.effect
+            }
+        if (semanticEffect == null) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceChecksControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (control is VexLifeWorkspaceChecksFamily.Allow) {
+                        "workspace.status.workspace-checks-already-granted"
+                    } else {
+                        "workspace.status.workspace-checks-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                when (semanticEffect) {
+                    is VexLifeWorkspaceChecksFamily.Effect.GrantChecks ->
+                        workspaceChecks.grant(
+                            semanticEffect.sourceRef,
+                        )
+                    is VexLifeWorkspaceChecksFamily.Effect.RevokeChecks ->
+                        workspaceChecks.revoke(
+                            semanticEffect.sourceRef,
+                        )
+                }
+            }
+
+        when (realized) {
+            is VexLifeWorkspaceCheckStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED,
+                    reasonKey =
+                        if (control is VexLifeWorkspaceChecksFamily.Allow) {
+                            "workspace.status.workspace-checks-granted"
+                        } else {
+                            "workspace.status.workspace-checks-revoked"
+                        },
+                )
+
+            is VexLifeWorkspaceCheckStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REFUSED,
+                    reasonKey =
+                        when (realized.reason) {
+                            VexLifeWorkspaceCheckStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-checks-source-not-current"
+                            VexLifeWorkspaceCheckStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-checks-already-granted"
+                            VexLifeWorkspaceCheckStore.RefusedLimitReached ->
+                                "workspace.status.workspace-checks-limit-reached"
+                            else ->
+                                "workspace.status.workspace-checks-not-granted"
                         },
                 )
         }

@@ -11,6 +11,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -237,6 +238,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
             setOf(
                 VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
                 VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
             )
         VexLifeWorkspaceBlueprint.elements.forEach { element ->
             if (
@@ -1956,6 +1959,48 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             javascript.contains(
                 VexLifeLocalSourcesFamily.ControlRemove,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+            ),
+            "Allow checks is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+            ),
+            "Stop checks is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksPath: \"/api/v1/workspace-checks\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksControlPath: \"/api/v1/workspace-checks/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadWorkspaceChecks = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const applyWorkspaceChecksControl = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlAllow,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlRevoke,
             ),
         )
     }
