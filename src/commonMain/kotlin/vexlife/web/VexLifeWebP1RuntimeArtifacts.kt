@@ -5871,15 +5871,35 @@ object VexLifeWebP1RuntimeArtifacts {
                 const turnCancelling = Boolean(turnDisplay?.cancelling);
                 const sendLawful = turnControlRef === conversationTurn.control.send;
                 const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const firstLocalStartPending =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationPendingForNextTurn) &&
+                  !turnActive &&
+                  !turnCancelling;
+                const firstLocalStartTurn =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationForActiveTurn) &&
+                  (turnActive || turnCancelling);
+                const firstLocalStartVisible = firstLocalStartPending || firstLocalStartTurn;
                 const followUpReadiness =
                   canonicalNow ? (state.conversationTurn?.followUpReadiness ?? null) : null;
                 const followUpState = String(followUpReadiness?.state ?? '');
                 const followUpVisible =
                   canonicalNow &&
+                  !firstLocalStartVisible &&
                   Boolean(followUpState) &&
                   followUpState !== 'UNAVAILABLE';
-                ui.responseProgress.hidden = !followUpVisible;
-                if (followUpVisible) {
+                ui.responseProgress.hidden = !(firstLocalStartVisible || followUpVisible);
+                if (firstLocalStartVisible) {
+                  ui.responseProgress.dataset.state = 'FirstLocalStart';
+                  ui.responseProgress.removeAttribute('data-follow-up-state');
+                  ui.responseProgressTitle.textContent = workspaceText('workspace.heading.first-local-start');
+                  ui.responseProgressDetail.textContent = workspaceText(
+                    firstLocalStartTurn
+                      ? 'workspace.description.first-local-start-sent'
+                      : 'workspace.description.first-local-start-ready-to-send'
+                  );
+                } else if (followUpVisible) {
                   const detailKey =
                     followUpState === 'LOWER_MEMORY_REALIZATION'
                       ? 'workspace.label.model-cache-level-1'
