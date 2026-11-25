@@ -7903,6 +7903,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.attachmentDraft?.display?.requestResourcesReady === false) return;
 
                 const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
+                const automaticRetryDepth = Number(newAttemptSeed?.automaticRetryDepth ?? 0);
                 const content =
                   newAttemptSeed
                     ? String(newAttemptSeed.content ?? '').trim()
@@ -8070,12 +8071,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.sendCancelRequested = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
+                    const failureCode = String(failure.code ?? terminalError?.name ?? 'TURN_FAILED');
+                    const exactNextSafeRoute = failure.exactNextSafeRoute ?? null;
                     state.failedAttempts.push({
                       idempotencyKey: pending.idempotencyKey,
                       content: pending.content,
                       browserContext: pending.browserContext ?? null,
-                      failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
-                      exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
+                      failureCode,
+                      exactNextSafeRoute,
                       processEntries: interruptedProcess,
                       cancelledByPerson
                     });
@@ -8084,6 +8087,41 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     state.pending = null;
                     clearLiveProcessState();
+
+                    const automaticRetryAllowed =
+                      !cancelledByPerson &&
+                      failureCode === 'CONNECTION_EndpointResponseInvalid' &&
+                      automaticRetryDepth < 1 &&
+                      (
+                        exactNextSafeRoute === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY' ||
+                        exactNextSafeRoute === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
+                      );
+                    if (automaticRetryAllowed) {
+                      reportFact(
+                        'SEND_AUTOMATIC_RETRY_FORMED',
+                        {
+                          failureCode,
+                          exactNextSafeRoute,
+                          automaticRetryDepth: String(automaticRetryDepth + 1)
+                        }
+                      );
+                      setCompanionStatus(
+                        'Checking',
+                        t('workspace.status.companion-trying-again'),
+                        servingModelLabel() || ''
+                      );
+                      render();
+                      await send({
+                        content: pending.content,
+                        // A failed canonical attempt never becomes Conversation history. Re-read
+                        // the current explicit page-context choice and form one fresh Send from the
+                        // last valid head rather than replaying the failed idempotency key.
+                        browserContext: state.includePage ? state.browserContext : null,
+                        automaticRetryDepth: automaticRetryDepth + 1
+                      });
+                      return;
+                    }
+
                     setCompanionStatus(
                       cancelledByPerson ? 'Ready' : 'Unavailable',
                       cancelledByPerson
