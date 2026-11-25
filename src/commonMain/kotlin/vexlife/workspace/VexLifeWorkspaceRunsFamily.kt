@@ -36,7 +36,7 @@ object VexLifeWorkspaceRunsFamily :
     data class Grant(
         val grantRef: String,
         val sourceRef: String,
-        /** Exact Local Source grant generation this process-check authority is bound to. */
+        /** Exact Local Source grant generation this project-run authority is bound to. */
         val sourceGrantedAt: String,
         val grantedAt: String,
     ) {
