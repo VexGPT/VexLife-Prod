@@ -62,7 +62,7 @@ class VexLifeEffectiveModelCapabilitiesTest {
     }
 
     @Test
-    fun recognizedImportedNativeToolsStayHeldWhileQualifiedTextFallbackRemainsAvailable() {
+    fun importedQwenReachStaysHeldWithoutPerModelReachQualification() {
         val profile =
             HereticCompanionRepresentation.Profiles.importedQwen(
                 profileRef = "companion-profile.vexlife-prod.imported.test.qwen3.v1",
@@ -86,7 +86,7 @@ class VexLifeEffectiveModelCapabilitiesTest {
             capabilities.providerNativeTools,
         )
         assertEquals(
-            VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+            VexLifeEffectiveModelCapabilities.Standing.HELD,
             capabilities.vexReach,
         )
     }
@@ -112,6 +112,10 @@ class VexLifeEffectiveModelCapabilitiesTest {
         assertEquals(
             VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
             capabilities.providerNativeTools,
+        )
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.HELD,
+            capabilities.vexReach,
         )
     }
 
