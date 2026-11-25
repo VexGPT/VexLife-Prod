@@ -39,7 +39,7 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
-import vexlife.companion.VexLifeInitialPromptPreparation
+import vexlife.companion.VexLifePromptPreparation
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
@@ -143,7 +143,7 @@ class VexLifeProdLocalService private constructor(
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
-    private val initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
+    private val initialPromptPreparation: VexLifePromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -1073,7 +1073,7 @@ class VexLifeProdLocalService private constructor(
                 )
 
             val initialPromptPreparation =
-                VexLifeInitialPromptPreparation()
+                VexLifePromptPreparation()
 
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
@@ -1468,7 +1468,7 @@ class VexLifeProdLocalService private constructor(
             partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
             partnerConnectionLiveEffectsEnabled: Boolean = false,
-            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
+            initialPromptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
@@ -1583,7 +1583,7 @@ class VexLifeProdLocalService private constructor(
             partnerInference: VexLifeProdPartnerInference? = null,
             partnerConnectionLiveEffectsEnabled: Boolean =
                 PartnerConnectionLiveEffectsEnabledForThisRelease,
-            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
+            initialPromptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
