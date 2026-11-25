@@ -269,7 +269,9 @@ class VexLifeWorkspaceWrite(
                     disposition = DispositionRecovered,
                     effectPerformedNow = false,
                     currentEffectAuthority =
-                        currentGrant?.grantRef ==
+                        currentGrant !=
+                            null &&
+                            currentGrant.grantRef ==
                             existingIntent.grantRef &&
                             currentGrant.sourceGrantedAt ==
                             existingIntent.sourceGrantedAt,
