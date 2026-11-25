@@ -38,6 +38,8 @@ import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.partner.VexLifePartnerHostEffect
+import vexlife.workspace.VexLifeWorkspaceEffectStore
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -538,6 +540,15 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
+        val currentWorkspaceEffectGrants: (
+            productHome: Path,
+        ) -> List<VexLifeWorkspaceEffectsFamily.Grant> = {
+            productHome ->
+            VexLifeWorkspaceEffectStore(
+                productHome,
+            )
+                .currentGrants()
+        },
         val progressObserver: ProgressObserver? =
             null,
         val turnPolicy: TurnPolicy =
@@ -612,6 +623,7 @@ object DirectCompanionTurn {
         val materialization: DirectPromptContext.Materialization,
         val memoryContext: VexLifeMemoryContract.Context,
         val promptResidentMemoryStatementRefs: Set<String>,
+        val workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant>,
     )
 
     private data class ProviderStage(
@@ -1198,6 +1210,10 @@ object DirectCompanionTurn {
     ): FinalProviderTurn {
         val initialMemoryAvailability =
             hooks.currentMemoryContext(
+                productHome,
+            )
+        val initialWorkspaceEffectGrants =
+            hooks.currentWorkspaceEffectGrants(
                 productHome,
             )
         val initialRuntimeEvidence =
