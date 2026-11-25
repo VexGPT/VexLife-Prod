@@ -1330,6 +1330,8 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
 
   .model-choice-row { grid-template-columns: minmax(0, 1fr); }
+  .partner-api-fields { grid-template-columns: minmax(0, 1fr); }
+  .partner-api-heading { display: grid; }
   .model-choice-actions { justify-content: flex-start; }
   .model-cache-field { grid-template-columns: minmax(0, 1fr); }
   .model-start-button { width: 100%; min-width: 0; }
