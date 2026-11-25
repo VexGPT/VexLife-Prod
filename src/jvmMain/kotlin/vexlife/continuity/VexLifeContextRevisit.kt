@@ -450,21 +450,34 @@ object VexLifeContextRevisit {
                 .orEmpty()
         val turns =
             if (conversationInScope && sources.conversation != null)
-                VexLifeTurnNavigation
-                    .project(
-                        sources.conversation.canonicalEvents,
-                    )
-                    .filter {
-                        turn ->
-                        turn.request.eventRef !in
-                            blockedConversationEventRefs &&
-                            turn.response.eventRef !in
-                            blockedConversationEventRefs
-                    }
+                VexLifeTurnNavigation.project(
+                    sources.conversation.canonicalEvents,
+                )
             else emptyList()
-        val turnByRef = turns.associateBy { it.turnRef }
+        fun conversationTurnAdmitted(
+            turn: VexLifeTurnNavigation.Turn,
+        ): Boolean =
+            turn.request.eventRef !in
+                blockedConversationEventRefs &&
+                turn.response.eventRef !in
+                blockedConversationEventRefs
+        val admittedTurns =
+            turns.filter(
+                ::conversationTurnAdmitted,
+            )
+        val turnByRef =
+            admittedTurns.associateBy {
+                it.turnRef
+            }
         val turnByEventRef =
-            turns.flatMap { listOf(it.request.eventRef to it, it.response.eventRef to it) }.toMap()
+            admittedTurns
+                .flatMap {
+                    listOf(
+                        it.request.eventRef to it,
+                        it.response.eventRef to it,
+                    )
+                }
+                .toMap()
         val pages =
             if (Scope.MEMORY in request.scopes) sources.memory?.pages.orEmpty() else emptyList()
         val pageByStatement = pages.associateBy { it.statementRef }
@@ -488,7 +501,15 @@ object VexLifeContextRevisit {
             val normalizedTerms = query.terms.map(::normalize)
 
             if (query.terms.isNotEmpty()) {
-                turns.filter(inWindow).forEach { turn ->
+                turns
+                    .asSequence()
+                    .filter(
+                        ::conversationTurnAdmitted,
+                    )
+                    .filter(
+                        inWindow,
+                    )
+                    .forEach { turn ->
                     val searchable =
                         normalize(
                             when (query.speaker) {
@@ -535,7 +556,13 @@ object VexLifeContextRevisit {
 
             if (query.corrections) {
                 turns
-                    .filter(inWindow)
+                    .asSequence()
+                    .filter(
+                        ::conversationTurnAdmitted,
+                    )
+                    .filter(
+                        inWindow,
+                    )
                     .filter { it.correctionCue != null }
                     .forEach { turn ->
                         hitTurn(turn, Match(query.ref, Route.CORRECTIONS, turn.correctionCue!!))
@@ -568,18 +595,54 @@ object VexLifeContextRevisit {
         val located = turnMatches.keys.mapNotNull { turnByRef[it] }
         located.forEach { turn ->
             val queryRef = turnMatches.getValue(turn.turnRef).first().queryRef
-            turn.correctsOrdinal?.let { ordinal ->
-                hitTurn(turns[ordinal], Match(queryRef, Route.CORRECTED_BY, turn.turnRef))
-            }
+            turn.correctsOrdinal
+                ?.let(
+                    turns::getOrNull,
+                )
+                ?.takeIf(
+                    ::conversationTurnAdmitted,
+                )
+                ?.let {
+                    corrected ->
+                    hitTurn(
+                        corrected,
+                        Match(
+                            queryRef,
+                            Route.CORRECTED_BY,
+                            turn.turnRef,
+                        ),
+                    )
+                }
             turns
-                .getOrNull(turn.ordinal + 1)
+                .getOrNull(
+                    turn.ordinal +
+                        1,
+                )
+                ?.takeIf(
+                    ::conversationTurnAdmitted,
+                )
                 ?.takeIf { it.correctionCue != null }
                 ?.let { hitTurn(it, Match(queryRef, Route.CORRECTS, turn.turnRef)) }
             if (turn.pointsBack && turn.ordinal > 0) {
-                hitTurn(
-                    turns[turn.ordinal - 1],
-                    Match(queryRef, Route.POINTED_BACK_FROM, turn.turnRef),
-                )
+                turns
+                    .getOrNull(
+                        turn.ordinal -
+                            1,
+                    )
+                    ?.takeIf(
+                        ::conversationTurnAdmitted,
+                    )
+                    ?.let {
+                        prior ->
+                        hitTurn(
+                            prior,
+                            Match(
+                                queryRef,
+                                Route.POINTED_BACK_FROM,
+                                turn.turnRef,
+                            ),
+                        )
+                    }
             }
         }
 
@@ -709,7 +772,13 @@ object VexLifeContextRevisit {
             appendLine(Header)
             appendLine(
                 "state: $state · " +
-                    coverageLine(request, sources, turns.size, pages.size, conversationInScope)
+                    coverageLine(
+                        request,
+                        sources,
+                        admittedTurns.size,
+                        pages.size,
+                        conversationInScope,
+                    )
             )
             gapsLine(request, sources)?.let(::appendLine)
             directory?.let { appendLine(directoryLine(it, turnByEventRef)) }
@@ -789,7 +858,7 @@ object VexLifeContextRevisit {
             residentSourceRefs =
                 resident.flatMap { listOf(it.request.eventRef, it.response.eventRef) },
             frontierRefs = (frontier + unresolvedAnchors).distinct(),
-            scannedTurnCount = turns.size,
+            scannedTurnCount = admittedTurns.size,
             searchedMemoryPageCount = pages.size,
             resolvedNodeCount = turnMatches.size + pageMatches.size,
             matchRouteCount =
@@ -913,7 +982,18 @@ object VexLifeContextRevisit {
     ): String =
         listOfNotNull(
                 if (conversationInScope && sources.conversation != null)
-                    "searched $turnCount completed turns of this thread (exact words; no meaning index yet)"
+                    "searched $turnCount " +
+                        (
+                            if (
+                                sources.conversationLifecycle !=
+                                    null
+                            ) {
+                                "lifecycle-admitted "
+                            } else {
+                                ""
+                            }
+                            ) +
+                        "completed turns of this thread (exact words; no meaning index yet)"
                 else null,
                 if (Scope.MEMORY in request.scopes && sources.memory != null)
                     "$pageCount Memory pages (projection ${sources.memory.projectionState}" +
