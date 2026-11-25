@@ -79,6 +79,7 @@ import vexlife.partner.VexLifePartnerConnectionConfiguration
 import vexlife.partner.VexLifePartnerMacHostRealization
 import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -1098,6 +1099,8 @@ class VexLifeProdLocalService private constructor(
 
             val promptPreparation =
                 VexLifePromptPreparation()
+            val continuitySourceLocatorBackend =
+                VexLifeContinuitySourceLocator.InMemoryBackend()
 
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
@@ -1379,6 +1382,8 @@ class VexLifeProdLocalService private constructor(
                                     workspaceCheckRuntimeSource,
                                 capabilityOwners =
                                     workspaceCheckCapabilityOwners,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
                             )
                         }
                     },
@@ -1406,6 +1411,8 @@ class VexLifeProdLocalService private constructor(
                                     workspaceCheckRuntimeSource,
                                 capabilityOwners =
                                     workspaceCheckCapabilityOwners,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
                             )
                         }
                     },
@@ -1423,6 +1430,8 @@ class VexLifeProdLocalService private constructor(
                                 partnerTextTurn = partnerTextTurn,
                                 promptPreparation =
                                     promptPreparation,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
                             )
                         }
                     },
@@ -1444,6 +1453,8 @@ class VexLifeProdLocalService private constructor(
                                 partnerTextTurn = partnerTextTurn,
                                 promptPreparation =
                                     promptPreparation,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
                             )
                         }
                     },
