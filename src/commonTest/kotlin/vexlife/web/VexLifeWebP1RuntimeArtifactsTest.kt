@@ -1083,6 +1083,102 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun partnerApiSettingsStayVisibleButEffectHeldByServiceFundingGate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"partner-api-card\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-provider\" disabled",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-credential\" type=\"password\"",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-connect\"",
+                ),
+            "Settings must expose the Partner API connection surface while keeping effect controls fail-safe disabled in markup",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeProdServiceContract.PartnerConnectionsPath,
+            ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionsControlPath,
+                ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                ),
+            "the UI gate must consume Product service availability rather than invent a browser-only readiness flag",
+        )
+        assertTrue(
+            javascript.contains(
+                "state.partnerConnectionAvailability?.connectEnabled !== true",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiConnect.disabled = !enabled || !hasCredential",
+                ),
+            "Connect must remain held until the service explicitly opens the live effect gate",
+        )
+        assertTrue(
+            javascript.contains(
+                "new TextEncoder().encode(secretText)",
+            ) &&
+                javascript.contains(
+                    "secretBytes.fill(0)",
+                ) &&
+                javascript.contains(
+                    "ui.partnerApiCredential.value = ''",
+                ),
+            "the future enabled route must clear the DOM value and encoded credential bytes after the loopback effect",
+        )
+        assertFalse(
+            javascript.contains(
+                "localStorage.setItem('partner-api",
+            ) ||
+                javascript.contains(
+                    "URLSearchParams(secret",
+                ),
+            "Partner credentials may not gain browser persistence or URL carriage",
+        )
+        assertTrue(
+            javascript.contains(
+                "partnerConnectionStanding !== 'NEEDS_CREDENTIAL'",
+            ) &&
+                javascript.contains(
+                    "partnerConnectionControlReplace",
+                ) &&
+                javascript.contains(
+                    "partnerConnectionControlConnect",
+                ),
+            "the wired future action must converge through the existing CONNECT/REPLACE service contract",
+        )
+        listOf(
+            "workspace.heading.partner-api",
+            "workspace.description.partner-api",
+            "workspace.status.partner-api-held-funding",
+            "workspace.description.partner-api-held-funding",
+            "workspace.button.partner-api-connect",
+        ).forEach {
+            key ->
+            assertTrue(
+                bundle.html.contains(
+                    key,
+                ) ||
+                    javascript.contains(
+                        key,
+                    ),
+                "Partner API presentation is missing localized key $key",
+            )
+        }
+    }
+
+    @Test
     fun vexTextPresentationMapsRepliesAndThinkingWithoutTakingTruthOrScrollOwnership() {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         val javascript = bundle.javascript
