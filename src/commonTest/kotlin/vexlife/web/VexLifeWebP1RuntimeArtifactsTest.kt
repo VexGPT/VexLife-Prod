@@ -1118,6 +1118,24 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
+                "ui.partnerApiCard.dataset.state = 'held'",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiState.dataset.state = 'held'",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-card[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-state[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    "var(--status-caution)",
+                ),
+            "the funding-held Partner API surface must visibly present caution without collapsing the hold into an error",
+        )
+        assertTrue(
+            javascript.contains(
                 "state.partnerConnectionAvailability?.connectEnabled !== true",
             ) &&
                 javascript.contains(
