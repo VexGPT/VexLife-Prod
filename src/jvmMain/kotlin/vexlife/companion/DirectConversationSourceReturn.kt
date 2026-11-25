@@ -451,6 +451,20 @@ object DirectConversationSourceReturn {
             requireRequest(
                 request,
             )
+        require(
+            sourceLifecycleBindingRef ==
+                null ||
+                sourceLifecycleBindingRef.isNotBlank()
+        ) {
+            "Conversation source-return lifecycle binding must be absent or non-empty"
+        }
+        require(
+            historicalCurrentizedEventRefs.isEmpty() ||
+                sourceLifecycleBindingRef !=
+                null
+        ) {
+            "historical-currentized source refs require one exact lifecycle binding"
+        }
         val snapshot =
             conversationOwner.current()
         val events =
@@ -1022,16 +1036,19 @@ object DirectConversationSourceReturn {
                 }
                 .distinct()
         val lifecycleTruth =
-            if (
-                historicalCurrentizedReturned.isNotEmpty()
-            ) {
-                "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
-                    historicalCurrentizedReturned.joinToString(",") +
-                    ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
-            } else {
-                "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
-            }
-        return listOf(
+            sourceLifecycleBindingRef@ discovery.sourceLifecycleBindingRef
+                ?.let {
+                    if (
+                        historicalCurrentizedReturned.isNotEmpty()
+                    ) {
+                        "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                            historicalCurrentizedReturned.joinToString(",") +
+                            ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+                    } else {
+                        "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
+                    }
+                }
+        return listOfNotNull(
             ContextHeader,
             hostTruth,
             lifecycleTruth,
