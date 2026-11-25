@@ -953,6 +953,9 @@ internal class VexLifeWorkspaceTextCheck(
         const val FailureNotRegular =
             "FILE_NOT_REGULAR"
 
+        const val FailurePathNotConfined =
+            "PATH_NOT_CONFINED"
+
         const val FailureFileTooLarge =
             "FILE_TOO_LARGE"
 
@@ -1006,6 +1009,34 @@ internal class VexLifeWorkspaceTextCheck(
                     ownedRoot,
                     request.relativePath,
                 )
+            val parentState =
+                runCatching {
+                    VexOwnedPath.observeParent(
+                        root =
+                            ownedRoot,
+                        file =
+                            target,
+                    )
+                }
+                    .getOrElse {
+                        return failed(
+                            request,
+                            Failure(
+                                FailurePathNotConfined,
+                            ),
+                        )
+                    }
+            if (
+                parentState ==
+                    VexOwnedPath.DirectoryState.Missing
+            ) {
+                return failed(
+                    request,
+                    Failure(
+                        FailureFileMissing,
+                    ),
+                )
+            }
 
             val attributes =
                 try {

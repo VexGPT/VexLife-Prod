@@ -212,6 +212,65 @@ class VexLifeWorkspaceTextCheckTest {
         }
 
     @Test
+    fun evaluatorRejectsIntermediateSymlinkEscapeWithoutReadingOutsideRoot() =
+        withFixture {
+            fixture ->
+            val outside =
+                Files.createDirectories(
+                    fixture.parent.resolve(
+                        "outside",
+                    ),
+                )
+            Files.writeString(
+                outside.resolve(
+                    "secret.txt",
+                ),
+                "outside-secret\n",
+            )
+            Files.createSymbolicLink(
+                fixture.source.resolve(
+                    "escape",
+                ),
+                outside,
+            )
+
+            val result =
+                VexLifeWorkspaceTextCheck.evaluate(
+                    root =
+                        fixture.source,
+                    request =
+                        VexLifeWorkspaceTextCheck.Request(
+                            relativePath =
+                                "escape/secret.txt",
+                            requiredLiterals =
+                                listOf(
+                                    "outside-secret",
+                                ),
+                        ),
+                )
+
+            assertEquals(
+                VexLifeWorkspaceTextCheck.DispositionCheckFailed,
+                result.disposition,
+            )
+            assertEquals(
+                VexLifeWorkspaceTextCheck.FailurePathNotConfined,
+                result.failures.single().code,
+            )
+            assertEquals(
+                null,
+                result.observedSha256,
+            )
+            assertEquals(
+                null,
+                result.bytes,
+            )
+            assertFalse(
+                result.contentReturned,
+            )
+        }
+
+    @Test
     fun readableSourceDoesNotBecomeProcessAuthorityWithoutSeparateCheckGrant() =
         withFixture(
             grantChecks =
