@@ -1182,6 +1182,8 @@ class VexLifeProdLocalService private constructor(
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )
+                    val restorePreparationOnFailure =
+                        promptPreparation.nextTurnPreparationPending()
                     promptPreparation.invalidateAndAwait(
                         "MODEL_SWITCH",
                     )
@@ -1194,49 +1196,62 @@ class VexLifeProdLocalService private constructor(
                         )
                         val current =
                             sessionRef.get()
-                        val next =
-                            VexLifeProdRuntimeSessionFactory.establishExact(
-                                productHome =
-                                    Path.of(
-                                        current.foundation.productHome,
-                                    ),
-                                realization = realization,
-                                allowAcquisition = false,
-                                allowRuntimeStart = true,
-                                progress =
-                                    object :
-                                        VexLifeProdSetupProgress {
-                                        override fun phase(
-                                            phase: VexLifeProdSetupProgress.Phase,
-                                        ) {
-                                            if (
-                                                phase ==
-                                                    VexLifeProdSetupProgress.Phase.StartingLocalModel
+                        try {
+                            val next =
+                                VexLifeProdRuntimeSessionFactory.establishExact(
+                                    productHome =
+                                        Path.of(
+                                            current.foundation.productHome,
+                                        ),
+                                    realization = realization,
+                                    allowAcquisition = false,
+                                    allowRuntimeStart = true,
+                                    progress =
+                                        object :
+                                            VexLifeProdSetupProgress {
+                                            override fun phase(
+                                                phase: VexLifeProdSetupProgress.Phase,
                                             ) {
-                                                observe(
-                                                    VexLifeModels.SwitchPhase.SwitchingRuntime,
-                                                )
+                                                if (
+                                                    phase ==
+                                                        VexLifeProdSetupProgress.Phase.StartingLocalModel
+                                                ) {
+                                                    observe(
+                                                        VexLifeModels.SwitchPhase.SwitchingRuntime,
+                                                    )
+                                                }
                                             }
-                                        }
 
-                                        override fun artifactBytes(
-                                            completedBytes: Long,
-                                            totalBytes: Long,
-                                        ) = Unit
-                                    },
+                                            override fun artifactBytes(
+                                                completedBytes: Long,
+                                                totalBytes: Long,
+                                            ) = Unit
+                                        },
+                                )
+                            require(
+                                next.foundation.qualifiedRuntimeEvidence.realizationRef ==
+                                    realization.realizationRef,
+                            ) {
+                                "model switch qualified a runtime other than the selected realization"
+                            }
+                            sessionRef.set(
+                                next,
                             )
-                        require(
-                            next.foundation.qualifiedRuntimeEvidence.realizationRef ==
-                                realization.realizationRef,
+                            promptPreparation.startCurrent(
+                                next.foundation.qualifiedRuntimeEvidence,
+                            )
+                        } catch (
+                            error: Throwable,
                         ) {
-                            "model switch qualified a runtime other than the selected realization"
+                            if (
+                                restorePreparationOnFailure
+                            ) {
+                                promptPreparation.startCurrent(
+                                    current.foundation.qualifiedRuntimeEvidence,
+                                )
+                            }
+                            throw error
                         }
-                        sessionRef.set(
-                            next,
-                        )
-                        promptPreparation.startCurrent(
-                            next.foundation.qualifiedRuntimeEvidence,
-                        )
                     } finally {
                         write.unlock()
                     }
@@ -1253,6 +1268,8 @@ class VexLifeProdLocalService private constructor(
                             observe(
                                 VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                             )
+                            val restorePreparationOnFailure =
+                                promptPreparation.nextTurnPreparationPending()
                             promptPreparation.invalidateAndAwait(
                                 "MODEL_SWITCH",
                             )
@@ -1263,9 +1280,35 @@ class VexLifeProdLocalService private constructor(
                                 observe(
                                     VexLifeModels.SwitchPhase.PreparingTarget,
                                 )
-                                composition.qualify(
-                                    target,
-                                )
+                                val current =
+                                    sessionRef.get()
+                                try {
+                                    val outcome =
+                                        composition.qualify(
+                                            target,
+                                        )
+                                    if (
+                                        restorePreparationOnFailure &&
+                                            outcome is
+                                            vexlife.partner.VexLifePartnerLiveQualification.Outcome.Held
+                                    ) {
+                                        promptPreparation.startCurrent(
+                                            current.foundation.qualifiedRuntimeEvidence,
+                                        )
+                                    }
+                                    outcome
+                                } catch (
+                                    error: Throwable,
+                                ) {
+                                    if (
+                                        restorePreparationOnFailure
+                                    ) {
+                                        promptPreparation.startCurrent(
+                                            current.foundation.qualifiedRuntimeEvidence,
+                                        )
+                                    }
+                                    throw error
+                                }
                             } finally {
                                 write.unlock()
                             }
@@ -2918,6 +2961,18 @@ class VexLifeProdLocalService private constructor(
     private fun followUpReadinessProjection(
         active: ActiveTurn?,
     ): VexLifeProdServiceContract.FollowUpReadinessProjection {
+        if (
+            models.partnerServing() !=
+            null
+        ) {
+            return VexLifeProdServiceContract.FollowUpReadinessProjection(
+                state =
+                    VexLifeProdServiceContract.FollowUpReadinessUnavailable,
+                lastCompletedProviderMeasurement =
+                    null,
+            )
+        }
+
         val productHome =
             Path.of(
                 startupSetup.productHome,
@@ -6435,6 +6490,9 @@ class VexLifeProdLocalService private constructor(
                 intent = intent,
                 draftLeaseAttachments = draftLeaseAttachments,
                 begin = begin,
+                localTurn =
+                    partnerTextTurn ==
+                    null,
                 executor = streaming,
             )
             return
@@ -6443,12 +6501,17 @@ class VexLifeProdLocalService private constructor(
         var draftCompleted =
             false
         try {
-            // This is still the first canonical local Send even when the caller did not request the
-            // streaming presentation path. Retire only the presentation fact; preparation remains
-            // independently reusable for future Sessions.
-            initialLocalStartPresentationPending.set(
-                false,
-            )
+            // FirstLocalStart belongs to the first canonical Local Send, not merely the first
+            // Conversation Send. A Partner turn must leave this one-way Local presentation fact
+            // available for the first later Local turn.
+            if (
+                partnerTextTurn ==
+                null
+            ) {
+                initialLocalStartPresentationPending.set(
+                    false,
+                )
+            }
             val result =
                 if (
                     partnerTextTurn ==
@@ -6606,6 +6669,7 @@ class VexLifeProdLocalService private constructor(
         intent: DirectCompanionTurn.Intent,
         draftLeaseAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
         begin: VexLifeConversationTurnFamily.BeginTurn,
+        localTurn: Boolean,
         executor: StreamingTurnExecutor,
     ) {
         require(
@@ -6618,7 +6682,8 @@ class VexLifeProdLocalService private constructor(
         val cancellation =
             DirectCompanionCancellation()
         val initialPromptPreparationTurn =
-            initialLocalStartPresentationPending.get() &&
+            localTurn &&
+                initialLocalStartPresentationPending.get() &&
                 promptPreparation
                     ?.nextTurnPreparationPending() ==
                 true
@@ -6647,11 +6712,15 @@ class VexLifeProdLocalService private constructor(
             return
         }
 
-        // The first canonical local Send has now begun. Later model switches may re-arm provider
-        // preparation, but they may never re-arm the first-start presentation.
-        initialLocalStartPresentationPending.set(
-            false,
-        )
+        // Only a Local canonical Send consumes the one first-local-start presentation. Partner
+        // turns share Conversation ownership but do not consume Local startup history.
+        if (
+            localTurn
+        ) {
+            initialLocalStartPresentationPending.set(
+                false,
+            )
+        }
 
         check(
             conversationTurnState() ==
