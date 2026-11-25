@@ -4321,6 +4321,36 @@
         "zh-Hant"
       ]
     },
+    "workspace.button.workspace-checks-allow": {
+      "enHash": "273eacf4e4a2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.button.workspace-checks-revoke": {
+      "enHash": "5d938a4eaaa4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.button.workspace-effects-allow": {
       "enHash": "1693edafc2fd",
       "langs": [
@@ -15858,6 +15888,126 @@
     },
     "workspace.status.voice-input-stopping": {
       "enHash": "0f3cbf9561fc",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-allowed": {
+      "enHash": "6ae010c9ad22",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-already-granted": {
+      "enHash": "ebfc66f0ae63",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-granted": {
+      "enHash": "cec558b59988",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-limit-reached": {
+      "enHash": "c7ee93cc5c09",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-not-allowed": {
+      "enHash": "ecbec93d494a",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-not-granted": {
+      "enHash": "a2606329b045",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-revoked": {
+      "enHash": "2deded913ebd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.workspace-checks-source-not-current": {
+      "enHash": "e8cf5a528fd5",
       "langs": [
         "ar",
         "de",
