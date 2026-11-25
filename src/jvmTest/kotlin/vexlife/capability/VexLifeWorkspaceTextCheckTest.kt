@@ -2,6 +2,7 @@ package vexlife.capability
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.io.File
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -478,6 +479,130 @@ class VexLifeWorkspaceTextCheckTest {
             )
             assertFalse(
                 runnerCalled,
+            )
+        }
+
+    @Test
+    fun systemRunnerExecutesTheProductOwnedCheckerChildWithoutShellOrAmbientEnvironment() =
+        withFixture {
+            fixture ->
+            Files.writeString(
+                fixture.source.resolve(
+                    "app.txt",
+                ),
+                "alpha\n",
+            )
+            val request =
+                VexLifeWorkspaceTextCheck.Request(
+                    relativePath =
+                        "app.txt",
+                    requiredLiterals =
+                        listOf(
+                            "alpha",
+                        ),
+                )
+            val launchRoot =
+                Path.of(
+                    System.getProperty(
+                        "user.dir",
+                    ),
+                )
+                    .toAbsolutePath()
+                    .normalize()
+            val classPath =
+                System.getProperty(
+                    "java.class.path",
+                )
+                    .split(
+                        File.pathSeparator,
+                    )
+                    .joinToString(
+                        File.pathSeparator,
+                    ) {
+                        entry ->
+                        Path.of(
+                            entry,
+                        )
+                            .let {
+                                if (
+                                    it.isAbsolute
+                                ) {
+                                    it
+                                } else {
+                                    launchRoot.resolve(
+                                        it,
+                                    )
+                                }
+                            }
+                            .normalize()
+                            .toString()
+                    }
+            val java =
+                Path.of(
+                    System.getProperty(
+                        "java.home",
+                    ),
+                    "bin",
+                    "java",
+                )
+                    .toAbsolutePath()
+                    .normalize()
+
+            val process =
+                VexLifeWorkspaceTextCheck.SystemRunner.run(
+                    VexLifeWorkspaceTextCheck.ProcessSpec(
+                        program =
+                            java.toString(),
+                        arguments =
+                            listOf(
+                                "-Dfile.encoding=UTF-8",
+                                "-cp",
+                                classPath,
+                                VexLifeWorkspaceCheckDefinitions.ProcessMainClass,
+                                VexContractJson.canonicalEncode(
+                                    request,
+                                ),
+                            ),
+                        workingDirectory =
+                            fixture.source,
+                        environment =
+                            emptyMap(),
+                        timeoutMs =
+                            VexLifeWorkspaceCheckDefinitions.TimeoutMs,
+                        maximumStdoutBytes =
+                            VexLifeWorkspaceCheckDefinitions.MaximumStdoutBytes,
+                        maximumStderrBytes =
+                            VexLifeWorkspaceCheckDefinitions.MaximumStderrBytes,
+                    ),
+                )
+
+            assertTrue(
+                process.started,
+            )
+            assertFalse(
+                process.timedOut,
+            )
+            assertFalse(
+                process.stdoutTruncated,
+            )
+            assertEquals(
+                0,
+                process.exitCode,
+                process.stderr,
+            )
+            val result =
+                VexContractJson.decode<VexLifeWorkspaceTextCheck.CheckResult>(
+                    process.stdout.trim(),
+                )
+            assertEquals(
+                VexLifeWorkspaceTextCheck.DispositionCheckCompleted,
+                result.disposition,
+            )
+            assertFalse(
+                result.contentReturned,
+            )
+            assertFalse(
+                result.effectsPerformed,
             )
         }
 
