@@ -395,6 +395,19 @@ val serviceImageJdk21 =
             )
         }
 
+val serviceImageJavaLauncher21 =
+    extensions
+        .getByType(
+            JavaToolchainService::class.java,
+        )
+        .launcherFor {
+            languageVersion.set(
+                JavaLanguageVersion.of(
+                    21,
+                ),
+            )
+        }
+
 val serviceLauncherSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/bin/vexlife-prod-service",
@@ -3894,7 +3907,7 @@ tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
         )
 
     javaLauncher.set(
-        serviceImageJdk21,
+        serviceImageJavaLauncher21,
     )
     mainClass.set(
         "vexlife.capability.VexLifeWorkspaceJavaTestMacProbeKt",
@@ -3903,6 +3916,29 @@ tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
         projectDir
 
     doFirst {
+        val compilerInstallation =
+            serviceImageJdk21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        val launcherInstallation =
+            serviceImageJavaLauncher21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        require(
+            launcherInstallation ==
+                compilerInstallation,
+        ) {
+            "C3-R1 Mac proof launcher must use the exact JDK 21 installation that formed the private service image"
+        }
+
         val sourceSha =
             Files.readString(
                 serviceImageSourceIdentityFile
