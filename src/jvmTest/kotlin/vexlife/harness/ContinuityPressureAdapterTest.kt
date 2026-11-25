@@ -21,6 +21,10 @@ import vexlife.continuity.DirectConversationContextProjection
  */
 class ContinuityPressureAdapterTest {
     private val scenario = Path.of("tools/continuity-pressure/scenarios/depth-continuity-v1.json")
+    private val dreamScenario =
+        Path.of(
+            "tools/continuity-pressure/scenarios/lane/dream-current-plan-v1.json",
+        )
 
     private fun config(stage: ContinuityPressureAdapter.Stage, dir: Path, sets: Int? = null) =
         ContinuityPressureAdapter.Config(
@@ -659,6 +663,21 @@ class ContinuityPressureAdapterTest {
                 Json.parseToJsonElement(Files.readString(dir.resolve("result.json"))).jsonObject
             assertEquals("LIVE_MODEL", result.getValue("executionClass").jsonPrimitive.content)
             assertEquals(
+                "LIVE_MODEL",
+                result
+                    .getValue("turns")
+                    .jsonArray
+                    .first()
+                    .jsonObject
+                    .getValue("implementationExtensions")
+                    .jsonObject
+                    .getValue("vexlife-prod.claude-c20/v1")
+                    .jsonObject
+                    .getValue("provider")
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
                 ContinuityPressureAdapter.FixtureEvidence.runtimeReceiptRef,
                 result.getValue("source").jsonObject.getValue("runtimeRef").jsonPrimitive.content,
             )
@@ -669,15 +688,26 @@ class ContinuityPressureAdapterTest {
                         .use { it.filter { p -> p.toString().endsWith(".zip") }.findFirst().get() }
                         .toFile()
                 )
-            val telemetry = zip.use { z ->
-                String(
-                        z.getInputStream(z.getEntry("implementation/provider-telemetry.jsonl"))
-                            .readBytes()
-                    )
-                    .lines()
-                    .filter { it.isNotBlank() }
-                    .map { Json.parseToJsonElement(it).jsonObject }
+            val (adapterProvider, telemetry) = zip.use { z ->
+                val report =
+                    Json.parseToJsonElement(
+                            String(
+                                z.getInputStream(z.getEntry("implementation/adapter-report.json"))
+                                    .readBytes(),
+                            )
+                        )
+                        .jsonObject
+                val rows =
+                    String(
+                            z.getInputStream(z.getEntry("implementation/provider-telemetry.jsonl"))
+                                .readBytes()
+                        )
+                        .lines()
+                        .filter { it.isNotBlank() }
+                        .map { Json.parseToJsonElement(it).jsonObject }
+                report.getValue("provider").jsonPrimitive.content to rows
             }
+            assertEquals("LIVE_MODEL", adapterProvider)
             assertEquals(8, telemetry.size)
             telemetry.forEach { row ->
                 val prompt = row.getValue("promptTokens").jsonPrimitive.content.toInt()
@@ -702,6 +732,289 @@ class ContinuityPressureAdapterTest {
             )
         } finally {
             dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun dreamCurrentPlanScenarioMechanicallyProvesKeepDreamRolloverAndCurrentization() {
+        val dir =
+            Files.createTempDirectory(
+                "vexlife-prod-dream-current-plan-projection-",
+            )
+        try {
+            val code =
+                ContinuityPressureAdapter.run(
+                    config(
+                        ContinuityPressureAdapter.Stage.projection,
+                        dir,
+                    )
+                        .copy(
+                            scenarioRef =
+                                "scenario.vexlife.evolution.dream-current-plan.v1",
+                            scenarioFile =
+                                dreamScenario.toAbsolutePath(),
+                            conversationContextProjectionEnabled =
+                                true,
+                        ),
+                )
+            if (
+                code !=
+                    0
+            ) {
+                val failed =
+                    Json.parseToJsonElement(
+                        Files.readString(
+                            dir.resolve(
+                                "result.json",
+                            ),
+                        ),
+                    )
+                        .jsonObject
+                assertEquals(
+                    0,
+                    code,
+                    "Dream A4 deterministic projection failed: " +
+                        failed["failure"],
+                )
+            }
+
+            val result =
+                Json.parseToJsonElement(
+                    Files.readString(
+                        dir.resolve(
+                            "result.json",
+                        ),
+                    ),
+                )
+                    .jsonObject
+            val turns =
+                result
+                    .getValue(
+                        "turns",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+            val wake =
+                turns.single {
+                    it
+                        .getValue(
+                            "scenarioTurnRef",
+                        )
+                        .jsonPrimitive
+                        .content ==
+                        "pressure.01"
+                }
+            val effects =
+                wake
+                    .getValue(
+                        "controlEffects",
+                    )
+                    .jsonArray
+            assertEquals(
+                1,
+                effects.size,
+            )
+            val effect =
+                effects
+                    .single()
+                    .jsonObject
+            assertEquals(
+                "MEMORY_CORRECTION_KEEP_AND_DREAM",
+                effect
+                    .getValue(
+                        "controlClass",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "plan.current",
+                effect
+                    .getValue(
+                        "sourceScenarioTurnRef",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "pressure.01",
+                wake
+                    .getValue(
+                        "scenarioTurnRef",
+                    )
+                    .jsonPrimitive
+                    .content,
+                "the first ordinary pressure turn is the wake turn after deterministic Dream",
+            )
+            assertEquals(
+                "false",
+                effect
+                    .getValue(
+                        "synchronizationActivated",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "false",
+                effect
+                    .getValue(
+                        "trainingRan",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                64,
+                effect
+                    .getValue(
+                        "dreamHeadSha256",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .length,
+            )
+            assertEquals(
+                "true",
+                wake
+                    .getValue(
+                        "prompt",
+                    )
+                    .jsonObject
+                    .getValue(
+                        "memoryIncluded",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+
+            val live =
+                turns.single {
+                    it
+                        .getValue(
+                            "scenarioTurnRef",
+                        )
+                        .jsonPrimitive
+                        .content ==
+                        "live.01"
+                }
+            val assertion =
+                live
+                    .getValue(
+                        "assertions",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .single {
+                        it
+                            .getValue(
+                                "assertionRef",
+                            )
+                            .jsonPrimitive
+                            .content ==
+                            "assert.dream-current-plan-currentization"
+                    }
+            assertEquals(
+                "PASS",
+                assertion
+                    .getValue(
+                        "state",
+                    )
+                    .jsonPrimitive
+                    .content,
+                assertion
+                    .getValue(
+                        "detail",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertTrue(
+                assertion
+                    .getValue(
+                        "detail",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .contains(
+                        "old/current plan outside recent view=true",
+                    ),
+            )
+            assertTrue(
+                assertion
+                    .getValue(
+                        "detail",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .contains(
+                        "current correction projected=true",
+                    ),
+            )
+            assertTrue(
+                assertion
+                    .getValue(
+                        "detail",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .contains(
+                        "accepted Memory summary provider-visible=true",
+                    ),
+            )
+            assertTrue(
+                live
+                    .getValue(
+                        "prompt",
+                    )
+                    .jsonObject
+                    .getValue(
+                        "contextMode",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .contains(
+                        "WORKING_CHECKPOINT_SUCCESSOR",
+                    ),
+                "the final ordinary request must land on the successor boundary where Stage-A EvolveContext is admitted",
+            )
+            assertTrue(
+                ContinuityPressureAdapter
+                    .payload(
+                        20261124,
+                        ContinuityPressureAdapter.ScenarioTurn(
+                            turnRef =
+                                "pressure.test",
+                            input =
+                                "ordinary",
+                            tags =
+                                listOf(
+                                    "PRESSURE",
+                                    "ORDINARY_BACKGROUND",
+                                ),
+                            payloadTargetTokens =
+                                100,
+                        ),
+                        ordinal =
+                            3,
+                    )
+                    .let {
+                        !it.contains(
+                            "[SYNTHETIC PAYLOAD",
+                        ) &&
+                            it.contains(
+                                "Unrelated rough notes from another task",
+                            )
+                    },
+            )
+        } finally {
+            dir
+                .toFile()
+                .deleteRecursively()
         }
     }
 

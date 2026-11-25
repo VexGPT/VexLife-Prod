@@ -6,6 +6,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.Serializable
@@ -23,6 +24,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.consideration.VexLifeConsiderationContract
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
@@ -36,6 +38,11 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
+import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.memory.VexLifeMemoryReviewFamily
+import vexlife.memory.VexLifeMemoryReviewOwner
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -174,8 +181,40 @@ object ContinuityPressureAdapter {
         val beforeTurnControls: List<Control> = emptyList(),
     )
 
-    /** A host action before the turn; only a canonical person-setting write is admitted. */
-    @Serializable data class Control(val controlClass: String, val key: String, val value: String)
+    /**
+     * One synthetic-human action performed before a turn.
+     *
+     * PERSON_SETTING_UPDATE preserves the existing canonical setting route.
+     * MEMORY_CORRECTION_KEEP_AND_DREAM models one explicit synthetic human Keep decision through the
+     * real Memory Review owner, then commits one deterministic G03 Dream before the next turn.
+     */
+    @Serializable
+    data class Control(
+        val controlClass: String,
+        val key: String = "",
+        val value: String = "",
+        val sourceTurnRef: String? = null,
+    )
+
+    @Serializable
+    data class ControlEffectEvidence(
+        val controlClass: String,
+        val sourceScenarioTurnRef: String,
+        val sourceConversationTurnRef: String,
+        val semanticSubjectRef: String,
+        val acceptedSummary: String,
+        val decisionRef: String,
+        val decisionSha256: String,
+        val scoreHeadSha256: String,
+        val dreamHeadSha256: String,
+        val dailyStratumSha256: String,
+        val sourceConversationHeadSha256: String,
+        val sourceScoreHeadSha256: String,
+        val synchronizationActivated: Boolean,
+        val rhythmLearned: Boolean,
+        val trainingRan: Boolean,
+        val modelWeightsChanged: Boolean,
+    )
 
     /**
      * Which formation turn each scenario assertion is about; this adapter's evaluation, recorded.
@@ -563,6 +602,7 @@ object ContinuityPressureAdapter {
         /** The canonical PersonSettings reply language when this turn was formed. */
         val canonicalReplyLanguage: String? = null,
         val controls: List<Control> = emptyList(),
+        val controlEffects: List<ControlEffectEvidence> = emptyList(),
         val hostScans: List<VexLifeContextRevisit.HostScan> = emptyList(),
         /** Live only: observed provider telemetry for this turn's calls. */
         val telemetry: List<JsonObject> = emptyList(),
@@ -575,6 +615,255 @@ object ContinuityPressureAdapter {
         val checkpointRef: String? = null,
         val cursorEventRef: String? = null,
     )
+
+    private fun applyMemoryCorrectionKeepAndDream(
+        home: Path,
+        control: Control,
+        observed: List<Observed>,
+        clock: Instant,
+    ): ControlEffectEvidence {
+        require(
+            control.controlClass ==
+                "MEMORY_CORRECTION_KEEP_AND_DREAM",
+        ) {
+            "unsupported Memory/Dream control ${control.controlClass}"
+        }
+        val sourceScenarioTurnRef =
+            requireNotNull(
+                control.sourceTurnRef,
+            ) {
+                "Memory/Dream control requires sourceTurnRef"
+            }
+        require(
+            control.key.isNotBlank(),
+        ) {
+            "Memory/Dream control requires semantic subject ref in key"
+        }
+        require(
+            control.value.isNotBlank(),
+        ) {
+            "Memory/Dream control requires accepted summary in value"
+        }
+
+        val sourceObserved =
+            requireNotNull(
+                observed.singleOrNull {
+                    it.scenarioTurn.turnRef ==
+                        sourceScenarioTurnRef
+                },
+            ) {
+                "Memory/Dream control source turn was not already completed: $sourceScenarioTurnRef"
+            }
+        val sourceEvents =
+            DirectConversationStore(
+                home,
+            )
+                .current()
+                .canonicalEvents
+                .filter {
+                    it.turnRef ==
+                        sourceObserved.result.turnRef
+                }
+                .sortedBy {
+                    it.sequence
+                }
+        require(
+            sourceEvents.size ==
+                2 &&
+                sourceEvents.first().eventKind ==
+                    "REQUEST" &&
+                sourceEvents.last().eventKind ==
+                    "RESPONSE",
+        ) {
+            "Memory/Dream control source is not one complete canonical Conversation pair"
+        }
+
+        val salience =
+            VexLifeConsiderationContract.Salience(
+                selfAttributedVantage =
+                    VexLifeConsiderationContract.SelfAttributedVantage(
+                        feltImportance =
+                            VexLifeConsiderationContract.Level.HIGH,
+                        feltUncertainty =
+                            VexLifeConsiderationContract.Level.LOW,
+                        feltRelationshipShift =
+                            VexLifeConsiderationContract.RelationshipShift.CORRECTION,
+                        feltNeedToReturn =
+                            VexLifeConsiderationContract.ReturnNeed.YES,
+                    ),
+                continuitySignals =
+                    VexLifeConsiderationContract.ContinuitySignals(
+                        olderSharedContextWasNeeded =
+                            false,
+                        currentExternalTruthWasNeeded =
+                            false,
+                        humanCorrectionObserved =
+                            true,
+                        explicitHumanMemoryIntent =
+                            false,
+                        futureUsefulness =
+                            VexLifeConsiderationContract.Level.HIGH,
+                        unresolvedOpenLoop =
+                            false,
+                    ),
+                memoryCandidate =
+                    VexLifeConsiderationContract.MemoryCandidate(
+                        disposition =
+                            VexLifeConsiderationContract.MemoryCandidateDisposition.CANDIDATE,
+                        candidateClass =
+                            VexLifeConsiderationContract.MemoryCandidateClass.CORRECTION,
+                        summary =
+                            control.value,
+                        scopeHint =
+                            control.key,
+                    ),
+            )
+        val proposedAt =
+            clock.minusSeconds(
+                90,
+            )
+        val pending =
+            VexLifeMemoryReviewOwner.proposeHumanCorrection(
+                productHome =
+                    home,
+                invocation =
+                    VexLifeMemoryReviewOwner.ProposeHumanCorrectionInvocation(
+                        semanticSubjectRef =
+                            control.key,
+                        salience =
+                            salience,
+                        sourceEventHashes =
+                            sourceEvents.map {
+                                it.eventHash
+                            },
+                        formedAt =
+                            proposedAt,
+                    ),
+            )
+        val kept =
+            VexLifeMemoryReviewOwner.act(
+                productHome =
+                    home,
+                control =
+                    VexLifeMemoryReviewFamily.Keep(
+                        pending.candidateRef,
+                    ),
+                humanSubjectRef =
+                    sourceEvents
+                        .first()
+                        .speakerRef,
+                decidedAt =
+                    clock.minusSeconds(
+                        60,
+                    ),
+            ) as
+                VexLifeMemoryReviewOwner.ActionResult.Kept
+
+        val frontier =
+            VexLifeCurrentMemoryReader.readDreamSourceFrontier(
+                home,
+            )
+        val prior =
+            frontier.priorDaily
+        val dayIndex =
+            prior
+                ?.dayIndex
+                ?.plus(
+                    1,
+                )
+                ?: 0L
+        val dreamAt =
+            clock.minusSeconds(
+                30,
+            )
+        val zone =
+            ZoneId.of(
+                "America/Los_Angeles",
+            )
+        val dream =
+            VexLifeDailyMemoryDream.commit(
+                productHome =
+                    home,
+                invocation =
+                    VexLifeDailyMemoryDream.Invocation(
+                        instanceRef =
+                            "instance.vexlife-prod.continuity-pressure.dream." +
+                                dayIndex,
+                        restInvocationAuthorityRef =
+                            "authority.synthetic-human.memory-review.keep",
+                        dayRef =
+                            "day.continuity-pressure." +
+                                dayIndex,
+                        dayIndex =
+                            dayIndex,
+                        calendarDateRef =
+                            dreamAt
+                                .atZone(
+                                    zone,
+                                )
+                                .toLocalDate()
+                                .toString(),
+                        timeZoneRef =
+                            zone.id,
+                        observedAt =
+                            dreamAt,
+                        expectedConversationHeadSha256 =
+                            frontier.conversationHeadSha256,
+                        expectedScoreHeadSha256 =
+                            frontier.scoreHeadSha256,
+                        expectedDailyDreamHeadSha256 =
+                            prior
+                                ?.dailyDreamHeadSha256,
+                    ),
+            )
+
+        require(
+            !dream.synchronizationActivated &&
+                !dream.rhythmLearned &&
+                !dream.trainingRan &&
+                !dream.modelWeightsChanged &&
+                !dream.adapterChanged &&
+                !dream.publicationPerformed &&
+                !dream.firstPersonAuthorityGranted,
+        ) {
+            "deterministic Dream control crossed a held effect boundary"
+        }
+
+        return ControlEffectEvidence(
+            controlClass =
+                control.controlClass,
+            sourceScenarioTurnRef =
+                sourceScenarioTurnRef,
+            sourceConversationTurnRef =
+                sourceObserved.result.turnRef,
+            semanticSubjectRef =
+                control.key,
+            acceptedSummary =
+                control.value,
+            decisionRef =
+                kept.decisionRef,
+            decisionSha256 =
+                kept.decisionSha256,
+            scoreHeadSha256 =
+                kept.scoreHeadSha256,
+            dreamHeadSha256 =
+                dream.dailyDreamHeadSha256,
+            dailyStratumSha256 =
+                dream.dailyStratumSha256,
+            sourceConversationHeadSha256 =
+                dream.sourceConversationHeadSha256,
+            sourceScoreHeadSha256 =
+                dream.sourceScoreHeadSha256,
+            synchronizationActivated =
+                dream.synchronizationActivated,
+            rhythmLearned =
+                dream.rhythmLearned,
+            trainingRan =
+                dream.trainingRan,
+            modelWeightsChanged =
+                dream.modelWeightsChanged,
+        )
+    }
 
     private fun projection(
         config: Config,
@@ -615,6 +904,15 @@ object ContinuityPressureAdapter {
                 now = { if (provider.live) Instant.now() else clock },
                 currentRuntimeEvidence = { provider.observe() },
                 reobserveSameRuntimeEvidence = { provider.observe() },
+                memoryProviderSelectionAtCap = {
+                    productHome,
+                    memoryTokenCap,
+                    ->
+                    VexLifeCurrentMemoryProviderSelection.read(
+                        productHome = productHome,
+                        memoryTokenCap = memoryTokenCap,
+                    )
+                },
                 experimentEffectiveInputTokenBudget = budget,
                 experimentConversationContextProjectionEnabled =
                     config.conversationContextProjectionEnabled,
@@ -643,17 +941,48 @@ object ContinuityPressureAdapter {
                     failedTurnRecordsBefore = recordsBefore
                     val startedNanos = System.nanoTime()
                     val settings = VexLifePersonSettingsStore(home)
+                    val controlEffects =
+                        mutableListOf<ControlEffectEvidence>()
                     turn.beforeTurnControls.forEach { control ->
-                        require(
-                            control.controlClass == "PERSON_SETTING_UPDATE" &&
-                                control.key == "replyLanguage"
+                        when (
+                            control.controlClass
                         ) {
-                            "unsupported control ${control.controlClass}/${control.key}"
+                            "PERSON_SETTING_UPDATE" -> {
+                                require(
+                                    control.key ==
+                                        "replyLanguage",
+                                ) {
+                                    "unsupported person-setting control ${control.key}"
+                                }
+                                VexLifePersonSettings.languageName(
+                                    control.value,
+                                )
+                                settings.write(
+                                    VexLifePersonSettings.Value(
+                                        VexLifePersonSettings.Schema,
+                                        control.value,
+                                    ),
+                                )
+                            }
+
+                            "MEMORY_CORRECTION_KEEP_AND_DREAM" ->
+                                controlEffects +=
+                                    applyMemoryCorrectionKeepAndDream(
+                                        home =
+                                            home,
+                                        control =
+                                            control,
+                                        observed =
+                                            observed,
+                                        clock =
+                                            clock,
+                                    )
+
+                            else ->
+                                error(
+                                    "unsupported control ${control.controlClass}/${control.key}",
+                                )
                         }
-                        VexLifePersonSettings.languageName(control.value)
-                        settings.write(
-                            VexLifePersonSettings.Value(VexLifePersonSettings.Schema, control.value)
-                        )
                     }
                     // As the service composes it each turn: read fresh from the canonical owner.
                     val language = settings.read().replyLanguage
@@ -798,6 +1127,7 @@ object ContinuityPressureAdapter {
                             cursorEventRef = committed?.checkpoint?.workingSet?.cursorEventRef,
                             canonicalReplyLanguage = language,
                             controls = turn.beforeTurnControls,
+                            controlEffects = controlEffects,
                             hostScans = revisitEntries.mapNotNull { it.hostScan },
                         )
                     peakBytes = maxOf(peakBytes, directoryBytes(home))
@@ -840,7 +1170,7 @@ object ContinuityPressureAdapter {
             )
         }
         val deleted = cleanup(parent, config.keepScratch)
-        val turns = turnsJson(observed, budget)
+        val turns = turnsJson(observed, budget, provider.live)
         val status = statusOf(turns)
         return writeResult(
             config,
@@ -888,6 +1218,15 @@ object ContinuityPressureAdapter {
             state = state xor (state ushr 7)
             state = state xor (state shl 17)
             words.append(PayloadWords[((state ushr 1) % PayloadWords.size).toInt()]).append(' ')
+        }
+        if (
+            "ORDINARY_BACKGROUND" in
+                turn.tags
+        ) {
+            return "\n\nUnrelated rough notes from another task:\n" +
+                words
+                    .toString()
+                    .trimEnd()
         }
         return "\n\n[SYNTHETIC PAYLOAD seed=$seed turn=${turn.turnRef} targetTokens=$target; " +
             "filler, not part of the experiment's meaning]\n" +
@@ -997,7 +1336,11 @@ object ContinuityPressureAdapter {
 
     // ---------------------------------------------------------------- turns + residency
 
-    private fun turnsJson(observed: List<Observed>, budget: Int?): List<JsonObject> {
+    private fun turnsJson(
+        observed: List<Observed>,
+        budget: Int?,
+        providerLive: Boolean,
+    ): List<JsonObject> {
         val known = observed.filter { o -> o.scenarioTurn.tags.any { it in KnownRefTags } }
         return observed.map { o ->
             val receipt = o.result.promptContextReceipt
@@ -1160,6 +1503,12 @@ object ContinuityPressureAdapter {
                 put("residency", json.encodeToJsonElement(residency))
                 put("assertions", json.encodeToJsonElement(assertions))
                 put(
+                    "controlEffects",
+                    json.encodeToJsonElement(
+                        o.controlEffects,
+                    ),
+                )
+                put(
                     "implementationExtensions",
                     buildJsonObject {
                         put(
@@ -1198,7 +1547,7 @@ object ContinuityPressureAdapter {
                                     "capabilityExchangeAllowanceTokens",
                                     receipt.capabilityExchangeAllowanceTokens,
                                 )
-                                put("provider", "DETERMINISTIC_FIXTURE")
+                                put("provider", if (providerLive) "LIVE_MODEL" else "DETERMINISTIC_FIXTURE")
                                 put("providerCallCount", o.providerCalls.size)
                                 put(
                                     "providerMessageOrder",
@@ -1314,6 +1663,114 @@ object ContinuityPressureAdapter {
         val anchorRef = AssertionAnchors[ref]
         val (state, detail, evidence) =
             when {
+                ref ==
+                    "assert.dream-current-plan-currentization" -> {
+                    val oldPlan =
+                        observed.firstOrNull {
+                            it.scenarioTurn.turnRef ==
+                                "plan.old"
+                        }
+                    val currentPlan =
+                        observed.firstOrNull {
+                            it.scenarioTurn.turnRef ==
+                                "plan.current"
+                        }
+                    if (
+                        oldPlan ==
+                            null ||
+                        currentPlan ==
+                            null
+                    ) {
+                        Triple(
+                            "UNKNOWN",
+                            "old/current plan formation turns were not both run",
+                            emptyList(),
+                        )
+                    } else {
+                        val oldRefs =
+                            listOf(
+                                oldPlan.result.requestEventRef,
+                                oldPlan.result.responseEventRef,
+                            )
+                        val currentRefs =
+                            listOf(
+                                currentPlan.result.requestEventRef,
+                                currentPlan.result.responseEventRef,
+                            )
+                        val planOutsideRecentView =
+                            (oldRefs +
+                                currentRefs)
+                                .none {
+                                    it in
+                                        resident
+                                }
+                        val currentSourceProjected =
+                            currentRefs.any {
+                                it in
+                                    conversationContextProjected
+                            }
+                        val acceptedEffect =
+                            observed
+                                .asSequence()
+                                .flatMap {
+                                    it.controlEffects
+                                        .asSequence()
+                                }
+                                .lastOrNull {
+                                    it.controlClass ==
+                                        "MEMORY_CORRECTION_KEEP_AND_DREAM"
+                                }
+                        val acceptedSummary =
+                            acceptedEffect
+                                ?.acceptedSummary
+                        val providerCarriesAcceptedMemory =
+                            acceptedSummary !=
+                                null &&
+                                firstCallMessages(
+                                    o,
+                                )
+                                    ?.any {
+                                        message ->
+                                        message
+                                            .jsonObject
+                                            .getValue(
+                                                "content",
+                                            )
+                                            .jsonPrimitive
+                                            .content
+                                            .contains(
+                                                acceptedSummary,
+                                            )
+                                    } ==
+                                true
+                        val passed =
+                            planOutsideRecentView &&
+                                currentSourceProjected &&
+                                providerCarriesAcceptedMemory
+                        Triple(
+                            if (
+                                passed
+                            ) {
+                                "PASS"
+                            } else {
+                                "FAIL"
+                            },
+                            "projection: old/current plan outside recent view=$planOutsideRecentView; " +
+                                "current correction projected=$currentSourceProjected; " +
+                                "accepted Memory summary provider-visible=$providerCarriesAcceptedMemory; " +
+                                "mechanics only, not answer quality",
+                            (
+                                oldRefs +
+                                    currentRefs +
+                                    listOfNotNull(
+                                        acceptedEffect
+                                            ?.decisionRef,
+                                    )
+                            ),
+                        )
+                    }
+                }
+
                 anchorRef != null -> {
                     val anchor = observed.firstOrNull { it.scenarioTurn.turnRef == anchorRef }
                     if (anchor == null) {
@@ -1813,7 +2270,7 @@ object ContinuityPressureAdapter {
         failure: String?,
         provider: Provider,
     ): Int {
-        val turns = turnsJson(observed, budget)
+        val turns = turnsJson(observed, budget, provider.live)
         val summary = summary(turns)
         val files = linkedMapOf<String, ByteArray>()
         fun jsonl(rows: List<JsonElement>) =
@@ -1868,7 +2325,7 @@ object ContinuityPressureAdapter {
                 .toString()
                 .toByteArray()
         files["summary.json"] = summary.toString().toByteArray()
-        // Exactly what each provider call carried (synthetic only), so the provider representation
+        // Exactly what each provider call carried, so the provider representation
         // can be re-rendered with the pinned chat template outside this run.
         if (observed.any { it.telemetry.isNotEmpty() }) {
             files["implementation/provider-telemetry.jsonl"] =
@@ -1901,8 +2358,12 @@ object ContinuityPressureAdapter {
                 put("adapterRef", AdapterRef)
                 put(
                     "provider",
-                    "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
-                        "on setting turns reports the reply-language setting the provider input itself carried, and where",
+                    if (provider.live) {
+                        "LIVE_MODEL"
+                    } else {
+                        "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
+                            "on setting turns reports the reply-language setting the provider input itself carried, and where"
+                    },
                 )
                 put(
                     "owners",
