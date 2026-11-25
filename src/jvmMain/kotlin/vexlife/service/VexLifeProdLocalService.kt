@@ -1282,7 +1282,7 @@ class VexLifeProdLocalService private constructor(
                             productHome = productHome,
                             runtimeSource = workspaceCheckRuntimeSource,
                         )
-                            .run(
+                            .check(
                                 operationRef = operationRef,
                                 sourceRef = sourceRef,
                                 request = request,
