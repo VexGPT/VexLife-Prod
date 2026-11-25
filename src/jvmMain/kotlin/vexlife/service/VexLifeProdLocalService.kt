@@ -143,7 +143,7 @@ class VexLifeProdLocalService private constructor(
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
-    private val initialPromptPreparation: VexLifePromptPreparation? = null,
+    private val promptPreparation: VexLifePromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -155,11 +155,6 @@ class VexLifeProdLocalService private constructor(
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
-        /**
-         * True only when this active human turn began while the one initial Prompt Preparation
-         * window was still pending/reusable. It is not a second preparation owner.
-         */
-        val initialPromptPreparationTurn: Boolean,
     )
 
     private class PartnerServingNotCurrent(
@@ -1072,7 +1067,7 @@ class VexLifeProdLocalService private constructor(
                     true,
                 )
 
-            val initialPromptPreparation =
+            val promptPreparation =
                 VexLifePromptPreparation()
 
             fun <T> withCurrentSession(
@@ -1158,7 +1153,7 @@ class VexLifeProdLocalService private constructor(
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )
-                    initialPromptPreparation.invalidateAndAwait(
+                    promptPreparation.invalidateAndAwait(
                         "MODEL_SWITCH",
                     )
                     val write =
@@ -1210,7 +1205,7 @@ class VexLifeProdLocalService private constructor(
                         sessionRef.set(
                             next,
                         )
-                        initialPromptPreparation.startCurrent(
+                        promptPreparation.startCurrent(
                             next.foundation.qualifiedRuntimeEvidence,
                         )
                     } finally {
@@ -1229,7 +1224,7 @@ class VexLifeProdLocalService private constructor(
                             observe(
                                 VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                             )
-                            initialPromptPreparation.invalidateAndAwait(
+                            promptPreparation.invalidateAndAwait(
                                 "MODEL_SWITCH",
                             )
                             val write =
@@ -1275,8 +1270,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
-                                initialPromptPreparation =
-                                    initialPromptPreparation,
+                                promptPreparation =
+                                    promptPreparation,
                             )
                         }
                     },
@@ -1298,8 +1293,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
-                                initialPromptPreparation =
-                                    initialPromptPreparation,
+                                promptPreparation =
+                                    promptPreparation,
                             )
                         }
                     },
@@ -1315,8 +1310,8 @@ class VexLifeProdLocalService private constructor(
                                 session = current,
                                 intent = intent,
                                 partnerTextTurn = partnerTextTurn,
-                                initialPromptPreparation =
-                                    initialPromptPreparation,
+                                promptPreparation =
+                                    promptPreparation,
                             )
                         }
                     },
@@ -1336,8 +1331,8 @@ class VexLifeProdLocalService private constructor(
                                 progressObserver = observer,
                                 cancellation = cancellation,
                                 partnerTextTurn = partnerTextTurn,
-                                initialPromptPreparation =
-                                    initialPromptPreparation,
+                                promptPreparation =
+                                    promptPreparation,
                             )
                         }
                     },
@@ -1397,7 +1392,7 @@ class VexLifeProdLocalService private constructor(
                 partnerInference = partnerInference,
                 partnerConnectionLiveEffectsEnabled =
                     PartnerConnectionLiveEffectsEnabledForThisRelease,
-                initialPromptPreparation = initialPromptPreparation,
+                promptPreparation = promptPreparation,
                 runtimeSessionClose = {
                     sessionRef
                         .get()
@@ -1471,7 +1466,7 @@ class VexLifeProdLocalService private constructor(
             partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
             partnerConnectionLiveEffectsEnabled: Boolean = false,
-            initialPromptPreparation: VexLifePromptPreparation? = null,
+            promptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
@@ -1542,7 +1537,7 @@ class VexLifeProdLocalService private constructor(
                 partnerInference = partnerInference,
                 partnerConnectionLiveEffectsEnabled =
                     partnerConnectionLiveEffectsEnabled,
-                initialPromptPreparation = initialPromptPreparation,
+                promptPreparation = promptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
                 runtimeSessionRelinquishForRestart =
@@ -1586,7 +1581,7 @@ class VexLifeProdLocalService private constructor(
             partnerInference: VexLifeProdPartnerInference? = null,
             partnerConnectionLiveEffectsEnabled: Boolean =
                 PartnerConnectionLiveEffectsEnabledForThisRelease,
-            initialPromptPreparation: VexLifePromptPreparation? = null,
+            promptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
@@ -1701,7 +1696,7 @@ class VexLifeProdLocalService private constructor(
                         partnerInference = partnerInference,
                         partnerConnectionLiveEffectsEnabled =
                             partnerConnectionLiveEffectsEnabled,
-                        initialPromptPreparation = initialPromptPreparation,
+                        promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
                         runtimeSessionRelinquishForRestart =
@@ -1711,7 +1706,7 @@ class VexLifeProdLocalService private constructor(
                         privateCompletionOverride = privateCompletion,
                     )
 
-                initialPromptPreparation
+                promptPreparation
                     ?.attach(
                         executor = executor,
                         prefixProvider =
@@ -1830,7 +1825,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
-        runCatching { initialPromptPreparation?.close() }
+        runCatching { promptPreparation?.close() }
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
@@ -2952,14 +2947,6 @@ class VexLifeProdLocalService private constructor(
                     state,
                 ),
             effectsPerformed = false,
-            initialPromptPreparationPendingForNextTurn =
-                initialPromptPreparation
-                    ?.nextTurnPreparationPending() ==
-                    true,
-            initialPromptPreparationForActiveTurn =
-                active
-                    ?.initialPromptPreparationTurn ==
-                    true,
             followUpReadiness =
                 followUpReadinessProjection(
                     active,
@@ -3194,7 +3181,7 @@ class VexLifeProdLocalService private constructor(
      */
     private fun currentPromptPreparationPrefix(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-    ): DirectPromptContext.InitialBootPrefix {
+    ): DirectPromptContext.ProviderPreparationPrefix {
         val productHome =
             Path.of(
                 startupSetup.productHome,
@@ -3210,7 +3197,7 @@ class VexLifeProdLocalService private constructor(
         val capabilityRequestsAdmitted =
             entry.companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
-        return DirectPromptContext.projectInitialBootPrefix(
+        return DirectPromptContext.projectProviderPreparationPrefix(
             foundationalField =
                 VexLifeFoundationalField.readCurrent(),
             contextProfile =
@@ -3232,7 +3219,7 @@ class VexLifeProdLocalService private constructor(
 
     /** Best-effort preparation never controls Product availability. */
     private fun startPromptPreparation() {
-        initialPromptPreparation
+        promptPreparation
             ?.startCurrent(
                 currentQualifiedRuntimeEvidence(),
             )
@@ -6387,10 +6374,6 @@ class VexLifeProdLocalService private constructor(
             ActiveTurn(
                 attempt = begin.attempt,
                 cancellation = cancellation,
-                initialPromptPreparationTurn =
-                    initialPromptPreparation
-                        ?.nextTurnPreparationPending() ==
-                        true,
             )
         if (
             !activeTurn.compareAndSet(
