@@ -877,21 +877,25 @@ svg { display: block; }
 .reaches li { margin: 2px 0; overflow-wrap: anywhere; }
 .reaches li::before { content: "↳ "; color: var(--text-tertiary); }
 .reached-line { overflow-wrap: anywhere; }
-.model-state-card, .model-configuration, .model-import-card, .partner-api-card {
+.model-state-card, .model-configuration, .model-import-card {
   margin: var(--space-2) 0; padding: 10px var(--space-3); border: 1px solid var(--border-default); border-left: 3px solid var(--relation-runtime);
   border-radius: var(--radius-md); background: var(--bg-surface-raised);
 }
 .model-import-card { display: grid; gap: var(--space-2); margin: 10px 0 var(--space-3); padding: 10px var(--space-3); }
-.partner-api-card { display: grid; gap: var(--space-2); margin: 10px 0 var(--space-3); padding: 10px var(--space-3); }
+.partner-api-card {
+  display: grid; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default); border-left: 3px solid var(--relation-runtime);
+  border-radius: var(--radius-md); background: var(--bg-surface-raised);
+}
 .partner-api-heading { display: flex; gap: var(--space-3); justify-content: space-between; align-items: flex-start; }
 .partner-api-state {
-  flex: none; padding: 4px 8px; border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
+  flex: none; padding: var(--space-1) var(--space-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
   background: var(--bg-overlay); color: var(--text-secondary); font-size: var(--step--2); font-weight: 650;
 }
-.partner-api-fields { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 10px; }
-.partner-api-field { display: grid; gap: 6px; color: var(--text-secondary); font-size: var(--step--1); }
+.partner-api-fields { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--space-2); }
+.partner-api-field { display: grid; gap: var(--space-1); color: var(--text-secondary); font-size: var(--step--1); }
 .partner-api-field select, .partner-api-field input {
-  width: 100%; min-width: 0; min-height: 38px; padding: 0 10px;
+  width: 100%; min-width: 0; min-height: 38px; padding: 0 var(--space-2);
   border: 1px solid var(--border-default); border-radius: var(--radius-md);
   background: var(--bg-surface); color: var(--text-primary);
 }
