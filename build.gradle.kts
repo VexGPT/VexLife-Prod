@@ -3866,3 +3866,86 @@ tasks.register<JavaExec>("continuityPressure") {
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
 }
+
+/**
+ * Mac-only C3-R1 proof. This stays on the JVM test classpath so the probe itself does not ship in
+ * Product. The assembled private service image is the runtime under proof.
+ */
+tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
+    group = "verification"
+    description = "Prove the C3-R1 sandboxed Java project-test owner against the exact macOS private service image."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJdk21,
+    )
+    mainClass.set(
+        "vexlife.capability.VexLifeWorkspaceJavaTestMacProbeKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "C3-R1 Mac proof requires one exact Product source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "C3-R1 Mac proof private service image is missing: $imageRoot"
+        }
+
+        setArgs(
+            listOf(
+                imageRoot.toString(),
+                sourceSha,
+            ),
+        )
+    }
+}
