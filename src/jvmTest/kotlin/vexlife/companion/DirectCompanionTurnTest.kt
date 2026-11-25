@@ -591,7 +591,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun exactInitialPreparationIsConsumedAfterRequestBecomesCanonical() {
+    fun exactPreparationIsConsumedAfterRequestBecomesCanonical() {
         val home =
             productHome()
         val setup =
@@ -602,7 +602,7 @@ class DirectCompanionTurnTest {
         val memory =
             VexLifeMemoryContextFixture.current()
         val prefix =
-            DirectPromptContext.projectInitialBootPrefix(
+            DirectPromptContext.projectProviderPreparationPrefix(
                 foundationalField =
                     VexLifeFoundationalFieldFixture.shipped,
                 memoryContext =
@@ -699,7 +699,7 @@ class DirectCompanionTurnTest {
                             currentFoundationalField = {
                                 VexLifeFoundationalFieldFixture.shipped
                             },
-                            initialPromptPreparation =
+                            promptPreparation =
                                 preparation,
                         ),
                 )
@@ -753,7 +753,7 @@ class DirectCompanionTurnTest {
                 HereticModelCatalog.Models.Qwen4B,
             )
         val stalePrefix =
-            DirectPromptContext.projectInitialBootPrefix(
+            DirectPromptContext.projectProviderPreparationPrefix(
                 foundationalField =
                     null,
                 memoryContext =
@@ -852,7 +852,7 @@ class DirectCompanionTurnTest {
                             currentFoundationalField = {
                                 VexLifeFoundationalFieldFixture.shipped
                             },
-                            initialPromptPreparation =
+                            promptPreparation =
                                 preparation,
                         ),
                 )
