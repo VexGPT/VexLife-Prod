@@ -440,6 +440,7 @@ class VexLifeProdPrivateServiceImageTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.compiler",
                         "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
