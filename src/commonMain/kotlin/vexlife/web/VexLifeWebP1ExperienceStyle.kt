@@ -1035,6 +1035,11 @@ svg { display: block; }
 }
 .response-progress { margin: 0 0 6px; color: var(--text-secondary); font-size: var(--step--1); }
 .response-progress[data-state="Failed"] { color: var(--status-critical); }
+.response-progress[data-state="FirstLocalStart"] {
+  display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 10px var(--space-3);
+  color: var(--text-primary); background: var(--bg-surface-raised);
+  border: 1px solid var(--status-caution); border-left-width: 4px; border-radius: var(--radius-md);
+}
 .response-progress[data-state="FollowUpReadiness"] {
   display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 10px var(--space-3);
   color: var(--text-primary); background: var(--bg-surface-raised);
