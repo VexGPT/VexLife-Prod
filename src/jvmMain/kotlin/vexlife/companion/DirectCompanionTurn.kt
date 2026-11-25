@@ -26,6 +26,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -601,6 +602,13 @@ object DirectCompanionTurn {
          */
         val experimentConversationContextProjectionEnabled: Boolean = false,
         /**
+         * Derived continuity source locator shared by the caller across related turns.
+         *
+         * null preserves the existing canonical full-scan route. This backend is only a candidate
+         * locator; Conversation remains the source owner and every hit is exact-reopened there.
+         */
+        val continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
+        /**
          * Qualified static-image interpreter. null means this turn has no visual-input realization.
          *
          * It may derive bounded request context only; it does not write Conversation or own the
@@ -1059,6 +1067,19 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    hooks.continuitySourceLocatorBackend
+                        ?.let {
+                            backend ->
+                            runCatching {
+                                VexLifeContinuitySourceLocator.catchUpCommittedTurn(
+                                    committedHead = head,
+                                    request = request,
+                                    response = response,
+                                    backend = backend,
+                                )
+                            }
+                        }
+
                     VexLogger.record(
                         VexLogger.Fact.TurnCompleted,
                         mapOf(
@@ -1363,6 +1384,8 @@ object DirectCompanionTurn {
                                 receipt.sourceReturnSourceEventRefs
                         )
                             .toSet(),
+                    locatorBackend =
+                        hooks.continuitySourceLocatorBackend,
                 )
             } else {
                 null
