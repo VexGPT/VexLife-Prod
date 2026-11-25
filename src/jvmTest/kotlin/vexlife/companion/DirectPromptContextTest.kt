@@ -3516,10 +3516,6 @@ class DirectPromptContextTest {
                                 null,
                         )
                             .receipt
-                            .capabilityFrameSnapshot
-                            .let(
-                                ::requireNotNull,
-                            )
 
                     val held =
                         materialize(
@@ -3673,9 +3669,13 @@ class DirectPromptContextTest {
                             emptyList(),
                             runtimeRef,
                         )
+                    val noGrantFrame =
+                        requireNotNull(
+                            noGrant.capabilityFrameSnapshot,
+                        )
                     assertTrue(
                         VexLifeWorkspaceCheckDefinitions.CapabilityRef in
-                            noGrant.heldCapabilityRefs,
+                            noGrantFrame.heldCapabilityRefs,
                     )
 
                     val noRuntime =
@@ -3685,9 +3685,13 @@ class DirectPromptContextTest {
                             ),
                             null,
                         )
+                    val noRuntimeFrame =
+                        requireNotNull(
+                            noRuntime.capabilityFrameSnapshot,
+                        )
                     assertTrue(
                         VexLifeWorkspaceCheckDefinitions.CapabilityRef in
-                            noRuntime.heldCapabilityRefs,
+                            noRuntimeFrame.heldCapabilityRefs,
                     )
 
                     val available =
@@ -3697,26 +3701,30 @@ class DirectPromptContextTest {
                             ),
                             runtimeRef,
                         )
+                    val availableFrame =
+                        requireNotNull(
+                            available.capabilityFrameSnapshot,
+                        )
                     assertTrue(
                         VexLifeWorkspaceCheckDefinitions.CapabilityRef in
-                            available.availableCapabilityRefs,
+                            availableFrame.availableCapabilityRefs,
                     )
                     assertFalse(
                         VexLifeWorkspaceCheckDefinitions.CapabilityRef in
-                            available.heldCapabilityRefs,
+                            availableFrame.heldCapabilityRefs,
                     )
                     assertTrue(
-                        available.sourceRefs.contains(
+                        available.capabilityFrameSourceRefs.contains(
                             grant.grantRef,
                         ),
                     )
                     assertTrue(
-                        available.sourceRefs.contains(
+                        available.capabilityFrameSourceRefs.contains(
                             runtimeRef,
                         ),
                     )
                     assertFalse(
-                        available.effectAuthorityGranted,
+                        availableFrame.effectAuthorityGranted,
                     )
                 }
         } finally {
