@@ -3516,6 +3516,10 @@ class DirectPromptContextTest {
                                 null,
                         )
                             .receipt
+                            .capabilityFrameSnapshot
+                            .let(
+                                ::requireNotNull,
+                            )
 
                     val held =
                         materialize(
@@ -3659,10 +3663,6 @@ class DirectPromptContextTest {
                                 null,
                         )
                             .receipt
-                            .capabilityFrameSnapshot
-                            .let(
-                                ::requireNotNull,
-                            )
 
                     val noGrant =
                         materialize(
