@@ -104,7 +104,18 @@ class VexLifeWorkspaceWrite(
     }
 
     sealed interface Outcome {
-        data class Completed(val receipt: Receipt) : Outcome
+        /**
+         * Call-local truth stays separate from the durable receipt.
+         *
+         * A durable receipt describes the completed intent historically. Returning/recovering that
+         * evidence later does not mean this invocation performed another external effect or that
+         * write authority is still current.
+         */
+        data class Completed(
+            val receipt: Receipt,
+            val effectPerformedNow: Boolean,
+            val currentEffectAuthority: Boolean,
+        ) : Outcome
 
         data class Refused(
             val reason: String,
@@ -175,7 +186,17 @@ class VexLifeWorkspaceWrite(
                     existingReceipt.newSha256 == newSha &&
                     existingReceipt.priorSha256 == expectedPriorSha256
             ) {
-                Outcome.Completed(existingReceipt)
+                Outcome.Completed(
+                    receipt = existingReceipt,
+                    effectPerformedNow = false,
+                    currentEffectAuthority =
+                        workspaceEffects
+                            .currentGrant(
+                                sourceRef,
+                            )
+                            ?.grantRef ==
+                            existingReceipt.grantRef,
+                )
             } else {
                 Outcome.Refused(RefusedOperationConflict, existingReceipt.intentRef)
             }
@@ -238,10 +259,20 @@ class VexLifeWorkspaceWrite(
             // occurs when the already-intended bytes are simply reobserved and receipted.
             val observed = observe(target)
             if (observed is TargetObservation.Present && observed.sha256 == newSha) {
+                val currentGrant =
+                    workspaceEffects.currentGrant(
+                        sourceRef,
+                    )
                 return complete(
                     intent = existingIntent,
                     receiptPath = receiptPath,
                     disposition = DispositionRecovered,
+                    effectPerformedNow = false,
+                    currentEffectAuthority =
+                        currentGrant?.grantRef ==
+                            existingIntent.grantRef &&
+                            currentGrant.sourceGrantedAt ==
+                            existingIntent.sourceGrantedAt,
                 )
             }
 
@@ -459,6 +490,8 @@ class VexLifeWorkspaceWrite(
                 } else {
                     DispositionReplaced
                 },
+            effectPerformedNow = true,
+            currentEffectAuthority = true,
         )
     }
 
@@ -466,6 +499,8 @@ class VexLifeWorkspaceWrite(
         intent: Intent,
         receiptPath: Path,
         disposition: String,
+        effectPerformedNow: Boolean,
+        currentEffectAuthority: Boolean,
     ): Outcome {
         val receipt =
             Receipt(
@@ -500,7 +535,11 @@ class VexLifeWorkspaceWrite(
                 require(readback == receipt) {
                     "workspace write receipt changed after persistence"
                 }
-                Outcome.Completed(receipt)
+                Outcome.Completed(
+                    receipt = receipt,
+                    effectPerformedNow = effectPerformedNow,
+                    currentEffectAuthority = currentEffectAuthority,
+                )
             }
             .getOrElse {
                 Outcome.UnknownAfterAttempt(
