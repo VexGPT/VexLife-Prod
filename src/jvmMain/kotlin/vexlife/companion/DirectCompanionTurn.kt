@@ -1391,6 +1391,23 @@ object DirectCompanionTurn {
                             .toSet(),
                     locatorBackend =
                         hooks.continuitySourceLocatorBackend,
+                    sourceLifecycle = {
+                        VexLifeCurrentMemoryReader
+                            .readConversationRecallMembrane(
+                                productHome,
+                            )
+                            .let {
+                                membrane ->
+                                DirectConversationContextProjection.SourceLifecycle(
+                                    bindingRef =
+                                        membrane.bindingRef,
+                                    blockedEventRefs =
+                                        membrane.blockedEventRefs,
+                                    historicalCurrentizedEventRefs =
+                                        membrane.historicalCurrentizedEventRefs,
+                                )
+                            }
+                    },
                 )
             } else {
                 null
