@@ -139,12 +139,6 @@ class VexLifeWorkspaceWrite(
         if (operationRef.isBlank() || operationRef.length > MaximumOperationRefCharacters) {
             return Outcome.Refused(RefusedOperationRef)
         }
-        val grant =
-            workspaceEffects.currentGrant(sourceRef)
-                ?: return Outcome.Refused(RefusedGrantNotCurrent)
-        val root =
-            localSources.root(sourceRef)
-                ?: return Outcome.Refused(RefusedSourceNotCurrent)
         val normalizedRelative =
             normalizeRelative(relativePath)
                 ?: return Outcome.Refused(RefusedPath)
@@ -156,24 +150,13 @@ class VexLifeWorkspaceWrite(
             return Outcome.Refused(RefusedExpectedSha)
         }
 
-        val target =
-            VexOwnedPath.resolveInside(
-                root,
-                normalizedRelative,
-            )
-        if (
-            VexOwnedPath.observeParent(
-                root,
-                target,
-            ) !=
-            VexOwnedPath.DirectoryState.Present
-        ) {
-            return Outcome.Refused(RefusedParentMissing)
-        }
-
         val operationKey = sha256(operationRef)
         val intentPath = intentPath(operationKey)
         val receiptPath = receiptPath(operationKey)
+        val newSha = sha256(bytes)
+
+        // Completed evidence remains readable even if authority was later revoked. Returning an
+        // existing receipt performs no workspace effect.
         val existingReceipt =
             runCatching {
                     VexDurableContractFile.read<Receipt>(
@@ -184,11 +167,9 @@ class VexLifeWorkspaceWrite(
                 .getOrElse {
                     return Outcome.Refused(RefusedReceiptInvalid)
                 }
-        val newSha = sha256(bytes)
         if (existingReceipt != null) {
             return if (
                 existingReceipt.operationRef == operationRef &&
-                    existingReceipt.grantRef == grant.grantRef &&
                     existingReceipt.sourceRef == sourceRef &&
                     existingReceipt.relativePath == normalizedRelative &&
                     existingReceipt.newSha256 == newSha &&
@@ -211,122 +192,187 @@ class VexLifeWorkspaceWrite(
                     return Outcome.Refused(RefusedIntentInvalid)
                 }
 
-        val intent =
-            if (existingIntent != null) {
-                if (
-                    existingIntent.operationRef != operationRef ||
-                    existingIntent.grantRef != grant.grantRef ||
-                    existingIntent.sourceRef != sourceRef ||
-                    existingIntent.sourceGrantedAt != grant.sourceGrantedAt ||
-                    existingIntent.relativePath != normalizedRelative ||
-                    existingIntent.expectedPriorSha256 != expectedPriorSha256 ||
-                    existingIntent.newSha256 != newSha ||
-                    existingIntent.bytes != bytes.size
-                ) {
-                    return Outcome.Refused(
-                        RefusedOperationConflict,
-                        existingIntent.intentRef,
-                        observeSha(target),
-                    )
-                }
-                existingIntent
-            } else {
-                val prior =
-                    when (val observation = observe(target)) {
-                        is TargetObservation.Invalid ->
-                            return Outcome.Refused(observation.reason)
-
-                        is TargetObservation.Absent ->
-                            if (expectedPriorSha256 == null) {
-                                null
-                            } else {
-                                return Outcome.Refused(RefusedExpectedMissing)
-                            }
-
-                        is TargetObservation.Present -> {
-                            if (expectedPriorSha256 == null) {
-                                return Outcome.Refused(
-                                    RefusedCreateTargetExists,
-                                    observedSha256 = observation.sha256,
-                                )
-                            }
-                            if (observation.sha256 != expectedPriorSha256) {
-                                return Outcome.Refused(
-                                    RefusedStaleExpectation,
-                                    observedSha256 = observation.sha256,
-                                )
-                            }
-                            observation
-                        }
-                    }
-
-                val intentRef = IntentRefPrefix + operationKey
-                val beforeImageRef =
-                    prior?.let {
-                        val before =
-                            BeforeImage(
-                                schemaVersion = BeforeImageSchema,
-                                intentRef = intentRef,
-                                sourceRef = sourceRef,
-                                relativePath = normalizedRelative,
-                                sha256 = it.sha256,
-                                content = it.content,
-                                capturedAt = now().toString(),
-                            )
-                        VexDurableContractFile.write(
-                            ownedRoot = home,
-                            path = beforeImagePath(operationKey),
-                            value = before,
-                        )
-                        BeforeImageRefPrefix + operationKey
-                    }
-                val formed =
-                    Intent(
-                        schemaVersion = IntentSchema,
-                        intentRef = intentRef,
-                        operationRef = operationRef,
-                        grantRef = grant.grantRef,
-                        sourceRef = sourceRef,
-                        sourceGrantedAt = grant.sourceGrantedAt,
-                        relativePath = normalizedRelative,
-                        expectedPriorSha256 = expectedPriorSha256,
-                        observedPriorSha256 = prior?.sha256,
-                        newSha256 = newSha,
-                        bytes = bytes.size,
-                        beforeImageRefOrNull = beforeImageRef,
-                        formedAt = now().toString(),
-                    )
-                runCatching {
-                        VexDurableContractFile.write(
-                            ownedRoot = home,
-                            path = intentPath,
-                            value = formed,
-                        )
-                    }
-                    .getOrElse {
-                        return Outcome.Refused(RefusedIntentPersist)
-                    }
-                formed
-            }
-
-        // Recovery-before-replay: an earlier attempt may have completed the target mutation and
-        // failed before writing its Vex Home receipt.
-        val current = observe(target)
+        // A readable Local Source is needed to observe the external target. It does not itself
+        // authorize another mutation.
+        val root =
+            localSources.root(sourceRef)
+                ?: return Outcome.Refused(
+                    RefusedSourceNotCurrent,
+                    existingIntent?.intentRef,
+                )
+        val target =
+            VexOwnedPath.resolveInside(
+                root,
+                normalizedRelative,
+            )
         if (
-            existingIntent != null &&
-            current is TargetObservation.Present &&
-            current.sha256 == newSha
+            VexOwnedPath.observeParent(
+                root,
+                target,
+            ) !=
+            VexOwnedPath.DirectoryState.Present
         ) {
-            return complete(
-                intent = intent,
-                receiptPath = receiptPath,
-                disposition = DispositionRecovered,
+            return Outcome.Refused(
+                RefusedParentMissing,
+                existingIntent?.intentRef,
             )
         }
 
-        when (current) {
+        if (existingIntent != null) {
+            if (
+                existingIntent.operationRef != operationRef ||
+                existingIntent.sourceRef != sourceRef ||
+                existingIntent.relativePath != normalizedRelative ||
+                existingIntent.expectedPriorSha256 != expectedPriorSha256 ||
+                existingIntent.newSha256 != newSha ||
+                existingIntent.bytes != bytes.size
+            ) {
+                return Outcome.Refused(
+                    RefusedOperationConflict,
+                    existingIntent.intentRef,
+                    observeSha(target),
+                )
+            }
+
+            // Recovery-before-replay is lawful without renewed write authority: no external effect
+            // occurs when the already-intended bytes are simply reobserved and receipted.
+            val observed = observe(target)
+            if (observed is TargetObservation.Present && observed.sha256 == newSha) {
+                return complete(
+                    intent = existingIntent,
+                    receiptPath = receiptPath,
+                    disposition = DispositionRecovered,
+                )
+            }
+
+            // Any actual replay still requires the exact same current effect-grant generation that
+            // formed the intent. Revocation or re-grant never reactivates an old mutation.
+            val currentGrant =
+                workspaceEffects.currentGrant(sourceRef)
+                    ?: return Outcome.Refused(
+                        RefusedGrantNotCurrent,
+                        existingIntent.intentRef,
+                        (observed as? TargetObservation.Present)?.sha256,
+                    )
+            if (
+                currentGrant.grantRef != existingIntent.grantRef ||
+                currentGrant.sourceGrantedAt != existingIntent.sourceGrantedAt
+            ) {
+                return Outcome.Refused(
+                    RefusedGrantGenerationChanged,
+                    existingIntent.intentRef,
+                    (observed as? TargetObservation.Present)?.sha256,
+                )
+            }
+            return attemptMutation(
+                intent = existingIntent,
+                target = target,
+                receiptPath = receiptPath,
+                bytes = bytes,
+                observation = observed,
+            )
+        }
+
+        val grant =
+            workspaceEffects.currentGrant(sourceRef)
+                ?: return Outcome.Refused(RefusedGrantNotCurrent)
+        val prior =
+            when (val observation = observe(target)) {
+                is TargetObservation.Invalid ->
+                    return Outcome.Refused(observation.reason)
+
+                is TargetObservation.Absent ->
+                    if (expectedPriorSha256 == null) {
+                        null
+                    } else {
+                        return Outcome.Refused(RefusedExpectedMissing)
+                    }
+
+                is TargetObservation.Present -> {
+                    if (expectedPriorSha256 == null) {
+                        return Outcome.Refused(
+                            RefusedCreateTargetExists,
+                            observedSha256 = observation.sha256,
+                        )
+                    }
+                    if (observation.sha256 != expectedPriorSha256) {
+                        return Outcome.Refused(
+                            RefusedStaleExpectation,
+                            observedSha256 = observation.sha256,
+                        )
+                    }
+                    observation
+                }
+            }
+
+        val intentRef = IntentRefPrefix + operationKey
+        val beforeImageRef =
+            prior?.let {
+                val before =
+                    BeforeImage(
+                        schemaVersion = BeforeImageSchema,
+                        intentRef = intentRef,
+                        sourceRef = sourceRef,
+                        relativePath = normalizedRelative,
+                        sha256 = it.sha256,
+                        content = it.content,
+                        capturedAt = now().toString(),
+                    )
+                VexDurableContractFile.write(
+                    ownedRoot = home,
+                    path = beforeImagePath(operationKey),
+                    value = before,
+                )
+                BeforeImageRefPrefix + operationKey
+            }
+        val intent =
+            Intent(
+                schemaVersion = IntentSchema,
+                intentRef = intentRef,
+                operationRef = operationRef,
+                grantRef = grant.grantRef,
+                sourceRef = sourceRef,
+                sourceGrantedAt = grant.sourceGrantedAt,
+                relativePath = normalizedRelative,
+                expectedPriorSha256 = expectedPriorSha256,
+                observedPriorSha256 = prior?.sha256,
+                newSha256 = newSha,
+                bytes = bytes.size,
+                beforeImageRefOrNull = beforeImageRef,
+                formedAt = now().toString(),
+            )
+        runCatching {
+                VexDurableContractFile.write(
+                    ownedRoot = home,
+                    path = intentPath,
+                    value = intent,
+                )
+            }
+            .getOrElse {
+                return Outcome.Refused(RefusedIntentPersist)
+            }
+
+        // Reobserve after the intent becomes durable so a concurrent external change cannot be
+        // silently overwritten merely because it matched before intent persistence.
+        return attemptMutation(
+            intent = intent,
+            target = target,
+            receiptPath = receiptPath,
+            bytes = bytes,
+            observation = observe(target),
+        )
+    }
+
+    private fun attemptMutation(
+        intent: Intent,
+        target: Path,
+        receiptPath: Path,
+        bytes: ByteArray,
+        observation: TargetObservation,
+    ): Outcome {
+        when (observation) {
             is TargetObservation.Invalid ->
-                return Outcome.Refused(current.reason, intent.intentRef)
+                return Outcome.Refused(observation.reason, intent.intentRef)
 
             is TargetObservation.Absent ->
                 if (intent.observedPriorSha256 != null) {
@@ -334,11 +380,11 @@ class VexLifeWorkspaceWrite(
                 }
 
             is TargetObservation.Present ->
-                if (current.sha256 != intent.observedPriorSha256) {
+                if (observation.sha256 != intent.observedPriorSha256) {
                     return Outcome.Refused(
                         RefusedStaleExpectation,
                         intent.intentRef,
-                        current.sha256,
+                        observation.sha256,
                     )
                 }
         }
@@ -396,7 +442,7 @@ class VexLifeWorkspaceWrite(
         }
 
         val post = observe(target)
-        if (post !is TargetObservation.Present || post.sha256 != newSha) {
+        if (post !is TargetObservation.Present || post.sha256 != intent.newSha256) {
             return Outcome.UnknownAfterAttempt(
                 intentRef = intent.intentRef,
                 reason = "workspace target did not reobserve the intended content after atomic move",
@@ -572,6 +618,7 @@ class VexLifeWorkspaceWrite(
 
         const val RefusedOperationRef = "WORKSPACE_OPERATION_REF_INVALID"
         const val RefusedGrantNotCurrent = "WORKSPACE_EFFECT_GRANT_NOT_CURRENT"
+        const val RefusedGrantGenerationChanged = "WORKSPACE_EFFECT_GRANT_GENERATION_CHANGED"
         const val RefusedSourceNotCurrent = "WORKSPACE_SOURCE_NOT_CURRENT"
         const val RefusedPath = "WORKSPACE_PATH_INVALID"
         const val RefusedParentMissing = "WORKSPACE_PARENT_MISSING"
