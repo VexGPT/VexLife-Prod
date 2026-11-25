@@ -305,6 +305,48 @@ class VexLifeCapabilityAtlasTest {
     }
 
     @Test
+    fun effectCapabilityAvailabilityStillDoesNotGrantEffectAuthority() {
+        val frame =
+            VexLifeCapabilityAtlas.formFrame(
+                input(
+                    grants = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    relevant = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    resources =
+                        listOf(
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = VexLifeWorkspaceEffectDefinitions.ResourceRef,
+                                state = VexLifeCapabilityAtlas.ResourceState.AVAILABLE,
+                                sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                            )
+                        ),
+                    tokenBudget = 1_600,
+                )
+                    .copy(
+                        permissionFacts =
+                            listOf(
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef = VexLifeWorkspaceEffectDefinitions.PermissionRef,
+                                    state = VexLifeCapabilityAtlas.PermissionState.GRANTED,
+                                    sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                                )
+                            )
+                    )
+            )
+
+        assertEquals(
+            listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+            frame.availableCapabilityRefs,
+        )
+        val workspace =
+            frame.capabilityEntries.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals("RECOVERY_GUARDED_LOCAL_WRITE", workspace.effectClass)
+        assertFalse(workspace.effectAuthorityGranted)
+        assertFalse(frame.effectAuthorityGranted)
+    }
+
+    @Test
     fun missingProjectGrantHoldsCapabilityWithoutChangingCanonicalMaturity() {
         val frame =
             VexLifeCapabilityAtlas.formFrame(
