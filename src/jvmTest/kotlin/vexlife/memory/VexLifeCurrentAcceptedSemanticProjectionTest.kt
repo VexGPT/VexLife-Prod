@@ -285,7 +285,14 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
             )
 
         assertEquals(
-            "lifecycle.score.1111111111111111.2222222222222222",
+            "lifecycle.score." +
+                "1".repeat(
+                    64,
+                ) +
+                "." +
+                "2".repeat(
+                    64,
+                ),
             membrane.bindingRef,
         )
         assertEquals(
