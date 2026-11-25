@@ -437,7 +437,8 @@ object VexLifeCapabilityBridge {
     )
 
     private val RequestEnvelopeCapabilityRefs: Set<String> =
-        VexLifeReachDefinitions.EnvelopeCapabilityRefs +
+        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            .toSet() +
             VexLifeWorkspaceEffectDefinitions.WriteRef
 
     private const val FormReminder =
