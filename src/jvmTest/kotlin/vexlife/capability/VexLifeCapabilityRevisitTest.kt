@@ -285,6 +285,70 @@ class VexLifeCapabilityRevisitTest {
     }
 
     @Test
+    fun unavailableLifecycleOwnerHoldsConversationScopeInsteadOfLeakingRawHistory() {
+        ContinuityTurnFixture().use { fixture ->
+            val turns =
+                fixture.threeTurns()
+            val sources =
+                VexLifeContextRevisit.TurnSources(
+                    readConversation = {
+                        DirectConversationStore(
+                            fixture.home,
+                        )
+                            .current()
+                    },
+                    memory = {
+                        null
+                    },
+                    readWorking = {
+                        null
+                    },
+                    promptResidentEventRefs = {
+                        emptySet()
+                    },
+                    promptResidentStatementRefs = {
+                        emptySet()
+                    },
+                    now = {
+                        now
+                    },
+                    readConversationLifecycle = {
+                        error(
+                            "semantic lifecycle unavailable",
+                        )
+                    },
+                )
+
+            val exchange =
+                perform(
+                    fixture.home,
+                    """{"queries":[{"terms":["one owner"]}],"scopes":["CONVERSATION"]}""",
+                    sources,
+                )
+
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.NOT_FOUND,
+                exchange.entry.state,
+            )
+            assertTrue(
+                exchange.entry.sourceRefs.isEmpty(),
+            )
+            assertTrue(
+                exchange.resultMessage.content.contains(
+                    "Conversation — semantic lifecycle could not be read now",
+                ),
+            )
+            assertFalse(
+                exchange.resultMessage.content.contains(
+                    turns.first()
+                        .first
+                        .content,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun cluesInOneQueryAreConjunctiveAndQueriesAreAlternateVantages() {
         ContinuityTurnFixture().use { fixture ->
             val turns = fixture.threeTurns()
