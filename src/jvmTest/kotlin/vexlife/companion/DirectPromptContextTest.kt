@@ -756,10 +756,10 @@ class DirectPromptContextTest {
     }
 
     @Test
-    fun initialBootPrefixExactlyMatchesTheRealGenesisTurnLeadingSystemMessage() {
+    fun providerPreparationPrefixExactlyMatchesTheRealGenesisTurnLeadingSystemMessage() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-prompt-initial-boot-prefix-",
+                "vexlife-prod-direct-prompt-provider-preparation-prefix-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -776,7 +776,7 @@ class DirectPromptContextTest {
             val runtime =
                 runtimeEvidence()
             val boot =
-                DirectPromptContext.projectInitialBootPrefix(
+                DirectPromptContext.projectProviderPreparationPrefix(
                     foundationalField =
                         VexLifeFoundationalFieldFixture.shipped,
                     memoryContext =
@@ -794,9 +794,9 @@ class DirectPromptContextTest {
                     val request =
                         beginRequest(
                             turnRef =
-                                "turn.self-development.initial-boot-prefix",
+                                "turn.self-development.provider-preparation-prefix",
                             requestMessageRef =
-                                "message.self-development.human.initial-boot-prefix",
+                                "message.self-development.human.provider-preparation-prefix",
                             content =
                                 "Hello after boot.",
                         )
@@ -874,10 +874,10 @@ class DirectPromptContextTest {
     }
 
     @Test
-    fun initialBootPrefixExactlyMatchesTheLivedQwen4BTextControlGenesisShape() {
+    fun providerPreparationPrefixExactlyMatchesTheLivedQwen4BTextControlGenesisShape() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-prompt-initial-boot-prefix-qwen4b-",
+                "vexlife-prod-direct-prompt-provider-preparation-prefix-qwen4b-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -894,7 +894,7 @@ class DirectPromptContextTest {
             val runtime =
                 runtimeEvidence()
             val boot =
-                DirectPromptContext.projectInitialBootPrefix(
+                DirectPromptContext.projectProviderPreparationPrefix(
                     foundationalField =
                         VexLifeFoundationalFieldFixture.shipped,
                     memoryContext =
@@ -912,9 +912,9 @@ class DirectPromptContextTest {
                     val request =
                         beginRequest(
                             turnRef =
-                                "turn.self-development.initial-boot-prefix.qwen4b",
+                                "turn.self-development.provider-preparation-prefix.qwen4b",
                             requestMessageRef =
-                                "message.self-development.human.initial-boot-prefix.qwen4b",
+                                "message.self-development.human.provider-preparation-prefix.qwen4b",
                             content =
                                 "Hello from the lived 4B text-control shape.",
                         )
