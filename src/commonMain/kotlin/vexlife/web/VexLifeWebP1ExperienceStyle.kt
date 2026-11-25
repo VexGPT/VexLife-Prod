@@ -892,6 +892,21 @@ svg { display: block; }
   flex: none; padding: var(--space-1) var(--space-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
   background: var(--bg-overlay); color: var(--text-secondary); font-size: var(--step--2); font-weight: 650;
 }
+.partner-api-card[data-state="held"] {
+  border-color: color-mix(in oklch, var(--status-caution) 45%, var(--border-default));
+  border-left-color: var(--status-caution);
+}
+.partner-api-state[data-state="held"] {
+  border-color: color-mix(in oklch, var(--status-caution) 65%, var(--border-subtle));
+  color: color-mix(in oklch, var(--status-caution) 72%, var(--text-primary));
+}
+.partner-api-card[data-state="held"] .partner-api-note {
+  padding: var(--space-2);
+  border-left: 3px solid var(--status-caution);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--status-caution) 10%, var(--bg-overlay));
+  color: var(--text-primary);
+}
 .partner-api-fields { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--space-2); }
 .partner-api-field { display: grid; gap: var(--space-1); color: var(--text-secondary); font-size: var(--step--1); }
 .partner-api-field select, .partner-api-field input {
