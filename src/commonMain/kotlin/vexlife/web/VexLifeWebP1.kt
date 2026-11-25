@@ -96,6 +96,11 @@ object VexLifeWebP1 {
                 "local-sources.manage",
             )
 
+        val WorkspaceEffectsCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-effects.manage",
+            )
+
         const val ColorModeToggleAction = "color-mode.toggle"
         const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
 
@@ -1070,6 +1075,38 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalSourceAllowChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
+    val LocalSourceStopChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
     val SettingsLocalSources =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SettingsLocalSources,
@@ -1077,6 +1114,8 @@ object VexLifeWebP1 {
                 listOf(
                     LocalSourcesList,
                     LocalSourcesAdd,
+                    LocalSourceAllowChanges,
+                    LocalSourceStopChanges,
                 ),
         )
 
