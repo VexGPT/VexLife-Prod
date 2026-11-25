@@ -11,6 +11,7 @@ import vexlife.model.VexLifeModelsFamily
 import vexlife.partner.VexLifePartnerProviderCatalog
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -341,6 +342,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
                 localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
                 localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
+                workspaceEffectsPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsPath)},
+                workspaceEffectsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlPath)},
                 attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
                 attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
@@ -469,6 +472,20 @@ object VexLifeWebP1RuntimeArtifacts {
                   refused: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED.name)},
                   notLawfulNow: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW.name)}
                 })
+              });
+              // Stronger human authority remains separate from the Local Source read grant.
+              const workspaceEffects = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceEffectsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceEffectsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChanges.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChanges.identity.ref)}
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
@@ -774,6 +791,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 localAsrInFlight: false,
                 localSources: null,
                 localSourcesInFlight: false,
+                workspaceEffects: null,
+                workspaceEffectsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -6023,6 +6042,35 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   main.append(name, path);
 
+                  const currentWorkspaceGrant =
+                    (state.workspaceEffects?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const authority = document.createElement('span');
+                  authority.className = 'local-source-authority';
+                  authority.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.status.workspace-effects-writable')
+                    : workspaceText('workspace.status.workspace-effects-read-only');
+
+                  const authorityControl = document.createElement('button');
+                  authorityControl.type = 'button';
+                  authorityControl.className = 'outline-button';
+                  authorityControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  authorityControl.dataset.controlRef = currentWorkspaceGrant
+                    ? workspaceEffects.control.revoke
+                    : workspaceEffects.control.allow;
+                  authorityControl.setAttribute(
+                    'data-vex-ref',
+                    currentWorkspaceGrant ? workspaceEffects.revokeRef : workspaceEffects.allowRef
+                  );
+                  authorityControl.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.button.workspace-effects-revoke')
+                    : workspaceText('workspace.button.workspace-effects-allow');
+                  authorityControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceEffectsInFlight ||
+                    !grant.sourceRef;
+
                   const remove = document.createElement('button');
                   remove.type = 'button';
                   remove.className = 'outline-button';
@@ -6035,7 +6083,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.localSourcesInFlight ||
                     grant.removeControlRef !== localSources.control.remove;
 
-                  item.append(main, remove);
+                  item.append(main, authority, authorityControl, remove);
                   ui.localSourcesList.append(item);
                 }
 
@@ -6065,6 +6113,47 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.localSources = await readJson(response);
                 if (renderNow) renderLocalSources();
                 return state.localSources;
+              };
+
+              const loadWorkspaceEffects = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceEffectsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceEffects = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceEffects;
+              };
+
+              const applyWorkspaceEffectsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceEffectsInFlight) return;
+                state.workspaceEffectsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceEffectsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceEffects = result.effects ?? state.workspaceEffects;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceEffects.control.allow
+                      ? workspaceText('workspace.status.workspace-effects-granted')
+                      : workspaceText('workspace.status.workspace-effects-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-effects-source-not-current');
+                } finally {
+                  state.workspaceEffectsInFlight = false;
+                  renderLocalSources();
+                }
               };
 
               const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
@@ -6109,6 +6198,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       : workspaceText('workspace.status.local-sources-picker-unavailable');
                 } finally {
                   state.localSourcesInFlight = false;
+                  await loadWorkspaceEffects(false).catch(() => {});
                   renderLocalSources();
                 }
               };
@@ -8465,6 +8555,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadLocalSources().catch(() => {});
+                  void loadWorkspaceEffects().catch(() => {});
                   void loadLocalAsr().catch(() => {});
                 }
               });
@@ -8482,6 +8573,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 const sourceRef = String(button.dataset.sourceRef ?? '');
                 if (controlRef === localSources.control.remove && sourceRef) {
                   void applyLocalSourcesControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceEffects.control.allow ||
+                    controlRef === workspaceEffects.control.revoke)
+                ) {
+                  void applyWorkspaceEffectsControl(controlRef, sourceRef);
                 }
               });
 
@@ -8882,6 +8981,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadConversationTurn(),
                 loadAttachmentDraft(),
                 loadLocalSources(),
+                loadWorkspaceEffects(),
                 loadConversation(),
                 loadVision()
               ])
