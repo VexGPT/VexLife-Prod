@@ -17,7 +17,8 @@ import vexlife.model.heretic.HereticRuntimeRealization
  *
  * ```text
  * MODEL NAME != CAPABILITY
- * PROVIDER REPRESENTATION != RUNTIME QUALIFICATION
+ * PROVIDER REPRESENTATION != RELATIONSHIP QUALIFICATION
+ * RECOGNIZED PROVIDER TOOL GRAMMAR != QUALIFIED PROVIDER TOOL CARRIAGE
  * RUNTIME REALIZABLE != RUNTIME SERVING
  * VISUAL MODEL CANDIDATE != QUALIFIED VISUAL INPUT
  * CAPABILITY PROJECTION != CAPABILITY AUTHORITY
@@ -121,10 +122,26 @@ object VexLifeEffectiveModelCapabilities {
                         Standing.HELD
                 },
             providerNativeTools =
-                represented(
-                    profile.capabilityRepresentation ==
-                        HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
-                ),
+                when (profile.providerNativeToolStanding) {
+                    HereticCompanionRepresentation.ProviderNativeToolStanding.NOT_REPRESENTED ->
+                        Standing.NOT_APPLICABLE
+
+                    HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD ->
+                        if (
+                            exactQualifiedRuntime != null &&
+                            HereticCompanionRepresentation.providerNativeToolsActive(
+                                profile = profile,
+                                qualification = qualifiedRuntime?.qualification,
+                            )
+                        ) {
+                            Standing.AVAILABLE
+                        } else {
+                            Standing.HELD
+                        }
+
+                    HereticCompanionRepresentation.ProviderNativeToolStanding.QUALIFIED ->
+                        represented(true)
+                },
             reasoningEffortControl =
                 represented(
                     profile.generation.reasoningEffort != null,

@@ -207,6 +207,45 @@ class HereticRuntimeContractTest {
     }
 
     @Test
+    fun providerNativeToolQualificationIsOptionalAndDoesNotRewriteLegacyQualificationShape() {
+        val ordinary =
+            HereticRuntimeQualification.qualified()
+        assertEquals(
+            null,
+            ordinary.providerNativeToolsQualificationRef,
+        )
+        assertFalse(
+            VexContractJson
+                .encode(
+                    ordinary,
+                )
+                .contains(
+                    "providerNativeToolsQualificationRef",
+                ),
+            "ordinary/legacy runtime qualification must not gain a serialized null field",
+        )
+
+        val native =
+            HereticRuntimeQualification.qualified(
+                providerNativeToolsQualified = true,
+            )
+        assertEquals(
+            HereticRuntimeQualification.ProviderNativeToolsQualificationRef,
+            native.providerNativeToolsQualificationRef,
+        )
+        assertTrue(
+            VexContractJson
+                .encode(
+                    native,
+                )
+                .contains(
+                    HereticRuntimeQualification.ProviderNativeToolsQualificationRef,
+                ),
+        )
+    }
+
+
+    @Test
     fun runtimeStateWireValuesRemainCompatibleWithCurrentVexLifeReceipts() {
         assertEquals(
             "PERSISTENT_MLX_RUNTIME_STARTING",

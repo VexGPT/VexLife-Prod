@@ -119,6 +119,58 @@ class VexLifeProdServiceContractTest {
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
         )
+        assertEquals(
+            "/api/v1/models/sources",
+            VexLifeProdServiceContract.ModelsSourcesPath,
+        )
+        assertEquals(
+            "/api/v1/models/sources/control",
+            VexLifeProdServiceContract.ModelsSourcesControlPath,
+        )
+        assertEquals(
+            "/api/v1/partner-connections",
+            VexLifeProdServiceContract.PartnerConnectionsPath,
+        )
+        assertEquals(
+            "/api/v1/partner-connections/control",
+            VexLifeProdServiceContract.PartnerConnectionsControlPath,
+        )
+        val held =
+            VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilitySchema,
+                state =
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                connectEnabled = false,
+                liveProviderTestingFunded = false,
+                effectsPerformed = false,
+            )
+        assertFalse(
+            held.connectEnabled,
+        )
+        assertEquals(
+            "x-vexlife-partner-control",
+            VexLifeProdServiceContract.PartnerConnectionControlHeader,
+        )
+        assertEquals(
+            "x-vexlife-partner-provider-ref",
+            VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+        )
+        assertEquals(
+            "x-vexlife-partner-workspace-id",
+            VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+            VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                "CONNECT",
+            ),
+        )
+        assertNull(
+            VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                "connect",
+            ),
+        )
     }
 
     @Test

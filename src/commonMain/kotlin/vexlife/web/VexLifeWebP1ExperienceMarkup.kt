@@ -504,6 +504,35 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <p class="model-import-facts" id="model-import-facts"></p>
           </div>
 
+          <div class="partner-api-card" id="partner-api-card">
+            <div class="partner-api-heading">
+              <div>
+                <p class="memory-label" data-vex-text="workspace.heading.partner-api"></p>
+                <p class="setting-note-line" data-vex-text="workspace.description.partner-api"></p>
+              </div>
+              <span class="partner-api-state" id="partner-api-state"></span>
+            </div>
+            <div class="partner-api-fields">
+              <label class="partner-api-field">
+                <span data-vex-text="workspace.label.partner-api-provider"></span>
+                <select id="partner-api-provider" disabled></select>
+              </label>
+              <label class="partner-api-field">
+                <span data-vex-text="workspace.label.partner-api-key"></span>
+                <input id="partner-api-credential" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" disabled>
+              </label>
+              <label class="partner-api-field" id="partner-api-workspace-field" hidden>
+                <span data-vex-text="workspace.label.partner-api-workspace"></span>
+                <input id="partner-api-workspace" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" disabled>
+              </label>
+            </div>
+            <div class="partner-api-actions">
+              <button class="outline-button" id="partner-api-connect" type="button" data-vex-text="workspace.button.partner-api-connect" disabled></button>
+            </div>
+            <p class="setting-note-line partner-api-status" id="partner-api-status" role="status" aria-live="polite"></p>
+            <p class="setting-note-line partner-api-note" id="partner-api-note"></p>
+          </div>
+
           <div class="model-state-card" data-vex-ref="${VexLifeWebP1.ModelsState.identity.ref}" id="models-state">
             <p class="memory-label" data-vex-text="workspace.heading.model-swap-process"></p>
             <p class="setting-note-line" id="models-current-state"></p>
