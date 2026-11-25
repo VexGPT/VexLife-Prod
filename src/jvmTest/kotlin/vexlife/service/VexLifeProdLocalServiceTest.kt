@@ -6339,6 +6339,50 @@ class VexLifeProdLocalServiceTest {
                             ),
                     )
 
+                    VexLifePartnerConnectionSettingsStore(
+                        root,
+                    )
+                        .write(
+                            VexLifePartnerConnectionSettings.form(
+                                entries =
+                                    listOf(
+                                        VexLifePartnerConnectionSettings.Entry(
+                                            providerRef = profile.providerRef,
+                                            credentialRef =
+                                                "credential.vexlife.partner.use-send-rotated",
+                                            accountScope =
+                                                VexLifePartnerAccountScope.Selection(
+                                                    providerRef = profile.providerRef,
+                                                ),
+                                        ),
+                                    ),
+                            ),
+                        )
+                    val staleSend =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.SendRequest(
+                                    idempotencyKey =
+                                        "send.partner-use-service.stale-currentness.001",
+                                    content =
+                                        "Do not silently fall back after credential rotation.",
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        staleSend.statusCode(),
+                        staleSend.body(),
+                    )
+                    assertTrue(
+                        staleSend.body()
+                            .contains(
+                                "PARTNER_SERVING_NOT_CURRENT",
+                            ),
+                    )
+
                     val localHandle =
                         requireNotNull(
                             HereticModelCatalog.entry(
@@ -6408,50 +6452,6 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         firstLocalTurn.initialPromptPreparationPendingForNextTurn,
                         "Partner turns must not consume the first canonical Local Send presentation",
-                    )
-
-                    VexLifePartnerConnectionSettingsStore(
-                        root,
-                    )
-                        .write(
-                            VexLifePartnerConnectionSettings.form(
-                                entries =
-                                    listOf(
-                                        VexLifePartnerConnectionSettings.Entry(
-                                            providerRef = profile.providerRef,
-                                            credentialRef =
-                                                "credential.vexlife.partner.use-send-rotated",
-                                            accountScope =
-                                                VexLifePartnerAccountScope.Selection(
-                                                    providerRef = profile.providerRef,
-                                                ),
-                                        ),
-                                    ),
-                            ),
-                        )
-                    val staleSend =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.ConversationSendPath,
-                            json.encodeToString(
-                                VexLifeProdServiceContract.SendRequest(
-                                    idempotencyKey =
-                                        "send.partner-use-service.stale-currentness.001",
-                                    content =
-                                        "Do not silently fall back after credential rotation.",
-                                ),
-                            ),
-                        )
-                    assertEquals(
-                        409,
-                        staleSend.statusCode(),
-                        staleSend.body(),
-                    )
-                    assertTrue(
-                        staleSend.body()
-                            .contains(
-                                "PARTNER_SERVING_NOT_CURRENT",
-                            ),
                     )
 
                     assertEquals(
