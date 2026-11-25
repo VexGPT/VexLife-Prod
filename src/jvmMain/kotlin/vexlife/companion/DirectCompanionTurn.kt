@@ -1551,6 +1551,23 @@ object DirectCompanionTurn {
                     base.promptResidentMemoryStatementRefs
                 },
                 now = hooks.now,
+                readConversationLifecycle = {
+                    VexLifeCurrentMemoryReader
+                        .readConversationRecallMembrane(
+                            productHome,
+                        )
+                        .let {
+                            membrane ->
+                            VexLifeContextRevisit.ConversationLifecycle(
+                                bindingRef =
+                                    membrane.bindingRef,
+                                blockedEventRefs =
+                                    membrane.blockedEventRefs,
+                                historicalCurrentizedEventRefs =
+                                    membrane.historicalCurrentizedEventRefs,
+                            )
+                        }
+                },
             )
 
         fun exchangeMessages(): List<CompanionProviderMessage> =
@@ -1656,6 +1673,23 @@ object DirectCompanionTurn {
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
                 hooks.cancellation?.checkpoint()
+                turnSources
+                    .conversationLifecycleBindingRefOrNull()
+                    ?.let {
+                        expectedLifecycleBinding ->
+                        val currentLifecycleBinding =
+                            VexLifeCurrentMemoryReader
+                                .readConversationRecallMembrane(
+                                    productHome,
+                                )
+                                .bindingRef
+                        require(
+                            currentLifecycleBinding ==
+                                expectedLifecycleBinding
+                        ) {
+                            "Conversation revisit lifecycle changed before capability return could re-enter provider context"
+                        }
+                    }
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
