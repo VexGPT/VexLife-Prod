@@ -657,6 +657,10 @@ class VexLifeModels(
             )
         val serving =
             servingModelRef()
+                .takeIf {
+                    partnerServing.get() ==
+                        null
+                }
         val effectiveRuntimeConfiguration =
             realization
                 ?.let {
