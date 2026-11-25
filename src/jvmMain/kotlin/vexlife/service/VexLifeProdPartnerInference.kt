@@ -80,16 +80,41 @@ internal class VexLifeProdPartnerInference(
                 ),
         )
 
-    fun <T> withCurrentConnection(
-        block: () -> T,
-    ): T {
+    class ConnectionLease internal constructor(
+        private val unlock: () -> Unit,
+    ) : AutoCloseable {
+        private var open =
+            true
+
+        override fun close() {
+            if (
+                open
+            ) {
+                open =
+                    false
+                unlock()
+            }
+        }
+    }
+
+    fun currentConnectionLease(): ConnectionLease {
         val read =
             connectionFence.readLock()
         read.lock()
+        return ConnectionLease(
+            read::unlock,
+        )
+    }
+
+    fun <T> withCurrentConnection(
+        block: () -> T,
+    ): T {
+        val lease =
+            currentConnectionLease()
         return try {
             block()
         } finally {
-            read.unlock()
+            lease.close()
         }
     }
 

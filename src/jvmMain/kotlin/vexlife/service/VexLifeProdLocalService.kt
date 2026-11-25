@@ -5753,6 +5753,22 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val partnerConnectionLease =
+            if (
+                models.partnerServing() !=
+                null
+            ) {
+                requireNotNull(
+                    partnerInference,
+                ) {
+                    "Partner serving requires one current Partner service realization"
+                }
+                    .currentConnectionLease()
+            } else {
+                null
+            }
+
+        try {
         val partnerTextTurn =
             try {
                 currentPartnerTextTurnOrNull()
@@ -5867,20 +5883,13 @@ class VexLifeProdLocalService private constructor(
                     observer,
                     cancellation,
                     ->
-                    requireNotNull(
-                        partnerInference,
-                    ) {
-                        "Partner serving requires one current Partner service realization"
-                    }
-                        .withCurrentConnection {
-                            partnerExecutor.perform(
-                                setup = setup,
-                                intent = currentIntent,
-                                partnerTextTurn = partnerTextTurn,
-                                progressObserver = observer,
-                                cancellation = cancellation,
-                            )
-                        }
+                    partnerExecutor.perform(
+                        setup = setup,
+                        intent = currentIntent,
+                        partnerTextTurn = partnerTextTurn,
+                        progressObserver = observer,
+                        cancellation = cancellation,
+                    )
                 }
             }
         if (
@@ -5945,24 +5954,16 @@ class VexLifeProdLocalService private constructor(
                         intent,
                     )
                 } else {
-                    val partnerExecutor =
-                        requireNotNull(
-                            partnerTurnExecutor,
-                        ) {
-                            "Partner serving requires one Partner turn executor"
-                        }
                     requireNotNull(
-                        partnerInference,
+                        partnerTurnExecutor,
                     ) {
-                        "Partner serving requires one current Partner service realization"
+                        "Partner serving requires one Partner turn executor"
                     }
-                        .withCurrentConnection {
-                            partnerExecutor.perform(
-                                setup = startupSetup,
-                                intent = intent,
-                                partnerTextTurn = partnerTextTurn,
-                            )
-                        }
+                        .perform(
+                            setup = startupSetup,
+                            intent = intent,
+                            partnerTextTurn = partnerTextTurn,
+                        )
                 }
             check(
                 attachmentDraft.completeSend(
@@ -5990,6 +5991,10 @@ class VexLifeProdLocalService private constructor(
                     draftLeaseAttachments,
                 )
             }
+        }
+        } finally {
+            partnerConnectionLease
+                ?.close()
         }
     }
 
