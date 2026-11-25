@@ -28,7 +28,7 @@ import vexlife.workspace.VexLifeWorkspaceCheckStore
  * environment key or timeout. Those are compiled from Product source and current host/source/grant
  * observations.
  */
-class VexLifeWorkspaceTextCheck(
+internal class VexLifeWorkspaceTextCheck(
     productHome: Path,
     private val localSources: VexLifeLocalSourceStore =
         VexLifeLocalSourceStore(
@@ -543,11 +543,10 @@ class VexLifeWorkspaceTextCheck(
             }
             return Captured(
                 text =
-                    output
-                        .toByteArray()
-                        .toString(
-                            StandardCharsets.UTF_8,
-                        ),
+                    String(
+                        output.toByteArray(),
+                        StandardCharsets.UTF_8,
+                    ),
                 truncated =
                     truncated,
             )
