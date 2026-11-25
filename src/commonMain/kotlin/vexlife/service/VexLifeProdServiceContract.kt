@@ -15,6 +15,7 @@ import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.text.VexLifeText
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -80,6 +81,12 @@ object VexLifeProdServiceContract {
 
     const val LocalSourcesControlResponseSchema =
         "vexlife-prod.local-service-local-sources-control-response/v1"
+
+    const val WorkspaceEffectsProjectionSchema =
+        "vexlife-prod.local-service-workspace-effects-projection/v1"
+
+    const val WorkspaceEffectsControlResponseSchema =
+        "vexlife-prod.local-service-workspace-effects-control-response/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -390,6 +397,12 @@ object VexLifeProdServiceContract {
 
     const val LocalSourcesControlPath =
         "/api/v1/local-sources/control"
+
+    const val WorkspaceEffectsPath =
+        "/api/v1/workspace-effects"
+
+    const val WorkspaceEffectsControlPath =
+        "/api/v1/workspace-effects/control"
 
     const val AttachmentDraftRefHeader =
         "x-vexlife-attachment-draft-ref"
@@ -2288,6 +2301,83 @@ object VexLifeProdServiceContract {
                     ),
             ) {
                 "Local Sources Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceEffectsProjection(
+        val schemaVersion: String,
+        val state: String,
+        val grants: List<VexLifeWorkspaceEffectsFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceEffectsProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeWorkspaceEffectsFamily.StateEmpty,
+                        VexLifeWorkspaceEffectsFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Workspace Effects projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceEffectsControlRequest(
+        val controlRef: String,
+        val sourceRef: String,
+    ) {
+        init {
+            require(
+                controlRef in
+                    VexLifeWorkspaceEffectsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ),
+            ) {
+                "Workspace Effects Control is unknown"
+            }
+        }
+    }
+
+    enum class WorkspaceEffectsControlOutcome {
+        REALIZED,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class WorkspaceEffectsControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String,
+        val outcome: WorkspaceEffectsControlOutcome,
+        val reasonKey: String? = null,
+        val effects: WorkspaceEffectsProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceEffectsControlResponseSchema &&
+                    controlRef in
+                    VexLifeWorkspaceEffectsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ) &&
+                    grantMutationPerformed ==
+                    (
+                        outcome ==
+                            WorkspaceEffectsControlOutcome.REALIZED
+                    ),
+            ) {
+                "Workspace Effects Control response is invalid"
             }
         }
     }
