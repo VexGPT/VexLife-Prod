@@ -127,6 +127,33 @@ class VexLifeProdServiceContractTest {
             "/api/v1/models/sources/control",
             VexLifeProdServiceContract.ModelsSourcesControlPath,
         )
+        assertEquals(
+            "/api/v1/partner-connections/control",
+            VexLifeProdServiceContract.PartnerConnectionsControlPath,
+        )
+        assertEquals(
+            "x-vexlife-partner-control",
+            VexLifeProdServiceContract.PartnerConnectionControlHeader,
+        )
+        assertEquals(
+            "x-vexlife-partner-provider-ref",
+            VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+        )
+        assertEquals(
+            "x-vexlife-partner-workspace-id",
+            VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+            VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                "CONNECT",
+            ),
+        )
+        assertNull(
+            VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                "connect",
+            ),
+        )
     }
 
     @Test

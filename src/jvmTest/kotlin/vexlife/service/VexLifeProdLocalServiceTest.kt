@@ -79,6 +79,34 @@ class VexLifeProdLocalServiceTest {
     private val client =
         HttpClient.newHttpClient()
 
+    private class MutablePartnerHost :
+        VexLifePartnerCredentialCustody.ProtectedHostStore {
+        private val present =
+            mutableSetOf<VexLifePartnerCredentialCustody.Coordinate>()
+
+        override fun store(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+            secret: CharArray,
+        ) {
+            present +=
+                coordinate
+        }
+
+        override fun contains(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+        ): Boolean =
+            coordinate in
+                present
+
+        override fun delete(
+            coordinate: VexLifePartnerCredentialCustody.Coordinate,
+        ): Boolean {
+            present -=
+                coordinate
+            return true
+        }
+    }
+
     private class ReadOnlyPartnerHost(
         private val present:
             Set<VexLifePartnerCredentialCustody.Coordinate> =
@@ -283,6 +311,62 @@ class VexLifeProdLocalServiceTest {
                 StandardCharsets.UTF_8,
             ),
         )
+
+    private fun postPartnerConnectionControl(
+        origin: String,
+        control: VexLifeProdServiceContract.PartnerConnectionControl,
+        providerRef: String? = null,
+        workspaceId: String? = null,
+        body: ByteArray = byteArrayOf(),
+        contentType: String? = null,
+    ): HttpResponse<String> {
+        val builder =
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            VexLifeProdServiceContract.PartnerConnectionsControlPath,
+                    ),
+                )
+                .header(
+                    VexLifeProdServiceContract.PartnerConnectionControlHeader,
+                    control.wire,
+                )
+        providerRef
+            ?.let {
+                builder.header(
+                    VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+                    it,
+                )
+            }
+        workspaceId
+            ?.let {
+                builder.header(
+                    VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+                    it,
+                )
+            }
+        contentType
+            ?.let {
+                builder.header(
+                    "content-type",
+                    it,
+                )
+            }
+
+        return client.send(
+            builder
+                .POST(
+                    HttpRequest.BodyPublishers.ofByteArray(
+                        body,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+    }
 
     private fun postWav(
         origin: String,
@@ -5217,6 +5301,313 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         0,
                         providerCalls,
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun partnerConnectionControlUsesProtectedHostWithoutProjectingCredentialSecret() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-partner-connection-control-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        bootstrapHome(
+            root,
+        )
+        val host =
+            MutablePartnerHost()
+        val composition =
+            VexLifeProdPartnerInference(
+                productHome = root,
+                host = host,
+                executor = null,
+            )
+        val provider =
+            VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol.providerRef
+        val firstSecret =
+            "not-a-real-provider-secret-first"
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                )
+        val replacementSecret =
+            "not-a-real-provider-secret-replacement"
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                )
+
+        try {
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "7".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "Partner connection configuration must not run a Companion turn",
+                            )
+                        },
+                    partnerInference =
+                        composition,
+                )
+                .use {
+                    service ->
+                    val wrongContentType =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+                            providerRef = provider,
+                            body = firstSecret,
+                            contentType = "application/json",
+                        )
+                    assertEquals(
+                        400,
+                        wrongContentType.statusCode(),
+                        wrongContentType.body(),
+                    )
+
+                    val connect =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+                            providerRef = provider,
+                            body = firstSecret,
+                            contentType = "application/octet-stream",
+                        )
+                    assertEquals(
+                        200,
+                        connect.statusCode(),
+                        connect.body(),
+                    )
+                    assertFalse(
+                        connect.body()
+                            .contains(
+                                firstSecret.toString(
+                                    StandardCharsets.UTF_8,
+                                ),
+                            ),
+                    )
+                    val connected =
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            connect.body(),
+                        )
+                    assertEquals(
+                        "CONNECTED",
+                        connected.results
+                            .single()
+                            .state,
+                    )
+                    val firstCredentialRef =
+                        requireNotNull(
+                            connected.results
+                                .single()
+                                .credentialRef,
+                        )
+                    assertTrue(
+                        host.contains(
+                            VexLifePartnerCredentialCustody.Coordinate(
+                                providerRef = provider,
+                                credentialRef = firstCredentialRef,
+                            ),
+                        ),
+                    )
+
+                    val replace =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Replace,
+                            providerRef = provider,
+                            body = replacementSecret,
+                            contentType = "application/octet-stream",
+                        )
+                    assertEquals(
+                        200,
+                        replace.statusCode(),
+                        replace.body(),
+                    )
+                    assertFalse(
+                        replace.body()
+                            .contains(
+                                replacementSecret.toString(
+                                    StandardCharsets.UTF_8,
+                                ),
+                            ),
+                    )
+                    val replaced =
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            replace.body(),
+                        )
+                    assertEquals(
+                        "REPLACED",
+                        replaced.results
+                            .single()
+                            .state,
+                    )
+                    val nextCredentialRef =
+                        requireNotNull(
+                            replaced.results
+                                .single()
+                                .credentialRef,
+                        )
+                    assertTrue(
+                        nextCredentialRef !=
+                            firstCredentialRef,
+                    )
+                    assertFalse(
+                        host.contains(
+                            VexLifePartnerCredentialCustody.Coordinate(
+                                providerRef = provider,
+                                credentialRef = firstCredentialRef,
+                            ),
+                        ),
+                    )
+                    assertTrue(
+                        host.contains(
+                            VexLifePartnerCredentialCustody.Coordinate(
+                                providerRef = provider,
+                                credentialRef = nextCredentialRef,
+                            ),
+                        ),
+                    )
+
+                    val remove =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Remove,
+                            providerRef = provider,
+                        )
+                    assertEquals(
+                        200,
+                        remove.statusCode(),
+                        remove.body(),
+                    )
+                    val removed =
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            remove.body(),
+                        )
+                    assertEquals(
+                        "REMOVED",
+                        removed.results
+                            .single()
+                            .state,
+                    )
+                    assertFalse(
+                        host.contains(
+                            VexLifePartnerCredentialCustody.Coordinate(
+                                providerRef = provider,
+                                credentialRef = nextCredentialRef,
+                            ),
+                        ),
+                    )
+
+                    val anthropicProvider =
+                        VexLifePartnerModelProfileCatalog.AnthropicClaudeSonnet55.providerRef
+                    val anthropicSecret =
+                        "not-a-real-anthropic-secret"
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+                    val anthropicConnect =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Connect,
+                            providerRef = anthropicProvider,
+                            workspaceId = "wrkspc_test_scope_001",
+                            body = anthropicSecret,
+                            contentType = "application/octet-stream",
+                        )
+                    assertEquals(
+                        200,
+                        anthropicConnect.statusCode(),
+                        anthropicConnect.body(),
+                    )
+                    val scopeUpdate =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.UpdateScope,
+                            providerRef = anthropicProvider,
+                            workspaceId = "wrkspc_test_scope_002",
+                        )
+                    assertEquals(
+                        200,
+                        scopeUpdate.statusCode(),
+                        scopeUpdate.body(),
+                    )
+                    assertEquals(
+                        "SCOPE_UPDATED",
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            scopeUpdate.body(),
+                        )
+                            .results
+                            .single()
+                            .state,
+                    )
+                    assertEquals(
+                        "wrkspc_test_scope_002",
+                        VexLifePartnerConnectionSettings.entryFor(
+                            VexLifePartnerConnectionSettingsStore(
+                                root,
+                            )
+                                .read(),
+                            anthropicProvider,
+                        )
+                            ?.accountScope
+                            ?.workspaceId,
+                    )
+                    assertEquals(
+                        200,
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Remove,
+                            providerRef = anthropicProvider,
+                        )
+                            .statusCode(),
+                    )
+
+                    val recovered =
+                        postPartnerConnectionControl(
+                            origin = service.origin,
+                            control =
+                                VexLifeProdServiceContract.PartnerConnectionControl.Recover,
+                        )
+                    assertEquals(
+                        200,
+                        recovered.statusCode(),
+                        recovered.body(),
+                    )
+                    val recovery =
+                        json.decodeFromString<VexLifeProdServiceContract.PartnerConnectionControlResponse>(
+                            recovered.body(),
+                        )
+                    assertTrue(
+                        recovery.results.isEmpty(),
+                    )
+                    assertFalse(
+                        recovery.effectsPerformed,
                     )
                 }
         } finally {

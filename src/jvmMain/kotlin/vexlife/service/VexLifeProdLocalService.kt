@@ -75,6 +75,7 @@ import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
+import vexlife.partner.VexLifePartnerConnectionConfiguration
 import vexlife.partner.VexLifePartnerMacHostRealization
 import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -449,6 +450,283 @@ class VexLifeProdLocalService private constructor(
 
             sourceAwareModelsProjection()
         }
+
+    private fun handlePartnerConnectionControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner connection configuration is unavailable on this service realization"
+            }
+        val controlWire =
+            requireNotNull(
+                exchange.requestHeaders
+                    .getFirst(
+                        VexLifeProdServiceContract.PartnerConnectionControlHeader,
+                    )
+                    ?.trim()
+                    ?.takeIf(
+                        String::isNotEmpty,
+                    ),
+            ) {
+                "Partner connection control requires one control header"
+            }
+        val control =
+            requireNotNull(
+                VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                    controlWire,
+                ),
+            ) {
+                "Partner connection control is not recognized"
+            }
+        val providerRef =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+        val workspaceId =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+
+        val results =
+            try {
+                when (
+                    control
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionControl.Connect -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner connect requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.connect(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Replace -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner replace requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.replace(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Remove -> {
+                        require(
+                            workspaceId ==
+                                null,
+                        ) {
+                            "Partner remove does not accept an account-scope header"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.remove(
+                                requireNotNull(
+                                    providerRef,
+                                ) {
+                                    "Partner remove requires one providerRef header"
+                                },
+                            ),
+                        )
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Recover -> {
+                        require(
+                            providerRef ==
+                                null &&
+                                workspaceId ==
+                                null,
+                        ) {
+                            "Partner recover does not accept provider/account headers"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        composition.recoverConnections()
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.UpdateScope -> {
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.updateAccountScope(
+                                providerRef =
+                                    requireNotNull(
+                                        providerRef,
+                                    ) {
+                                        "Partner account-scope update requires one providerRef header"
+                                    },
+                                workspaceId = workspaceId,
+                            ),
+                        )
+                    }
+                }
+            } catch (
+                recovery: VexLifePartnerConnectionConfiguration.RecoveryRequiredException,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_CONNECTION_RECOVERY_REQUIRED",
+                    message =
+                        "Partner connection recovery is required for " +
+                            recovery.providerRef +
+                            " (" +
+                            recovery.transitionKind.name +
+                            ").",
+                )
+                return
+            }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.PartnerConnectionControlResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.PartnerConnectionControlSchema,
+                    control = control.wire,
+                    results =
+                        results.map {
+                            result ->
+                            VexLifeProdServiceContract.PartnerConnectionControlResult(
+                                providerRef = result.providerRef,
+                                state = result.state.name,
+                                credentialRef = result.credentialRef,
+                                recoveryPerformed = result.recoveryPerformed,
+                            )
+                        },
+                    effectsPerformed =
+                        results.isNotEmpty(),
+                ),
+        )
+    }
+
+    private fun readPartnerConnectionSecret(
+        exchange: HttpExchange,
+    ): CharArray {
+        requireContentType(
+            exchange,
+            "application/octet-stream",
+        )
+        val bytes =
+            requestBytes(
+                exchange,
+                vexlife.partner.VexLifePartnerCredentialCustody.MaximumSecretBytes,
+            )
+        require(
+            bytes.isNotEmpty(),
+        ) {
+            "Partner credential secret must not be empty"
+        }
+
+        return try {
+            val decoder =
+                StandardCharsets.UTF_8
+                    .newDecoder()
+                    .onMalformedInput(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+                    .onUnmappableCharacter(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+            val buffer =
+                decoder.decode(
+                    java.nio.ByteBuffer.wrap(
+                        bytes,
+                    ),
+                )
+            val secret =
+                CharArray(
+                    buffer.remaining(),
+                )
+            buffer.get(
+                secret,
+            )
+            for (
+                index in
+                0 until
+                    buffer.limit()
+            ) {
+                buffer.put(
+                    index,
+                    '\u0000',
+                )
+            }
+            secret
+        } finally {
+            bytes.fill(
+                0,
+            )
+        }
+    }
+
+    private fun requireEmptyRequestBody(
+        exchange: HttpExchange,
+    ) {
+        require(
+            requestBytes(
+                exchange,
+                0,
+            )
+                .isEmpty(),
+        ) {
+            "Partner connection control does not accept a request body"
+        }
+    }
 
     private fun currentPartnerTextTurnOrNull(): DirectCompanionTurn.PartnerTextTurn? {
         val serving =
@@ -1856,6 +2134,11 @@ class VexLifeProdLocalService private constructor(
                             ),
                     )
                 }
+
+                VexLifeProdServiceContract.PartnerConnectionsControlPath ->
+                    handlePartnerConnectionControl(
+                        exchange,
+                    )
 
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
@@ -5470,6 +5753,22 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val partnerConnectionLease =
+            if (
+                models.partnerServing() !=
+                null
+            ) {
+                requireNotNull(
+                    partnerInference,
+                ) {
+                    "Partner serving requires one current Partner service realization"
+                }
+                    .currentConnectionLease()
+            } else {
+                null
+            }
+
+        try {
         val partnerTextTurn =
             try {
                 currentPartnerTextTurnOrNull()
@@ -5692,6 +5991,10 @@ class VexLifeProdLocalService private constructor(
                     draftLeaseAttachments,
                 )
             }
+        }
+        } finally {
+            partnerConnectionLease
+                ?.close()
         }
     }
 
