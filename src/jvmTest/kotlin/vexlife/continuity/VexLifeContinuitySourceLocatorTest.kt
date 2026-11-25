@@ -506,7 +506,10 @@ class VexLifeContinuitySourceLocatorTest {
                                         entry.coordinates.copy(
                                             request =
                                                 entry.coordinates.request.copy(
-                                                    eventHash = "not-a-sha256",
+                                                    eventHash =
+                                                        "0".repeat(
+                                                            64,
+                                                        ),
                                                 ),
                                         ),
                                 )
@@ -558,7 +561,7 @@ class VexLifeContinuitySourceLocatorTest {
                         ),
                     )
                 assertEquals(
-                    VexLifeContinuitySourceLocator.FallbackReason.CORRUPT,
+                    VexLifeContinuitySourceLocator.FallbackReason.SOURCE_COORDINATE_MISMATCH,
                     outcome.reason,
                 )
             }
