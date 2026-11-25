@@ -54,7 +54,7 @@ internal class VexLifePromptPreparation(
     internal fun interface PrefixProvider {
         fun current(
             runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        ): DirectPromptContext.InitialBootPrefix
+        ): DirectPromptContext.ProviderPreparationPrefix
     }
 
     internal data class Binding(
@@ -332,7 +332,7 @@ internal class VexLifePromptPreparation(
     internal fun start(
         executor: ExecutorService,
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
     ) {
         this.executor.compareAndSet(
             null,
@@ -355,10 +355,10 @@ internal class VexLifePromptPreparation(
                     reasonRef =
                         when {
                             message == null ->
-                                "INITIAL_PREFIX_NOT_SINGLE_MESSAGE"
+                                "PREPARATION_PREFIX_NOT_SINGLE_MESSAGE"
 
                             message.role != "system" ->
-                                "INITIAL_PREFIX_NOT_SYSTEM"
+                                "PREPARATION_PREFIX_NOT_SYSTEM"
 
                             else ->
                                 "MODEL_NOT_PRODUCT_CATALOG"
