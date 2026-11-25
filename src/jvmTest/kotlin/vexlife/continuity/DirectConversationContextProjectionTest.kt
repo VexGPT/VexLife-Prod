@@ -478,6 +478,60 @@ class DirectConversationContextProjectionTest {
     }
 
     @Test
+    fun ordinaryForwardPreparationDoesNotReadSemanticLifecycle() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "Earlier canonical source.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+
+            fixture.store.withWriterLease {
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.lifecycle-lazy-forward",
+                        requestMessageRef =
+                            "message.continuity.lifecycle-lazy-forward",
+                        content =
+                            "Tell me something new about architecture.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                var lifecycleReads =
+                    0
+
+                assertNull(
+                    DirectConversationContextProjection.prepare(
+                        conversationOwner = this,
+                        currentRequest = current,
+                        excludedEventRefs =
+                            setOf(
+                                current.eventRef,
+                            ),
+                        sourceLifecycle = {
+                            lifecycleReads +=
+                                1
+                            error(
+                                "ordinary forward request must not read semantic recall lifecycle",
+                            )
+                        },
+                    ),
+                )
+                assertEquals(
+                    0,
+                    lifecycleReads,
+                )
+            }
+        }
+    }
+
+    @Test
     fun preparationReopensExactCanonicalSourceWithoutWritingAnything() {
         ContinuityTurnFixture().use {
             fixture ->
