@@ -940,7 +940,7 @@ object ContinuityPressureAdapter {
                     )
                 },
                 experimentEffectiveInputTokenBudget = budget,
-                experimentConversationContextProjectionEnabled =
+                conversationContextProjectionEnabled =
                     config.conversationContextProjectionEnabled,
                 continuitySourceLocatorBackend =
                     continuitySourceLocatorBackend,
