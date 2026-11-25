@@ -169,7 +169,7 @@ class HuggingFaceModelInspectionTest {
             importedEntry.companionProfile.providerNativeToolStanding,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
             importedEntry.companionProfile.reachRepresentationStanding,
         )
     }
@@ -216,7 +216,7 @@ class HuggingFaceModelInspectionTest {
             entry.companionProfile.providerNativeToolStanding,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
             entry.companionProfile.reachRepresentationStanding,
         )
         assertFalse(
