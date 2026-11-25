@@ -663,6 +663,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelImportAdd: byId('model-import-add'),
                 modelImportResult: byId('model-import-result'),
                 modelImportFacts: byId('model-import-facts'),
+                partnerApiCard: byId('partner-api-card'),
                 partnerApiState: byId('partner-api-state'),
                 partnerApiProvider: byId('partner-api-provider'),
                 partnerApiCredential: byId('partner-api-credential'),
@@ -6579,7 +6580,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 if (availability?.state === service.partnerConnectionHeldFunding) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'held';
                   if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'held';
                     ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-held-funding');
                   }
                   if (ui.partnerApiStatus) {
@@ -6589,7 +6592,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.partnerApiNote.textContent = workspaceText('workspace.description.partner-api-held-funding');
                   }
                 } else if (availability?.connectEnabled === true) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'ready';
                   if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'ready';
                     ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-ready');
                   }
                   if (ui.partnerApiStatus) {
@@ -6606,7 +6611,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                   if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
                 } else {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'unavailable';
                   if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'unavailable';
                     ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-unavailable');
                   }
                   if (ui.partnerApiStatus) {
