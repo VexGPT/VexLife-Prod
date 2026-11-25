@@ -48,7 +48,7 @@ object VexLifeProdServiceContract {
         "workspace.status.sent-resource-review-failed"
 
     const val ConversationTurnProjectionSchema =
-        "vexlife-prod.local-service-conversation-turn-projection/v2"
+        "vexlife-prod.local-service-conversation-turn-projection/v3"
 
     const val FollowUpReadinessUnavailable = "UNAVAILABLE"
     const val FollowUpReadinessLowerMemory = "LOWER_MEMORY_REALIZATION"
@@ -2498,18 +2498,6 @@ object VexLifeProdServiceContract {
         val display: VexLifeConversationTurnFamily.DisplayState,
         val effectsPerformed: Boolean,
         /**
-         * The existing Prompt Preparation owner says the next canonical Send still belongs to this
-         * service's one initial local-start window. Presentation may explain it; it may not infer or
-         * control provider/cache state from this flag.
-         */
-        val initialPromptPreparationPendingForNextTurn: Boolean = false,
-        /**
-         * The currently active canonical turn began inside that same initial local-start window.
-         * This keeps the explanation visible while the first reply is being formed, even after the
-         * reusable-prefix state itself has been consumed.
-         */
-        val initialPromptPreparationForActiveTurn: Boolean = false,
-        /**
          * Follow-up mode is Product/runtime truth. The nested measurement is observed completed-turn
          * evidence only; neither field certifies invisible provider cache residency.
          */
@@ -2519,15 +2507,7 @@ object VexLifeProdServiceContract {
             require(
                 schemaVersion == ConversationTurnProjectionSchema &&
                     state in VexLifeConversationTurnFamily.StateRefs &&
-                    !effectsPerformed &&
-                    (
-                        !initialPromptPreparationForActiveTurn ||
-                            state in
-                            setOf(
-                                VexLifeConversationTurnFamily.StateActive,
-                                VexLifeConversationTurnFamily.StateCancelling,
-                            )
-                    )
+                    !effectsPerformed
             ) {
                 "Conversation turn projection is invalid"
             }
