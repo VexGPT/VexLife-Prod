@@ -840,6 +840,124 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
+    fun exactOwnedFirstConversationPrefixRuntimeIsRecognizedAndRotatesToCurrentContract() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            bindingFor(
+                model =
+                    vexlife.model.heretic.HereticModelCatalog.Models.Qwen4B,
+                promptCacheEntries =
+                    2,
+            )
+        val priorArgs =
+            HereticPersistentRuntime.serverArgs(
+                current,
+                HereticPersistentRuntime.ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE,
+            )
+        val currentArgs =
+            HereticPersistentRuntime.serverArgs(
+                current,
+            )
+
+        assertEquals(
+            "-c",
+            priorArgs.first(),
+        )
+        assertTrue(
+            priorArgs[
+                1
+            ]
+                .contains(
+                    "boundary_tokens=tokenizer.apply_chat_template(messages[:boundary]",
+                ),
+        )
+        assertFalse(
+            priorArgs[
+                1
+            ]
+                .contains(
+                    "user_probe=tokenizer.apply_chat_template",
+                ),
+        )
+        assertTrue(
+            priorArgs !=
+                currentArgs,
+        )
+
+        val staleSha =
+            if (
+                current.implementationIdentity.classSha256 ==
+                    "a".repeat(
+                        64,
+                    )
+            ) {
+                "b".repeat(
+                    64,
+                )
+            } else {
+                "a".repeat(
+                    64,
+                )
+            }
+        val prior =
+            receipt(
+                binding =
+                    current,
+                implementationSha =
+                    staleSha,
+                runtimeArgs =
+                    priorArgs,
+            )
+        val store =
+            Store(
+                prior,
+                trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+                .also {
+                    it.alivePids +=
+                        prior.runtime.pid
+                }
+
+        val result =
+            HereticPersistentRuntime.startOrReuse(
+                current,
+                store,
+                platform,
+            )
+
+        assertEquals(
+            "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(
+            trace.indexOf(
+                "RETIRE_Qualified",
+            ) <
+                trace.indexOf(
+                    "SPAWN",
+                ),
+        )
+        assertTrue(
+            priorArgs in
+                platform.processIdentityArgs,
+        )
+        assertEquals(
+            currentArgs,
+            result.receipt.runtime.args,
+        )
+        assertTrue(
+            trace.contains(
+                "STORE_DELETE",
+            ),
+        )
+    }
+
+    @Test
     fun exactOwnedFinalPromptCacheRuntimeRotatesIntoConversationPrefixLaunchContract() {
         val trace =
             mutableListOf<String>()
