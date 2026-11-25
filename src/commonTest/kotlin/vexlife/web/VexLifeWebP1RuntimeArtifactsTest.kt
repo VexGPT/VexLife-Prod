@@ -238,6 +238,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
             setOf(
                 VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
                 VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
             )
         VexLifeWorkspaceBlueprint.elements.forEach { element ->
             if (
@@ -1960,18 +1962,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
-            bundle.html.contains(
-                "data-vex-ref=\"" +
-                    VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref +
-                    "\"",
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
             ),
+            "Allow checks is a per-source row-runtime coordinate, not a static template element",
         )
         assertTrue(
-            bundle.html.contains(
-                "data-vex-ref=\"" +
-                    VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref +
-                    "\"",
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
             ),
+            "Stop checks is a per-source row-runtime coordinate, not a static template element",
         )
         assertTrue(
             javascript.contains(
