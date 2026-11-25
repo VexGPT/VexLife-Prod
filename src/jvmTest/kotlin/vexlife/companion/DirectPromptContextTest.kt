@@ -18,6 +18,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeWorkspaceEffectDefinitions
+import vexlife.capability.VexLifeWorkspaceCheckDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.contract.VexContractJson
@@ -35,6 +36,7 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
 
 class DirectPromptContextTest {
     @Test
@@ -3548,6 +3550,170 @@ class DirectPromptContextTest {
                     assertFalse(
                         VexLifeWorkspaceEffectDefinitions.WriteRef in
                             available.heldCapabilityRefs,
+                    )
+                    assertFalse(
+                        available.effectAuthorityGranted,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workspaceCheckAvailabilityRequiresSeparateGrantAndCurrentProductRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-check-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-check",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-check",
+                            content =
+                                "Use only the check authority I actually granted.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "c".repeat(
+                                64,
+                            ),
+                        )
+                    val grant =
+                        VexLifeWorkspaceChecksFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceChecksFamily.GrantRefPrefix +
+                                    "d".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-25T04:00:00Z",
+                            grantedAt =
+                                "2026-11-25T04:01:00Z",
+                        )
+                    val runtimeRef =
+                        "image.vexlife-prod.private-service." +
+                            "e".repeat(
+                                32,
+                            )
+
+                    fun materialize(
+                        grants: List<VexLifeWorkspaceChecksFamily.Grant>,
+                        checkRuntimeRef: String?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            workspaceCheckGrants =
+                                grants,
+                            workspaceCheckRuntimeRef =
+                                checkRuntimeRef,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+                            .receipt
+                            .capabilityFrameSnapshot
+                            .let(
+                                ::requireNotNull,
+                            )
+
+                    val noGrant =
+                        materialize(
+                            emptyList(),
+                            runtimeRef,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            noGrant.heldCapabilityRefs,
+                    )
+
+                    val noRuntime =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                            null,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            noRuntime.heldCapabilityRefs,
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                            runtimeRef,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            available.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            available.heldCapabilityRefs,
+                    )
+                    assertTrue(
+                        available.sourceRefs.contains(
+                            grant.grantRef,
+                        ),
+                    )
+                    assertTrue(
+                        available.sourceRefs.contains(
+                            runtimeRef,
+                        ),
                     )
                     assertFalse(
                         available.effectAuthorityGranted,

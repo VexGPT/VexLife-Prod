@@ -11,6 +11,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -1956,6 +1957,50 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             javascript.contains(
                 VexLifeLocalSourcesFamily.ControlRemove,
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksPath: \"/api/v1/workspace-checks\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksControlPath: \"/api/v1/workspace-checks/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadWorkspaceChecks = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const applyWorkspaceChecksControl = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlAllow,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlRevoke,
             ),
         )
     }

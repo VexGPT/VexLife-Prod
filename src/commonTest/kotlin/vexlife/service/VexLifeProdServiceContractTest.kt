@@ -10,6 +10,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
 
 class VexLifeProdServiceContractTest {
     @Test
@@ -89,6 +90,14 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/workspace-effects/control",
             VexLifeProdServiceContract.WorkspaceEffectsControlPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-checks",
+            VexLifeProdServiceContract.WorkspaceChecksPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-checks/control",
+            VexLifeProdServiceContract.WorkspaceChecksControlPath,
         )
         assertEquals(
             "/api/v1/context",
@@ -697,6 +706,87 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.WorkspaceEffectsControlRequest(
                 controlRef =
                     VexLifeLocalSourcesFamily.ControlRemove,
+                sourceRef =
+                    sourceRef,
+            )
+        }
+    }
+
+
+    @Test
+    fun workspaceChecksContractKeepsProcessAuthoritySeparateFromReadAndWrite() {
+        val sourceRef =
+            VexLifeLocalSourcesFamily.sourceRefForSha256(
+                "c".repeat(
+                    64,
+                ),
+            )
+        val grant =
+            VexLifeWorkspaceChecksFamily.Grant(
+                grantRef =
+                    VexLifeWorkspaceChecksFamily.GrantRefPrefix +
+                        "d".repeat(
+                            64,
+                        ),
+                sourceRef =
+                    sourceRef,
+                sourceGrantedAt =
+                    "2026-11-25T04:00:00Z",
+                grantedAt =
+                    "2026-11-25T04:01:00Z",
+            )
+        val projection =
+            VexLifeProdServiceContract.WorkspaceChecksProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceChecksProjectionSchema,
+                state =
+                    VexLifeWorkspaceChecksFamily.StateGranted,
+                grants =
+                    listOf(
+                        grant,
+                    ),
+                effectsPerformed =
+                    false,
+            )
+        val response =
+            VexLifeProdServiceContract.WorkspaceChecksControlResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceChecksControlResponseSchema,
+                controlRef =
+                    VexLifeWorkspaceChecksFamily.ControlRevoke,
+                sourceRef =
+                    sourceRef,
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED,
+                checks =
+                    VexLifeProdServiceContract.WorkspaceChecksProjection(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceChecksProjectionSchema,
+                        state =
+                            VexLifeWorkspaceChecksFamily.StateEmpty,
+                        grants =
+                            emptyList(),
+                        effectsPerformed =
+                            false,
+                    ),
+                grantMutationPerformed =
+                    true,
+            )
+
+        assertEquals(
+            sourceRef,
+            projection.grants.single().sourceRef,
+        )
+        assertTrue(
+            response.grantMutationPerformed,
+        )
+        assertFalse(
+            response.checks.effectsPerformed,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeProdServiceContract.WorkspaceChecksControlRequest(
+                controlRef =
+                    VexLifeWorkspaceEffectsFamily.ControlAllow,
                 sourceRef =
                     sourceRef,
             )

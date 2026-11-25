@@ -58,6 +58,75 @@ class VexLifeWorkspaceCheckDefinitionsTest {
             },
         )
     }
+
+    @Test
+    fun boundedCheckIsAtlasVisibleWithoutExposingProcessSelection() {
+        val definition =
+            VexLifeWorkspaceCheckDefinitions.Definitions.single()
+        val action =
+            definition.actions.single()
+
+        assertEquals(
+            VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            definition.capabilityRef,
+        )
+        assertEquals(
+            VexLifeWorkspaceCheckDefinitions.Handle,
+            definition.handle,
+        )
+        assertEquals(
+            VexLifeWorkspaceCheckDefinitions.PermissionRef,
+            definition.permissionRef,
+        )
+        assertEquals(
+            VexLifeWorkspaceCheckDefinitions.ResourceRef,
+            definition.resourceRef,
+        )
+        assertEquals(
+            "check",
+            action.action,
+        )
+        assertEquals(
+            listOf(
+                "source",
+                "path",
+                "required",
+                "forbidden",
+            ),
+            action.arguments.map {
+                it.name
+            },
+        )
+        assertEquals(
+            "string[]",
+            action.arguments.single {
+                it.name ==
+                    "required"
+            }
+                .type,
+        )
+        assertTrue(
+            action.arguments.none {
+                it.name in
+                    setOf(
+                        "program",
+                        "executable",
+                        "shell",
+                        "command",
+                        "workingDirectory",
+                        "environment",
+                        "timeout",
+                    )
+            },
+        )
+        assertTrue(
+            VexLifeCapabilityAtlas.definitions().any {
+                it.capabilityRef ==
+                    VexLifeWorkspaceCheckDefinitions.CapabilityRef
+            },
+        )
+    }
+
 }
 
 // [VXG RealForever]

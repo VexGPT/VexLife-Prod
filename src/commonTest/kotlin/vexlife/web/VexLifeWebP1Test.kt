@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            141,
+            143,
             blueprint.size,
         )
 
@@ -69,6 +69,21 @@ class VexLifeWebP1Test {
         ) {
             assertEquals(
                 VexLifeWebP1.Refs.WorkspaceEffectsCapability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
+
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+                    VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWebP1.Refs.WorkspaceChecksCapability,
                 (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
                 ref,
             )
