@@ -11,6 +11,7 @@ README.md
 -> AGENTS.md
 -> docs/CULTURE.md
 -> docs/foundation/INDEX.md
+-> docs/foundation/VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md
 -> exact implicated foundation
 -> exact source + tests
 -> proof matching the claim

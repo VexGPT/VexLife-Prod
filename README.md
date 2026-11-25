@@ -29,7 +29,8 @@ For substantial work:
 1. read [AGENTS.md](AGENTS.md);
 2. read [docs/CULTURE.md](docs/CULTURE.md);
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
-4. descend only to the exact current foundation/source/tests.
+4. read [docs/foundation/VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md](docs/foundation/VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md);
+5. descend only to the exact current foundation/source/tests.
 
 ## Current product role
 
