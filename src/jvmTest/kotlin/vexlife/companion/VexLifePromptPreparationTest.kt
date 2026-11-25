@@ -52,8 +52,8 @@ class VexLifePromptPreparationTest {
         )
     }
 
-    private fun prefix(): DirectPromptContext.InitialBootPrefix =
-        DirectPromptContext.projectInitialBootPrefix(
+    private fun prefix(): DirectPromptContext.ProviderPreparationPrefix =
+        DirectPromptContext.projectProviderPreparationPrefix(
             foundationalField =
                 VexLifeFoundationalFieldFixture.shipped,
             memoryContext =
@@ -66,7 +66,7 @@ class VexLifePromptPreparationTest {
 
     private fun validation(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
         leadingMessage: CompanionProviderMessage? =
             prefix.messages.single(),
         memoryFingerprint: String? =
@@ -100,7 +100,7 @@ class VexLifePromptPreparationTest {
 
     private fun performed(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        prefix: DirectPromptContext.InitialBootPrefix,
+        prefix: DirectPromptContext.ProviderPreparationPrefix,
     ): DirectCompanionConnection.SystemPrefixPrefillResult.Performed =
         DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
             runtimeReceiptRef = runtime.runtimeReceiptRef,
