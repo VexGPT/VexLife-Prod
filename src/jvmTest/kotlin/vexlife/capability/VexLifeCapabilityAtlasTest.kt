@@ -23,6 +23,7 @@ class VexLifeCapabilityAtlasTest {
         listOf(
             VexLifeWorkspaceEffectDefinitions.WriteRef,
             VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
         )
 
     private val reachCapabilityRefs =
