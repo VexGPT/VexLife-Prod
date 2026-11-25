@@ -213,6 +213,57 @@ PARTNER TEXT TURN
 != PARTNER LOCAL-ARTIFACT ADMISSION
 ~~~
 
+## Human Partner connection control
+
+The running Product now exposes one bounded local-only configuration control:
+
+~~~text
+POST /api/v1/partner-connections/control
+~~~
+
+Non-secret request coordinates stay in headers:
+
+~~~text
+x-vexlife-partner-control
+  CONNECT | REPLACE | REMOVE | RECOVER | UPDATE_SCOPE
+
+x-vexlife-partner-provider-ref
+  exact built-in providerRef when the control targets one provider
+
+x-vexlife-partner-workspace-id
+  optional non-secret Anthropic workspace coordinate
+~~~
+
+CONNECT / REPLACE carry the credential only as a bounded `application/octet-stream` request body.
+The body is decoded directly into mutable character storage, the request bytes are zeroed, and the
+existing crash-recoverable `VexLifePartnerConnectionConfiguration` owner performs protected-host
+custody. The response contains only providerRef, opaque credentialRef, configuration state and
+recovery standing.
+
+Permanent:
+
+~~~text
+HUMAN CONNECTION CONTROL
+!= CREDENTIAL STORE OWNER
+!= PROVIDER CALL
+
+SECRET BODY
+!= JSON
+!= URL
+!= HEADER
+!= RESPONSE
+!= VEXLOGGER
+!= CONVERSATION / MEMORY / CONTEXT
+~~~
+
+Connection mutation and Partner provider execution share one service-composition lease. A credential
+replace/remove therefore cannot cut protected custody out from underneath an active Partner
+qualification or turn. Rotation can make an already-serving Partner coordinate stale; the existing
+Send currentness law then holds rather than silently falling back to Local.
+
+This route is the first secure Product control surface for existing connection custody. Presentation
+may later invoke the same contract; it does not become credential authority by rendering it.
+
 ## Credential and host boundary
 
 The JVM keeps only an opaque credential coordinate.

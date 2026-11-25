@@ -1,6 +1,7 @@
 package vexlife.service
 
 import java.nio.file.Path
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.VexLifeDirectMessageSemanticRelay
 import vexlife.model.VexLifeInferenceCurrentState
@@ -11,7 +12,9 @@ import vexlife.model.VexLifeModels
 import vexlife.model.VexLifePartnerModelInventory
 import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.partner.VexLifePartnerAccountScope
 import vexlife.partner.VexLifePartnerConfiguredCurrentness
+import vexlife.partner.VexLifePartnerConnectionConfiguration
 import vexlife.partner.VexLifePartnerConnectionSettingsStore
 import vexlife.partner.VexLifePartnerCredentialCustody
 import vexlife.partner.VexLifePartnerDeterministicSupport
@@ -60,6 +63,122 @@ internal class VexLifeProdPartnerInference(
             home,
         )
 
+    private val connectionFence =
+        ReentrantReadWriteLock(
+            true,
+        )
+
+    private val connectionConfiguration =
+        VexLifePartnerConnectionConfiguration.Coordinator(
+            settings =
+                VexLifePartnerConnectionConfiguration.DurableSettingsPort(
+                    settings,
+                ),
+            custody =
+                VexLifePartnerCredentialCustody.Custodian(
+                    host,
+                ),
+        )
+
+    fun <T> withCurrentConnection(
+        block: () -> T,
+    ): T {
+        val read =
+            connectionFence.readLock()
+        read.lock()
+        return try {
+            block()
+        } finally {
+            read.unlock()
+        }
+    }
+
+    fun connect(
+        providerRef: String,
+        workspaceId: String?,
+        secret: CharArray,
+    ): VexLifePartnerConnectionConfiguration.Result =
+        withConnectionMutation {
+            connectionConfiguration.connect(
+                providerRef = providerRef,
+                accountScope =
+                    accountScope(
+                        providerRef,
+                        workspaceId,
+                    ),
+                secret = secret,
+            )
+        }
+
+    fun replace(
+        providerRef: String,
+        workspaceId: String?,
+        secret: CharArray,
+    ): VexLifePartnerConnectionConfiguration.Result =
+        withConnectionMutation {
+            connectionConfiguration.replace(
+                providerRef = providerRef,
+                accountScope =
+                    accountScope(
+                        providerRef,
+                        workspaceId,
+                    ),
+                replacement = secret,
+            )
+        }
+
+    fun updateAccountScope(
+        providerRef: String,
+        workspaceId: String?,
+    ): VexLifePartnerConnectionConfiguration.Result =
+        withConnectionMutation {
+            connectionConfiguration.updateAccountScope(
+                providerRef = providerRef,
+                accountScope =
+                    accountScope(
+                        providerRef,
+                        workspaceId,
+                    ),
+            )
+        }
+
+    fun remove(
+        providerRef: String,
+    ): VexLifePartnerConnectionConfiguration.Result =
+        withConnectionMutation {
+            connectionConfiguration.remove(
+                providerRef,
+            )
+        }
+
+    fun recoverConnections():
+        List<VexLifePartnerConnectionConfiguration.Result> =
+        withConnectionMutation {
+            connectionConfiguration.recover()
+        }
+
+    private fun <T> withConnectionMutation(
+        block: () -> T,
+    ): T {
+        val write =
+            connectionFence.writeLock()
+        write.lock()
+        return try {
+            block()
+        } finally {
+            write.unlock()
+        }
+    }
+
+    private fun accountScope(
+        providerRef: String,
+        workspaceId: String?,
+    ): VexLifePartnerAccountScope.Selection =
+        VexLifePartnerAccountScope.Selection(
+            providerRef = providerRef,
+            workspaceId = workspaceId,
+        )
+
     fun observe(
         local: VexLifeModels.Projection,
         stagedTarget: VexLifeInferenceSelection.Coordinate?,
@@ -93,7 +212,8 @@ internal class VexLifeProdPartnerInference(
 
     fun qualify(
         target: VexLifeInferenceSelection.Coordinate,
-    ): VexLifePartnerLiveQualification.Outcome {
+    ): VexLifePartnerLiveQualification.Outcome =
+        withCurrentConnection {
         require(
             target.sourceKind ==
                 VexLifeModelSourceProjection.SourceKind.PARTNER,
