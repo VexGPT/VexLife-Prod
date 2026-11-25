@@ -258,7 +258,14 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     receipt.sandboxSha256 ==
                     runtime.sandboxSha256
             ) {
-                "workspace Java-test Mac owner proof did not return the exact PASS receipt"
+                "workspace Java-test Mac owner proof receipt mismatch: " +
+                    "disposition=" + receipt.disposition +
+                    " exit=" + receipt.testExitCode +
+                    " stdout=" + receipt.testStdout +
+                    " stderr=" + receipt.testStderr +
+                    " cleanup=" + receipt.cleanupComplete +
+                    " currentEffectAuthority=" + receipt.currentEffectAuthority +
+                    " sandboxMatches=" + (receipt.sandboxSha256 == runtime.sandboxSha256)
             }
             before.forEach {
                 (
