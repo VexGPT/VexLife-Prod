@@ -19,6 +19,7 @@ class VexLifeWorkspaceWriteTest {
         val home: Path,
         val source: Path,
         val sourceRef: String,
+        val effects: VexLifeWorkspaceEffectStore,
         val writer: VexLifeWorkspaceWrite,
     )
 
@@ -55,7 +56,7 @@ class VexLifeWorkspaceWriteTest {
                     workspaceEffects = effects,
                     now = { Instant.parse("2026-11-24T21:02:00Z") },
                 )
-            block(Fixture(parent, home, source, sourceRef, writer))
+            block(Fixture(parent, home, source, sourceRef, effects, writer))
         } finally {
             parent.toFile().deleteRecursively()
         }
@@ -178,6 +179,51 @@ class VexLifeWorkspaceWriteTest {
                 )
             assertEquals(VexLifeWorkspaceWrite.DispositionRecovered, recovered.receipt.disposition)
             assertEquals(modifiedAt, Files.getLastModifiedTime(fixture.source.resolve("recover.txt")))
+        }
+
+    @Test
+    fun completedIntentMayRecoverAfterRevocationButNewMutationCannotReplay() =
+        withFixture { fixture ->
+            assertIs<VexLifeWorkspaceWrite.Outcome.Completed>(
+                fixture.writer.write(
+                    operationRef = "operation.test.revoked-recovery",
+                    sourceRef = fixture.sourceRef,
+                    relativePath = "revoked.txt",
+                    content = "already-written",
+                )
+            )
+            val key = sha256("operation.test.revoked-recovery")
+            Files.delete(
+                fixture.home.resolve(
+                    VexLifeWorkspaceWrite.RuntimeRoot + "/receipts/" + key + ".json"
+                )
+            )
+            assertIs<VexLifeWorkspaceEffectStore.Outcome.Realized>(
+                fixture.effects.revoke(fixture.sourceRef)
+            )
+
+            val recovered =
+                assertIs<VexLifeWorkspaceWrite.Outcome.Completed>(
+                    fixture.writer.write(
+                        operationRef = "operation.test.revoked-recovery",
+                        sourceRef = fixture.sourceRef,
+                        relativePath = "revoked.txt",
+                        content = "already-written",
+                    )
+                )
+            assertEquals(VexLifeWorkspaceWrite.DispositionRecovered, recovered.receipt.disposition)
+
+            val refused =
+                assertIs<VexLifeWorkspaceWrite.Outcome.Refused>(
+                    fixture.writer.write(
+                        operationRef = "operation.test.after-revoke",
+                        sourceRef = fixture.sourceRef,
+                        relativePath = "new.txt",
+                        content = "must-not-write",
+                    )
+                )
+            assertEquals(VexLifeWorkspaceWrite.RefusedGrantNotCurrent, refused.reason)
+            assertTrue(!Files.exists(fixture.source.resolve("new.txt")))
         }
 
     @Test
