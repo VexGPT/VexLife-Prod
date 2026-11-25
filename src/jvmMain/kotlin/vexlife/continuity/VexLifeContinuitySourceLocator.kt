@@ -56,7 +56,7 @@ object VexLifeContinuitySourceLocator {
      * Derived source-addressed row. It intentionally contains no Conversation body or Memory
      * content. Fingerprints belong only to this backend realization.
      */
-    data class Entry internal constructor(
+    data class Entry(
         val coordinates: SourceCoordinates,
         val requestFingerprints: Set<String>,
         val responseFingerprints: Set<String>,
@@ -69,7 +69,7 @@ object VexLifeContinuitySourceLocator {
      * completed Conversation head. Incremental catch-up is a later integration concern; this first
      * substrate fails closed to canonical fallback when the generation is stale.
      */
-    data class Generation internal constructor(
+    data class Generation(
         val schemaVersion: String,
         val sourceConversationHeadSha256: String?,
         val sourceConversationSequence: Long?,
@@ -147,9 +147,11 @@ object VexLifeContinuitySourceLocator {
 
         override fun load(): BackendLoad =
             generation
-                ?.let(
-                    BackendLoad::Ready,
-                )
+                ?.let {
+                    BackendLoad.Ready(
+                        it,
+                    )
+                }
                 ?: BackendLoad.Absent
 
         override fun replace(generation: Generation) {
