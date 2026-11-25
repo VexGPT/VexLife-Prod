@@ -1,0 +1,418 @@
+{
+  "_meta": {
+    "scope": "workspace-checks",
+    "category": "product",
+    "description": "Human-facing grant and status text for bounded Product-owned workspace checks.",
+    "keyConvention": "workspace.{element-type}.workspace-checks-*",
+    "surfaces": {
+      "workspace.settings": "Settings → Local folders"
+    },
+    "dataKeyOwners": {
+      "workspace-checks": "VexLifeWorkspaceChecksFamily (explicit Allow/Revoke process-check authority)"
+    }
+  },
+  "workspace.status.workspace-checks-not-allowed": {
+    "strings": {
+      "en": {
+        "text": "Checks not allowed"
+      },
+      "ja": {
+        "text": "チェックは許可されていません"
+      },
+      "zh": {
+        "text": "未允许检查"
+      },
+      "zh-Hant": {
+        "text": "未允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용 안 됨"
+      },
+      "fr": {
+        "text": "Vérifications non autorisées"
+      },
+      "de": {
+        "text": "Prüfungen nicht erlaubt"
+      },
+      "es": {
+        "text": "Comprobaciones no permitidas"
+      },
+      "pt": {
+        "text": "Verificações não permitidas"
+      },
+      "ar": {
+        "text": "الفحوصات غير مسموحة"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-allowed": {
+    "strings": {
+      "en": {
+        "text": "Checks allowed"
+      },
+      "ja": {
+        "text": "チェックを許可"
+      },
+      "zh": {
+        "text": "已允许检查"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용"
+      },
+      "fr": {
+        "text": "Vérifications autorisées"
+      },
+      "de": {
+        "text": "Prüfungen erlaubt"
+      },
+      "es": {
+        "text": "Comprobaciones permitidas"
+      },
+      "pt": {
+        "text": "Verificações permitidas"
+      },
+      "ar": {
+        "text": "الفحوصات مسموحة"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-checks-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow checks"
+      },
+      "ja": {
+        "text": "チェックを許可"
+      },
+      "zh": {
+        "text": "允许检查"
+      },
+      "zh-Hant": {
+        "text": "允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용"
+      },
+      "fr": {
+        "text": "Autoriser les vérifications"
+      },
+      "de": {
+        "text": "Prüfungen erlauben"
+      },
+      "es": {
+        "text": "Permitir comprobaciones"
+      },
+      "pt": {
+        "text": "Permitir verificações"
+      },
+      "ar": {
+        "text": "السماح بالفحوصات"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-checks:control:ALLOW_WORKSPACE_CHECKS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-checks"
+  },
+  "workspace.button.workspace-checks-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop checks"
+      },
+      "ja": {
+        "text": "チェックを停止"
+      },
+      "zh": {
+        "text": "停止检查"
+      },
+      "zh-Hant": {
+        "text": "停止檢查"
+      },
+      "ko": {
+        "text": "검사 중지"
+      },
+      "fr": {
+        "text": "Arrêter les vérifications"
+      },
+      "de": {
+        "text": "Prüfungen stoppen"
+      },
+      "es": {
+        "text": "Detener comprobaciones"
+      },
+      "pt": {
+        "text": "Parar verificações"
+      },
+      "ar": {
+        "text": "إيقاف الفحوصات"
+      },
+      "hi": {
+        "text": "जाँच रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-checks:control:REVOKE_WORKSPACE_CHECKS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-checks"
+  },
+  "workspace.status.workspace-checks-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックを許可しました。"
+      },
+      "zh": {
+        "text": "已允许检查此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사가 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten comprobaciones en esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالفحوصات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-revoked": {
+    "strings": {
+      "en": {
+        "text": "Checks stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "チェックを停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止检查。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止檢查。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "검사가 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Vérifications arrêtées. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Comprobaciones detenidas. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Verificações interrompidas. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف الفحوصات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "जाँच रोक दी गई है। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックはすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许检查此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사는 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont déjà autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Las comprobaciones ya están permitidas para esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações já estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "الفحوصات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच पहले से अनुमत है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックはすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的检查已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的檢查已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사는 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont déjà arrêtées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Las comprobaciones ya están detenidas para esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações já estão interrompidas para esta pasta."
+      },
+      "ar": {
+        "text": "الفحوصات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच पहले से रुकी हुई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Check access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、チェックアクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予检查权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予檢查權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 검사 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux vérifications n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Prüfzugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de comprobación porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de verificação porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية الفحص لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "जाँच की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  }
+}

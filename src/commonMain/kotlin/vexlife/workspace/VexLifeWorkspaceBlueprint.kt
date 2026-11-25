@@ -320,6 +320,15 @@ object VexLifeWorkspaceBlueprint :
         SettingsLocalSources.control(
             "stop-changes",
         )
+    /** Process/check authority remains separate from both read and write authority. */
+    val LocalSourceAllowChecks =
+        SettingsLocalSources.control(
+            "allow-checks",
+        )
+    val LocalSourceStopChecks =
+        SettingsLocalSources.control(
+            "stop-checks",
+        )
 
     val SettingsContinuity =
         Settings.region(
