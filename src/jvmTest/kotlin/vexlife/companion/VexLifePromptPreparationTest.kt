@@ -280,7 +280,7 @@ class VexLifePromptPreparationTest {
 
             assertTrue(
                 preparation.nextTurnPreparationPending(),
-                "Cold/Preparing/Ready preparation still belongs to the one first local turn",
+                "Cold/Preparing/Ready preparation still belongs to the current preparation generation",
             )
 
             val first =
@@ -302,7 +302,7 @@ class VexLifePromptPreparationTest {
             )
             assertFalse(
                 preparation.nextTurnPreparationPending(),
-                "Consumed preparation must not label later turns as first-local-start work",
+                "Consumed preparation must not label later turns as current preparation work",
             )
 
             val second =
@@ -620,6 +620,7 @@ class VexLifePromptPreparationTest {
             executor.shutdownNow()
         }
     }
+
     @Test
     fun consumedGenerationCanRearmForANewRuntimeReceipt() {
         val firstRuntime =
