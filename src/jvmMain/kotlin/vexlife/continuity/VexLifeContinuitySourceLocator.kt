@@ -82,11 +82,11 @@ object VexLifeContinuitySourceLocator {
         val sourceConversationHeadSha256: String?,
         val sourceConversationSequence: Long?,
         val fingerprintBindingRef: String,
-        val sourceLifecycleBindingRef: String =
-            UnboundSourceLifecycleBindingRef,
         val sourceEventCount: Int,
         val completedTurnCount: Int,
         val entries: List<Entry>,
+        val sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
     )
 
     sealed interface BackendLoad {
