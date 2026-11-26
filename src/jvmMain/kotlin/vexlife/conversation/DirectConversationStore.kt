@@ -33,6 +33,8 @@ import vexlife.model.heretic.HereticProductIdentity
  */
 class DirectConversationStore(
     productHome: Path,
+    private val attemptIndex: DirectConversationAttemptIndex? =
+        null,
 ) {
     companion object {
         const val EventSchema =
@@ -148,6 +150,22 @@ class DirectConversationStore(
         val events: List<Event>,
         val canonicalEvents: List<Event>,
         val abandonedAttempts: List<AbandonedAttempt>,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestAdmission internal constructor(
+        val requestMessageRef: String,
+        val head: Head?,
+        val matchingCanonicalEvents: List<Event>,
+        val matchingAbandonedAttempt: AbandonedAttempt?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestEventLookup internal constructor(
+        val requestEvent: Event?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+        val derivedIndexRebuilt: Boolean,
     )
 
     @ConsistentCopyVisibility
@@ -277,7 +295,7 @@ class DirectConversationStore(
             null
         private var pendingResponse: Event? =
             null
-        private var reusableAdmissionSnapshot: Snapshot? =
+        private var reusableAdmissionSnapshot: RequestAdmission? =
             null
 
         /** Canonical Home-owned person identity used by request/response participant formation. */
@@ -292,12 +310,97 @@ class DirectConversationStore(
          * admission. The object identity is the lease-local capability; a snapshot from another
          * lease is never accepted merely because the completed head still matches.
          */
-        internal fun currentForRequestAdmission(): Snapshot =
-            readCurrentComplete()
-                .also {
-                    reusableAdmissionSnapshot =
-                        it
+        internal fun currentForRequestAdmission(
+            requestMessageRef: String,
+        ): RequestAdmission {
+            requireNonEmpty(
+                requestMessageRef,
+                "requestMessageRef",
+            )
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+
+            val admission =
+                when (
+                    val indexed =
+                        readIndexedAttempt(
+                            requestMessageRef,
+                        )
+                ) {
+                    is IndexedAttemptLookup.Found ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    listOf(
+                                        indexed.request,
+                                        requireNotNull(
+                                            indexed.response,
+                                        ),
+                                    )
+                                } else {
+                                    emptyList()
+                                },
+                            matchingAbandonedAttempt =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    null
+                                } else {
+                                    AbandonedAttempt(
+                                        requestEvent =
+                                            indexed.request,
+                                        responseEventOrNull =
+                                            indexed.response,
+                                    )
+                                },
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.CurrentMiss ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents = emptyList(),
+                            matchingAbandonedAttempt = null,
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.FallbackRequired -> {
+                        val snapshot =
+                            readCurrentComplete()
+                        attemptIndex
+                            ?.rebuild(
+                                snapshot,
+                            )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
                 }
+
+            reusableAdmissionSnapshot =
+                admission
+            return admission
+        }
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
