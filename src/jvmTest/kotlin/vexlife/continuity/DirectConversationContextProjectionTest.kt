@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.companion.DirectConversationSourceReturn
@@ -117,12 +118,430 @@ class DirectConversationContextProjectionTest {
     }
 
     @Test
+    fun currentLocatorPreparesExactOlderSourceWithoutWholeHistoryEnumeration() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "Experiment anchor: the silver lantern is beside the pine gate.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Unrelated later turn.",
+                        vex = "later",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                )
+                    .first()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            43
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-current",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                val current =
+                    beginRequest(
+                        turnRef = "turn.continuity.locator-current",
+                        requestMessageRef = "message.continuity.locator-current",
+                        content =
+                            "Without guessing: where was the silver lantern?",
+                        formedAt = Instant.parse("2026-11-20T10:00:00Z"),
+                    )
+                val before =
+                    fixture.homeTree()
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    DirectConversationContextProjection.SourcePreparation.LOCATOR_CURRENT,
+                    prepared.sourcePreparation,
+                )
+                assertFalse(
+                    prepared.discovery.wholeHistoryEventEnumerationPerformed,
+                )
+                assertTrue(
+                    prepared.exactEventFileReadCount >=
+                        2,
+                )
+                assertTrue(
+                    prepared.discovery.matches.any {
+                        it.requestEvent.eventRef ==
+                            old.first.eventRef
+                    },
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "current locator preparation must not mutate canonical Home",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun absentLocatorRebuildsOnceAndReturnsExactSourceThroughTheSamePacketContract() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human =
+                        "Experiment anchor: the copper telescope is beside the east window.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+                ContinuityTurnFixture.Line(
+                    human = "Unrelated later turn.",
+                    vex = "later",
+                    at = Instant.parse("2026-11-20T09:00:00Z"),
+                ),
+            )
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            47
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-rebuild",
+                )
+
+            fixture.store.withWriterLease {
+                val current =
+                    beginRequest(
+                        turnRef = "turn.continuity.locator-rebuild",
+                        requestMessageRef = "message.continuity.locator-rebuild",
+                        content =
+                            "Without guessing: where was the copper telescope?",
+                        formedAt = Instant.parse("2026-11-20T10:00:00Z"),
+                    )
+                val before =
+                    fixture.homeTree()
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                        ),
+                    )
+                val projection =
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = 8_000,
+                    )
+
+                assertEquals(
+                    DirectConversationContextProjection.SourcePreparation.LOCATOR_REBUILT,
+                    prepared.sourcePreparation,
+                )
+                assertFalse(
+                    prepared.discovery.wholeHistoryEventEnumerationPerformed,
+                )
+                assertTrue(
+                    prepared.exactEventFileReadCount >=
+                        2,
+                )
+                assertEquals(
+                    DirectConversationContextProjection.Returned,
+                    projection.state,
+                )
+                assertTrue(
+                    projection.systemContent.startsWith(
+                        DirectConversationContextProjection.ContextHeader,
+                    ),
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "derived locator rebuild must not mutate canonical Home",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun lifecycleBindingDriftRebuildsBeforeBlockedSourceCanBecomeRecall() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "The withdrawn continuity token is crimson-delta-52.",
+                        vex = "historical",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            71
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-lifecycle-drift",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                    sourceLifecycleBindingRef =
+                        "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.locator-lifecycle-drift",
+                        requestMessageRef =
+                            "message.continuity.locator-lifecycle-drift",
+                        content =
+                            "Earlier, without guessing: what was crimson-delta-52?",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                assertNotNull(
+                    DirectConversationContextProjection.cueOrNull(
+                        current.content,
+                    ),
+                    "lifecycle-drift proof must exercise an admitted backward-recall cue",
+                )
+                assertTrue(
+                    "crimson-delta-52" in
+                        DirectConversationContextProjection.queryTerms(
+                            current.content,
+                        ),
+                    "lifecycle-drift proof must retain the exact source token as a query term",
+                )
+                val prepared =
+                    DirectConversationContextProjection.prepare(
+                        conversationOwner = this,
+                        currentRequest = current,
+                        excludedEventRefs =
+                            setOf(
+                                current.eventRef,
+                            ),
+                        locatorBackend = backend,
+                        sourceLifecycle = {
+                            DirectConversationContextProjection.SourceLifecycle(
+                                bindingRef =
+                                    "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                                blockedEventRefs =
+                                    setOf(
+                                        old.first.eventRef,
+                                        old.second.eventRef,
+                                    ),
+                            )
+                        },
+                    )
+
+                assertNull(
+                    prepared,
+                    "lifecycle-held source must not return through locator or canonical fallback",
+                )
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+                assertEquals(
+                    "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                    generation.sourceLifecycleBindingRef,
+                )
+                assertTrue(
+                    generation.entries.isEmpty(),
+                    "lifecycle rebuild must remove the held pair from derived candidate location",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun correctedSourceIsReturnedAsExplicitHistoricalCurrentizedEvidence() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val old =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "Earlier wording: the bronze compass belongs beside the willow gate.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            73
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.context-currentized",
+                )
+            val lifecycleBinding =
+                "lifecycle.score.1111111111111111.2222222222222222"
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                    sourceLifecycleBindingRef =
+                        lifecycleBinding,
+                )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.locator-currentized",
+                        requestMessageRef =
+                            "message.continuity.locator-currentized",
+                        content =
+                            "Earlier, what did I say about the bronze compass?",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                val prepared =
+                    assertNotNull(
+                        DirectConversationContextProjection.prepare(
+                            conversationOwner = this,
+                            currentRequest = current,
+                            excludedEventRefs =
+                                setOf(
+                                    current.eventRef,
+                                ),
+                            locatorBackend = backend,
+                            sourceLifecycle = {
+                                DirectConversationContextProjection.SourceLifecycle(
+                                    bindingRef =
+                                        lifecycleBinding,
+                                    historicalCurrentizedEventRefs =
+                                        setOf(
+                                            old.first.eventRef,
+                                            old.second.eventRef,
+                                        ),
+                                )
+                            },
+                        ),
+                    )
+                val projection =
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = 8_000,
+                    )
+
+                assertEquals(
+                    setOf(
+                        old.first.eventRef,
+                        old.second.eventRef,
+                    ),
+                    projection.historicalCurrentizedEventRefs.toSet(),
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "historical source whose semantic relationship has since been corrected or superseded",
+                    ),
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "do not present them as current Memory or current accepted meaning",
+                    ),
+                )
+            }
+        }
+    }
+
+    @Test
     fun ordinaryForwardRequestDoesNotCreateAContinuationCue() {
         assertNull(
             DirectConversationContextProjection.cueOrNull(
                 "What is the weather like today?",
             ),
         )
+    }
+
+    @Test
+    fun ordinaryForwardPreparationDoesNotReadSemanticLifecycle() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "Earlier canonical source.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+
+            fixture.store.withWriterLease {
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.lifecycle-lazy-forward",
+                        requestMessageRef =
+                            "message.continuity.lifecycle-lazy-forward",
+                        content =
+                            "Tell me something new about architecture.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T09:00:00Z",
+                            ),
+                    )
+                var lifecycleReads =
+                    0
+
+                assertNull(
+                    DirectConversationContextProjection.prepare(
+                        conversationOwner = this,
+                        currentRequest = current,
+                        excludedEventRefs =
+                            setOf(
+                                current.eventRef,
+                            ),
+                        sourceLifecycle = {
+                            lifecycleReads +=
+                                1
+                            error(
+                                "ordinary forward request must not read semantic recall lifecycle",
+                            )
+                        },
+                    ),
+                )
+                assertEquals(
+                    0,
+                    lifecycleReads,
+                )
+            }
+        }
     }
 
     @Test

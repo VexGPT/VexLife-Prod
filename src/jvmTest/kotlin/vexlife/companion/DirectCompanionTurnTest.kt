@@ -16,8 +16,10 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.foundational.VexLifeFoundationalFieldFixture
@@ -583,6 +585,143 @@ class DirectCompanionTurnTest {
                     .jsonPrimitive
                     .content,
             )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun completedTurnsKeepSharedContinuityLocatorCurrentForTheNextRequest() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val backend =
+            VexLifeContinuitySourceLocator.InMemoryBackend(
+                secret =
+                    ByteArray(32) {
+                        53
+                    },
+                fingerprintBindingRef =
+                    "fingerprint.test.direct-turn-catch-up",
+            )
+        var calls =
+            0
+        val hooks =
+            DirectCompanionTurn.Hooks(
+                transport =
+                    DirectCompanionConnection.Transport {
+                        _ ->
+                        calls +=
+                            1
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "response $calls"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+                continuitySourceLocatorBackend =
+                    backend,
+            )
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.locator-catch-up.001",
+                            content =
+                                "The locator anchor is indigo-bridge-64.",
+                        ),
+                    hooks = hooks,
+                )
+            val afterFirst =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    backend.load(),
+                )
+                    .generation
+            assertEquals(
+                1,
+                afterFirst.completedTurnCount,
+            )
+            assertEquals(
+                first.currentConversationHeadSha256,
+                afterFirst.sourceConversationHeadSha256,
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.locator-catch-up.002",
+                            content =
+                                "A later unrelated turn.",
+                        ),
+                    hooks = hooks,
+                )
+            val afterSecond =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    backend.load(),
+                )
+                    .generation
+            assertEquals(
+                2,
+                afterSecond.completedTurnCount,
+            )
+            assertEquals(
+                second.currentConversationHeadSha256,
+                afterSecond.sourceConversationHeadSha256,
+            )
+
+            DirectConversationStore(
+                home,
+            )
+                .withWriterLease {
+                    val located =
+                        assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                            VexLifeContinuitySourceLocator.locate(
+                                conversationOwner = this,
+                                queryTerms =
+                                    listOf(
+                                        "indigo-bridge-64",
+                                    ),
+                                speakerScope =
+                                    VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                backend = backend,
+                            ),
+                        )
+                    assertEquals(
+                        first.requestEventRef,
+                        located.candidates
+                            .single()
+                            .requestEvent
+                            .eventRef,
+                    )
+                    assertFalse(
+                        located.wholeHistoryEventEnumerationPerformed,
+                    )
+                }
         } finally {
             home.parent
                 .toFile()
@@ -3100,6 +3239,14 @@ class DirectCompanionTurnTest {
                 idempotencyKey = "send.self-development.failure",
                 content = "Please answer",
             )
+        val conversationAttemptIndex =
+            DirectConversationAttemptIndex()
+        conversationAttemptIndex.rebuild(
+            DirectConversationStore(
+                home,
+            )
+                .current(),
+        )
 
         try {
             val error =
@@ -3111,6 +3258,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3171,6 +3320,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3211,6 +3362,8 @@ class DirectCompanionTurnTest {
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
+                            conversationAttemptIndex =
+                                conversationAttemptIndex,
                             transport =
                                 DirectCompanionConnection.Transport {
                                     calls +=

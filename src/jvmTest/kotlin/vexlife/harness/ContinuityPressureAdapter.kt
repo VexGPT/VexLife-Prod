@@ -32,6 +32,7 @@ import vexlife.companion.DirectTurnContextStore
 import vexlife.companion.ProviderCapabilityTools
 import vexlife.companion.DirectWorkingContinuity
 import vexlife.continuity.VexLifeContextRevisit
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
@@ -897,6 +898,31 @@ object ContinuityPressureAdapter {
             lineageSuffix = "pressure-lineage",
         )
         var clock = start
+        val continuitySourceLocatorBackend =
+            if (
+                config.conversationContextProjectionEnabled
+            ) {
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        MessageDigest.getInstance(
+                            "SHA-256",
+                        )
+                            .digest(
+                                (
+                                    "continuity-pressure-locator:" +
+                                        scenarioSha
+                                )
+                                    .toByteArray(),
+                            ),
+                    fingerprintBindingRef =
+                        "fingerprint.continuity-pressure." +
+                            scenarioSha.take(
+                                12,
+                            ),
+                )
+            } else {
+                null
+            }
         val hooks =
             DirectCompanionTurn.Hooks(
                 transport = provider.transport,
@@ -914,8 +940,10 @@ object ContinuityPressureAdapter {
                     )
                 },
                 experimentEffectiveInputTokenBudget = budget,
-                experimentConversationContextProjectionEnabled =
+                conversationContextProjectionEnabled =
                     config.conversationContextProjectionEnabled,
+                continuitySourceLocatorBackend =
+                    continuitySourceLocatorBackend,
             )
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
