@@ -425,6 +425,8 @@ object VexLifeContinuitySourceLocator {
             val exactEventFileReadCount: Int,
             val exactHeadFileReadCount: Int,
             val wholeHistoryHeadTraversalPerformed: Boolean,
+            val derivedEntryScanCount: Int = 0,
+            val derivedPostingLookupCount: Int = 0,
             override val wholeHistoryEventEnumerationPerformed: Boolean = false,
             override val canonicalSourceMutationPerformed: Boolean = false,
         ) : LocateOutcome
@@ -432,6 +434,8 @@ object VexLifeContinuitySourceLocator {
         data class CurrentMiss(
             override val currentConversationHeadSha256: String?,
             val generationConversationHeadSha256: String?,
+            val derivedEntryScanCount: Int = 0,
+            val derivedPostingLookupCount: Int = 0,
             override val wholeHistoryEventEnumerationPerformed: Boolean = false,
             override val canonicalSourceMutationPerformed: Boolean = false,
         ) : LocateOutcome
