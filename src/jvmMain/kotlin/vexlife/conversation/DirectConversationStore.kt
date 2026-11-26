@@ -1706,6 +1706,219 @@ class DirectConversationStore(
         )
     }
 
+    private sealed interface IndexedAttemptLookup {
+        data class Found(
+            val request: Event,
+            val response: Event?,
+            val committed: Boolean,
+        ) : IndexedAttemptLookup
+
+        data object CurrentMiss : IndexedAttemptLookup
+
+        data object FallbackRequired : IndexedAttemptLookup
+    }
+
+    internal fun requestEventForMessageRef(
+        requestMessageRef: String,
+    ): RequestEventLookup {
+        requireNonEmpty(
+            requestMessageRef,
+            "requestMessageRef",
+        )
+
+        return when (
+            val indexed =
+                readIndexedAttempt(
+                    requestMessageRef,
+                )
+        ) {
+            is IndexedAttemptLookup.Found ->
+                RequestEventLookup(
+                    requestEvent =
+                        indexed.request,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.CurrentMiss ->
+                RequestEventLookup(
+                    requestEvent = null,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.FallbackRequired -> {
+                val snapshot =
+                    readCurrentComplete()
+                attemptIndex
+                    ?.rebuild(
+                        snapshot,
+                    )
+                RequestEventLookup(
+                    requestEvent =
+                        snapshot.events
+                            .singleOrNull {
+                                it.eventKind ==
+                                    VexLifeConversationContract.RequestKind &&
+                                    it.messageRef ==
+                                    requestMessageRef
+                            },
+                    wholeHistoryEventEnumerationPerformed = true,
+                    derivedIndexRebuilt =
+                        attemptIndex !=
+                            null,
+                )
+            }
+        }
+    }
+
+    private fun readIndexedAttempt(
+        requestMessageRef: String,
+    ): IndexedAttemptLookup {
+        val index =
+            attemptIndex
+                ?: return IndexedAttemptLookup.FallbackRequired
+        val generation =
+            when (
+                val load =
+                    index.load()
+            ) {
+                DirectConversationAttemptIndex.Load.Absent ->
+                    return IndexedAttemptLookup.FallbackRequired
+
+                is DirectConversationAttemptIndex.Load.Ready ->
+                    load.generation
+            }
+        val currentHead =
+            readHeadRecord()
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHead
+                    ?.conversationHeadSha256 ||
+            generation.sourceConversationSequence !=
+                currentHead
+                    ?.sequence
+        ) {
+            index.invalidate()
+            return IndexedAttemptLookup.FallbackRequired
+        }
+
+        val entry =
+            generation.entriesByRequestMessageRef[
+                requestMessageRef
+            ]
+                ?: return IndexedAttemptLookup.CurrentMiss
+
+        return try {
+            val request =
+                requireNotNull(
+                    readEventAt(
+                        eventPath(
+                            sequence =
+                                entry.request.sequence,
+                            eventHash =
+                                entry.request.eventHash,
+                        ),
+                    ),
+                ) {
+                    "Conversation attempt index request source is missing"
+                }
+            require(
+                request.eventRef ==
+                    entry.request.eventRef &&
+                    request.eventHash ==
+                    entry.request.eventHash &&
+                    request.messageRef ==
+                    entry.requestMessageRef &&
+                    request.turnRef ==
+                    entry.turnRef &&
+                    request.eventKind ==
+                    VexLifeConversationContract.RequestKind
+            ) {
+                "Conversation attempt index request coordinate does not match canonical source"
+            }
+
+            val response =
+                entry.response
+                    ?.let {
+                        address ->
+                        requireNotNull(
+                            readEventAt(
+                                eventPath(
+                                    sequence =
+                                        address.sequence,
+                                    eventHash =
+                                        address.eventHash,
+                                ),
+                            ),
+                        ) {
+                            "Conversation attempt index response source is missing"
+                        }
+                            .also {
+                                value ->
+                                require(
+                                    value.eventRef ==
+                                        address.eventRef &&
+                                        value.eventHash ==
+                                        address.eventHash &&
+                                        value.eventKind ==
+                                        VexLifeConversationContract.ResponseKind &&
+                                        value.turnRef ==
+                                        request.turnRef &&
+                                        value.sequence ==
+                                        request.sequence +
+                                            1 &&
+                                        value.priorEventHash ==
+                                        request.eventHash
+                                ) {
+                                    "Conversation attempt index response coordinate does not match canonical source"
+                                }
+                            }
+                    }
+
+            if (
+                entry.committed
+            ) {
+                val committedResponse =
+                    requireNotNull(
+                        response,
+                    ) {
+                        "committed Conversation attempt index entry has no response"
+                    }
+                val exact =
+                    readExactCommittedConversationEvents(
+                        listOf(
+                            entry.request,
+                            requireNotNull(
+                                entry.response,
+                            ),
+                        ),
+                    )
+                require(
+                    exact.events ==
+                        listOf(
+                            request,
+                            committedResponse,
+                        )
+                ) {
+                    "Conversation attempt index committed pair is not exact current-lineage source"
+                }
+            }
+
+            IndexedAttemptLookup.Found(
+                request = request,
+                response = response,
+                committed =
+                    entry.committed,
+            )
+        } catch (
+            _: RuntimeException,
+        ) {
+            index.invalidate()
+            IndexedAttemptLookup.FallbackRequired
+        }
+    }
+
     private fun prepareOwnedDirectories() {
         for (
             directory in
