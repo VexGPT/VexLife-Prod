@@ -28,7 +28,6 @@ internal class DirectConversationAttemptIndex {
     data class Generation internal constructor(
         val sourceConversationHeadSha256: String?,
         val sourceConversationSequence: Long?,
-        val sourceEventCount: Int,
         val entriesByRequestMessageRef: Map<String, Entry>,
     )
 
@@ -42,7 +41,6 @@ internal class DirectConversationAttemptIndex {
 
     data class RebuildReceipt(
         val sourceConversationHeadSha256: String?,
-        val sourceEventCount: Int,
         val attemptCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
         val canonicalSourceMutationPerformed: Boolean = false,
@@ -166,8 +164,6 @@ internal class DirectConversationAttemptIndex {
                     sourceConversationSequence =
                         snapshot.head
                             ?.sequence,
-                    sourceEventCount =
-                        snapshot.events.size,
                     entriesByRequestMessageRef =
                         entries.toMap(),
                 )
@@ -177,8 +173,6 @@ internal class DirectConversationAttemptIndex {
             RebuildReceipt(
                 sourceConversationHeadSha256 =
                     rebuilt.sourceConversationHeadSha256,
-                sourceEventCount =
-                    rebuilt.sourceEventCount,
                 attemptCount =
                     rebuilt.entriesByRequestMessageRef.size,
                 wholeHistoryEventEnumerationPerformed = true,
@@ -213,9 +207,6 @@ internal class DirectConversationAttemptIndex {
             }
 
             before.copy(
-                sourceEventCount =
-                    before.sourceEventCount +
-                        1,
                 entriesByRequestMessageRef =
                     before.entriesByRequestMessageRef +
                         (
@@ -273,16 +264,6 @@ internal class DirectConversationAttemptIndex {
             }
 
             before.copy(
-                sourceEventCount =
-                    before.sourceEventCount +
-                        if (
-                            existing.response ==
-                                null
-                        ) {
-                            1
-                        } else {
-                            0
-                        },
                 entriesByRequestMessageRef =
                     before.entriesByRequestMessageRef +
                         (
