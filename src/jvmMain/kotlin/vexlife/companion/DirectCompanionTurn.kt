@@ -1641,6 +1641,16 @@ object DirectCompanionTurn {
                                                 seedRefs =
                                                     query.seedRefs
                                                         .toSet(),
+                                                typedEdges =
+                                                    if (
+                                                        query.corrections
+                                                    ) {
+                                                        setOf(
+                                                            VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                                        )
+                                                    } else {
+                                                        emptySet()
+                                                    },
                                             )
                                         }
                                     val lifecycleBindingRef =
@@ -1730,6 +1740,8 @@ object DirectCompanionTurn {
                                                     ready.derivedPostingLookupCount,
                                                 derivedRefLookupCount =
                                                     ready.derivedRefLookupCount,
+                                                derivedTypedEdgeLookupCount =
+                                                    ready.derivedTypedEdgeLookupCount,
                                             )
 
                                         else ->
