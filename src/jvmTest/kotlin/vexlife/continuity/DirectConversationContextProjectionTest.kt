@@ -323,12 +323,25 @@ class DirectConversationContextProjectionTest {
                         requestMessageRef =
                             "message.continuity.locator-lifecycle-drift",
                         content =
-                            "Without guessing: what was crimson-delta-52?",
+                            "Earlier, without guessing: what was crimson-delta-52?",
                         formedAt =
                             Instant.parse(
                                 "2026-11-20T09:00:00Z",
                             ),
                     )
+                assertNotNull(
+                    DirectConversationContextProjection.cueOrNull(
+                        current.content,
+                    ),
+                    "lifecycle-drift proof must exercise an admitted backward-recall cue",
+                )
+                assertTrue(
+                    "crimson-delta-52" in
+                        DirectConversationContextProjection.queryTerms(
+                            current.content,
+                        ),
+                    "lifecycle-drift proof must retain the exact source token as a query term",
+                )
                 val prepared =
                     DirectConversationContextProjection.prepare(
                         conversationOwner = this,
