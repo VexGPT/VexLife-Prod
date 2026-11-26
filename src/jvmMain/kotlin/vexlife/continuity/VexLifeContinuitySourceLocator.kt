@@ -895,9 +895,55 @@ object VexLifeContinuitySourceLocator {
                     backend = backend,
                 )
             }
+        val indexedLookup =
+            (backend as? IndexedBackend)
+                ?.candidateEntryIndexes(
+                    queryFingerprints =
+                        normalizedTerms.map(
+                            queryFingerprints::getValue,
+                        ),
+                    speakerScope =
+                        speakerScope,
+                )
+        val candidateEntries =
+            if (
+                indexedLookup !=
+                null
+            ) {
+                indexedLookup.entryIndexes
+                    .asSequence()
+                    .sorted()
+                    .map {
+                        index ->
+                        require(
+                            index in
+                                generation.entries.indices
+                        ) {
+                            "indexed locator posting points outside the current generation"
+                        }
+                        generation.entries[
+                            index
+                        ]
+                    }
+            } else {
+                generation.entries
+                    .asSequence()
+            }
+        val derivedEntryScanCount =
+            if (
+                indexedLookup ==
+                null
+            ) {
+                generation.entries.size
+            } else {
+                0
+            }
+        val derivedPostingLookupCount =
+            indexedLookup
+                ?.postingLookupCount
+                ?: 0
         val approximate =
-            generation.entries
-                .asSequence()
+            candidateEntries
                 .filter {
                     entry ->
                     entry.coordinates.request.eventRef !in
@@ -950,6 +996,10 @@ object VexLifeContinuitySourceLocator {
                 currentConversationHeadSha256 = currentHeadSha,
                 generationConversationHeadSha256 =
                     generation.sourceConversationHeadSha256,
+                derivedEntryScanCount =
+                    derivedEntryScanCount,
+                derivedPostingLookupCount =
+                    derivedPostingLookupCount,
             )
         }
 
@@ -1104,6 +1154,10 @@ object VexLifeContinuitySourceLocator {
                 exact.exactHeadFileReadCount,
             wholeHistoryHeadTraversalPerformed =
                 exact.wholeHistoryHeadTraversalPerformed,
+            derivedEntryScanCount =
+                derivedEntryScanCount,
+            derivedPostingLookupCount =
+                derivedPostingLookupCount,
         )
     }
 
