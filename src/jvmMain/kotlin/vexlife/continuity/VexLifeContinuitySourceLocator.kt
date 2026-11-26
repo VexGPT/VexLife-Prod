@@ -27,7 +27,7 @@ import vexlife.conversation.DirectConversationStore
  */
 object VexLifeContinuitySourceLocator {
     const val GenerationSchema =
-        "vexlife-prod.continuity-source-locator-generation/v1"
+        "vexlife-prod.continuity-source-locator-generation/v2"
 
     const val UnboundSourceLifecycleBindingRef =
         "lifecycle.unbound"
@@ -65,6 +65,7 @@ object VexLifeContinuitySourceLocator {
      * content. Fingerprints belong only to this backend realization.
      */
     data class Entry(
+        val turnRef: String,
         val coordinates: SourceCoordinates,
         val requestFingerprints: Set<String>,
         val responseFingerprints: Set<String>,
@@ -129,6 +130,11 @@ object VexLifeContinuitySourceLocator {
         val postingLookupCount: Int,
     )
 
+    data class IndexedRefLookup(
+        val entryIndexesByRef: Map<String, Int>,
+        val refLookupCount: Int,
+    )
+
     /**
      * Optional realization capability for a true inverted lexical index.
      *
@@ -141,6 +147,10 @@ object VexLifeContinuitySourceLocator {
             queryFingerprints: List<Set<String>>,
             speakerScope: SpeakerScope,
         ): IndexedCandidateLookup
+
+        fun entryIndexesForRefs(
+            refs: Set<String>,
+        ): IndexedRefLookup
 
         fun replaceAfterAppend(
             priorGeneration: Generation,
@@ -183,6 +193,9 @@ object VexLifeContinuitySourceLocator {
         private val responsePostings =
             linkedMapOf<String, MutableSet<Int>>()
 
+        private val entryIndexByRef =
+            linkedMapOf<String, Int>()
+
         override fun fingerprint(value: String): String {
             val mac =
                 Mac.getInstance("HmacSHA256")
@@ -220,6 +233,7 @@ object VexLifeContinuitySourceLocator {
                 generation
             requestPostings.clear()
             responsePostings.clear()
+            entryIndexByRef.clear()
             generation.entries.forEachIndexed(
                 ::indexEntry,
             )
@@ -366,11 +380,38 @@ object VexLifeContinuitySourceLocator {
             )
         }
 
+        override fun entryIndexesForRefs(
+            refs: Set<String>,
+        ): IndexedRefLookup {
+            val found =
+                linkedMapOf<String, Int>()
+            refs.forEach {
+                ref ->
+                entryIndexByRef[
+                    ref
+                ]
+                    ?.let {
+                        index ->
+                        found[
+                            ref
+                        ] =
+                            index
+                    }
+            }
+            return IndexedRefLookup(
+                entryIndexesByRef =
+                    found,
+                refLookupCount =
+                    refs.size,
+            )
+        }
+
         override fun clear() {
             generation =
                 null
             requestPostings.clear()
             responsePostings.clear()
+            entryIndexByRef.clear()
         }
 
         private fun indexEntry(
@@ -400,6 +441,24 @@ object VexLifeContinuitySourceLocator {
                     .add(
                         index,
                     )
+            }
+            for (
+                ref in
+                listOf(
+                    entry.turnRef,
+                    entry.coordinates.request.eventRef,
+                    entry.coordinates.response.eventRef,
+                )
+            ) {
+                require(
+                    entryIndexByRef.put(
+                        ref,
+                        index,
+                    ) ==
+                        null
+                ) {
+                    "indexed locator contains duplicate turn/event ref"
+                }
             }
         }
     }
@@ -524,6 +583,8 @@ object VexLifeContinuitySourceLocator {
                     ) {
                         add(
                             Entry(
+                                turnRef =
+                                    request.turnRef,
                                 coordinates =
                                     SourceCoordinates(
                                         request =
@@ -694,6 +755,8 @@ object VexLifeContinuitySourceLocator {
 
         val appendedEntry =
             Entry(
+                turnRef =
+                    request.turnRef,
                 coordinates =
                     SourceCoordinates(
                         request =
@@ -1261,6 +1324,17 @@ object VexLifeContinuitySourceLocator {
         ) {
             "continuity source locator generation contains duplicate source coordinates"
         }
+        require(
+            generation.entries
+                .map(
+                    Entry::turnRef,
+                )
+                .distinct()
+                .size ==
+                generation.entries.size
+        ) {
+            "continuity source locator generation contains duplicate turn refs"
+        }
         generation.entries.forEach {
             entry ->
             require(
@@ -1283,6 +1357,7 @@ object VexLifeContinuitySourceLocator {
                             "[0-9a-f]{64}",
                         ),
                     ) &&
+                    entry.turnRef.isNotBlank() &&
                     entry.requestFingerprints.all(
                         ::isFingerprint,
                     ) &&
