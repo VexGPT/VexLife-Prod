@@ -662,8 +662,10 @@ class VexLifeContextRevisitTest {
                 )
                 assertTrue(
                     lexicalResult.text.contains(
-                        "the person's next message corrects this reply",
+                        "this message corrects the reply in " +
+                            turns[0].first.turnRef,
                     ),
+                    "the adjacent correction reached through typed expansion must retain its CORRECTS relationship",
                 )
                 assertEquals(
                     4,
