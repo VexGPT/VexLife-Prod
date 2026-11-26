@@ -757,9 +757,17 @@ class VexLifeContextRevisitTest {
                 )
                 assertTrue(
                     correctionResult.text.contains(
-                        "this message corrects the reply in " +
-                            turns[0].first.turnRef,
+                        "opens like a correction",
                     ),
+                    "global corrections:true directly locates the correction turn as CORRECTIONS",
+                )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "the person's next message corrects this reply (" +
+                            turns[1].first.turnRef +
+                            ")",
+                    ),
+                    "one typed step from the correction turn must retain CORRECTED_BY on the exact prior turn",
                 )
             }
         }
