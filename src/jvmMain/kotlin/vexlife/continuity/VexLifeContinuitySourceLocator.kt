@@ -29,6 +29,9 @@ object VexLifeContinuitySourceLocator {
     const val GenerationSchema =
         "vexlife-prod.continuity-source-locator-generation/v1"
 
+    const val UnboundSourceLifecycleBindingRef =
+        "lifecycle.unbound"
+
     const val MaximumQueryTerms = 6
     const val MaximumQueryTermCharacters = 160
     const val MaximumExactCandidateReopens = 48
@@ -47,6 +50,7 @@ object VexLifeContinuitySourceLocator {
         UNSUPPORTED_QUERY,
         CANDIDATE_SET_TOO_LARGE,
         FINGERPRINT_BINDING_MISMATCH,
+        SOURCE_LIFECYCLE_BINDING_MISMATCH,
         EXACT_VERIFICATION_MISS,
         SOURCE_COORDINATE_MISMATCH,
     }
@@ -81,6 +85,8 @@ object VexLifeContinuitySourceLocator {
         val sourceEventCount: Int,
         val completedTurnCount: Int,
         val entries: List<Entry>,
+        val sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
     )
 
     sealed interface BackendLoad {
@@ -261,7 +267,15 @@ object VexLifeContinuitySourceLocator {
     fun rebuild(
         conversationOwner: DirectConversationStore.Locked,
         backend: Backend,
+        sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
+        excludedEventRefs: Set<String> =
+            emptySet(),
     ): RebuildReceipt {
+        requirePortableRef(
+            sourceLifecycleBindingRef,
+            "sourceLifecycleBindingRef",
+        )
         val snapshot =
             conversationOwner.current()
         val events =
@@ -289,31 +303,38 @@ object VexLifeContinuitySourceLocator {
                         request = request,
                         response = response,
                     )
-                    add(
-                        Entry(
-                            coordinates =
-                                SourceCoordinates(
-                                    request =
-                                        address(
-                                            request,
-                                        ),
-                                    response =
-                                        address(
-                                            response,
-                                        ),
-                                ),
-                            requestFingerprints =
-                                fingerprints(
-                                    request.content,
-                                    backend,
-                                ),
-                            responseFingerprints =
-                                fingerprints(
-                                    response.content,
-                                    backend,
-                                ),
-                        ),
-                    )
+                    if (
+                        request.eventRef !in
+                            excludedEventRefs &&
+                        response.eventRef !in
+                            excludedEventRefs
+                    ) {
+                        add(
+                            Entry(
+                                coordinates =
+                                    SourceCoordinates(
+                                        request =
+                                            address(
+                                                request,
+                                            ),
+                                        response =
+                                            address(
+                                                response,
+                                            ),
+                                    ),
+                                requestFingerprints =
+                                    fingerprints(
+                                        request.content,
+                                        backend,
+                                    ),
+                                responseFingerprints =
+                                    fingerprints(
+                                        response.content,
+                                        backend,
+                                    ),
+                            ),
+                        )
+                    }
                     index +=
                         2
                 }
@@ -330,10 +351,13 @@ object VexLifeContinuitySourceLocator {
                         ?.sequence,
                 fingerprintBindingRef =
                     backend.fingerprintBindingRef,
-                sourceEventCount = events.size,
-                completedTurnCount =
-                    events.size /
+                sourceLifecycleBindingRef =
+                    sourceLifecycleBindingRef,
+                sourceEventCount =
+                    entries.size *
                         2,
+                completedTurnCount =
+                    entries.size,
                 entries = entries,
             )
         requireGeneration(
@@ -407,6 +431,8 @@ object VexLifeContinuitySourceLocator {
                             sourceConversationSequence = null,
                             fingerprintBindingRef =
                                 backend.fingerprintBindingRef,
+                            sourceLifecycleBindingRef =
+                                UnboundSourceLifecycleBindingRef,
                             sourceEventCount = 0,
                             completedTurnCount = 0,
                             entries = emptyList(),
@@ -462,6 +488,8 @@ object VexLifeContinuitySourceLocator {
                     committedHead.sequence,
                 fingerprintBindingRef =
                     backend.fingerprintBindingRef,
+                sourceLifecycleBindingRef =
+                    priorGeneration.sourceLifecycleBindingRef,
                 sourceEventCount =
                     priorGeneration.sourceEventCount +
                         2,
@@ -534,7 +562,13 @@ object VexLifeContinuitySourceLocator {
         speakerScope: SpeakerScope,
         backend: Backend,
         excludedEventRefs: Set<String> = emptySet(),
+        sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
     ): LocateOutcome {
+        requirePortableRef(
+            sourceLifecycleBindingRef,
+            "sourceLifecycleBindingRef",
+        )
         val normalizedTerms =
             queryTerms
                 .map(
@@ -613,6 +647,19 @@ object VexLifeContinuitySourceLocator {
             return LocateOutcome.FallbackRequired(
                 reason =
                     FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                currentConversationHeadSha256 = currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        if (
+            generation.sourceLifecycleBindingRef !=
+                sourceLifecycleBindingRef
+        ) {
+            return LocateOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
                 currentConversationHeadSha256 = currentHeadSha,
                 generationConversationHeadSha256 =
                     generation.sourceConversationHeadSha256,
@@ -871,6 +918,10 @@ object VexLifeContinuitySourceLocator {
         requirePortableRef(
             generation.fingerprintBindingRef,
             "generation fingerprintBindingRef",
+        )
+        requirePortableRef(
+            generation.sourceLifecycleBindingRef,
+            "generation sourceLifecycleBindingRef",
         )
         require(
             generation.sourceEventCount >=

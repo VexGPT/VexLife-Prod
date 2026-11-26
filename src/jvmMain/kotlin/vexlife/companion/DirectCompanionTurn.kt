@@ -1391,6 +1391,11 @@ object DirectCompanionTurn {
                             .toSet(),
                     locatorBackend =
                         hooks.continuitySourceLocatorBackend,
+                    sourceLifecycle = {
+                        conversationRecallSourceLifecycle(
+                            productHome,
+                        )
+                    },
                 )
             } else {
                 null
@@ -1546,6 +1551,23 @@ object DirectCompanionTurn {
                     base.promptResidentMemoryStatementRefs
                 },
                 now = hooks.now,
+                readConversationLifecycle = {
+                    VexLifeCurrentMemoryReader
+                        .readConversationRecallMembrane(
+                            productHome,
+                        )
+                        .let {
+                            membrane ->
+                            VexLifeContextRevisit.ConversationLifecycle(
+                                bindingRef =
+                                    membrane.bindingRef,
+                                blockedEventRefs =
+                                    membrane.blockedEventRefs,
+                                historicalCurrentizedEventRefs =
+                                    membrane.historicalCurrentizedEventRefs,
+                            )
+                        }
+                },
             )
 
         fun exchangeMessages(): List<CompanionProviderMessage> =
@@ -1651,6 +1673,23 @@ object DirectCompanionTurn {
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
                 hooks.cancellation?.checkpoint()
+                turnSources
+                    .conversationLifecycleBindingRefOrNull()
+                    ?.let {
+                        expectedLifecycleBinding ->
+                        val currentLifecycleBinding =
+                            VexLifeCurrentMemoryReader
+                                .readConversationRecallMembrane(
+                                    productHome,
+                                )
+                                .bindingRef
+                        require(
+                            currentLifecycleBinding ==
+                                expectedLifecycleBinding
+                        ) {
+                            "Conversation revisit lifecycle changed before capability return could re-enter provider context"
+                        }
+                    }
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1703,6 +1742,10 @@ object DirectCompanionTurn {
                 )
             }
 
+            val sourceReturnLifecycle =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    productHome,
+                )
             val excludedSourceRefs =
                 buildSet {
                     addAll(
@@ -1716,12 +1759,19 @@ object DirectCompanionTurn {
                         initialPrompt.materialization.receipt
                             .conversationContextProjectionSourceEventRefs,
                     )
+                    addAll(
+                        sourceReturnLifecycle.blockedEventRefs,
+                    )
                 }
             val discovery =
                 DirectConversationSourceReturn.discover(
                     conversationOwner = conversationOwner,
                     request = sourceReturnRequest,
                     excludedEventRefs = excludedSourceRefs,
+                    sourceLifecycleBindingRef =
+                        sourceReturnLifecycle.bindingRef,
+                    historicalCurrentizedEventRefs =
+                        sourceReturnLifecycle.historicalCurrentizedEventRefs,
                 )
 
             val finalMemoryAvailability =
@@ -2269,6 +2319,25 @@ object DirectCompanionTurn {
         )
     }
 
+    private fun conversationRecallSourceLifecycle(
+        productHome: Path,
+    ): DirectConversationContextProjection.SourceLifecycle =
+        VexLifeCurrentMemoryReader
+            .readConversationRecallMembrane(
+                productHome,
+            )
+            .let {
+                membrane ->
+                DirectConversationContextProjection.SourceLifecycle(
+                    bindingRef =
+                        membrane.bindingRef,
+                    blockedEventRefs =
+                        membrane.blockedEventRefs,
+                    historicalCurrentizedEventRefs =
+                        membrane.historicalCurrentizedEventRefs,
+                )
+            }
+
     private fun reverifyContinuityPrompt(
         selection: ContinuityPromptSelection,
         conversationOwner: DirectConversationStore.Locked,
@@ -2300,6 +2369,33 @@ object DirectCompanionTurn {
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
+        val expectedRecallLifecycleBindings =
+            listOfNotNull(
+                conversationContextPreparation
+                    ?.sourceLifecycleBindingRef,
+                sourceReturnDiscovery
+                    ?.sourceLifecycleBindingRef,
+            )
+                .distinct()
+        if (
+            expectedRecallLifecycleBindings.isNotEmpty()
+        ) {
+            val currentRecallLifecycleBinding =
+                VexLifeCurrentMemoryReader
+                    .readConversationRecallMembrane(
+                        productHome,
+                    )
+                    .bindingRef
+            require(
+                expectedRecallLifecycleBindings.all {
+                    it ==
+                        currentRecallLifecycleBinding
+                },
+            ) {
+                "Conversation recall lifecycle changed before the provider boundary"
+            }
+        }
+
         val requestArtifactManifest =
             requestArtifactManifest(
                 productHome =

@@ -675,6 +675,161 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun semanticLifecycleBindingChangeRequiresRebuildBeforeAuthoritativeMiss() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "The lifecycle anchor is umber-bridge-73.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            61
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.lifecycle-binding",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                    sourceLifecycleBindingRef =
+                        "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                )
+
+                val changed =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "not-present",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                            backend = backend,
+                            sourceLifecycleBindingRef =
+                                "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+                    changed.reason,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun lifecycleRebuildOmitsBlockedPairsWithoutDeletingCanonicalConversation() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val blocked =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "The withdrawn anchor is scarlet-harbor-88.",
+                        vex = "historical",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "The current anchor is teal-orbit-24.",
+                        vex = "current",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                )
+                    .first()
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            67
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.lifecycle-filter",
+                )
+
+            fixture.store.withWriterLease {
+                val before =
+                    fixture.homeTree()
+                val receipt =
+                    VexLifeContinuitySourceLocator.rebuild(
+                        conversationOwner = this,
+                        backend = backend,
+                        sourceLifecycleBindingRef =
+                            "lifecycle.score.1111111111111111.2222222222222222",
+                        excludedEventRefs =
+                            setOf(
+                                blocked.first.eventRef,
+                                blocked.second.eventRef,
+                            ),
+                    )
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+
+                assertEquals(
+                    1,
+                    receipt.completedTurnCount,
+                )
+                assertEquals(
+                    2,
+                    receipt.sourceEventCount,
+                )
+                assertEquals(
+                    "lifecycle.score.1111111111111111.2222222222222222",
+                    generation.sourceLifecycleBindingRef,
+                )
+                assertEquals(
+                    1,
+                    generation.entries.size,
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "lifecycle filtering may remove only derived locator entries",
+                )
+
+                assertIs<VexLifeContinuitySourceLocator.LocateOutcome.CurrentMiss>(
+                    VexLifeContinuitySourceLocator.locate(
+                        conversationOwner = this,
+                        queryTerms =
+                            listOf(
+                                "scarlet-harbor-88",
+                            ),
+                        speakerScope =
+                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                        backend = backend,
+                        sourceLifecycleBindingRef =
+                            generation.sourceLifecycleBindingRef,
+                    ),
+                )
+                assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                    VexLifeContinuitySourceLocator.locate(
+                        conversationOwner = this,
+                        queryTerms =
+                            listOf(
+                                "teal-orbit-24",
+                            ),
+                        speakerScope =
+                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                        backend = backend,
+                        sourceLifecycleBindingRef =
+                            generation.sourceLifecycleBindingRef,
+                    ),
+                )
+            }
+        }
+    }
+
+    @Test
     fun corruptOrUnsupportedLocatorNeverBecomesNotFound() {
         ContinuityTurnFixture().use {
             fixture ->
