@@ -13,6 +13,7 @@ import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -347,6 +348,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 workspaceEffectsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlPath)},
                 workspaceChecksPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksPath)},
                 workspaceChecksControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlPath)},
+                workspaceRunsPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsPath)},
+                workspaceRunsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlPath)},
                 attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
                 attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
@@ -502,6 +505,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 }),
                 allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChecks.identity.ref)},
                 revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChecks.identity.ref)}
+              });
+              const workspaceRuns = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceRunsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceRunsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowTests.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopTests.identity.ref)}
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
@@ -811,6 +827,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 workspaceEffectsInFlight: false,
                 workspaceChecks: null,
                 workspaceChecksInFlight: false,
+                workspaceRuns: null,
+                workspaceRunsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -6088,6 +6106,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.localSourcesInFlight ||
                     state.workspaceEffectsInFlight ||
                     state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
                     !grant.sourceRef;
 
                   const currentCheckGrant =
@@ -6117,6 +6136,36 @@ object VexLifeWebP1RuntimeArtifacts {
                   checkControl.disabled =
                     state.localSourcesInFlight ||
                     state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const currentRunGrant =
+                    (state.workspaceRuns?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const runAuthority = document.createElement('span');
+                  runAuthority.className = 'local-source-authority';
+                  runAuthority.textContent = currentRunGrant
+                    ? workspaceText('workspace.status.workspace-runs-allowed')
+                    : workspaceText('workspace.status.workspace-runs-not-allowed');
+
+                  const runControl = document.createElement('button');
+                  runControl.type = 'button';
+                  runControl.className = 'outline-button';
+                  runControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  runControl.dataset.controlRef = currentRunGrant
+                    ? workspaceRuns.control.revoke
+                    : workspaceRuns.control.allow;
+                  runControl.setAttribute(
+                    'data-vex-ref',
+                    currentRunGrant ? workspaceRuns.revokeRef : workspaceRuns.allowRef
+                  );
+                  runControl.textContent = currentRunGrant
+                    ? workspaceText('workspace.button.workspace-runs-revoke')
+                    : workspaceText('workspace.button.workspace-runs-allow');
+                  runControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceRunsInFlight ||
                     !grant.sourceRef;
 
                   const remove = document.createElement('button');
@@ -6131,7 +6180,16 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.localSourcesInFlight ||
                     grant.removeControlRef !== localSources.control.remove;
 
-                  item.append(main, authority, authorityControl, checkAuthority, checkControl, remove);
+                  item.append(
+                    main,
+                    authority,
+                    authorityControl,
+                    checkAuthority,
+                    checkControl,
+                    runAuthority,
+                    runControl,
+                    remove
+                  );
                   ui.localSourcesList.append(item);
                 }
 
@@ -6145,6 +6203,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.localSourcesAdd.disabled =
                   state.localSourcesInFlight ||
                   state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
                   display?.addControlRef !== localSources.control.add;
 
                 if (display?.limitStatus && !state.localSourcesInFlight) {
@@ -6247,6 +6306,47 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const loadWorkspaceRuns = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceRunsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceRuns = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceRuns;
+              };
+
+              const applyWorkspaceRunsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceRunsInFlight) return;
+                state.workspaceRunsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceRunsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceRuns = result.runs ?? state.workspaceRuns;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceRuns.control.allow
+                      ? workspaceText('workspace.status.workspace-runs-granted')
+                      : workspaceText('workspace.status.workspace-runs-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-runs-source-not-current');
+                } finally {
+                  state.workspaceRunsInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
               const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
                 if (!controlRef || state.localSourcesInFlight) return;
                 state.localSourcesInFlight = true;
@@ -6291,6 +6391,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.localSourcesInFlight = false;
                   await loadWorkspaceEffects(false).catch(() => {});
                   await loadWorkspaceChecks(false).catch(() => {});
+                  await loadWorkspaceRuns(false).catch(() => {});
                   renderLocalSources();
                 }
               };
@@ -8654,6 +8755,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadLocalSources().catch(() => {});
                   void loadWorkspaceEffects().catch(() => {});
                   void loadWorkspaceChecks().catch(() => {});
+                  void loadWorkspaceRuns().catch(() => {});
                   void loadLocalAsr().catch(() => {});
                 }
               });
@@ -8687,6 +8789,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     controlRef === workspaceChecks.control.revoke)
                 ) {
                   void applyWorkspaceChecksControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceRuns.control.allow ||
+                    controlRef === workspaceRuns.control.revoke)
+                ) {
+                  void applyWorkspaceRunsControl(controlRef, sourceRef);
                 }
               });
 
@@ -9089,6 +9199,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadLocalSources(),
                 loadWorkspaceEffects(),
                 loadWorkspaceChecks(),
+                loadWorkspaceRuns(),
                 loadConversation(),
                 loadVision()
               ])

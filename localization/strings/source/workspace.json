@@ -35770,5 +35770,409 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.status.workspace-runs-not-allowed": {
+    "strings": {
+      "en": {
+        "text": "Tests not allowed"
+      },
+      "ja": {
+        "text": "テストは許可されていません"
+      },
+      "zh": {
+        "text": "未允许测试"
+      },
+      "zh-Hant": {
+        "text": "未允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용 안 됨"
+      },
+      "fr": {
+        "text": "Tests non autorisés"
+      },
+      "de": {
+        "text": "Tests nicht erlaubt"
+      },
+      "es": {
+        "text": "Pruebas no permitidas"
+      },
+      "pt": {
+        "text": "Testes não permitidos"
+      },
+      "ar": {
+        "text": "الاختبارات غير مسموحة"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-allowed": {
+    "strings": {
+      "en": {
+        "text": "Tests allowed"
+      },
+      "ja": {
+        "text": "テストを許可"
+      },
+      "zh": {
+        "text": "已允许测试"
+      },
+      "zh-Hant": {
+        "text": "已允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용"
+      },
+      "fr": {
+        "text": "Tests autorisés"
+      },
+      "de": {
+        "text": "Tests erlaubt"
+      },
+      "es": {
+        "text": "Pruebas permitidas"
+      },
+      "pt": {
+        "text": "Testes permitidos"
+      },
+      "ar": {
+        "text": "الاختبارات مسموحة"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-runs-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow tests"
+      },
+      "ja": {
+        "text": "テストを許可"
+      },
+      "zh": {
+        "text": "允许测试"
+      },
+      "zh-Hant": {
+        "text": "允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용"
+      },
+      "fr": {
+        "text": "Autoriser les tests"
+      },
+      "de": {
+        "text": "Tests erlauben"
+      },
+      "es": {
+        "text": "Permitir pruebas"
+      },
+      "pt": {
+        "text": "Permitir testes"
+      },
+      "ar": {
+        "text": "السماح بالاختبارات"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-runs:control:ALLOW_WORKSPACE_RUNS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-tests"
+  },
+  "workspace.button.workspace-runs-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop tests"
+      },
+      "ja": {
+        "text": "テストを停止"
+      },
+      "zh": {
+        "text": "停止测试"
+      },
+      "zh-Hant": {
+        "text": "停止測試"
+      },
+      "ko": {
+        "text": "테스트 중지"
+      },
+      "fr": {
+        "text": "Arrêter les tests"
+      },
+      "de": {
+        "text": "Tests stoppen"
+      },
+      "es": {
+        "text": "Detener pruebas"
+      },
+      "pt": {
+        "text": "Parar testes"
+      },
+      "ar": {
+        "text": "إيقاف الاختبارات"
+      },
+      "hi": {
+        "text": "परीक्षण रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-runs:control:REVOKE_WORKSPACE_RUNS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-tests"
+  },
+  "workspace.status.workspace-runs-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストを許可しました。"
+      },
+      "zh": {
+        "text": "已允许测试此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許測試此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트가 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les tests sont autorisés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten pruebas en esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes estão permitidos para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالاختبارات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-revoked": {
+    "strings": {
+      "en": {
+        "text": "Tests stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "テストを停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止测试。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止測試。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "테스트가 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Tests arrêtés. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Tests gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Pruebas detenidas. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Testes interrompidos. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف الاختبارات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "परीक्षण रोक दिए गए हैं। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストはすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许测试此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許測試此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트는 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les tests sont déjà autorisés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Las pruebas ya están permitidas para esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes já estão permitidos para esta pasta."
+      },
+      "ar": {
+        "text": "الاختبارات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण पहले से अनुमत हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストはすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的测试已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的測試已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트는 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les tests sont déjà arrêtés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Las pruebas ya están detenidas para esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes já estão interrompidos para esta pasta."
+      },
+      "ar": {
+        "text": "الاختبارات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण पहले से रुके हुए हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Test access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、テストアクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予测试权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予測試權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 테스트 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux tests n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Testzugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de prueba porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de teste porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية الاختبار لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "परीक्षण की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
