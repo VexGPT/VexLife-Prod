@@ -23,7 +23,8 @@
       "context-profile": "VexLifeContextProfileFamily (state and control refs)",
       "local-sources": "VexLifeLocalSourcesFamily (control refs)",
       "workspace-effects": "VexLifeWorkspaceEffectsFamily (explicit Allow/Revoke stronger change authority)",
-      "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)"
+      "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)",
+      "workspace-runs": "VexLifeWorkspaceRunsFamily (explicit Allow/Revoke bounded project-test authority)"
     }
   },
   "workspace.heading.diagnostics": {

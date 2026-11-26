@@ -1052,7 +1052,7 @@ object VexLifeCapabilityBridge {
                     state,
                     "$sourceRef:$testClass",
                     text,
-                    untrusted = false,
+                    untrusted = true,
                     facts =
                         buildMap {
                             put("disposition", receipt.disposition)
