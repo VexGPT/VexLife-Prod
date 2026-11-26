@@ -154,6 +154,115 @@ class DirectConversationStoreTest {
     }
 
     @Test
+    fun admissionSnapshotIsBoundToOneWriterLeaseAndConsumedOnce() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-admission-snapshot-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            lateinit var foreignAdmission: DirectConversationStore.Snapshot
+
+            store.withWriterLease {
+                foreignAdmission =
+                    currentForRequestAdmission()
+                assertNull(
+                    foreignAdmission.head,
+                )
+            }
+
+            store.withWriterLease {
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.foreign",
+                        requestMessageRef = "message.self-development.human.admission.foreign",
+                        content = "A snapshot from another lease must not write.",
+                        admissionSnapshot = foreignAdmission,
+                    )
+                }
+
+                val admission =
+                    currentForRequestAdmission()
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.001",
+                        requestMessageRef = "message.self-development.human.admission.001",
+                        content = "Use the exact admitted snapshot.",
+                        admissionSnapshot = admission,
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.self-development.companion.admission.001",
+                        content = "Bound to the exact writer lease.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.admission.001",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.admission.001",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T12:00:02Z",
+                            ),
+                    )
+                val committed =
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                    )
+
+                assertEquals(
+                    response.eventHash,
+                    committed.eventHash,
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.replay",
+                        requestMessageRef = "message.self-development.human.admission.replay",
+                        content = "A consumed admission capability must not replay.",
+                        admissionSnapshot = admission,
+                    )
+                }
+                val after =
+                    current()
+                assertEquals(
+                    committed,
+                    after.head,
+                )
+                assertEquals(
+                    2,
+                    after.events.size,
+                    "rejected admission capabilities must not append canonical events",
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun recentCompletedConversationWalksBackwardOnlyUntilTheBudgetBoundary() {
         val parent =
             Files.createTempDirectory(

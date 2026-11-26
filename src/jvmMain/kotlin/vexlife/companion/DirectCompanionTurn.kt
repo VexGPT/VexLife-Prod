@@ -823,7 +823,7 @@ object DirectCompanionTurn {
                 instanceRef = BrowserCompanionInstanceRef,
             ) {
                 val before =
-                    current()
+                    currentForRequestAdmission()
 
                 val recovered =
                     completedDuplicate(
@@ -873,6 +873,7 @@ object DirectCompanionTurn {
                                 requestMessageRef = identity.requestMessageRef,
                                 content = intent.content,
                                 formedAt = hooks.now(),
+                                admissionSnapshot = before,
                             )
                         } else {
                             beginRequestV2(
@@ -888,6 +889,7 @@ object DirectCompanionTurn {
                                         ),
                                     ),
                                 formedAt = hooks.now(),
+                                admissionSnapshot = before,
                             )
                         }
                     // The person's exact REQUEST words are durable before any resource relation

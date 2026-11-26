@@ -268,12 +268,36 @@ class DirectConversationStore(
     inner class Locked internal constructor(
         val instanceRef: String,
     ) {
+        /*
+         * One writer lease may own at most one in-flight canonical request. This is ephemeral
+         * custody only: durable Conversation remains the authority, and a later lease with no
+         * matching in-memory custody falls back to the full recovery/classification path.
+         */
+        private var pendingRequest: Event? =
+            null
+        private var pendingResponse: Event? =
+            null
+        private var reusableAdmissionSnapshot: Snapshot? =
+            null
+
         /** Canonical Home-owned person identity used by request/response participant formation. */
         fun canonicalPersonRef(): String =
             installation.personRef
 
         fun current(): Snapshot =
             readCurrentComplete()
+
+        /**
+         * Full recovery/idempotency snapshot that this exact writer lease may reuse once for request
+         * admission. The object identity is the lease-local capability; a snapshot from another
+         * lease is never accepted merely because the completed head still matches.
+         */
+        internal fun currentForRequestAdmission(): Snapshot =
+            readCurrentComplete()
+                .also {
+                    reusableAdmissionSnapshot =
+                        it
+                }
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
@@ -299,6 +323,7 @@ class DirectConversationStore(
             requestMessageRef: String,
             content: String,
             formedAt: Instant = Instant.now(),
+            admissionSnapshot: Snapshot? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -315,7 +340,9 @@ class DirectConversationStore(
             }
 
             val before =
-                readCurrentComplete()
+                requestAdmissionSnapshot(
+                    admissionSnapshot,
+                )
 
             require(
                 before.events.none {
@@ -411,6 +438,10 @@ class DirectConversationStore(
             writeEvent(
                 event,
             )
+            pendingRequest =
+                event
+            pendingResponse =
+                null
 
             return event
         }
@@ -428,6 +459,7 @@ class DirectConversationStore(
             content: String,
             semanticRelay: JsonObject,
             formedAt: Instant = Instant.now(),
+            admissionSnapshot: Snapshot? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -444,7 +476,9 @@ class DirectConversationStore(
             }
 
             val before =
-                readCurrentComplete()
+                requestAdmissionSnapshot(
+                    admissionSnapshot,
+                )
             require(
                 before.events.none {
                     it.turnRef ==
@@ -541,6 +575,10 @@ class DirectConversationStore(
             writeEvent(
                 event,
             )
+            pendingRequest =
+                event
+            pendingResponse =
+                null
             return event
         }
 
@@ -561,9 +599,24 @@ class DirectConversationStore(
                 HereticProductIdentity.CompanionEndpointProfileRef,
             formedAt: Instant = Instant.now(),
         ): Event {
-            validateRequestAsPending(
-                request,
-            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        null,
+                ) {
+                    "canonical writer lease already owns one response for this pending request"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
             requireNonEmpty(
                 responseMessageRef,
                 "responseMessageRef",
@@ -674,6 +727,13 @@ class DirectConversationStore(
             writeEvent(
                 response,
             )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingResponse =
+                    response
+            }
 
             return response
         }
@@ -696,9 +756,24 @@ class DirectConversationStore(
             invocationEvidenceRef: String,
             formedAt: Instant = Instant.now(),
         ): Event {
-            validateRequestAsPending(
-                request,
-            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        null,
+                ) {
+                    "canonical writer lease already owns one response for this pending request"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
             require(
                 request.schemaVersion ==
                     VexLifeConversationContract.EventSchemaV2,
@@ -807,6 +882,13 @@ class DirectConversationStore(
             writeEvent(
                 response,
             )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingResponse =
+                    response
+            }
             return response
         }
 
@@ -821,9 +903,24 @@ class DirectConversationStore(
             contextSha256: String,
             formedAt: Instant = Instant.now(),
         ): Head {
-            validateRequestAsPending(
-                request,
-            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        response,
+                ) {
+                    "canonical completed head requires this writer lease's exact durable response"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
             validateEvent(
                 response,
             )
@@ -934,18 +1031,121 @@ class DirectConversationStore(
             )
 
             val current =
-                readCurrentComplete()
+                requireNotNull(
+                    readImmediatePriorCompletedTurn(),
+                ) {
+                    "canonical Conversation current head disappeared after commit"
+                }
             require(
-                current.head
-                    ?.conversationHeadSha256 ==
-                    value.conversationHeadSha256,
+                current.head.conversationHeadSha256 ==
+                    value.conversationHeadSha256 &&
+                    current.requestEvent ==
+                    request &&
+                    current.responseEvent ==
+                    response
             ) {
                 "canonical Conversation current head did not commit exactly"
             }
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingRequest =
+                    null
+                pendingResponse =
+                    null
+            }
 
-            return requireNotNull(
-                current.head,
+            return current.head
+        }
+
+        private fun validateOwnedPendingRequest(
+            request: Event,
+        ) {
+            validateEvent(
+                request,
             )
+            require(
+                request.eventKind ==
+                    VexLifeConversationContract.RequestKind,
+            ) {
+                "canonical response requires one request event"
+            }
+
+            val beforeHead =
+                readHeadRecord()
+            val expectedSequence =
+                beforeHead
+                    ?.sequence
+                    ?.plus(
+                        1,
+                    )
+                    ?: 0L
+            val expectedPrior =
+                beforeHead
+                    ?.eventHash
+
+            require(
+                request.sequence ==
+                    expectedSequence &&
+                    request.priorEventHash ==
+                    expectedPrior,
+            ) {
+                "canonical request no longer extends the exact current completed head"
+            }
+
+            val durable =
+                readEventAt(
+                    eventPath(
+                        request,
+                    ),
+                )
+            require(
+                durable ==
+                    request,
+            ) {
+                "canonical pending request is not the exact durable event"
+            }
+        }
+
+        private fun requestAdmissionSnapshot(
+            admissionSnapshot: Snapshot?,
+        ): Snapshot {
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+            val snapshot =
+                admissionSnapshot
+                    ?: readCurrentComplete()
+            if (
+                admissionSnapshot !=
+                    null
+            ) {
+                require(
+                    admissionSnapshot ===
+                        reusableAdmissionSnapshot
+                ) {
+                    "canonical request admission snapshot was not issued by this writer lease"
+                }
+                val currentHead =
+                    readHeadRecord()
+                require(
+                    currentHead
+                        ?.conversationHeadSha256 ==
+                        snapshot.head
+                            ?.conversationHeadSha256
+                ) {
+                    "canonical request admission snapshot is no longer current"
+                }
+                reusableAdmissionSnapshot =
+                    null
+            }
+            return snapshot
         }
     }
 
