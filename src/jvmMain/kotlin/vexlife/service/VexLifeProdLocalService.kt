@@ -75,6 +75,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
+import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.partner.VexLifePartnerConnectionConfiguration
 import vexlife.partner.VexLifePartnerMacHostRealization
@@ -139,6 +140,8 @@ class VexLifeProdLocalService private constructor(
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    private val memoryProviderSelectionAtCap:
+        (Int) -> VexLifeCurrentMemoryProviderSelection.Selection,
     private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     private val currentQualifiedVisualInputEvidence:
         () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
@@ -1118,6 +1121,12 @@ class VexLifeProdLocalService private constructor(
                 VexLifeContinuitySourceLocator.InMemoryBackend()
             val conversationAttemptIndex =
                 DirectConversationAttemptIndex()
+            val currentMemoryHotPath =
+                VexLifeCurrentMemoryHotPath(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
 
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
@@ -1434,6 +1443,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1467,6 +1478,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1488,6 +1501,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1513,10 +1528,21 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
                 dreamExecutor = ProductDreamExecutor,
+                memoryReader = {
+                    currentMemoryHotPath.readContext()
+                },
+                memoryProviderSelectionAtCap = {
+                    memoryTokenCap ->
+                    currentMemoryHotPath.readSelection(
+                        memoryTokenCap,
+                    )
+                },
                 currentStateObserver = {
                     observeCurrentState(
                         Path.of(
@@ -1743,6 +1769,9 @@ class VexLifeProdLocalService private constructor(
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
+            memoryProviderSelectionAtCap:
+                ((Int) -> VexLifeCurrentMemoryProviderSelection.Selection)? =
+                null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: () -> String? = {
                 startupSetup.qualifiedRuntimeEvidence.modelRef
@@ -1840,6 +1869,17 @@ class VexLifeProdLocalService private constructor(
                     sourceSha = sourceSha,
                     productHome = productHome,
                 )
+            val realizedMemoryProviderSelectionAtCap =
+                memoryProviderSelectionAtCap
+                    ?: {
+                        memoryTokenCap ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome =
+                                productHome,
+                            memoryTokenCap =
+                                memoryTokenCap,
+                        )
+                    }
             val realizedReleaseAlertsProjection =
                 releaseAlertsProjection
                     ?: {
@@ -1894,6 +1934,8 @@ class VexLifeProdLocalService private constructor(
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        memoryProviderSelectionAtCap =
+                            realizedMemoryProviderSelectionAtCap,
                         currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
                         currentQualifiedVisualInputEvidence =
                             currentQualifiedVisualInputEvidence,
@@ -3457,10 +3499,8 @@ class VexLifeProdLocalService private constructor(
                     productFoundationIdentity(),
                 ),
             memoryProviderSelection =
-                VexLifeCurrentMemoryProviderSelection.read(
-                    productHome = productHome,
-                    memoryTokenCap =
-                        VexLifeMemoryContract.MaximumMemoryTokens,
+                memoryProviderSelectionAtCap(
+                    VexLifeMemoryContract.MaximumMemoryTokens,
                 ),
             capabilityRequestsAdmitted =
                 capabilityRequestsAdmitted,
