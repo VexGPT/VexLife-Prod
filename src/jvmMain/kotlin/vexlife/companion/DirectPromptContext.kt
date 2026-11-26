@@ -14,6 +14,7 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeWorkspaceEffectDefinitions
 import vexlife.capability.VexLifeWorkspaceCheckDefinitions
+import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.contract.VexContractJson
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -29,6 +30,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 /**
  * Bounded direct Companion prompt materialization.
@@ -1995,6 +1997,10 @@ object DirectPromptContext {
             emptyList(),
         workspaceCheckRuntimeRef: String? =
             null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ): Materialization =
         materializeContinuityAt(
             conversationOwner = conversationOwner,
@@ -2018,6 +2024,8 @@ object DirectPromptContext {
             workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -2052,6 +2060,10 @@ object DirectPromptContext {
         workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
             emptyList(),
         workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
             null,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
@@ -2102,6 +2114,8 @@ object DirectPromptContext {
                 workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                 successorBridgeInSuffix = false,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
@@ -2468,6 +2482,10 @@ object DirectPromptContext {
             emptyList(),
         workspaceCheckRuntimeRef: String? =
             null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ) =
         reverifyContinuityAt(
             materialization = materialization,
@@ -2492,6 +2510,8 @@ object DirectPromptContext {
             workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -2521,6 +2541,10 @@ object DirectPromptContext {
         workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
             emptyList(),
         workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
             null,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
@@ -2557,6 +2581,8 @@ object DirectPromptContext {
                 workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
@@ -2849,6 +2875,10 @@ object DirectPromptContext {
             emptyList(),
         workspaceCheckRuntimeRef: String? =
             null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
         /**
          * Legacy successor bridge: the prior Vex reply alone, in the suffix. The continuity path
          * passes false and keeps an exact overlap tail of whole turns instead.
@@ -3028,6 +3058,8 @@ object DirectPromptContext {
                         workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                     )
                 }
         val personContextContent = personContext?.let(::personContextSystemContent)
@@ -3470,6 +3502,10 @@ object DirectPromptContext {
             emptyList(),
         workspaceCheckRuntimeRef: String? =
             null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ): VerifiedCapabilityFrame {
         val memoryCurrent =
             memoryContext?.projectionState == "CURRENT" && memoryContext.projectionCurrentness == "CURRENT"
@@ -3504,6 +3540,21 @@ object DirectPromptContext {
                     } +
                     listOfNotNull(
                         workspaceCheckRuntimeRef,
+                    )
+            )
+                .distinct()
+                .sorted()
+        val workspaceRunSourceRefs =
+            (
+                workspaceRunGrants
+                    .flatMap {
+                        listOf(
+                            it.sourceRef,
+                            it.grantRef,
+                        )
+                    } +
+                    listOfNotNull(
+                        workspaceJavaTestRuntimeRef,
                     )
             )
                 .distinct()
@@ -3548,6 +3599,20 @@ object DirectPromptContext {
                                     sourceRefs =
                                         workspaceCheckSourceRefs,
                                 ),
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef =
+                                        VexLifeWorkspaceJavaTestDefinitions.PermissionRef,
+                                    state =
+                                        if (
+                                            workspaceRunGrants.isNotEmpty()
+                                        ) {
+                                            VexLifeCapabilityAtlas.PermissionState.GRANTED
+                                        } else {
+                                            VexLifeCapabilityAtlas.PermissionState.DENIED
+                                        },
+                                    sourceRefs =
+                                        workspaceRunSourceRefs,
+                                ),
                             )
                         } else {
                             emptyList()
@@ -3588,6 +3653,21 @@ object DirectPromptContext {
                                             },
                                         sourceRefs =
                                             workspaceCheckSourceRefs,
+                                    ),
+                                    VexLifeCapabilityAtlas.ResourceFact(
+                                        resourceRef =
+                                            VexLifeWorkspaceJavaTestDefinitions.ResourceRef,
+                                        state =
+                                            if (
+                                                workspaceRunGrants.isNotEmpty() &&
+                                                workspaceJavaTestRuntimeRef != null
+                                            ) {
+                                                VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                            } else {
+                                                VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                            },
+                                        sourceRefs =
+                                            workspaceRunSourceRefs,
                                     ),
                                 )
                             } else {
@@ -3685,6 +3765,7 @@ object DirectPromptContext {
         listOf(
             VexLifeWorkspaceEffectDefinitions.WriteRef,
             VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
         )
 
     /**

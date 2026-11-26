@@ -1829,6 +1829,38 @@
           ]
         },
         {
+          "ref": "element.vexlife-workspace.companion.settings.local-sources.allow-tests",
+          "kind": "BUTTON",
+          "label": "Allow tests",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-sources",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalSourceAllowTests",
+          "declared": "SettingsLocalSources.control(\"allow-tests\")",
+          "intent": "capability workspace-runs.manage",
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "Trailing",
+          "layer": "CONTENT",
+          "interactions": [
+            "ACTIVATE"
+          ]
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-sources.stop-tests",
+          "kind": "BUTTON",
+          "label": "Stop tests",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-sources",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalSourceStopTests",
+          "declared": "SettingsLocalSources.control(\"stop-tests\")",
+          "intent": "capability workspace-runs.manage",
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "Trailing",
+          "layer": "CONTENT",
+          "interactions": [
+            "ACTIVATE"
+          ]
+        },
+        {
           "ref": "element.vexlife-workspace.companion.settings.continuity",
           "kind": "REGION",
           "label": "Continuity",

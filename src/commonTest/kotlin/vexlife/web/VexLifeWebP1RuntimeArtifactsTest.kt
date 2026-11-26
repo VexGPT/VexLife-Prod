@@ -12,6 +12,7 @@ import vexlife.service.VexLifeProdServiceContract
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -240,6 +241,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
                 VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
                 VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceAllowTests.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopTests.ref,
             )
         VexLifeWorkspaceBlueprint.elements.forEach { element ->
             if (
@@ -2013,6 +2016,48 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             javascript.contains(
                 VexLifeWorkspaceChecksFamily.ControlRevoke,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowTests.ref,
+            ),
+            "Allow tests is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceStopTests.ref,
+            ),
+            "Stop tests is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceRunsPath: \"/api/v1/workspace-runs\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceRunsControlPath: \"/api/v1/workspace-runs/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadWorkspaceRuns = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const applyWorkspaceRunsControl = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceRunsFamily.ControlAllow,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceRunsFamily.ControlRevoke,
             ),
         )
     }
