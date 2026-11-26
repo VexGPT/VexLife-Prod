@@ -60,9 +60,12 @@ internal class DirectConversationAttemptIndex {
             lock,
         ) {
             generation
-                ?.let(
-                    Load::Ready,
-                )
+                ?.let {
+                    value ->
+                    Load.Ready(
+                        value,
+                    )
+                }
                 ?: Load.Absent
         }
 
