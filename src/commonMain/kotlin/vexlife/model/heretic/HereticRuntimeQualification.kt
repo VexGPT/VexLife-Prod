@@ -33,14 +33,28 @@ data class HereticRuntimeQualification private constructor(
      */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val providerNativeToolsQualificationRef: String? = null,
+    /**
+     * Optional qualification of this exact model/runtime's Vex text-control reach relationship.
+     *
+     * This is deliberately independent of provider-native tool qualification. It proves only that
+     * the model can form one canonical no-effect Vex reach request, consume the canonical host
+     * result carriage, and continue the same turn. Capability admission/effects remain Atlas/Bridge
+     * truth.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val vexReachQualificationRef: String? = null,
 ) {
     companion object {
         const val ProviderNativeToolsQualificationRef =
             "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
 
+        const val VexReachQualificationRef =
+            "qualification.vexlife-prod.vex-reach.text-control-atlas-roundtrip.v1"
+
         fun qualified(
             loadResultRef: String? = null,
             providerNativeToolsQualified: Boolean = false,
+            vexReachQualified: Boolean = false,
         ): HereticRuntimeQualification =
             HereticRuntimeQualification(
                 healthAndExactModelVerified = true,
@@ -52,6 +66,10 @@ data class HereticRuntimeQualification private constructor(
                 providerNativeToolsQualificationRef =
                     ProviderNativeToolsQualificationRef.takeIf {
                         providerNativeToolsQualified
+                    },
+                vexReachQualificationRef =
+                    VexReachQualificationRef.takeIf {
+                        vexReachQualified
                     },
             )
     }
@@ -94,6 +112,14 @@ data class HereticRuntimeQualification private constructor(
                     ProviderNativeToolsQualificationRef,
             ) {
                 "provider-native tool qualification ref is not admitted"
+            }
+        }
+        vexReachQualificationRef?.let {
+            require(
+                it ==
+                    VexReachQualificationRef,
+            ) {
+                "Vex reach qualification ref is not admitted"
             }
         }
     }

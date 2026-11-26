@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
@@ -60,9 +61,9 @@ class MacHereticNativeToolQualificationTest {
 
     private fun binding(
         root: java.nio.file.Path,
+        model: HereticModelCatalog.Entry =
+            recognizedModel(),
     ): HereticPersistentRuntime.Binding {
-        val model =
-            recognizedModel()
         val environment =
             HereticPythonEnvironment.environmentRoot(
                 root,
@@ -173,6 +174,150 @@ class MacHereticNativeToolQualificationTest {
             root
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    private fun qualify4BReach(
+        reachProbeResult: HereticPythonEnvironment.CommandResult,
+    ): ProbeRun {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-4b-reach-qualification-",
+            )
+                .toAbsolutePath()
+        val runner =
+            Runner(
+                results =
+                    listOf(
+                        HereticPythonEnvironment.CommandResult(
+                            status = 0,
+                            stdout = "QUALIFIED\n",
+                            stderr = "",
+                        ),
+                        reachProbeResult,
+                    ),
+            )
+        val platform =
+            MacHereticRuntimePlatform(
+                productHome = root,
+                commandRunner = runner,
+            )
+
+        return try {
+            ProbeRun(
+                qualification =
+                    platform.qualify(
+                        binding(
+                            root = root,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                        ),
+                    ),
+                calls = runner.calls.toList(),
+                timeouts = runner.timeouts.toList(),
+            )
+        } finally {
+            root
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun held4BTextControlReachProbeIsOptionalExactAndSeparateFromNativeTools() {
+        val held =
+            qualify4BReach(
+                HereticPythonEnvironment.CommandResult(
+                    status = null,
+                    stdout = "",
+                    stderr = "",
+                    timedOut = true,
+                ),
+            )
+        assertEquals(
+            null,
+            held.qualification.vexReachQualificationRef,
+        )
+        assertEquals(
+            null,
+            held.qualification.providerNativeToolsQualificationRef,
+        )
+        assertEquals(
+            listOf(
+                180_000L,
+                300_000L,
+            ),
+            held.timeouts,
+        )
+        assertEquals(
+            2,
+            held.calls.size,
+        )
+
+        val qualified =
+            qualify4BReach(
+                HereticPythonEnvironment.CommandResult(
+                    status = 0,
+                    stdout = "QUALIFIED_VEX_REACH\n",
+                    stderr = "",
+                ),
+            )
+        assertEquals(
+            HereticRuntimeQualification.VexReachQualificationRef,
+            qualified.qualification.vexReachQualificationRef,
+        )
+        assertEquals(
+            null,
+            qualified.qualification.providerNativeToolsQualificationRef,
+            "4B text-control reach qualification must not resurrect provider-native tools",
+        )
+        assertEquals(
+            2,
+            qualified.calls.size,
+        )
+        val reachCall =
+            qualified.calls[
+                1
+            ]
+        assertTrue(
+            reachCall.contains(
+                VexLifeCapabilityRequest.RequestHeader,
+            ),
+        )
+        assertTrue(
+            reachCall.contains(
+                VexLifeCapabilityRequest.ResultHeader,
+            ),
+        )
+        assertTrue(
+            reachCall.contains(
+                "atlas",
+            ),
+        )
+        assertTrue(
+            reachCall.contains(
+                "list",
+            ),
+        )
+        val script =
+            reachCall[
+                1
+            ]
+        for (
+            required in
+            listOf(
+                "QUALIFIED_VEX_REACH",
+                "VEX_REACH_HELD:",
+                "request_header",
+                "result_header",
+                "exact no-effect Atlas call",
+            )
+        ) {
+            assertTrue(
+                script.contains(
+                    required,
+                ),
+                required,
+            )
         }
     }
 

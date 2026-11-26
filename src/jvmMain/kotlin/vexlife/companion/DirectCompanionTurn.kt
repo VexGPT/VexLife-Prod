@@ -1348,8 +1348,10 @@ object DirectCompanionTurn {
         val companionProfile =
             companionEntry.companionProfile
         val capabilityProviderBridgeQualified =
-            companionProfile.reachRepresentationStanding ==
-                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+            HereticCompanionRepresentation.vexReachActive(
+                profile = companionProfile,
+                qualification = initialRuntimeEvidence.qualification,
+            )
         val providerNativeTools =
             HereticCompanionRepresentation.providerNativeToolsActive(
                 profile = companionProfile,

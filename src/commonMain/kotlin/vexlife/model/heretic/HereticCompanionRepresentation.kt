@@ -83,6 +83,27 @@ object HereticCompanionRepresentation {
                 true
         }
 
+    /**
+     * Actual Vex Reach availability for one exact model/runtime representation.
+     *
+     * A statically QUALIFIED profile keeps its already-earned relationship. A
+     * HELD_PROVIDER_BRIDGE profile remains fail-closed unless this exact runtime carries the
+     * separately-earned Vex Reach qualification ref. Provider-native tool qualification is not
+     * consulted here.
+     */
+    fun vexReachActive(
+        profile: Profile,
+        qualification: HereticRuntimeQualification?,
+    ): Boolean =
+        when (profile.reachRepresentationStanding) {
+            ReachRepresentationStanding.QUALIFIED ->
+                true
+
+            ReachRepresentationStanding.HELD_PROVIDER_BRIDGE ->
+                qualification?.vexReachQualificationRef ==
+                    HereticRuntimeQualification.VexReachQualificationRef
+        }
+
     enum class ReachRepresentationStanding {
         /** This provider representation of Vex reach is qualified for ordinary Companion use. */
         QUALIFIED,

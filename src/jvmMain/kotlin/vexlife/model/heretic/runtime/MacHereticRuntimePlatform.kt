@@ -7,6 +7,8 @@ import java.net.URL
 import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
+import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.continuity.VexLifeContinuity
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
@@ -680,6 +682,13 @@ class MacHereticRuntimePlatform(
         val probeNativeTools =
             binding.model.companionProfile.providerNativeToolStanding ==
                 vexlife.model.heretic.HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD
+        val probeVexReach =
+            binding.model.modelRef ==
+                vexlife.model.heretic.HereticModelCatalog.Models.Qwen4B.modelRef &&
+                binding.model.companionProfile.capabilityRepresentation ==
+                vexlife.model.heretic.HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT &&
+                binding.model.companionProfile.reachRepresentationStanding ==
+                vexlife.model.heretic.HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE
         val qualificationScript =
             """
             import json, pathlib, sys, urllib.request
@@ -953,9 +962,200 @@ class MacHereticRuntimePlatform(
                     "QUALIFIED_NATIVE_TOOLS"
             }
 
+        val vexReachQualified =
+            if (
+                !probeVexReach
+            ) {
+                false
+            } else {
+                val atlas =
+                    requireNotNull(
+                        VexLifeCapabilityAtlas.resolve(
+                            "atlas",
+                        ),
+                    ) {
+                        "Vex Reach qualification requires the current Atlas capability"
+                    }
+                val atlasList =
+                    requireNotNull(
+                        atlas.actions.singleOrNull {
+                            it.action ==
+                                "list"
+                        },
+                    ) {
+                        "Vex Reach qualification requires the current Atlas list action"
+                    }
+                val vexReachProbeScript =
+                    """
+                    import json, sys, urllib.request
+
+                    origin, request_model, request_header, result_header, capability, action = sys.argv[1:7]
+
+                    def read_json(request, timeout):
+                        with urllib.request.urlopen(request, timeout=timeout) as response:
+                            body = response.read().decode("utf-8", errors="replace")
+                            content_type = response.headers.get("Content-Type", "")
+                            if response.status != 200:
+                                raise RuntimeError(
+                                    "HTTP %s content-type=%s body=%r"
+                                    % (response.status, content_type, body[:512])
+                                )
+                            try:
+                                return json.loads(body)
+                            except json.JSONDecodeError as error:
+                                raise RuntimeError(
+                                    "non-JSON HTTP 200 content-type=%s body=%r"
+                                    % (content_type, body[:512])
+                                ) from error
+
+                    def post_completion(payload, timeout=120):
+                        request = urllib.request.Request(
+                            origin + "/v1/chat/completions",
+                            data=json.dumps(payload).encode("utf-8"),
+                            headers={"Content-Type": "application/json"},
+                            method="POST",
+                        )
+                        completion = read_json(request, timeout)
+                        if completion.get("model") != request_model:
+                            raise RuntimeError("completion model does not match exact request model")
+                        return completion
+
+                    def message_content(completion):
+                        choices = completion.get("choices")
+                        content = (
+                            choices[0].get("message", {}).get("content")
+                            if isinstance(choices, list) and choices and isinstance(choices[0], dict)
+                            else None
+                        )
+                        if not isinstance(content, str) or not content.strip():
+                            raise RuntimeError("Vex Reach qualification returned no assistant content")
+                        return content
+
+                    system_message = {
+                        "role": "system",
+                        "content":
+                            "This is a synthetic no-effect VexLife text-control reach qualification. "
+                            "When asked to inspect the capability registry, your whole reply for that stage "
+                            "must be the exact header " + request_header +
+                            " followed by one JSON object with capability, action, and arguments. "
+                            "Use capability " + capability + ", action " + action +
+                            ", and an empty arguments object. Do not add human-facing prose. "
+                            "After a later host-result message beginning with " + result_header +
+                            ", reply exactly QUALIFIED.",
+                    }
+                    user_message = {
+                        "role": "user",
+                        "content": "Inspect the current capability registry before answering.",
+                    }
+
+                    try:
+                        first = post_completion({
+                            "model": request_model,
+                            "messages": [system_message, user_message],
+                            "max_tokens": 2048,
+                            "temperature": 0,
+                            "stream": False,
+                            "chat_template_kwargs": {"enable_thinking": True},
+                        })
+                        full_content = message_content(first).strip()
+                        header_index = full_content.find(request_header)
+                        if header_index < 0 or header_index > 512:
+                            raise RuntimeError("Vex Reach qualification request header is absent or too late")
+                        if header_index > 0 and full_content[header_index - 1] != "\n":
+                            raise RuntimeError("Vex Reach qualification request header does not start a line")
+                        control = full_content[header_index:].strip()
+                        body = control[len(request_header):].strip()
+                        fence = chr(96) * 3
+                        if body.startswith(fence + "json"):
+                            body = body[len(fence + "json"):].strip()
+                        elif body.startswith(fence):
+                            body = body[len(fence):].strip()
+                        decoder = json.JSONDecoder()
+                        call, _ = decoder.raw_decode(body)
+                        expected = {
+                            "capability": capability,
+                            "action": action,
+                            "arguments": {},
+                        }
+                        if call != expected:
+                            raise RuntimeError("Vex Reach qualification request does not match the exact no-effect Atlas call")
+                        result_message = (
+                            result_header + "\n"
+                            "The host performed your request; this is what came back. "
+                            "It is not a message from the person.\n"
+                            + json.dumps(
+                                {
+                                    "request": "1 of 4",
+                                    "state": "RETURNED",
+                                    "target": capability,
+                                },
+                                separators=(",", ":"),
+                                sort_keys=True,
+                            )
+                            + "\n<<<CONTENT\n"
+                            "Qualification registry result: exact no-effect Atlas list carriage succeeded.\n"
+                            "CONTENT>>>\n"
+                            "You can make another request (3 left this turn) or answer the person now."
+                        )
+                        second = post_completion({
+                            "model": request_model,
+                            "messages": [
+                                system_message,
+                                user_message,
+                                {"role": "assistant", "content": control},
+                                {"role": "user", "content": result_message},
+                            ],
+                            "max_tokens": 512,
+                            "temperature": 0,
+                            "stream": False,
+                            "chat_template_kwargs": {"enable_thinking": True},
+                        })
+                        if message_content(second).strip() != "QUALIFIED":
+                            raise RuntimeError("Vex Reach qualification continuation did not return QUALIFIED")
+
+                        print("QUALIFIED_VEX_REACH")
+                    except Exception as error:
+                        print(
+                            "VEX_REACH_HELD:%s" % str(error)[:512],
+                            file=sys.stderr,
+                        )
+                        print("HELD")
+                    """.trimIndent()
+
+                val probe =
+                    commandRunner.run(
+                        program =
+                            binding.pythonPath,
+                        args =
+                            listOf(
+                                "-c",
+                                vexReachProbeScript,
+                                HereticProductIdentity.Endpoint,
+                                HereticProductIdentity.RequestModel,
+                                VexLifeCapabilityRequest.RequestHeader,
+                                VexLifeCapabilityRequest.ResultHeader,
+                                atlas.handle,
+                                atlasList.action,
+                            ),
+                        timeoutMs =
+                            300_000L,
+                    )
+
+                probe.status ==
+                    0 &&
+                    probe.errorMessage ==
+                    null &&
+                    !probe.timedOut &&
+                    probe.stdout
+                        .trim() ==
+                    "QUALIFIED_VEX_REACH"
+            }
+
         return HereticRuntimeQualification.qualified(
             providerNativeToolsQualified =
                 providerNativeToolsQualified,
+            vexReachQualified =
+                vexReachQualified,
         )
     }
 

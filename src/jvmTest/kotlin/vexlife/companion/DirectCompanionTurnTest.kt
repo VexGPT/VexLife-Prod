@@ -290,6 +290,128 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun exact4BTextControlReachQualificationAdvertisesBridgeWithoutNativeTools() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                val request =
+                    Json.parseToJsonElement(
+                        call.body,
+                    )
+                        .jsonObject
+                assertFalse(
+                    request.containsKey(
+                        "tools",
+                    ),
+                    "4B text-control Vex Reach qualification must not re-enable provider-native tools",
+                )
+                assertTrue(
+                    call.body.contains(
+                        "text-control fallback instead of provider-native tools",
+                    ),
+                )
+                assertTrue(
+                    call.body.contains(
+                        "VEXLIFE_CAPABILITY_REQUEST/v1",
+                    ),
+                )
+                assertFalse(
+                    call.body.contains(
+                        "No outside-source capability reach is admitted in this turn.",
+                    ),
+                )
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "4B qualified text-control response"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-qualified.001",
+                            content =
+                                "Use the current qualified text-control reach only if needed.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-26T19:30:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertTrue(
+                result.promptContextReceipt.capabilityExchangeAllowanceTokens >
+                    0,
+            )
+            assertTrue(
+                result.promptContextReceipt.sourceReturnProtocolEnabled,
+                "text-control reach keeps the dedicated Conversation source-return route",
+            )
+            val frame =
+                requireNotNull(
+                    result.promptContextReceipt.capabilityFrameSnapshot,
+                )
+            assertTrue(
+                "capability.vexlife.continuity.revisit" in
+                    frame.availableCapabilityRefs,
+            )
+            assertTrue(
+                "capability.vexlife.web.read" in
+                    frame.availableCapabilityRefs,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun importedNativeToolQualificationDoesNotBypassHeldVexReach() {
         fun requestBody(
             nativeToolsQualified: Boolean,
