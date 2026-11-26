@@ -173,7 +173,7 @@ class DirectConversationStoreTest {
                 DirectConversationStore(
                     productHome,
                 )
-            lateinit var foreignAdmission: DirectConversationStore.Snapshot
+            lateinit var foreignAdmission: DirectConversationStore.RequestAdmission
 
             store.withWriterLease {
                 foreignAdmission =
