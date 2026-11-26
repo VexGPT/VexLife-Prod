@@ -434,9 +434,7 @@ object VexLifeCurrentMemoryReader {
                     boundedOutStatementRefs =
                         source.boundedOutStatementRefs,
                     tokenBoundedOutPageRefs =
-                        tokenBounded
-                            .toList()
-                            .sorted(),
+                        emptyList(),
                     reasons =
                         source.reasons,
                     memoryTokenCap =
