@@ -667,6 +667,30 @@ object VexLifeContinuitySourceLocator {
             return catchUpRebuildRequired()
         }
 
+        val appendedEntry =
+            Entry(
+                coordinates =
+                    SourceCoordinates(
+                        request =
+                            address(
+                                request,
+                            ),
+                        response =
+                            address(
+                                response,
+                            ),
+                    ),
+                requestFingerprints =
+                    fingerprints(
+                        request.content,
+                        backend,
+                    ),
+                responseFingerprints =
+                    fingerprints(
+                        response.content,
+                        backend,
+                    ),
+            )
         val updated =
             Generation(
                 schemaVersion = GenerationSchema,
@@ -686,36 +710,26 @@ object VexLifeContinuitySourceLocator {
                         1,
                 entries =
                     priorGeneration.entries +
-                        Entry(
-                            coordinates =
-                                SourceCoordinates(
-                                    request =
-                                        address(
-                                            request,
-                                        ),
-                                    response =
-                                        address(
-                                            response,
-                                        ),
-                                ),
-                            requestFingerprints =
-                                fingerprints(
-                                    request.content,
-                                    backend,
-                                ),
-                            responseFingerprints =
-                                fingerprints(
-                                    response.content,
-                                    backend,
-                                ),
-                        ),
+                        appendedEntry,
             )
         requireGeneration(
             updated,
         )
-        backend.replace(
-            updated,
-        )
+        if (
+            backend is
+            IndexedBackend
+        ) {
+            backend.replaceAfterAppend(
+                generation =
+                    updated,
+                appendedEntry =
+                    appendedEntry,
+            )
+        } else {
+            backend.replace(
+                updated,
+            )
+        }
         return CatchUpReceipt(
             state = CatchUpState.UPDATED,
             sourceConversationHeadSha256 =
