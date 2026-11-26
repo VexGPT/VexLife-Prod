@@ -395,10 +395,9 @@ class DirectConversationStore(
                     IndexedAttemptLookup.FallbackRequired -> {
                         val snapshot =
                             readCurrentComplete()
-                        attemptIndex
-                            ?.rebuild(
-                                snapshot,
-                            )
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
                         admissionFromSnapshot(
                             snapshot = snapshot,
                             requestMessageRef =
@@ -1267,10 +1266,9 @@ class DirectConversationStore(
                     ?: run {
                         val snapshot =
                             readCurrentComplete()
-                        attemptIndex
-                            ?.rebuild(
-                                snapshot,
-                            )
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
                         admissionFromSnapshot(
                             snapshot = snapshot,
                             requestMessageRef =
@@ -1717,6 +1715,24 @@ class DirectConversationStore(
         )
     }
 
+    private fun rebuildAttemptIndexBestEffort(
+        snapshot: Snapshot,
+    ): Boolean {
+        val index =
+            attemptIndex
+                ?: return false
+        return runCatching {
+            index.rebuild(
+                snapshot,
+            )
+            true
+        }
+            .getOrElse {
+                index.invalidate()
+                false
+            }
+    }
+
     private sealed interface IndexedAttemptLookup {
         data class Found(
             val request: Event,
@@ -1761,8 +1777,8 @@ class DirectConversationStore(
             IndexedAttemptLookup.FallbackRequired -> {
                 val snapshot =
                     readCurrentComplete()
-                attemptIndex
-                    ?.rebuild(
+                val rebuilt =
+                    rebuildAttemptIndexBestEffort(
                         snapshot,
                     )
                 RequestEventLookup(
@@ -1776,8 +1792,7 @@ class DirectConversationStore(
                             },
                     wholeHistoryEventEnumerationPerformed = true,
                     derivedIndexRebuilt =
-                        attemptIndex !=
-                            null,
+                        rebuilt,
                 )
             }
         }
