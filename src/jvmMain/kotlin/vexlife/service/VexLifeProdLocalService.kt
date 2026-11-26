@@ -104,6 +104,7 @@ import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceCheckStore
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
 import vexlife.capability.VexLifeWorkspaceTextCheck
+import vexlife.capability.VexLifeWorkspaceJavaTest
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
@@ -1333,7 +1334,18 @@ class VexLifeProdLocalService private constructor(
                     expectedSourceSha =
                         sourceSha,
                 )
-            val workspaceCheckCapabilityOwners =
+            val workspaceJavaTestRuntimeSource =
+                VexLifeWorkspaceJavaTest.PrivateServiceImageRuntimeSource(
+                    imageRoot =
+                        Path.of(
+                            "",
+                        )
+                            .toAbsolutePath()
+                            .normalize(),
+                    expectedSourceSha =
+                        sourceSha,
+                )
+            val workspaceCapabilityOwners =
                 VexLifeCapabilityBridge.OwnerBindings(
                     checkWorkspace = {
                         productHome,
@@ -1346,6 +1358,22 @@ class VexLifeProdLocalService private constructor(
                             runtimeSource = workspaceCheckRuntimeSource,
                         )
                             .check(
+                                operationRef = operationRef,
+                                sourceRef = sourceRef,
+                                request = request,
+                            )
+                    },
+                    testWorkspace = {
+                        productHome,
+                        operationRef,
+                        sourceRef,
+                        request,
+                        ->
+                        VexLifeWorkspaceJavaTest(
+                            productHome = productHome,
+                            runtimeSource = workspaceJavaTestRuntimeSource,
+                        )
+                            .test(
                                 operationRef = operationRef,
                                 sourceRef = sourceRef,
                                 request = request,
@@ -1386,8 +1414,10 @@ class VexLifeProdLocalService private constructor(
                                     promptPreparation,
                                 workspaceCheckRuntimeSource =
                                     workspaceCheckRuntimeSource,
+                                workspaceJavaTestRuntimeSource =
+                                    workspaceJavaTestRuntimeSource,
                                 capabilityOwners =
-                                    workspaceCheckCapabilityOwners,
+                                    workspaceCapabilityOwners,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
@@ -1417,8 +1447,10 @@ class VexLifeProdLocalService private constructor(
                                     promptPreparation,
                                 workspaceCheckRuntimeSource =
                                     workspaceCheckRuntimeSource,
+                                workspaceJavaTestRuntimeSource =
+                                    workspaceJavaTestRuntimeSource,
                                 capabilityOwners =
-                                    workspaceCheckCapabilityOwners,
+                                    workspaceCapabilityOwners,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =

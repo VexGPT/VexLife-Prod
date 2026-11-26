@@ -137,6 +137,13 @@ object VexLifeCapabilityBridge {
             request: VexLifeWorkspaceTextCheck.Request,
         ) -> VexLifeWorkspaceTextCheck.Outcome)? =
             null,
+        val testWorkspace: ((
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            request: VexLifeWorkspaceJavaTest.Request,
+        ) -> VexLifeWorkspaceJavaTest.Outcome)? =
+            null,
         val now: () -> Instant = { Instant.now() },
     )
 
@@ -449,6 +456,7 @@ object VexLifeCapabilityBridge {
             setOf(
                 VexLifeWorkspaceEffectDefinitions.WriteRef,
                 VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+                VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
             )
 
     private const val FormReminder =
@@ -527,6 +535,13 @@ object VexLifeCapabilityBridge {
                     )
                 VexLifeWorkspaceCheckDefinitions.CapabilityRef ->
                     workspaceCheck(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
+                VexLifeWorkspaceJavaTestDefinitions.CapabilityRef ->
+                    workspaceTest(
                         action = action.action,
                         args = args,
                         admission = admission,
@@ -902,6 +917,175 @@ object VexLifeCapabilityBridge {
                                         it.code + (it.assertionIndex?.let { index -> ":$index" } ?: "")
                                     },
                                 )
+                            }
+                        },
+                    externalEffectsExecuted = receipt.externalEffectsExecuted,
+                    effectAuthorityGranted = receipt.effectAuthorityGranted,
+                )
+            }
+        }
+    }
+
+    private fun workspaceTest(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (action != "test") {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                null,
+                "workspace-test has no action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string("source")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    null,
+                    "workspace test requires one exact Local Source ref.",
+                    untrusted = false,
+                )
+        val sources =
+            args.stringArray("sources")
+        val testClass =
+            args.string("testClass")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace test requires one fully-qualified test class.",
+                    untrusted = false,
+                )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$testClass",
+                    "workspace test requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val owner =
+            ownerBindings.testWorkspace
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$testClass",
+                    "The Product-owned workspace Java-test process is not available in this runtime.",
+                    untrusted = false,
+                )
+        val request =
+            runCatching {
+                VexLifeWorkspaceJavaTest.Request(
+                    sources = sources,
+                    testClass = testClass,
+                )
+            }
+                .getOrElse {
+                    return Body(
+                        ResultState.INVALID_REQUEST,
+                        "$sourceRef:$testClass",
+                        "workspace test sources/testClass are outside the admitted typed Java-test request.",
+                        untrusted = false,
+                    )
+                }
+        val operationRef =
+            "operation.vexlife-prod.workspace-test." +
+                VexLifeCapabilityRequest.sha256(
+                    requestEventHash +
+                        "\u0000" +
+                        VexLifeWorkspaceJavaTestDefinitions.CapabilityRef +
+                        "\u0000" +
+                        action +
+                        "\u0000" +
+                        VexContractJson.canonicalEncodeElement(args),
+                )
+
+        return when (
+            val outcome =
+                owner(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    request,
+                )
+        ) {
+            is VexLifeWorkspaceJavaTest.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    "$sourceRef:$testClass",
+                    "The workspace test was refused before the Product-owned Java-test owner completed.",
+                    untrusted = false,
+                    facts = mapOf("reason" to outcome.reason),
+                )
+
+            is VexLifeWorkspaceJavaTest.Outcome.Completed -> {
+                val receipt = outcome.receipt
+                val state =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceJavaTest.DispositionTestPassed,
+                        VexLifeWorkspaceJavaTest.DispositionCompileFailed,
+                        VexLifeWorkspaceJavaTest.DispositionTestFailed,
+                        VexLifeWorkspaceJavaTest.DispositionSourceChanged,
+                        -> ResultState.RETURNED
+                        VexLifeWorkspaceJavaTest.DispositionTimeout,
+                        VexLifeWorkspaceJavaTest.DispositionHostFailed,
+                        -> ResultState.FAILED
+                        else -> ResultState.FAILED
+                    }
+                val text =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceJavaTest.DispositionTestPassed ->
+                            "The bounded workspace Java test completed and passed."
+                        VexLifeWorkspaceJavaTest.DispositionCompileFailed ->
+                            "The bounded workspace Java test compiled the admitted sources and returned compiler diagnostics."
+                        VexLifeWorkspaceJavaTest.DispositionTestFailed ->
+                            "The bounded workspace Java test ran and returned failing test evidence."
+                        VexLifeWorkspaceJavaTest.DispositionSourceChanged ->
+                            "The bounded workspace Java-test source snapshot changed before completion; re-observe the project before deciding what to run next."
+                        VexLifeWorkspaceJavaTest.DispositionTimeout ->
+                            "The bounded workspace Java test timed out."
+                        else ->
+                            "The bounded workspace Java-test host process did not complete normally."
+                    }
+                Body(
+                    state,
+                    "$sourceRef:$testClass",
+                    text,
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put("disposition", receipt.disposition)
+                            put("currentEffectAuthority", receipt.currentEffectAuthority.toString())
+                            put("runtimeRef", receipt.runtimeRef)
+                            put("runGrantRef", receipt.runGrantRef)
+                            put("testClass", receipt.testClass)
+                            put("sourceCount", receipt.sources.size.toString())
+                            put("cleanupComplete", receipt.cleanupComplete.toString())
+                            put("testTimedOut", receipt.testTimedOut.toString())
+                            put("stdoutTruncated", receipt.stdoutTruncated.toString())
+                            put("stderrTruncated", receipt.stderrTruncated.toString())
+                            receipt.testExitCode?.let { put("testExitCode", it.toString()) }
+                            if (receipt.diagnostics.isNotEmpty()) {
+                                put(
+                                    "diagnostics",
+                                    receipt.diagnostics.joinToString("\n") {
+                                        diagnostic ->
+                                        listOfNotNull(
+                                            diagnostic.kind,
+                                            diagnostic.sourcePath,
+                                            diagnostic.line.takeIf { it >= 0 }?.toString(),
+                                            diagnostic.message,
+                                        )
+                                            .joinToString(":")
+                                    },
+                                )
+                            }
+                            if (receipt.testStdout.isNotBlank()) {
+                                put("testStdout", receipt.testStdout)
+                            }
+                            if (receipt.testStderr.isNotBlank()) {
+                                put("testStderr", receipt.testStderr)
                             }
                         },
                     externalEffectsExecuted = receipt.externalEffectsExecuted,

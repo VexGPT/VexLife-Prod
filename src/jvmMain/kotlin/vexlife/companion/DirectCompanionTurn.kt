@@ -44,7 +44,11 @@ import vexlife.workspace.VexLifeWorkspaceEffectStore
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceCheckStore
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunStore
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 import vexlife.capability.VexLifeWorkspaceTextCheck
+import vexlife.capability.VexLifeWorkspaceJavaTest
+import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -566,6 +570,18 @@ object DirectCompanionTurn {
         val currentWorkspaceCheckRuntimeRef: () -> String? = {
             null
         },
+        val currentWorkspaceRunGrants: (
+            productHome: Path,
+        ) -> List<VexLifeWorkspaceRunsFamily.Grant> = {
+            productHome ->
+            VexLifeWorkspaceRunStore(
+                productHome,
+            )
+                .currentGrants()
+        },
+        val currentWorkspaceJavaTestRuntimeRef: () -> String? = {
+            null
+        },
         val progressObserver: ProgressObserver? =
             null,
         val turnPolicy: TurnPolicy =
@@ -657,6 +673,8 @@ object DirectCompanionTurn {
         val workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant>,
         val workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant>,
         val workspaceCheckRuntimeRef: String?,
+        val workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant>,
+        val workspaceJavaTestRuntimeRef: String?,
     )
 
     private data class ProviderStage(
@@ -716,6 +734,8 @@ object DirectCompanionTurn {
             null,
         workspaceCheckRuntimeSource: VexLifeWorkspaceTextCheck.RuntimeSource? =
             null,
+        workspaceJavaTestRuntimeSource: VexLifeWorkspaceJavaTest.RuntimeSource? =
+            null,
         capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
             VexLifeCapabilityBridge.OwnerBindings(),
         continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
@@ -759,6 +779,14 @@ object DirectCompanionTurn {
                     currentWorkspaceCheckRuntimeRef = {
                         runCatching {
                             workspaceCheckRuntimeSource
+                                ?.current()
+                                ?.runtimeRef
+                        }
+                            .getOrNull()
+                    },
+                    currentWorkspaceJavaTestRuntimeRef = {
+                        runCatching {
+                            workspaceJavaTestRuntimeSource
                                 ?.current()
                                 ?.runtimeRef
                         }
@@ -1302,6 +1330,12 @@ object DirectCompanionTurn {
             )
         val initialWorkspaceCheckRuntimeRef =
             hooks.currentWorkspaceCheckRuntimeRef()
+        val initialWorkspaceRunGrants =
+            hooks.currentWorkspaceRunGrants(
+                productHome,
+            )
+        val initialWorkspaceJavaTestRuntimeRef =
+            hooks.currentWorkspaceJavaTestRuntimeRef()
         val initialRuntimeEvidence =
             hooks.currentRuntimeEvidence(
                 setup,
@@ -1383,6 +1417,8 @@ object DirectCompanionTurn {
                 workspaceEffectGrants = initialWorkspaceEffectGrants,
                 workspaceCheckGrants = initialWorkspaceCheckGrants,
                 workspaceCheckRuntimeRef = initialWorkspaceCheckRuntimeRef,
+                workspaceRunGrants = initialWorkspaceRunGrants,
+                workspaceJavaTestRuntimeRef = initialWorkspaceJavaTestRuntimeRef,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
@@ -2222,6 +2258,10 @@ object DirectCompanionTurn {
             emptyList(),
         workspaceCheckRuntimeRef: String? =
             null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
@@ -2295,6 +2335,8 @@ object DirectCompanionTurn {
                 workspaceEffectGrants = workspaceEffectGrants,
                 workspaceCheckGrants = workspaceCheckGrants,
                 workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+                workspaceRunGrants = workspaceRunGrants,
+                workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -2339,6 +2381,8 @@ object DirectCompanionTurn {
             workspaceEffectGrants = workspaceEffectGrants,
             workspaceCheckGrants = workspaceCheckGrants,
             workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
         )
     }
 
@@ -2478,6 +2522,8 @@ object DirectCompanionTurn {
             workspaceEffectGrants = selection.workspaceEffectGrants,
             workspaceCheckGrants = selection.workspaceCheckGrants,
             workspaceCheckRuntimeRef = selection.workspaceCheckRuntimeRef,
+            workspaceRunGrants = selection.workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = selection.workspaceJavaTestRuntimeRef,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = maximumMemoryTokens,
         )
