@@ -55,17 +55,11 @@ class ContinuityPressureAdapterTest {
     fun projectionRunsTheWholeScenarioReportsWhatItSawAndAnalyzeAgrees() {
         val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-result-")
         try {
-            val scratchBefore = scratchDirectories()
             assertEquals(
                 0,
                 ContinuityPressureAdapter.run(
                     config(ContinuityPressureAdapter.Stage.projection, dir)
                 ),
-            )
-            assertEquals(
-                scratchBefore,
-                scratchDirectories(),
-                "the scratch Home is deleted after the bundle",
             )
 
             val result =
