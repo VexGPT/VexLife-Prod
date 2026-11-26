@@ -830,7 +830,7 @@ object DirectCompanionTurn {
                 instanceRef = BrowserCompanionInstanceRef,
             ) {
                 val before =
-                    current()
+                    currentForRequestAdmission()
 
                 val recovered =
                     completedDuplicate(
