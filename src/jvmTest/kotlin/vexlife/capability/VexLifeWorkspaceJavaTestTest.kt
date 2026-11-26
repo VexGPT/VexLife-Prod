@@ -338,7 +338,8 @@ class VexLifeWorkspaceJavaTestTest {
                             profile.contains(
                                 "(literal \"/usr/bin/true\")",
                             ),
-                        )\n                        assertTrue(
+                        )
+                        assertTrue(
                             profile.contains(
                                 "(allow file-map-executable",
                             ),
