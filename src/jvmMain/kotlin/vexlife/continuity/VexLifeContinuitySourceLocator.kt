@@ -124,6 +124,30 @@ object VexLifeContinuitySourceLocator {
         fun clear()
     }
 
+    data class IndexedCandidateLookup(
+        val entryIndexes: Set<Int>,
+        val postingLookupCount: Int,
+    )
+
+    /**
+     * Optional realization capability for a true inverted lexical index.
+     *
+     * Product semantics do not require this exact data structure. A backend that does not implement
+     * it preserves the prior linear derived-entry scan; a qualified backend may instead answer
+     * postings and append one new entry without rebuilding lifetime derived state.
+     */
+    interface IndexedBackend : Backend {
+        fun candidateEntryIndexes(
+            queryFingerprints: List<Set<String>>,
+            speakerScope: SpeakerScope,
+        ): IndexedCandidateLookup
+
+        fun replaceAfterAppend(
+            generation: Generation,
+            appendedEntry: Entry,
+        )
+    }
+
     /**
      * Volatile reference realization. It deliberately persists nothing to Home, which keeps the
      * first substrate proof out of the unresolved durable-index leakage/encryption decision.
@@ -138,7 +162,7 @@ object VexLifeContinuitySourceLocator {
                         "-",
                         "",
                     ),
-    ) : Backend {
+    ) : IndexedBackend {
         private val secret: ByteArray =
             secret.copyOf().also {
                 require(it.size >= 32) {
@@ -151,6 +175,12 @@ object VexLifeContinuitySourceLocator {
             }
 
         private var generation: Generation? = null
+
+        private val requestPostings =
+            linkedMapOf<String, MutableSet<Int>>()
+
+        private val responsePostings =
+            linkedMapOf<String, MutableSet<Int>>()
 
         override fun fingerprint(value: String): String {
             val mac =
@@ -187,11 +217,169 @@ object VexLifeContinuitySourceLocator {
         override fun replace(generation: Generation) {
             this.generation =
                 generation
+            requestPostings.clear()
+            responsePostings.clear()
+            generation.entries.forEachIndexed(
+                ::indexEntry,
+            )
+        }
+
+        override fun replaceAfterAppend(
+            generation: Generation,
+            appendedEntry: Entry,
+        ) {
+            val prior =
+                requireNotNull(
+                    this.generation,
+                ) {
+                    "indexed locator append requires one prior generation"
+                }
+            require(
+                generation.entries.size ==
+                    prior.entries.size +
+                        1 &&
+                    generation.entries.dropLast(
+                        1,
+                    ) ==
+                    prior.entries &&
+                    generation.entries.last() ==
+                    appendedEntry
+            ) {
+                "indexed locator append does not extend the exact prior generation"
+            }
+
+            this.generation =
+                generation
+            indexEntry(
+                generation.entries.lastIndex,
+                appendedEntry,
+            )
+        }
+
+        override fun candidateEntryIndexes(
+            queryFingerprints: List<Set<String>>,
+            speakerScope: SpeakerScope,
+        ): IndexedCandidateLookup {
+            var postingLookups =
+                0
+
+            fun posting(
+                fingerprint: String,
+            ): Set<Int> {
+                postingLookups +=
+                    1
+                return when (
+                    speakerScope
+                ) {
+                    SpeakerScope.HUMAN ->
+                        requestPostings[
+                            fingerprint
+                        ]
+                            .orEmpty()
+
+                    SpeakerScope.VEX ->
+                        responsePostings[
+                            fingerprint
+                        ]
+                            .orEmpty()
+
+                    SpeakerScope.ANY ->
+                        requestPostings[
+                            fingerprint
+                        ]
+                            .orEmpty() +
+                            responsePostings[
+                                fingerprint
+                            ]
+                                .orEmpty()
+                }
+            }
+
+            val candidates =
+                linkedSetOf<Int>()
+            queryFingerprints.forEach {
+                fingerprints ->
+                if (
+                    fingerprints.isEmpty()
+                ) {
+                    return@forEach
+                }
+                var intersection: Set<Int>? =
+                    null
+                for (
+                    fingerprint in
+                    fingerprints
+                ) {
+                    val next =
+                        posting(
+                            fingerprint,
+                        )
+                    if (
+                        next.isEmpty()
+                    ) {
+                        intersection =
+                            emptySet()
+                        break
+                    }
+                    intersection =
+                        intersection
+                            ?.intersect(
+                                next,
+                            )
+                            ?: next.toSet()
+                    if (
+                        intersection.isEmpty()
+                    ) {
+                        break
+                    }
+                }
+                candidates +=
+                    intersection.orEmpty()
+            }
+
+            return IndexedCandidateLookup(
+                entryIndexes =
+                    candidates,
+                postingLookupCount =
+                    postingLookups,
+            )
         }
 
         override fun clear() {
             generation =
                 null
+            requestPostings.clear()
+            responsePostings.clear()
+        }
+
+        private fun indexEntry(
+            index: Int,
+            entry: Entry,
+        ) {
+            entry.requestFingerprints.forEach {
+                fingerprint ->
+                requestPostings
+                    .getOrPut(
+                        fingerprint,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
+            entry.responseFingerprints.forEach {
+                fingerprint ->
+                responsePostings
+                    .getOrPut(
+                        fingerprint,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
         }
     }
 
