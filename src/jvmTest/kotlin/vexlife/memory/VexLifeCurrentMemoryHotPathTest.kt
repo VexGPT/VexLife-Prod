@@ -52,6 +52,13 @@ class VexLifeCurrentMemoryHotPathTest {
                 first.dailyContext.reasons,
             )
             assertEquals(
+                VexLifeCurrentMemoryProviderSelection.read(
+                    home,
+                ),
+                first,
+                "initial hot-path rebuild must equal canonical provider selection",
+            )
+            assertEquals(
                 VexLifeCurrentMemoryHotPath.Diagnostics(
                     canonicalRebuildCount = 1,
                     directConversationAdvanceCount = 0,
@@ -78,7 +85,15 @@ class VexLifeCurrentMemoryHotPathTest {
                         "2026-11-26T08:10:00Z",
                     ),
             )
-            hotPath.readSelection()
+            val advanced =
+                hotPath.readSelection()
+            assertEquals(
+                VexLifeCurrentMemoryProviderSelection.read(
+                    home,
+                ),
+                advanced,
+                "one-turn hot-path advance must equal fresh canonical provider selection",
+            )
             assertEquals(
                 VexLifeCurrentMemoryHotPath.Diagnostics(
                     canonicalRebuildCount = 1,
