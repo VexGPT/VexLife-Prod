@@ -426,7 +426,7 @@ class DirectConversationStore(
             requestMessageRef: String,
             content: String,
             formedAt: Instant = Instant.now(),
-            admissionSnapshot: Snapshot? = null,
+            admissionSnapshot: RequestAdmission? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -444,16 +444,15 @@ class DirectConversationStore(
 
             val before =
                 requestAdmissionSnapshot(
-                    admissionSnapshot,
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
                 )
 
             require(
-                before.events.none {
-                    it.turnRef ==
-                        turnRef ||
-                        it.messageRef ==
-                        requestMessageRef
-                },
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
             ) {
                 "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
             }
@@ -545,6 +544,13 @@ class DirectConversationStore(
                 event
             pendingResponse =
                 null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
 
             return event
         }
@@ -562,7 +568,7 @@ class DirectConversationStore(
             content: String,
             semanticRelay: JsonObject,
             formedAt: Instant = Instant.now(),
-            admissionSnapshot: Snapshot? = null,
+            admissionSnapshot: RequestAdmission? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -580,15 +586,14 @@ class DirectConversationStore(
 
             val before =
                 requestAdmissionSnapshot(
-                    admissionSnapshot,
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
                 )
             require(
-                before.events.none {
-                    it.turnRef ==
-                        turnRef ||
-                        it.messageRef ==
-                        requestMessageRef
-                },
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
             ) {
                 "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
             }
@@ -682,6 +687,13 @@ class DirectConversationStore(
                 event
             pendingResponse =
                 null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
             return event
         }
 
