@@ -779,6 +779,141 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun canonicalOrdinalAndTypedNeighborSurviveAnAbandonedPhysicalSequenceGap() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val first =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "The gap anchor is copper-lake.",
+                        vex = "Anchor recorded.",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            fixture.store.withWriterLease {
+                beginRequest(
+                    turnRef =
+                        "turn.continuity.abandoned-gap",
+                    requestMessageRef =
+                        "message.continuity.human.abandoned-gap",
+                    content =
+                        "This durable request is intentionally left off-head.",
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-20T08:02:00Z",
+                        ),
+                )
+            }
+            val second =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "Actually, copper-lake needs the canonical neighbor.",
+                        vex = "Canonical neighbor recorded.",
+                        at = Instant.parse("2026-11-20T08:05:00Z"),
+                    ),
+                )
+                    .single()
+
+            assertTrue(
+                second.first.sequence >
+                    first.second.sequence +
+                        1,
+                "the abandoned attempt must create a physical event-sequence gap for this proof",
+            )
+
+            fixture.store.withWriterLease {
+                val snapshot =
+                    current()
+                val projected =
+                    VexLifeTurnNavigation.project(
+                        snapshot.canonicalEvents,
+                    )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    projected.map(
+                        VexLifeTurnNavigation.Turn::ordinal,
+                    ),
+                    "canonical turn ordinal is completed-lineage position, not physical event sequence",
+                )
+
+                val backend =
+                    VexLifeContinuitySourceLocator.InMemoryBackend(
+                        secret =
+                            ByteArray(32) {
+                                79
+                            },
+                        fingerprintBindingRef =
+                            "fingerprint.test.abandoned-gap",
+                    )
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+                assertEquals(
+                    2,
+                    generation.canonicalCompletedTurnCount,
+                )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    generation.entries.map(
+                        VexLifeContinuitySourceLocator.Entry::canonicalOrdinal,
+                    ),
+                )
+
+                val neighborhood =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "gap anchor",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    listOf(
+                        first.first.turnRef,
+                        second.first.turnRef,
+                    ),
+                    neighborhood.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "typed immediate-neighbor expansion follows canonical lineage across physical gaps",
+                )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    neighborhood.turns.map(
+                        VexLifeTurnNavigation.Turn::ordinal,
+                    ),
+                )
+            }
+        }
+    }
+
+    @Test
     fun generationContainsCoordinatesAndFingerprintsButNoConversationBodies() {
         ContinuityTurnFixture().use {
             fixture ->
