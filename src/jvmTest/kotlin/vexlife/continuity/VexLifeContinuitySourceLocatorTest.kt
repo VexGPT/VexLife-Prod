@@ -96,6 +96,15 @@ class VexLifeContinuitySourceLocatorTest {
                     outcome.wholeHistoryEventEnumerationPerformed,
                     "current locator lookup must not enumerate the whole Conversation event directory",
                 )
+                assertEquals(
+                    0,
+                    outcome.derivedEntryScanCount,
+                    "default locator backend must use inverted postings rather than scan derived lifetime entries",
+                )
+                assertTrue(
+                    outcome.derivedPostingLookupCount >
+                        0,
+                )
                 assertFalse(
                     outcome.canonicalSourceMutationPerformed,
                 )
@@ -280,6 +289,40 @@ class VexLifeContinuitySourceLocatorTest {
                 assertFalse(
                     located.wholeHistoryEventEnumerationPerformed,
                 )
+                assertEquals(
+                    0,
+                    located.derivedEntryScanCount,
+                )
+                assertTrue(
+                    located.derivedPostingLookupCount >
+                        0,
+                )
+
+                val locatedSecond =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "later unrelated",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    second.first.eventRef,
+                    locatedSecond.candidates
+                        .single()
+                        .requestEvent
+                        .eventRef,
+                    "incremental catch-up must add the new turn to postings without a lifetime rebuild",
+                )
+                assertEquals(
+                    0,
+                    locatedSecond.derivedEntryScanCount,
+                )
             }
         }
     }
@@ -425,6 +468,140 @@ class VexLifeContinuitySourceLocatorTest {
                         second,
                     ),
                     "backend realization must not change canonical candidate identity",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun indexedBackendAvoidsDerivedLifetimeScanWhileGenericBackendPreservesFallback() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "First ordinary note.",
+                        vex = "first",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "The indexed token is quartz-river-73.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Third unrelated note.",
+                        vex = "third",
+                        at = Instant.parse("2026-11-20T10:00:00Z"),
+                    ),
+                )
+            val indexed =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            59
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.inverted-index",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = indexed,
+                )
+            }
+            val generation =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    indexed.load(),
+                )
+                    .generation
+            val generic =
+                object : VexLifeContinuitySourceLocator.Backend {
+                    override val fingerprintBindingRef =
+                        indexed.fingerprintBindingRef
+
+                    override fun fingerprint(
+                        value: String,
+                    ): String =
+                        indexed.fingerprint(
+                            value,
+                        )
+
+                    override fun load(): VexLifeContinuitySourceLocator.BackendLoad =
+                        VexLifeContinuitySourceLocator.BackendLoad.Ready(
+                            generation,
+                        )
+
+                    override fun replace(
+                        generation: VexLifeContinuitySourceLocator.Generation,
+                    ) =
+                        error(
+                            "generic comparison backend must remain read-only",
+                        )
+
+                    override fun clear() =
+                        Unit
+                }
+
+            fixture.store.withWriterLease {
+                val indexedFound =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "quartz-river-73",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend =
+                                indexed,
+                        ),
+                    )
+                val genericFound =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "quartz-river-73",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend =
+                                generic,
+                        ),
+                    )
+
+                assertEquals(
+                    turns[1].first.eventRef,
+                    indexedFound.candidates
+                        .single()
+                        .requestEvent
+                        .eventRef,
+                )
+                assertEquals(
+                    indexedFound.candidates,
+                    genericFound.candidates,
+                    "backend query acceleration must not change canonical candidate identity",
+                )
+                assertEquals(
+                    0,
+                    indexedFound.derivedEntryScanCount,
+                )
+                assertTrue(
+                    indexedFound.derivedPostingLookupCount >
+                        0,
+                )
+                assertEquals(
+                    generation.entries.size,
+                    genericFound.derivedEntryScanCount,
+                    "generic backend preserves the prior derived-entry scan fallback",
+                )
+                assertEquals(
+                    0,
+                    genericFound.derivedPostingLookupCount,
                 )
             }
         }
