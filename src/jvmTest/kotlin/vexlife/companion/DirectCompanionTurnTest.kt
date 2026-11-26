@@ -15,6 +15,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -3144,6 +3146,156 @@ class DirectCompanionTurnTest {
             assertEquals(
                 first.content,
                 recovered.content,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun completedSendWithDurableAttachmentCanRecoverAfterComposerDraftIsGone() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val artifacts =
+            VexLifeLocalArtifactStore(
+                home,
+            )
+        val original =
+            artifacts.storeOriginal(
+                "durable attachment body".toByteArray(),
+            )
+        val projection =
+            artifacts.storeTextProjection(
+                artifactRef = original.artifactRef,
+                converterRef = "converter.vexlife-prod.turn-test.text.v1",
+                text = "durable attachment body",
+            )
+        val attachment =
+            VexLifeLocalArtifact.RequestAttachment(
+                artifactRef = original.artifactRef,
+                projectionRef = projection.projectionRef,
+                displayName = "continuity-note.txt",
+            )
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "Attachment received."
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+        val intent =
+            DirectCompanionTurn.Intent(
+                idempotencyKey =
+                    "send.self-development.retry-durable-attachment",
+                content =
+                    "Use the attached continuity note.",
+                requestAttachments =
+                    listOf(
+                        attachment,
+                    ),
+            )
+        val hooks =
+            DirectCompanionTurn.Hooks(
+                transport = transport,
+            )
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent = intent,
+                    hooks = hooks,
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        intent.copy(
+                            requestAttachments =
+                                emptyList(),
+                        ),
+                    hooks = hooks,
+                )
+            }
+
+            val recovered =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        intent.copy(
+                            requestAttachments =
+                                emptyList(),
+                            reuseDurableRequestAttachmentsWhenEmpty =
+                                true,
+                        ),
+                    hooks = hooks,
+                )
+
+            assertEquals(
+                1,
+                calls,
+                "durable attachment retry must not invoke the provider again",
+            )
+            assertFalse(
+                first.recoveredCompletedTurn,
+            )
+            assertTrue(
+                recovered.recoveredCompletedTurn,
+            )
+            assertEquals(
+                first.requestEventRef,
+                recovered.requestEventRef,
+            )
+            assertEquals(
+                first.responseEventRef,
+                recovered.responseEventRef,
+            )
+
+            val canonicalRequest =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+                    .single {
+                        it.eventRef ==
+                            first.requestEventRef
+                    }
+            assertEquals(
+                listOf(
+                    attachment,
+                ),
+                artifacts
+                    .bindingFor(
+                        canonicalRequest.eventHash,
+                    )
+                    ?.attachments,
+                "retry recovery must preserve the original immutable REQUEST resource binding",
             )
         } finally {
             home.parent
