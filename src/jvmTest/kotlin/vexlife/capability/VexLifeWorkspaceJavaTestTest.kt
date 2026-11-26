@@ -338,6 +338,55 @@ class VexLifeWorkspaceJavaTestTest {
                             profile.contains(
                                 "(literal \"/usr/bin/true\")",
                             ),
+                        )\n                        assertTrue(
+                            profile.contains(
+                                "(allow file-map-executable",
+                            ),
+                        )
+                        assertTrue(
+                            profile.contains(
+                                "(subpath \"/Library/Apple\")",
+                            ),
+                        )
+                        assertTrue(
+                            profile.contains(
+                                "(subpath \"/Library/Filesystems/NetFSPlugins\")",
+                            ),
+                        )
+                        assertTrue(
+                            profile.contains(
+                                "(path-ancestors \"/System/Volumes/Data/private\")",
+                            ),
+                        )
+                        assertTrue(
+                            profile.contains(
+                                "(literal \"/dev/zero\")",
+                            ),
+                        )
+                        assertTrue(
+                            profile.contains(
+                                "(literal \"/private/etc/services\")",
+                            ),
+                        )
+                        assertFalse(
+                            profile.contains(
+                                "(allow system-mac-syscall",
+                            ),
+                        )
+                        assertFalse(
+                            profile.contains(
+                                "(allow iokit-open",
+                            ),
+                        )
+                        assertFalse(
+                            profile.contains(
+                                "(allow ipc-posix-sem",
+                            ),
+                        )
+                        assertFalse(
+                            profile.contains(
+                                "com.apple.PowerManagement.control",
+                            ),
                         )
                         VexLifeWorkspaceJavaTest.ProcessResult(
                             started =
