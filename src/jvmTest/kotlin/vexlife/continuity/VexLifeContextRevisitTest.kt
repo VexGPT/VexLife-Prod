@@ -473,7 +473,8 @@ class VexLifeContextRevisitTest {
                 )
 
             fixture.store.withWriterLease {
-                owner ->
+                val owner =
+                    this
                 VexLifeContinuitySourceLocator.rebuild(
                     conversationOwner =
                         owner,
@@ -720,7 +721,8 @@ class VexLifeContextRevisitTest {
                 ),
             )
             fixture.store.withWriterLease {
-                owner ->
+                val owner =
+                    this
                 var fullConversationReads =
                     0
                 var indexedViewAttempts =
