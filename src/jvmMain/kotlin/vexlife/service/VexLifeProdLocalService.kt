@@ -41,6 +41,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.companion.VexLifePromptPreparation
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
@@ -145,6 +146,7 @@ class VexLifeProdLocalService private constructor(
     private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
     private val partnerInference: VexLifeProdPartnerInference?,
     private val partnerConnectionLiveEffectsEnabled: Boolean,
+    private val conversationAttemptIndex: DirectConversationAttemptIndex,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -1101,6 +1103,8 @@ class VexLifeProdLocalService private constructor(
                 VexLifePromptPreparation()
             val continuitySourceLocatorBackend =
                 VexLifeContinuitySourceLocator.InMemoryBackend()
+            val conversationAttemptIndex =
+                DirectConversationAttemptIndex()
 
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
@@ -1352,6 +1356,8 @@ class VexLifeProdLocalService private constructor(
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.foundation,
+                conversationAttemptIndex =
+                    conversationAttemptIndex,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -1384,6 +1390,8 @@ class VexLifeProdLocalService private constructor(
                                     workspaceCheckCapabilityOwners,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                             )
                         }
                     },
@@ -1413,6 +1421,8 @@ class VexLifeProdLocalService private constructor(
                                     workspaceCheckCapabilityOwners,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                             )
                         }
                     },
@@ -1432,6 +1442,8 @@ class VexLifeProdLocalService private constructor(
                                     promptPreparation,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                             )
                         }
                     },
@@ -1455,6 +1467,8 @@ class VexLifeProdLocalService private constructor(
                                     promptPreparation,
                                 continuitySourceLocatorBackend =
                                     continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                             )
                         }
                     },
@@ -1671,6 +1685,7 @@ class VexLifeProdLocalService private constructor(
         private fun startAt(
             sourceSha: String,
             startupSetup: VexLifeProdRuntimeSession.Foundation,
+            conversationAttemptIndex: DirectConversationAttemptIndex? = null,
             address: InetSocketAddress,
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
@@ -1742,11 +1757,22 @@ class VexLifeProdLocalService private constructor(
                 "VexLife service requires one absolute canonical Home"
             }
 
-            // Construction-time validation only. The Conversation store remains the durable owner.
-            DirectConversationStore(
-                productHome,
+            // Reuse the already-required construction validation snapshot to seed one volatile
+            // service-lifetime exact attempt index. This adds no second startup enumeration and no
+            // durable Conversation authority.
+            val realizedConversationAttemptIndex =
+                conversationAttemptIndex
+                    ?: DirectConversationAttemptIndex()
+            val constructionSnapshot =
+                DirectConversationStore(
+                    productHome = productHome,
+                    attemptIndex =
+                        realizedConversationAttemptIndex,
+                )
+                    .current()
+            realizedConversationAttemptIndex.rebuild(
+                constructionSnapshot,
             )
-                .current()
 
             val releaseUpdates =
                 VexLifeReleaseUpdates(
@@ -1818,6 +1844,8 @@ class VexLifeProdLocalService private constructor(
                         partnerInference = partnerInference,
                         partnerConnectionLiveEffectsEnabled =
                             partnerConnectionLiveEffectsEnabled,
+                        conversationAttemptIndex =
+                            realizedConversationAttemptIndex,
                         promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
