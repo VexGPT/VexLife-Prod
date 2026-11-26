@@ -19,6 +19,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.foundational.VexLifeFoundationalFieldFixture
@@ -3238,6 +3239,14 @@ class DirectCompanionTurnTest {
                 idempotencyKey = "send.self-development.failure",
                 content = "Please answer",
             )
+        val conversationAttemptIndex =
+            DirectConversationAttemptIndex()
+        conversationAttemptIndex.rebuild(
+            DirectConversationStore(
+                home,
+            )
+                .current(),
+        )
 
         try {
             val error =
@@ -3249,6 +3258,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3309,6 +3320,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3349,6 +3362,8 @@ class DirectCompanionTurnTest {
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
+                            conversationAttemptIndex =
+                                conversationAttemptIndex,
                             transport =
                                 DirectCompanionConnection.Transport {
                                     calls +=

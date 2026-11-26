@@ -34,6 +34,19 @@ import vexlife.model.heretic.HereticProductIdentity
 class DirectConversationStore(
     productHome: Path,
 ) {
+    private var attemptIndex: DirectConversationAttemptIndex? =
+        null
+
+    internal constructor(
+        productHome: Path,
+        attemptIndex: DirectConversationAttemptIndex,
+    ) : this(
+        productHome = productHome,
+    ) {
+        this.attemptIndex =
+            attemptIndex
+    }
+
     companion object {
         const val EventSchema =
             VexLifeConversationContract.EventSchemaV1
@@ -148,6 +161,22 @@ class DirectConversationStore(
         val events: List<Event>,
         val canonicalEvents: List<Event>,
         val abandonedAttempts: List<AbandonedAttempt>,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestAdmission internal constructor(
+        val requestMessageRef: String,
+        val head: Head?,
+        val matchingCanonicalEvents: List<Event>,
+        val matchingAbandonedAttempt: AbandonedAttempt?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestEventLookup internal constructor(
+        val requestEvent: Event?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+        val derivedIndexRebuilt: Boolean,
     )
 
     @ConsistentCopyVisibility
@@ -277,7 +306,7 @@ class DirectConversationStore(
             null
         private var pendingResponse: Event? =
             null
-        private var reusableAdmissionSnapshot: Snapshot? =
+        private var reusableAdmissionSnapshot: RequestAdmission? =
             null
 
         /** Canonical Home-owned person identity used by request/response participant formation. */
@@ -292,12 +321,96 @@ class DirectConversationStore(
          * admission. The object identity is the lease-local capability; a snapshot from another
          * lease is never accepted merely because the completed head still matches.
          */
-        internal fun currentForRequestAdmission(): Snapshot =
-            readCurrentComplete()
-                .also {
-                    reusableAdmissionSnapshot =
-                        it
+        internal fun currentForRequestAdmission(
+            requestMessageRef: String,
+        ): RequestAdmission {
+            requireNonEmpty(
+                requestMessageRef,
+                "requestMessageRef",
+            )
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+
+            val admission =
+                when (
+                    val indexed =
+                        readIndexedAttempt(
+                            requestMessageRef,
+                        )
+                ) {
+                    is IndexedAttemptLookup.Found ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    listOf(
+                                        indexed.request,
+                                        requireNotNull(
+                                            indexed.response,
+                                        ),
+                                    )
+                                } else {
+                                    emptyList()
+                                },
+                            matchingAbandonedAttempt =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    null
+                                } else {
+                                    AbandonedAttempt(
+                                        requestEvent =
+                                            indexed.request,
+                                        responseEventOrNull =
+                                            indexed.response,
+                                    )
+                                },
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.CurrentMiss ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents = emptyList(),
+                            matchingAbandonedAttempt = null,
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.FallbackRequired -> {
+                        val snapshot =
+                            readCurrentComplete()
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
                 }
+
+            reusableAdmissionSnapshot =
+                admission
+            return admission
+        }
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
@@ -323,7 +436,7 @@ class DirectConversationStore(
             requestMessageRef: String,
             content: String,
             formedAt: Instant = Instant.now(),
-            admissionSnapshot: Snapshot? = null,
+            admissionSnapshot: RequestAdmission? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -341,16 +454,15 @@ class DirectConversationStore(
 
             val before =
                 requestAdmissionSnapshot(
-                    admissionSnapshot,
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
                 )
 
             require(
-                before.events.none {
-                    it.turnRef ==
-                        turnRef ||
-                        it.messageRef ==
-                        requestMessageRef
-                },
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
             ) {
                 "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
             }
@@ -442,6 +554,13 @@ class DirectConversationStore(
                 event
             pendingResponse =
                 null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
 
             return event
         }
@@ -459,7 +578,7 @@ class DirectConversationStore(
             content: String,
             semanticRelay: JsonObject,
             formedAt: Instant = Instant.now(),
-            admissionSnapshot: Snapshot? = null,
+            admissionSnapshot: RequestAdmission? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -477,15 +596,14 @@ class DirectConversationStore(
 
             val before =
                 requestAdmissionSnapshot(
-                    admissionSnapshot,
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
                 )
             require(
-                before.events.none {
-                    it.turnRef ==
-                        turnRef ||
-                        it.messageRef ==
-                        requestMessageRef
-                },
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
             ) {
                 "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
             }
@@ -579,6 +697,13 @@ class DirectConversationStore(
                 event
             pendingResponse =
                 null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
             return event
         }
 
@@ -734,6 +859,11 @@ class DirectConversationStore(
                 pendingResponse =
                     response
             }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
 
             return response
         }
@@ -889,6 +1019,11 @@ class DirectConversationStore(
                 pendingResponse =
                     response
             }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
             return response
         }
 
@@ -1046,6 +1181,12 @@ class DirectConversationStore(
             ) {
                 "canonical Conversation current head did not commit exactly"
             }
+            attemptIndex
+                ?.noteCommitted(
+                    head = current.head,
+                    request = request,
+                    response = response,
+                )
             if (
                 pendingRequest ==
                     request
@@ -1109,8 +1250,9 @@ class DirectConversationStore(
         }
 
         private fun requestAdmissionSnapshot(
-            admissionSnapshot: Snapshot?,
-        ): Snapshot {
+            admissionSnapshot: RequestAdmission?,
+            requestMessageRef: String,
+        ): RequestAdmission {
             require(
                 pendingRequest ==
                     null &&
@@ -1119,25 +1261,39 @@ class DirectConversationStore(
             ) {
                 "canonical writer lease already owns one pending request"
             }
-            val snapshot =
+            val admission =
                 admissionSnapshot
-                    ?: readCurrentComplete()
+                    ?: run {
+                        val snapshot =
+                            readCurrentComplete()
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
             if (
                 admissionSnapshot !=
                     null
             ) {
                 require(
                     admissionSnapshot ===
-                        reusableAdmissionSnapshot
+                        reusableAdmissionSnapshot &&
+                        admissionSnapshot.requestMessageRef ==
+                        requestMessageRef
                 ) {
-                    "canonical request admission snapshot was not issued by this writer lease"
+                    "canonical request admission snapshot was not issued for this exact writer lease/request identity"
                 }
                 val currentHead =
                     readHeadRecord()
                 require(
                     currentHead
                         ?.conversationHeadSha256 ==
-                        snapshot.head
+                        admission.head
                             ?.conversationHeadSha256
                 ) {
                     "canonical request admission snapshot is no longer current"
@@ -1145,7 +1301,68 @@ class DirectConversationStore(
                 reusableAdmissionSnapshot =
                     null
             }
-            return snapshot
+            return admission
+        }
+
+        private fun admissionFromSnapshot(
+            snapshot: Snapshot,
+            requestMessageRef: String,
+            wholeHistoryEventEnumerationPerformed: Boolean,
+        ): RequestAdmission {
+            val canonicalRequest =
+                snapshot.canonicalEvents
+                    .singleOrNull {
+                        it.eventKind ==
+                            VexLifeConversationContract.RequestKind &&
+                            it.messageRef ==
+                            requestMessageRef
+                    }
+            val canonicalEvents =
+                canonicalRequest
+                    ?.let {
+                        request ->
+                        snapshot.canonicalEvents
+                            .filter {
+                                it.turnRef ==
+                                    request.turnRef
+                            }
+                            .also {
+                                pair ->
+                                require(
+                                    pair.size ==
+                                        2
+                                ) {
+                                    "canonical request identity does not own one complete pair"
+                                }
+                            }
+                    }
+                    .orEmpty()
+            val abandoned =
+                snapshot.abandonedAttempts
+                    .singleOrNull {
+                        it.requestEvent.messageRef ==
+                            requestMessageRef
+                    }
+            require(
+                canonicalEvents.isEmpty() ||
+                    abandoned ==
+                    null
+            ) {
+                "canonical request identity cannot be both committed and abandoned"
+            }
+
+            return RequestAdmission(
+                requestMessageRef =
+                    requestMessageRef,
+                head =
+                    snapshot.head,
+                matchingCanonicalEvents =
+                    canonicalEvents,
+                matchingAbandonedAttempt =
+                    abandoned,
+                wholeHistoryEventEnumerationPerformed =
+                    wholeHistoryEventEnumerationPerformed,
+            )
         }
     }
 
@@ -1496,6 +1713,236 @@ class DirectConversationStore(
             exactEventFileReadCount = 2,
             currentCommittedLineageVerified = true,
         )
+    }
+
+    private fun rebuildAttemptIndexBestEffort(
+        snapshot: Snapshot,
+    ): Boolean {
+        val index =
+            attemptIndex
+                ?: return false
+        return runCatching {
+            index.rebuild(
+                snapshot,
+            )
+            true
+        }
+            .getOrElse {
+                index.invalidate()
+                false
+            }
+    }
+
+    private sealed interface IndexedAttemptLookup {
+        data class Found(
+            val request: Event,
+            val response: Event?,
+            val committed: Boolean,
+        ) : IndexedAttemptLookup
+
+        data object CurrentMiss : IndexedAttemptLookup
+
+        data object FallbackRequired : IndexedAttemptLookup
+    }
+
+    internal fun requestEventForMessageRef(
+        requestMessageRef: String,
+    ): RequestEventLookup {
+        requireNonEmpty(
+            requestMessageRef,
+            "requestMessageRef",
+        )
+
+        return when (
+            val indexed =
+                readIndexedAttempt(
+                    requestMessageRef,
+                )
+        ) {
+            is IndexedAttemptLookup.Found ->
+                RequestEventLookup(
+                    requestEvent =
+                        indexed.request,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.CurrentMiss ->
+                RequestEventLookup(
+                    requestEvent = null,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.FallbackRequired -> {
+                val snapshot =
+                    readCurrentComplete()
+                val rebuilt =
+                    rebuildAttemptIndexBestEffort(
+                        snapshot,
+                    )
+                RequestEventLookup(
+                    requestEvent =
+                        snapshot.events
+                            .singleOrNull {
+                                it.eventKind ==
+                                    VexLifeConversationContract.RequestKind &&
+                                    it.messageRef ==
+                                    requestMessageRef
+                            },
+                    wholeHistoryEventEnumerationPerformed = true,
+                    derivedIndexRebuilt =
+                        rebuilt,
+                )
+            }
+        }
+    }
+
+    private fun readIndexedAttempt(
+        requestMessageRef: String,
+    ): IndexedAttemptLookup {
+        val index =
+            attemptIndex
+                ?: return IndexedAttemptLookup.FallbackRequired
+        val generation =
+            when (
+                val load =
+                    index.load()
+            ) {
+                DirectConversationAttemptIndex.Load.Absent ->
+                    return IndexedAttemptLookup.FallbackRequired
+
+                is DirectConversationAttemptIndex.Load.Ready ->
+                    load.generation
+            }
+        val currentHead =
+            readHeadRecord()
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHead
+                    ?.conversationHeadSha256 ||
+            generation.sourceConversationSequence !=
+                currentHead
+                    ?.sequence
+        ) {
+            index.invalidate()
+            return IndexedAttemptLookup.FallbackRequired
+        }
+
+        val entry =
+            generation.entriesByRequestMessageRef[
+                requestMessageRef
+            ]
+                ?: return IndexedAttemptLookup.CurrentMiss
+
+        return try {
+            val request =
+                requireNotNull(
+                    readEventAt(
+                        eventPath(
+                            sequence =
+                                entry.request.sequence,
+                            eventHash =
+                                entry.request.eventHash,
+                        ),
+                    ),
+                ) {
+                    "Conversation attempt index request source is missing"
+                }
+            require(
+                request.eventRef ==
+                    entry.request.eventRef &&
+                    request.eventHash ==
+                    entry.request.eventHash &&
+                    request.messageRef ==
+                    entry.requestMessageRef &&
+                    request.turnRef ==
+                    entry.turnRef &&
+                    request.eventKind ==
+                    VexLifeConversationContract.RequestKind
+            ) {
+                "Conversation attempt index request coordinate does not match canonical source"
+            }
+
+            val response =
+                entry.response
+                    ?.let {
+                        address ->
+                        requireNotNull(
+                            readEventAt(
+                                eventPath(
+                                    sequence =
+                                        address.sequence,
+                                    eventHash =
+                                        address.eventHash,
+                                ),
+                            ),
+                        ) {
+                            "Conversation attempt index response source is missing"
+                        }
+                            .also {
+                                value ->
+                                require(
+                                    value.eventRef ==
+                                        address.eventRef &&
+                                        value.eventHash ==
+                                        address.eventHash &&
+                                        value.eventKind ==
+                                        VexLifeConversationContract.ResponseKind &&
+                                        value.turnRef ==
+                                        request.turnRef &&
+                                        value.sequence ==
+                                        request.sequence +
+                                            1 &&
+                                        value.priorEventHash ==
+                                        request.eventHash
+                                ) {
+                                    "Conversation attempt index response coordinate does not match canonical source"
+                                }
+                            }
+                    }
+
+            if (
+                entry.committed
+            ) {
+                val committedResponse =
+                    requireNotNull(
+                        response,
+                    ) {
+                        "committed Conversation attempt index entry has no response"
+                    }
+                val exact =
+                    readExactCommittedConversationEvents(
+                        listOf(
+                            entry.request,
+                            requireNotNull(
+                                entry.response,
+                            ),
+                        ),
+                    )
+                require(
+                    exact.events ==
+                        listOf(
+                            request,
+                            committedResponse,
+                        )
+                ) {
+                    "Conversation attempt index committed pair is not exact current-lineage source"
+                }
+            }
+
+            IndexedAttemptLookup.Found(
+                request = request,
+                response = response,
+                committed =
+                    entry.committed,
+            )
+        } catch (
+            _: RuntimeException,
+        ) {
+            index.invalidate()
+            IndexedAttemptLookup.FallbackRequired
+        }
     }
 
     private fun prepareOwnedDirectories() {
