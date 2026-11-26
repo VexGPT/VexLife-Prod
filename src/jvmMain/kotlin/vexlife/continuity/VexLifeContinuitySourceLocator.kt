@@ -143,6 +143,7 @@ object VexLifeContinuitySourceLocator {
         ): IndexedCandidateLookup
 
         fun replaceAfterAppend(
+            priorGeneration: Generation,
             generation: Generation,
             appendedEntry: Entry,
         )
@@ -225,23 +226,43 @@ object VexLifeContinuitySourceLocator {
         }
 
         override fun replaceAfterAppend(
+            priorGeneration: Generation,
             generation: Generation,
             appendedEntry: Entry,
         ) {
-            val prior =
-                requireNotNull(
-                    this.generation,
+            val observedPrior =
+                this.generation
+            if (
+                observedPrior ==
+                null
+            ) {
+                require(
+                    priorGeneration.entries.isEmpty() &&
+                        priorGeneration.sourceConversationHeadSha256 ==
+                            null &&
+                        priorGeneration.sourceConversationSequence ==
+                            null &&
+                        requestPostings.isEmpty() &&
+                        responsePostings.isEmpty()
                 ) {
-                    "indexed locator append requires one prior generation"
+                    "indexed locator append cannot bootstrap from a non-empty missing generation"
                 }
+            } else {
+                require(
+                    observedPrior ==
+                        priorGeneration
+                ) {
+                    "indexed locator append prior generation changed"
+                }
+            }
             require(
                 generation.entries.size ==
-                    prior.entries.size +
+                    priorGeneration.entries.size +
                         1 &&
                     generation.entries.dropLast(
                         1,
                     ) ==
-                    prior.entries &&
+                    priorGeneration.entries &&
                     generation.entries.last() ==
                     appendedEntry
             ) {
@@ -724,6 +745,8 @@ object VexLifeContinuitySourceLocator {
             IndexedBackend
         ) {
             backend.replaceAfterAppend(
+                priorGeneration =
+                    priorGeneration,
                 generation =
                     updated,
                 appendedEntry =
