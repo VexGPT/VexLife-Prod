@@ -3212,8 +3212,6 @@ class DirectConversationStore(
                 require(
                     head.sequence ==
                         responseAddress.sequence &&
-                        head.requestEventHash ==
-                            entry.request.eventHash &&
                         head.eventHash ==
                             responseAddress.eventHash &&
                         head.turnRef ==
