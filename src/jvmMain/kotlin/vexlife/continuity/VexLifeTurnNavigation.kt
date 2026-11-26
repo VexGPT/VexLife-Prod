@@ -57,23 +57,22 @@ object VexLifeTurnNavigation {
             projectPair(
                 request = request,
                 response = response,
+                ordinal = ordinal,
             )
-                .also {
-                    turn ->
-                    require(
-                        turn.ordinal ==
-                            ordinal
-                    ) {
-                        "turn navigation full projection sequence is not canonical from genesis"
-                    }
-                }
         }
     }
 
-    /** Project one exact canonical completed pair without requiring the whole Conversation. */
+    /**
+     * Project one exact canonical completed pair without requiring the whole Conversation.
+     *
+     * [ordinal] is the pair's position in the canonical completed-head lineage. It must not be
+     * inferred from the physical event sequence: abandoned/off-head attempts may consume event
+     * sequence coordinates without becoming completed Conversation turns.
+     */
     fun projectPair(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
+        ordinal: Int,
     ): Turn {
         require(
             request.eventKind ==
@@ -99,9 +98,15 @@ object VexLifeTurnNavigation {
             turnRef =
                 request.turnRef,
             ordinal =
-                (request.sequence /
-                    2)
-                    .toInt(),
+                ordinal
+                    .also {
+                        require(
+                            it >=
+                                0
+                        ) {
+                            "turn navigation canonical ordinal must be non-negative"
+                        }
+                    },
             request =
                 request,
             response =
