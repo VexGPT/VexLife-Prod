@@ -1612,12 +1612,10 @@ object DirectCompanionTurn {
                                 lifecycle,
                                 ->
                                 if (
-                                    revisitRequest.queries.any {
-                                        query ->
-                                        query.window !=
-                                            null ||
-                                            query.corrections
-                                    }
+                                    !VexLifeContextRevisit
+                                        .supportsIndexedConversationView(
+                                            revisitRequest,
+                                        )
                                 ) {
                                     null
                                 } else {
