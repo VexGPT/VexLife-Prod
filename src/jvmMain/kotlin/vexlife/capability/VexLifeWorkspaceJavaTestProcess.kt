@@ -101,7 +101,10 @@ internal object VexLifeWorkspaceJavaTestProcess {
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
-            return hostFailed()
+            return hostFailed(
+                testStderr =
+                    "HOST_SCRATCH_LAYOUT_INVALID",
+            )
         }
 
         val sourcePaths =
@@ -139,7 +142,10 @@ internal object VexLifeWorkspaceJavaTestProcess {
 
         val compiler =
             ToolProvider.getSystemJavaCompiler()
-                ?: return hostFailed()
+                ?: return hostFailed(
+                    testStderr =
+                        "HOST_COMPILER_UNAVAILABLE",
+                )
         val diagnostics =
             DiagnosticCollector<JavaFileObject>()
         val compilerOutput =
@@ -185,12 +191,18 @@ internal object VexLifeWorkspaceJavaTestProcess {
                         }
                 }
                 .getOrElse {
+                    failure ->
                     return hostFailed(
                         diagnostics =
                             diagnostics(
                                 diagnostics,
                                 sourceRoot,
                                 compilerOutput.toString(),
+                            ),
+                        testStderr =
+                            hostFailureDiagnostic(
+                                "HOST_COMPILER_EXCEPTION",
+                                failure,
                             ),
                     )
                 }
@@ -230,6 +242,9 @@ internal object VexLifeWorkspaceJavaTestProcess {
             return hostFailed(
                 diagnostics =
                     compileDiagnostics,
+                testStderr =
+                    "HOST_JAVA_EXECUTABLE_UNAVAILABLE:" +
+                        java,
             )
         }
 
@@ -556,11 +571,33 @@ internal object VexLifeWorkspaceJavaTestProcess {
     private fun processStartFailure(
         failure: Exception,
     ): String =
+        hostFailureDiagnostic(
+            "PROCESS_START_FAILED",
+            failure,
+        )
+
+    internal fun hostFailureDiagnostic(
+        label: String,
+        failure: Throwable,
+    ): String =
         (
-            "PROCESS_START_FAILED:" +
+            label +
+                ":" +
                 failure::class.java.name +
                 ":" +
                 failure.message.orEmpty()
+                    .replace(
+                        '\n',
+                        ' ',
+                    )
+                    .replace(
+                        '\r',
+                        ' ',
+                    )
+                    .replace(
+                        '\t',
+                        ' ',
+                    )
         )
             .take(
                 VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
@@ -672,9 +709,15 @@ fun main(args: Array<String>) {
                 )
             }
             .getOrElse {
+                failure ->
                 VexLifeWorkspaceJavaTest.RunnerResult(
                     disposition =
                         VexLifeWorkspaceJavaTest.DispositionHostFailed,
+                    testStderr =
+                        VexLifeWorkspaceJavaTestProcess.hostFailureDiagnostic(
+                            "RUNNER_EXCEPTION",
+                            failure,
+                        ),
                 )
             }
 

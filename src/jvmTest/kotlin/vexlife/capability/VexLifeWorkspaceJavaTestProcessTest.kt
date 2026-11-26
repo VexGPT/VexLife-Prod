@@ -108,6 +108,38 @@ class VexLifeWorkspaceJavaTestProcessTest {
     }
 
 
+
+    @Test
+    fun hostFailureDiagnosticIsBoundedAndSingleLine() {
+        val diagnostic =
+            VexLifeWorkspaceJavaTestProcess.hostFailureDiagnostic(
+                "HOST_TEST",
+                IllegalStateException(
+                    "line one\nline two\tline three",
+                ),
+            )
+
+        assertTrue(
+            diagnostic.startsWith(
+                "HOST_TEST:java.lang.IllegalStateException:",
+            ),
+        )
+        assertFalse(
+            diagnostic.contains(
+                '\n',
+            ),
+        )
+        assertFalse(
+            diagnostic.contains(
+                '\t',
+            ),
+        )
+        assertTrue(
+            diagnostic.length <=
+                VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+        )
+    }
+
     @Test
     fun processStartFailureReturnsBoundedHostDiagnostic() {
         val working =
