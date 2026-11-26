@@ -292,9 +292,9 @@ object VexLifeWorkspaceJavaTestMacProbe {
                 executable(
                     "/usr/bin/touch",
                 )
-            val shellCanary =
+            val execParentCanary =
                 executable(
-                    "/bin/sh",
+                    "/usr/bin/env",
                 )
             val idCanary =
                 executable(
@@ -328,7 +328,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     trueCanary,
                     catCanary,
                     touchCanary,
-                    shellCanary,
+                    execParentCanary,
                     networkCanary,
                 )
                     .joinToString(
@@ -345,7 +345,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     trueCanary,
                     catCanary,
                     touchCanary,
-                    shellCanary,
+                    execParentCanary,
                     networkCanary,
                 )
                     .joinToString(
@@ -567,7 +567,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
             data class SafetyResult(
                 val outsideReadDenied: Boolean,
                 val outsideWriteDenied: Boolean,
-                val shellControlPass: Boolean,
+                val childControlPass: Boolean,
                 val childDenied: Boolean,
                 val networkControlPass: Boolean,
                 val networkDenied: Boolean,
@@ -576,7 +576,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     get() =
                         outsideReadDenied &&
                             outsideWriteDenied &&
-                            shellControlPass &&
+                            childControlPass &&
                             childDenied &&
                             networkControlPass &&
                             networkDenied
@@ -586,8 +586,8 @@ object VexLifeWorkspaceJavaTestMacProbe {
                         outsideReadDenied +
                         ",writeDenied=" +
                         outsideWriteDenied +
-                        ",shellControl=" +
-                        shellControlPass +
+                        ",childControl=" +
+                        childControlPass +
                         ",childDenied=" +
                         childDenied +
                         ",networkControl=" +
@@ -618,21 +618,16 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             outsideWrite.toString(),
                         ),
                     )
-                val shellControl =
+                val childControl =
                     run(
                         candidate.profile,
-                        shellCanary,
-                        listOf(
-                            "-c",
-                            "exit 0",
-                        ),
+                        execParentCanary,
                     )
                 val child =
                     run(
                         candidate.profile,
-                        shellCanary,
+                        execParentCanary,
                         listOf(
-                            "-c",
                             idCanary.toString(),
                         ),
                     )
@@ -700,9 +695,9 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             !Files.exists(
                                 outsideWrite,
                             ),
-                    shellControlPass =
+                    childControlPass =
                         startedNormally(
-                            shellControl,
+                            childControl,
                         ),
                     childDenied =
                         deniedWithoutAbort(
