@@ -779,7 +779,7 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
-    fun canonicalOrdinalAndTypedNeighborSurviveAnAbandonedPhysicalSequenceGap() {
+    fun canonicalOrdinalAndTypedNeighborSurviveAnAbandonedBranchAtTheSameSequence() {
         ContinuityTurnFixture().use {
             fixture ->
             val first =
@@ -791,20 +791,21 @@ class VexLifeContinuitySourceLocatorTest {
                     ),
                 )
                     .single()
-            fixture.store.withWriterLease {
-                beginRequest(
-                    turnRef =
-                        "turn.continuity.abandoned-gap",
-                    requestMessageRef =
-                        "message.continuity.human.abandoned-gap",
-                    content =
-                        "This durable request is intentionally left off-head.",
-                    formedAt =
-                        Instant.parse(
-                            "2026-11-20T08:02:00Z",
-                        ),
-                )
-            }
+            val abandoned =
+                fixture.store.withWriterLease {
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.abandoned-branch",
+                        requestMessageRef =
+                            "message.continuity.human.abandoned-branch",
+                        content =
+                            "This durable request is intentionally left off-head.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T08:02:00Z",
+                            ),
+                    )
+                }
             val second =
                 fixture.commit(
                     ContinuityTurnFixture.Line(
@@ -815,11 +816,17 @@ class VexLifeContinuitySourceLocatorTest {
                 )
                     .single()
 
+            assertEquals(
+                abandoned.sequence,
+                second.first.sequence,
+                "an off-head branch and the later canonical successor lawfully reuse the same sequence coordinate from the last completed head",
+            )
             assertTrue(
-                second.first.sequence >
-                    first.second.sequence +
-                        1,
-                "the abandoned attempt must create a physical event-sequence gap for this proof",
+                abandoned.eventRef !=
+                    second.first.eventRef &&
+                    abandoned.eventHash !=
+                        second.first.eventHash,
+                "branch identity remains exact event ref/hash, not sequence alone",
             )
 
             fixture.store.withWriterLease {
@@ -898,7 +905,7 @@ class VexLifeContinuitySourceLocatorTest {
                     neighborhood.turns.map(
                         VexLifeTurnNavigation.Turn::turnRef,
                     ),
-                    "typed immediate-neighbor expansion follows canonical lineage across physical gaps",
+                    "typed immediate-neighbor expansion follows canonical completed lineage despite an abandoned branch at the same sequence",
                 )
                 assertEquals(
                     listOf(
