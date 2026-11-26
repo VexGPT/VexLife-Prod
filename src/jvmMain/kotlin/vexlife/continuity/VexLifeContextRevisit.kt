@@ -247,6 +247,8 @@ object VexLifeContextRevisit {
                 } else {
                     null
                 }
+            val conversationViewReader =
+                readConversationView
             val neighborhoodRead =
                 if (
                     Scope.CONVERSATION in
@@ -256,7 +258,7 @@ object VexLifeContextRevisit {
                         null &&
                     request !=
                         null &&
-                    readConversationView !=
+                    conversationViewReader !=
                         null
                 ) {
                     conversationViews[
@@ -267,7 +269,7 @@ object VexLifeContextRevisit {
                                 System.nanoTime()
                             val outcome =
                                 runCatching {
-                                    readConversationView.invoke(
+                                    conversationViewReader(
                                         request,
                                         lifecycleRead
                                             ?.getOrNull(),
