@@ -428,6 +428,18 @@ object VexLifeContextRevisit {
         val frontierSize: Int,
     )
 
+    fun supportsIndexedConversationView(
+        request: Request,
+    ): Boolean =
+        Scope.CONVERSATION in
+            request.scopes &&
+            request.queries.all {
+                query ->
+                query.window ==
+                    null &&
+                    !query.corrections
+            }
+
     fun parse(arguments: JsonObject): Parsed {
         val scopes =
             when (val value = arguments["scopes"]) {
@@ -544,14 +556,11 @@ object VexLifeContextRevisit {
         require(
             sources.conversationView ==
                 null ||
-                request.queries.none {
-                    query ->
-                    query.window !=
-                        null ||
-                        query.corrections
-                }
+                supportsIndexedConversationView(
+                    request,
+                )
         ) {
-            "indexed Conversation neighborhood cannot satisfy window/global-correction queries"
+            "indexed Conversation neighborhood cannot satisfy this revisit request"
         }
         val turns =
             when {
