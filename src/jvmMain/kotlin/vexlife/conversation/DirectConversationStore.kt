@@ -609,10 +609,14 @@ class DirectConversationStore(
                 ) {
                     "canonical writer lease already owns one response for this pending request"
                 }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
             }
-            validateRequestAsPending(
-                request,
-            )
             requireNonEmpty(
                 responseMessageRef,
                 "responseMessageRef",
@@ -762,10 +766,14 @@ class DirectConversationStore(
                 ) {
                     "canonical writer lease already owns one response for this pending request"
                 }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
             }
-            validateRequestAsPending(
-                request,
-            )
             require(
                 request.schemaVersion ==
                     VexLifeConversationContract.EventSchemaV2,
@@ -905,10 +913,14 @@ class DirectConversationStore(
                 ) {
                     "canonical completed head requires this writer lease's exact durable response"
                 }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
             }
-            validateRequestAsPending(
-                request,
-            )
             validateEvent(
                 response,
             )
@@ -1045,6 +1057,55 @@ class DirectConversationStore(
             }
 
             return current.head
+        }
+
+        private fun validateOwnedPendingRequest(
+            request: Event,
+        ) {
+            validateEvent(
+                request,
+            )
+            require(
+                request.eventKind ==
+                    VexLifeConversationContract.RequestKind,
+            ) {
+                "canonical response requires one request event"
+            }
+
+            val beforeHead =
+                readHeadRecord()
+            val expectedSequence =
+                beforeHead
+                    ?.sequence
+                    ?.plus(
+                        1,
+                    )
+                    ?: 0L
+            val expectedPrior =
+                beforeHead
+                    ?.eventHash
+
+            require(
+                request.sequence ==
+                    expectedSequence &&
+                    request.priorEventHash ==
+                    expectedPrior,
+            ) {
+                "canonical request no longer extends the exact current completed head"
+            }
+
+            val durable =
+                readEventAt(
+                    eventPath(
+                        request,
+                    ),
+                )
+            require(
+                durable ==
+                    request,
+            ) {
+                "canonical pending request is not the exact durable event"
+            }
         }
 
         private fun requestAdmissionSnapshot(
@@ -2547,13 +2608,6 @@ class DirectConversationStore(
                 request,
         ) {
             "canonical pending request is not the exact durable event"
-        }
-
-        if (
-            pendingRequest ==
-                request
-        ) {
-            return
         }
 
         val all =
