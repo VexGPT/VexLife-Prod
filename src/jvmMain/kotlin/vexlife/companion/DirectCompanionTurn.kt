@@ -100,13 +100,6 @@ object DirectCompanionTurn {
          */
         val requestAttachments: List<VexLifeLocalArtifact.RequestAttachment> =
             emptyList(),
-        /**
-         * Product-service retries may arrive after the Composer draft has already been consumed.
-         * When true, an empty attachment list may match already-durable attachments for an existing
-         * idempotency identity. It never adds attachments to a new request.
-         */
-        val reuseDurableRequestAttachmentsWhenEmpty: Boolean =
-            false,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
@@ -116,6 +109,13 @@ object DirectCompanionTurn {
          * every provider stage in this turn; a later profile edit belongs to the next Send.
          */
         val contextProfile: VexLifeContextProfile.Effective? = null,
+        /**
+         * Product-service retries may arrive after the Composer draft has already been consumed.
+         * When true, an empty attachment list may match already-durable attachments for an existing
+         * idempotency identity. It never adds attachments to a new request.
+         */
+        val reuseDurableRequestAttachmentsWhenEmpty: Boolean =
+            false,
     ) {
         init {
             requireRef(
