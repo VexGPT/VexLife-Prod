@@ -152,7 +152,7 @@ object VexLifeContinuitySourceLocator {
     )
 
     /**
-     * Optional realization capability for a true inverted lexical index.
+     * Optional realization capability for inverted lexical/ref/typed-edge lookup.
      *
      * Product semantics do not require this exact data structure. A backend that does not implement
      * it preserves the prior linear derived-entry scan; a qualified backend may instead answer
@@ -281,7 +281,9 @@ object VexLifeContinuitySourceLocator {
                         priorGeneration.sourceConversationSequence ==
                             null &&
                         requestPostings.isEmpty() &&
-                        responsePostings.isEmpty()
+                        responsePostings.isEmpty() &&
+                        entryIndexByRef.isEmpty() &&
+                        entryIndexesByTypedEdge.isEmpty()
                 ) {
                     "indexed locator append cannot bootstrap from a non-empty missing generation"
                 }
