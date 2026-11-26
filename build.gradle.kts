@@ -3985,10 +3985,16 @@ tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
             "C3-R1 Mac proof private service image is missing: $imageRoot"
         }
 
+        val proofMode =
+            (project.findProperty(
+                "vexlifeC3R1MacProofMode",
+            ) as String?)
+                ?: "FULL"
         setArgs(
             listOf(
                 imageRoot.toString(),
                 sourceSha,
+                proofMode,
             ),
         )
     }

@@ -18,9 +18,16 @@ import vexlife.workspace.VexLifeWorkspaceRunStore
  * macOS sandbox boundary before R1 can be accepted. R2 later owns ordinary-turn integration.
  */
 object VexLifeWorkspaceJavaTestMacProbe {
+    private const val FullMode =
+        "FULL"
+
+    private const val SubstrateMatrixMode =
+        "SUBSTRATE_MATRIX"
+
     fun run(
         imageRoot: Path,
         sourceSha: String,
+        mode: String = FullMode,
     ) {
         require(
             System.getProperty(
@@ -69,6 +76,25 @@ object VexLifeWorkspaceJavaTestMacProbe {
             ) {
                 "workspace Java-test runtime is not current on this Mac"
             }
+
+        when (
+            mode
+        ) {
+            SubstrateMatrixMode -> {
+                proveSandboxSubstrateMatrix(
+                    runtime =
+                        runtime,
+                )
+                return
+            }
+
+            FullMode -> Unit
+
+            else ->
+                error(
+                    "unsupported C3-R1 Mac proof mode: $mode",
+                )
+        }
 
         proveSandboxSubstrate(
             runtime =
@@ -203,6 +229,534 @@ object VexLifeWorkspaceJavaTestMacProbe {
             }
         } finally {
             scratch
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    private fun proveSandboxSubstrateMatrix(
+        runtime: VexLifeWorkspaceJavaTest.RuntimeObservation,
+    ) {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-workspace-java-test-mac-platform-matrix-",
+            )
+                .toRealPath()
+        val scratch =
+            Files.createDirectories(
+                parent.resolve(
+                    "scratch",
+                ),
+            )
+        val outside =
+            parent.resolve(
+                "outside-person-sentinel.txt",
+            )
+        val outsideWrite =
+            parent.resolve(
+                "outside-write.txt",
+            )
+        Files.writeString(
+            outside,
+            "OUTSIDE_PERSON_SENTINEL",
+        )
+
+        try {
+            fun executable(
+                value: String,
+            ): Path =
+                Path.of(
+                    value,
+                )
+                    .toRealPath()
+                    .also {
+                        require(
+                            Files.isExecutable(
+                                it,
+                            ),
+                        ) {
+                            "required A012 canary executable unavailable: $it"
+                        }
+                    }
+
+            val trueCanary =
+                executable(
+                    "/usr/bin/true",
+                )
+            val catCanary =
+                executable(
+                    "/bin/cat",
+                )
+            val touchCanary =
+                executable(
+                    "/usr/bin/touch",
+                )
+            val shellCanary =
+                executable(
+                    "/bin/sh",
+                )
+            val idCanary =
+                executable(
+                    "/usr/bin/id",
+                )
+            val networkCanary =
+                executable(
+                    "/usr/bin/nc",
+                )
+
+            fun literal(
+                path: Path,
+            ): String =
+                path
+                    .toString()
+                    .replace(
+                        "\\",
+                        "\\\\",
+                    )
+                    .replace(
+                        "\"",
+                        "\\\"",
+                    )
+
+            val scratchLiteral =
+                literal(
+                    scratch,
+                )
+            val canaryReadRules =
+                listOf(
+                    trueCanary,
+                    catCanary,
+                    touchCanary,
+                    shellCanary,
+                    networkCanary,
+                )
+                    .joinToString(
+                        "\n",
+                    ) {
+                        "(allow file-read* (literal \"" +
+                            literal(
+                                it,
+                            ) +
+                            "\"))"
+                    }
+            val canaryExecRules =
+                listOf(
+                    trueCanary,
+                    catCanary,
+                    touchCanary,
+                    shellCanary,
+                    networkCanary,
+                )
+                    .joinToString(
+                        "\n",
+                    ) {
+                        "(allow process-exec (literal \"" +
+                            literal(
+                                it,
+                            ) +
+                            "\"))"
+                    }
+
+            val commonProfile =
+                """
+                |(version 1)
+                |(deny default)
+                |(allow process-fork)
+                |(allow signal (target self))
+                |(allow sysctl-read)
+                |(allow file-read-metadata)
+                |$canaryExecRules
+                |$canaryReadRules
+                |(allow file-read* file-write* (subpath "$scratchLiteral"))
+                |(allow file-read*
+                |  (subpath "/usr")
+                |  (subpath "/System")
+                |  (literal "/dev/null")
+                |  (literal "/dev/random")
+                |  (literal "/dev/urandom"))
+                |(allow file-write* (literal "/dev/null"))
+                """.trimMargin() +
+                    "\n"
+
+            val executableMapping =
+                """
+                |(allow file-map-executable
+                |  (subpath "/Library/Apple/System/Library/Frameworks")
+                |  (subpath "/Library/Apple/System/Library/PrivateFrameworks")
+                |  (subpath "/Library/Apple/usr/lib")
+                |  (subpath "/System/Library/Extensions")
+                |  (subpath "/System/Library/Frameworks")
+                |  (subpath "/System/Library/PrivateFrameworks")
+                |  (subpath "/System/Library/SubFrameworks")
+                |  (subpath "/System/iOSSupport/System/Library/Frameworks")
+                |  (subpath "/System/iOSSupport/System/Library/PrivateFrameworks")
+                |  (subpath "/System/iOSSupport/System/Library/SubFrameworks")
+                |  (subpath "/usr/lib"))
+                |(allow file-read* file-test-existence
+                |  (subpath "/Library/Apple/System/Library/Frameworks")
+                |  (subpath "/Library/Apple/System/Library/PrivateFrameworks")
+                |  (subpath "/Library/Apple/usr/lib")
+                |  (subpath "/System/Library/Frameworks")
+                |  (subpath "/System/Library/PrivateFrameworks")
+                |  (subpath "/System/Library/SubFrameworks")
+                |  (subpath "/System/iOSSupport/System/Library/Frameworks")
+                |  (subpath "/System/iOSSupport/System/Library/PrivateFrameworks")
+                |  (subpath "/System/iOSSupport/System/Library/SubFrameworks")
+                |  (subpath "/usr/lib"))
+                """.trimMargin() +
+                    "\n"
+
+            val platformFilesystem =
+                """
+                |(allow file-read* file-test-existence
+                |  (subpath "/Library/Apple")
+                |  (subpath "/Library/Filesystems/NetFSPlugins")
+                |  (subpath "/Library/Preferences/Logging")
+                |  (subpath "/private/var/db/DarwinDirectory/local/recordStore.data")
+                |  (subpath "/private/var/db/timezone")
+                |  (subpath "/usr/lib")
+                |  (subpath "/usr/share")
+                |  (subpath "/Library/Preferences")
+                |  (subpath "/var/db")
+                |  (subpath "/private/var/db"))
+                |(allow file-read-metadata file-test-existence
+                |  (literal "/etc")
+                |  (literal "/tmp")
+                |  (literal "/var")
+                |  (literal "/private/etc/localtime"))
+                |(allow file-read-metadata file-test-existence
+                |  (path-ancestors "/System/Volumes/Data/private"))
+                |(allow file-read* file-test-existence
+                |  (literal "/"))
+                |(allow file-read*
+                |  (subpath "/etc"))
+                |(allow file-read*
+                |  (subpath "/private/etc"))
+                |(allow file-read-metadata
+                |  (subpath "/var"))
+                |(allow file-read-metadata
+                |  (subpath "/private/var"))
+                |(allow file-read* file-test-existence
+                |  (literal "/dev/autofs_nowait")
+                |  (literal "/dev/random")
+                |  (literal "/dev/urandom")
+                |  (literal "/private/etc/master.passwd")
+                |  (literal "/private/etc/passwd")
+                |  (literal "/private/etc/protocols")
+                |  (literal "/private/etc/services"))
+                |(allow file-read* file-test-existence file-write-data
+                |  (literal "/dev/null")
+                |  (literal "/dev/zero"))
+                """.trimMargin() +
+                    "\n"
+
+            val platformRuntime =
+                """
+                |(allow process-info* (target same-sandbox))
+                |(allow signal (target same-sandbox))
+                |(allow system-mac-syscall (mac-policy-name "vnguard"))
+                |(allow system-mac-syscall
+                |  (require-all
+                |    (mac-policy-name "Sandbox")
+                |    (mac-syscall-number 67)))
+                |(allow system-fsctl (fsctl-command FSIOC_CAS_BSDFLAGS))
+                |(allow sysctl-write
+                |  (sysctl-name "kern.grade_cputype"))
+                |(allow iokit-open
+                |  (iokit-registry-entry-class "RootDomainUserClient"))
+                |(allow mach-lookup
+                |  (global-name "com.apple.system.opendirectoryd.libinfo"))
+                |(allow mach-lookup
+                |  (global-name "com.apple.PowerManagement.control"))
+                |(allow ipc-posix-sem)
+                """.trimMargin() +
+                    "\n"
+
+            data class Candidate(
+                val name: String,
+                val profile: String,
+            )
+
+            val candidates =
+                listOf(
+                    Candidate(
+                        name =
+                            "M1_CURRENT_NARROW",
+                        profile =
+                            commonProfile,
+                    ),
+                    Candidate(
+                        name =
+                            "M2_EXECUTABLE_MAPPING",
+                        profile =
+                            commonProfile +
+                                executableMapping,
+                    ),
+                    Candidate(
+                        name =
+                            "M3_PLATFORM_FILESYSTEM",
+                        profile =
+                            commonProfile +
+                                executableMapping +
+                                platformFilesystem,
+                    ),
+                    Candidate(
+                        name =
+                            "M4_PLATFORM_RUNTIME",
+                        profile =
+                            commonProfile +
+                                executableMapping +
+                                platformFilesystem +
+                                platformRuntime,
+                    ),
+                )
+
+            fun run(
+                profile: String,
+                program: Path,
+                arguments: List<String> =
+                    emptyList(),
+                timeoutMs: Long =
+                    5_000,
+            ): VexLifeWorkspaceJavaTest.ProcessResult =
+                VexLifeWorkspaceJavaTest.SystemRunner.run(
+                    VexLifeWorkspaceJavaTest.ProcessSpec(
+                        program =
+                            runtime.sandboxPath,
+                        arguments =
+                            listOf(
+                                "-p",
+                                profile,
+                                program.toString(),
+                            ) +
+                                arguments,
+                        workingDirectory =
+                            scratch,
+                        environment =
+                            emptyMap(),
+                        timeoutMs =
+                            timeoutMs,
+                        maximumStdoutBytes =
+                            8_192,
+                        maximumStderrBytes =
+                            8_192,
+                    ),
+                )
+
+            fun startedNormally(
+                result: VexLifeWorkspaceJavaTest.ProcessResult,
+            ): Boolean =
+                result.started &&
+                    !result.timedOut &&
+                    result.exitCode ==
+                    0
+
+            fun deniedWithoutAbort(
+                result: VexLifeWorkspaceJavaTest.ProcessResult,
+            ): Boolean =
+                result.started &&
+                    !result.timedOut &&
+                    result.exitCode !=
+                    null &&
+                    result.exitCode !=
+                    0 &&
+                    result.exitCode !=
+                    134
+
+            fun safetyPass(
+                candidate: Candidate,
+            ): Boolean {
+                val read =
+                    run(
+                        candidate.profile,
+                        catCanary,
+                        listOf(
+                            outside.toString(),
+                        ),
+                    )
+                Files.deleteIfExists(
+                    outsideWrite,
+                )
+                val write =
+                    run(
+                        candidate.profile,
+                        touchCanary,
+                        listOf(
+                            outsideWrite.toString(),
+                        ),
+                    )
+                val shellControl =
+                    run(
+                        candidate.profile,
+                        shellCanary,
+                        listOf(
+                            "-c",
+                            "exit 0",
+                        ),
+                    )
+                val child =
+                    run(
+                        candidate.profile,
+                        shellCanary,
+                        listOf(
+                            "-c",
+                            idCanary.toString(),
+                        ),
+                    )
+                val networkControl =
+                    run(
+                        candidate.profile +
+                            "(allow network-bind (local ip \"localhost:*\"))\n" +
+                            "(allow network-inbound (local ip \"localhost:*\"))\n",
+                        networkCanary,
+                        listOf(
+                            "-l",
+                            "127.0.0.1",
+                            "54321",
+                        ),
+                        timeoutMs =
+                            750,
+                    )
+                val network =
+                    run(
+                        candidate.profile,
+                        networkCanary,
+                        listOf(
+                            "-l",
+                            "127.0.0.1",
+                            "54321",
+                        ),
+                        timeoutMs =
+                            1_500,
+                    )
+
+                return deniedWithoutAbort(
+                    read,
+                ) &&
+                    !read.stdout.contains(
+                        "OUTSIDE_PERSON_SENTINEL",
+                    ) &&
+                    deniedWithoutAbort(
+                        write,
+                    ) &&
+                    !Files.exists(
+                        outsideWrite,
+                    ) &&
+                    startedNormally(
+                        shellControl,
+                    ) &&
+                    deniedWithoutAbort(
+                        child,
+                    ) &&
+                    networkControl.started &&
+                    networkControl.timedOut &&
+                    deniedWithoutAbort(
+                        network,
+                    )
+            }
+
+            val globalProfile =
+                commonProfile +
+                    "(allow file-read*)\n"
+            val global =
+                run(
+                    globalProfile,
+                    trueCanary,
+                )
+            require(
+                startedNormally(
+                    global,
+                )
+            ) {
+                "A012 global-read control failed: osVersion=" +
+                    System.getProperty(
+                        "os.version",
+                    ) +
+                    " exit=" +
+                    global.exitCode +
+                    " stdout=" +
+                    global.stdout +
+                    " stderr=" +
+                    global.stderr
+            }
+
+            val observations =
+                candidates.map {
+                    candidate ->
+                    val startup =
+                        run(
+                            candidate.profile,
+                            trueCanary,
+                        )
+                    val safe =
+                        if (
+                            startedNormally(
+                                startup,
+                            )
+                        ) {
+                            safetyPass(
+                                candidate,
+                            )
+                        } else {
+                            false
+                        }
+                    candidate.name +
+                        "{exit=" +
+                        startup.exitCode +
+                        ",timedOut=" +
+                        startup.timedOut +
+                        ",safe=" +
+                        safe +
+                        ",stderr=" +
+                        startup.stderr +
+                        "}"
+                }
+
+            val selected =
+                candidates.firstOrNull {
+                    candidate ->
+                    val startup =
+                        run(
+                            candidate.profile,
+                            trueCanary,
+                        )
+                    startedNormally(
+                        startup,
+                    ) &&
+                        safetyPass(
+                            candidate,
+                        )
+                }
+
+            requireNotNull(
+                selected,
+            ) {
+                "A012 no safe platform-runtime baseline: osVersion=" +
+                    System.getProperty(
+                        "os.version",
+                    ) +
+                    " observations=" +
+                    observations.joinToString(
+                        ";",
+                    )
+            }
+
+            println(
+                "VEXLIFE_WORKSPACE_JAVA_TEST_MAC_SUBSTRATE_MATRIX_PASS " +
+                    "osVersion=" +
+                    System.getProperty(
+                        "os.version",
+                    ) +
+                    " selected=" +
+                    selected.name +
+                    " observations=" +
+                    observations.joinToString(
+                        ";",
+                    ),
+            )
+        } finally {
+            parent
                 .toFile()
                 .deleteRecursively()
         }
@@ -643,11 +1197,15 @@ object VexLifeWorkspaceJavaTestMacProbe {
 
 fun main(args: Array<String>) {
     require(
-        args.size ==
-            2,
+        args.size in
+            2..3,
     ) {
-        "usage: <private-service-image-root> <source-sha>"
+        "usage: <private-service-image-root> <source-sha> [FULL|SUBSTRATE_MATRIX]"
     }
+    val mode =
+        args.getOrNull(
+            2,
+        ) ?: "FULL"
     VexLifeWorkspaceJavaTestMacProbe.run(
         imageRoot =
             Path.of(
@@ -657,9 +1215,11 @@ fun main(args: Array<String>) {
                 .normalize(),
         sourceSha =
             args[1],
+        mode =
+            mode,
     )
     println(
-        "VEXLIFE_WORKSPACE_JAVA_TEST_MAC_PROBE_PASS",
+        "VEXLIFE_WORKSPACE_JAVA_TEST_MAC_PROBE_PASS mode=$mode",
     )
 }
 
