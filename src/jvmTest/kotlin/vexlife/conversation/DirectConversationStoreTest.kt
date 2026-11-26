@@ -5,6 +5,8 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -146,6 +148,387 @@ class DirectConversationStoreTest {
                     },
                 )
             }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun admissionSnapshotIsBoundToOneWriterLeaseAndConsumedOnce() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-admission-snapshot-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            lateinit var foreignAdmission: DirectConversationStore.RequestAdmission
+
+            store.withWriterLease {
+                foreignAdmission =
+                    currentForRequestAdmission(
+                        "message.self-development.human.admission.foreign",
+                    )
+                assertNull(
+                    foreignAdmission.head,
+                )
+            }
+
+            store.withWriterLease {
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.foreign",
+                        requestMessageRef = "message.self-development.human.admission.foreign",
+                        content = "A snapshot from another lease must not write.",
+                        admissionSnapshot = foreignAdmission,
+                    )
+                }
+
+                val admission =
+                    currentForRequestAdmission(
+                        "message.self-development.human.admission.001",
+                    )
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.001",
+                        requestMessageRef = "message.self-development.human.admission.001",
+                        content = "Use the exact admitted snapshot.",
+                        admissionSnapshot = admission,
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.self-development.companion.admission.001",
+                        content = "Bound to the exact writer lease.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.admission.001",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.admission.001",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T12:00:02Z",
+                            ),
+                    )
+                val committed =
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                    )
+
+                assertEquals(
+                    response.eventHash,
+                    committed.eventHash,
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.replay",
+                        requestMessageRef = "message.self-development.human.admission.001",
+                        content = "A consumed admission capability must not replay.",
+                        admissionSnapshot = admission,
+                    )
+                }
+                val after =
+                    current()
+                assertEquals(
+                    committed,
+                    after.head,
+                )
+                assertEquals(
+                    2,
+                    after.events.size,
+                    "rejected admission capabilities must not append canonical events",
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun volatileAttemptIndexBoundsCurrentMissCommittedFailedAndStaleHeadRecovery() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-attempt-index-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val source =
+                DirectConversationStore(
+                    productHome,
+                )
+            source.withWriterLease {
+                val committedRequest =
+                    beginRequest(
+                        turnRef = "turn.attempt-index.committed.001",
+                        requestMessageRef = "message.attempt-index.human.committed.001",
+                        content = "Committed attempt",
+                    )
+                val committedResponse =
+                    appendResponse(
+                        request = committedRequest,
+                        responseMessageRef = "message.attempt-index.vex.committed.001",
+                        content = "Committed response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.attempt-index.committed.001",
+                        invocationEvidenceRef = "evidence.attempt-index.committed.001",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = committedRequest,
+                        response = committedResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T13:00:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = committedRequest,
+                    response = committedResponse,
+                    contextSha256 = context.sha256,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-25T13:00:03Z",
+                        ),
+                )
+            }
+            source.withWriterLease {
+                beginRequest(
+                    turnRef = "turn.attempt-index.failed.002",
+                    requestMessageRef = "message.attempt-index.human.failed.002",
+                    content = "Failed attempt",
+                )
+            }
+
+            val index =
+                DirectConversationAttemptIndex()
+            val indexed =
+                DirectConversationStore(
+                    productHome = productHome,
+                    attemptIndex = index,
+                )
+            val rebuilt =
+                index.rebuild(
+                    indexed.current(),
+                )
+            assertTrue(
+                rebuilt.wholeHistoryEventEnumerationPerformed,
+            )
+            assertEquals(
+                2,
+                rebuilt.attemptCount,
+            )
+
+            val committed =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.committed.001",
+                )
+            assertEquals(
+                "Committed attempt",
+                assertNotNull(
+                    committed.requestEvent,
+                )
+                    .content,
+            )
+            assertFalse(
+                committed.wholeHistoryEventEnumerationPerformed,
+            )
+            assertFalse(
+                committed.derivedIndexRebuilt,
+            )
+
+            val failed =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.failed.002",
+                )
+            assertEquals(
+                "Failed attempt",
+                assertNotNull(
+                    failed.requestEvent,
+                )
+                    .content,
+            )
+            assertFalse(
+                failed.wholeHistoryEventEnumerationPerformed,
+            )
+
+            val miss =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.new.003",
+                )
+            assertNull(
+                miss.requestEvent,
+            )
+            assertFalse(
+                miss.wholeHistoryEventEnumerationPerformed,
+                "current service-lifetime index miss must not enumerate lifetime Conversation",
+            )
+
+            indexed.withWriterLease {
+                val admission =
+                    currentForRequestAdmission(
+                        "message.attempt-index.human.new.003",
+                    )
+                assertFalse(
+                    admission.wholeHistoryEventEnumerationPerformed,
+                )
+                val request =
+                    beginRequest(
+                        turnRef = "turn.attempt-index.new.003",
+                        requestMessageRef = "message.attempt-index.human.new.003",
+                        content = "Indexed new attempt",
+                        admissionSnapshot = admission,
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.attempt-index.vex.new.003",
+                        content = "Indexed new response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.attempt-index.new.003",
+                        invocationEvidenceRef = "evidence.attempt-index.new.003",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T13:10:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 = context.sha256,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-25T13:10:03Z",
+                        ),
+                )
+            }
+
+            val incrementallyCurrent =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.new.003",
+                )
+            assertEquals(
+                "Indexed new attempt",
+                assertNotNull(
+                    incrementallyCurrent.requestEvent,
+                )
+                    .content,
+            )
+            assertFalse(
+                incrementallyCurrent.wholeHistoryEventEnumerationPerformed,
+            )
+
+            val external =
+                DirectConversationStore(
+                    productHome,
+                )
+            external.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.attempt-index.external.004",
+                        requestMessageRef = "message.attempt-index.human.external.004",
+                        content = "External completed advance",
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.attempt-index.vex.external.004",
+                        content = "External response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.attempt-index.external.004",
+                        invocationEvidenceRef = "evidence.attempt-index.external.004",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T13:20:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 = context.sha256,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-25T13:20:03Z",
+                        ),
+                )
+            }
+
+            val staleFallback =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.external.004",
+                )
+            assertEquals(
+                "External completed advance",
+                assertNotNull(
+                    staleFallback.requestEvent,
+                )
+                    .content,
+            )
+            assertTrue(
+                staleFallback.wholeHistoryEventEnumerationPerformed,
+                "completed-head drift must fail closed to canonical full recovery",
+            )
+            assertTrue(
+                staleFallback.derivedIndexRebuilt,
+            )
+
+            val afterRebuildMiss =
+                indexed.requestEventForMessageRef(
+                    "message.attempt-index.human.never-seen.005",
+                )
+            assertNull(
+                afterRebuildMiss.requestEvent,
+            )
+            assertFalse(
+                afterRebuildMiss.wholeHistoryEventEnumerationPerformed,
+            )
         } finally {
             parent
                 .toFile()

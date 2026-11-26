@@ -92,6 +92,10 @@ object DirectConversationSourceReturn {
         val scannedCompletedTurnCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
         val effectsPerformed: Boolean,
+        val sourceLifecycleBindingRef: String? =
+            null,
+        val historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     )
 
     @Serializable
@@ -438,11 +442,29 @@ object DirectConversationSourceReturn {
         request: Request,
         excludedEventRefs: Set<String> =
             emptySet(),
+        sourceLifecycleBindingRef: String? =
+            null,
+        historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     ): Discovery {
         val admitted =
             requireRequest(
                 request,
             )
+        require(
+            sourceLifecycleBindingRef ==
+                null ||
+                sourceLifecycleBindingRef.isNotBlank()
+        ) {
+            "Conversation source-return lifecycle binding must be absent or non-empty"
+        }
+        require(
+            historicalCurrentizedEventRefs.isEmpty() ||
+                sourceLifecycleBindingRef !=
+                null
+        ) {
+            "historical-currentized source refs require one exact lifecycle binding"
+        }
         val snapshot =
             conversationOwner.current()
         val events =
@@ -640,6 +662,10 @@ object DirectConversationSourceReturn {
                     2,
             wholeHistoryEventEnumerationPerformed = true,
             effectsPerformed = false,
+            sourceLifecycleBindingRef =
+                sourceLifecycleBindingRef,
+            historicalCurrentizedEventRefs =
+                historicalCurrentizedEventRefs,
         )
     }
 
@@ -995,9 +1021,37 @@ object DirectConversationSourceReturn {
                         "Conversation source-return provider state is not recognized",
                     )
             }
-        return listOf(
+        val historicalCurrentizedReturned =
+            matches
+                .flatMap {
+                    match ->
+                    listOf(
+                        match.requestEvent.eventRef,
+                        match.responseEvent.eventRef,
+                    )
+                }
+                .filter {
+                    it in
+                        discovery.historicalCurrentizedEventRefs
+                }
+                .distinct()
+        val lifecycleTruth =
+            discovery.sourceLifecycleBindingRef
+                ?.let {
+                    if (
+                        historicalCurrentizedReturned.isNotEmpty()
+                    ) {
+                        "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                            historicalCurrentizedReturned.joinToString(",") +
+                            ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+                    } else {
+                        "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
+                    }
+                }
+        return listOfNotNull(
             ContextHeader,
             hostTruth,
+            lifecycleTruth,
             "This block is the Product's source-return execution evidence for this human turn. Protocol availability, reasoning, a planned request, or a narrated control is not equivalent to this result.",
             "Returned Conversation source is not Memory, semantic acceptance, or a profile of the human.",
             "Answer the current human from only the exact source actually present here and other current context. If the state is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
