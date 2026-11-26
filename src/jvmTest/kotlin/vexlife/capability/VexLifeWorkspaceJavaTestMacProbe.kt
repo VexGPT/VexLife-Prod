@@ -70,6 +70,10 @@ object VexLifeWorkspaceJavaTestMacProbe {
                 "workspace Java-test runtime is not current on this Mac"
             }
 
+        proveSandboxSubstrate(
+            runtime =
+                runtime,
+        )
         proveOwnerPass(
             runtimeSource =
                 runtimeSource,
@@ -82,6 +86,126 @@ object VexLifeWorkspaceJavaTestMacProbe {
             runtime =
                 runtime,
         )
+    }
+
+    private fun proveSandboxSubstrate(
+        runtime: VexLifeWorkspaceJavaTest.RuntimeObservation,
+    ) {
+        val scratch =
+            Files.createTempDirectory(
+                "vexlife-workspace-java-test-mac-substrate-",
+            )
+                .toRealPath()
+        try {
+            val canary =
+                Path.of(
+                    "/usr/bin/true",
+                )
+                    .toRealPath()
+            val commonProfile =
+                """
+                |(version 1)
+                |(deny default)
+                |(allow process-fork)
+                |(allow signal (target self))
+                |(allow sysctl-read)
+                |(allow file-read-metadata)
+                |(allow process-exec (literal "${canary}"))
+                """.trimMargin()
+            val globalProfile =
+                commonProfile +
+                    "\n(allow file-read*)\n"
+            val narrowProfile =
+                commonProfile +
+                    """
+                    |
+                    |(allow file-read*
+                    |  (subpath "/usr")
+                    |  (subpath "/System")
+                    |  (literal "/dev/null")
+                    |  (literal "/dev/random")
+                    |  (literal "/dev/urandom"))
+                    """.trimMargin() +
+                    "\n"
+
+            fun run(
+                profile: String,
+            ): VexLifeWorkspaceJavaTest.ProcessResult =
+                VexLifeWorkspaceJavaTest.SystemRunner.run(
+                    VexLifeWorkspaceJavaTest.ProcessSpec(
+                        program =
+                            runtime.sandboxPath,
+                        arguments =
+                            listOf(
+                                "-p",
+                                profile,
+                                canary.toString(),
+                            ),
+                        workingDirectory =
+                            scratch,
+                        environment =
+                            emptyMap(),
+                        timeoutMs =
+                            5_000,
+                        maximumStdoutBytes =
+                            4_096,
+                        maximumStderrBytes =
+                            4_096,
+                    ),
+                )
+
+            val global =
+                run(
+                    globalProfile,
+                )
+            val narrow =
+                run(
+                    narrowProfile,
+                )
+            val osVersion =
+                System.getProperty(
+                    "os.version",
+                )
+
+            require(
+                global.started &&
+                    !global.timedOut &&
+                    global.exitCode ==
+                    0
+            ) {
+                "macOS sandbox substrate global-read canary failed: " +
+                    "osVersion=" +
+                    osVersion +
+                    " exit=" +
+                    global.exitCode +
+                    " stdout=" +
+                    global.stdout +
+                    " stderr=" +
+                    global.stderr
+            }
+            require(
+                narrow.started &&
+                    !narrow.timedOut &&
+                    narrow.exitCode ==
+                    0
+            ) {
+                "macOS sandbox substrate narrow-read canary failed: " +
+                    "osVersion=" +
+                    osVersion +
+                    " globalExit=" +
+                    global.exitCode +
+                    " narrowExit=" +
+                    narrow.exitCode +
+                    " stdout=" +
+                    narrow.stdout +
+                    " stderr=" +
+                    narrow.stderr
+            }
+        } finally {
+            scratch
+                .toFile()
+                .deleteRecursively()
+        }
     }
 
     private fun proveOwnerPass(
