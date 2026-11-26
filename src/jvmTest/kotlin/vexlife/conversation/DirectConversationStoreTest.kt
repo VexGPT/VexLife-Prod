@@ -154,6 +154,97 @@ class DirectConversationStoreTest {
     }
 
     @Test
+    fun admissionSnapshotCanBeReusedOnceInsideLeaseButStaleSnapshotIsRejected() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-admission-snapshot-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val admission =
+                    current()
+                assertNull(
+                    admission.head,
+                )
+
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.001",
+                        requestMessageRef = "message.self-development.human.admission.001",
+                        content = "Use the exact admitted snapshot.",
+                        admissionSnapshot = admission,
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.self-development.companion.admission.001",
+                        content = "Bound to the exact writer lease.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.admission.001",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.admission.001",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                    )
+                val committed =
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                    )
+
+                assertEquals(
+                    response.eventHash,
+                    committed.eventHash,
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.002",
+                        requestMessageRef = "message.self-development.human.admission.002",
+                        content = "A stale admission must not write.",
+                        admissionSnapshot = admission,
+                    )
+                }
+                val after =
+                    current()
+                assertEquals(
+                    committed,
+                    after.head,
+                )
+                assertEquals(
+                    2,
+                    after.events.size,
+                    "stale admission failure must not append another canonical event",
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun recentCompletedConversationWalksBackwardOnlyUntilTheBudgetBoundary() {
         val parent =
             Files.createTempDirectory(
