@@ -6240,6 +6240,43 @@ class VexLifeProdLocalService private constructor(
             }
         }
 
+    /**
+     * Existing durable request resources for one idempotency identity.
+     *
+     * null means this idempotency key has never formed a durable REQUEST. An empty list means a
+     * durable REQUEST exists and owns no Local Artifacts.
+     */
+    private fun durableRequestAttachments(
+        idempotencyKey: String,
+    ): List<VexLifeLocalArtifact.RequestAttachment>? {
+        val requestMessageRef =
+            DirectCompanionTurn.requestMessageRefFor(
+                idempotencyKey,
+            )
+        val request =
+            DirectConversationStore(
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            )
+                .current()
+                .events
+                .firstOrNull {
+                    it.eventKind ==
+                        VexLifeConversationContract.RequestKind &&
+                        it.messageRef ==
+                        requestMessageRef
+                }
+                ?: return null
+
+        return localArtifactStore
+            .bindingFor(
+                request.eventHash,
+            )
+            ?.attachments
+            .orEmpty()
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
@@ -6330,12 +6367,26 @@ class VexLifeProdLocalService private constructor(
             return
         }
 
+        val durableAttachments =
+            durableRequestAttachments(
+                request.idempotencyKey,
+            )
         val requestAttachments =
-            draftLeaseAttachments
+            if (
+                durableAttachments !=
+                    null &&
+                draftLeaseAttachments.isEmpty()
+            ) {
+                durableAttachments
+            } else {
+                draftLeaseAttachments
+            }
 
         if (
-            partnerTextTurn !=
+            durableAttachments ==
                 null &&
+                partnerTextTurn !=
+                    null &&
                 requestAttachments.isNotEmpty()
         ) {
             attachmentDraft.releaseSend(
@@ -6352,9 +6403,11 @@ class VexLifeProdLocalService private constructor(
         }
 
         if (
-            requestUsesStaticImage(
-                requestAttachments,
-            ) &&
+            durableAttachments ==
+                null &&
+                requestUsesStaticImage(
+                    requestAttachments,
+                ) &&
                 currentVisualInputEvidenceOrNull() ==
                 null
         ) {
@@ -6532,7 +6585,6 @@ class VexLifeProdLocalService private constructor(
             idempotencyKey = request.idempotencyKey,
             content = request.content,
             requestAttachments = requestAttachments,
-            reuseDurableRequestAttachmentsWhenEmpty = true,
             personContext = personContext(),
             contextProfile =
                 contextProfiles.readActive(
