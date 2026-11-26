@@ -27,7 +27,7 @@ import vexlife.conversation.DirectConversationStore
  */
 object VexLifeContinuitySourceLocator {
     const val GenerationSchema =
-        "vexlife-prod.continuity-source-locator-generation/v2"
+        "vexlife-prod.continuity-source-locator-generation/v3"
 
     const val UnboundSourceLifecycleBindingRef =
         "lifecycle.unbound"
@@ -69,6 +69,7 @@ object VexLifeContinuitySourceLocator {
      */
     data class Entry(
         val turnRef: String,
+        val canonicalOrdinal: Int,
         val coordinates: SourceCoordinates,
         val requestFingerprints: Set<String>,
         val responseFingerprints: Set<String>,
@@ -88,6 +89,7 @@ object VexLifeContinuitySourceLocator {
         val fingerprintBindingRef: String,
         val sourceEventCount: Int,
         val completedTurnCount: Int,
+        val canonicalCompletedTurnCount: Int,
         val entries: List<Entry>,
         val sourceLifecycleBindingRef: String =
             UnboundSourceLifecycleBindingRef,
@@ -619,6 +621,9 @@ object VexLifeContinuitySourceLocator {
                             Entry(
                                 turnRef =
                                     request.turnRef,
+                                canonicalOrdinal =
+                                    index /
+                                        2,
                                 coordinates =
                                     SourceCoordinates(
                                         request =
@@ -666,6 +671,9 @@ object VexLifeContinuitySourceLocator {
                         2,
                 completedTurnCount =
                     entries.size,
+                canonicalCompletedTurnCount =
+                    snapshot.canonicalEvents.size /
+                        2,
                 entries = entries,
             )
         requireGeneration(
@@ -743,6 +751,7 @@ object VexLifeContinuitySourceLocator {
                                 UnboundSourceLifecycleBindingRef,
                             sourceEventCount = 0,
                             completedTurnCount = 0,
+                            canonicalCompletedTurnCount = 0,
                             entries = emptyList(),
                         )
                     } else {
@@ -791,6 +800,8 @@ object VexLifeContinuitySourceLocator {
             Entry(
                 turnRef =
                     request.turnRef,
+                canonicalOrdinal =
+                    priorGeneration.canonicalCompletedTurnCount,
                 coordinates =
                     SourceCoordinates(
                         request =
@@ -829,6 +840,9 @@ object VexLifeContinuitySourceLocator {
                         2,
                 completedTurnCount =
                     priorGeneration.completedTurnCount +
+                        1,
+                canonicalCompletedTurnCount =
+                    priorGeneration.canonicalCompletedTurnCount +
                         1,
                 entries =
                     priorGeneration.entries +
@@ -1569,9 +1583,9 @@ object VexLifeContinuitySourceLocator {
                     rightIndex
                 ]
             if (
-                right.coordinates.request.sequence ==
-                    left.coordinates.request.sequence +
-                        2
+                right.canonicalOrdinal ==
+                    left.canonicalOrdinal +
+                        1
             ) {
                 neighborhoodIndexes +=
                     leftIndex
@@ -1638,16 +1652,7 @@ object VexLifeContinuitySourceLocator {
                 unresolvedSeedRefs =
                     unresolvedSeedRefs,
                 totalCompletedTurnCount =
-                    currentHead
-                        ?.sequence
-                        ?.let {
-                            sequence ->
-                            (sequence /
-                                2 +
-                                1)
-                                .toInt()
-                        }
-                        ?: 0,
+                    generation.canonicalCompletedTurnCount,
                 exactEventFileReadCount = 0,
                 exactHeadFileReadCount = 0,
                 wholeHistoryHeadTraversalPerformed = false,
@@ -1721,6 +1726,8 @@ object VexLifeContinuitySourceLocator {
                 VexLifeTurnNavigation.projectPair(
                     request = request,
                     response = response,
+                    ordinal =
+                        entry.canonicalOrdinal,
                 )
             }
                 .sortedBy(
@@ -1747,16 +1754,7 @@ object VexLifeContinuitySourceLocator {
             unresolvedSeedRefs =
                 unresolvedSeedRefs,
             totalCompletedTurnCount =
-                currentHead
-                    ?.sequence
-                    ?.let {
-                        sequence ->
-                        (sequence /
-                            2 +
-                            1)
-                            .toInt()
-                    }
-                    ?: 0,
+                generation.canonicalCompletedTurnCount,
             exactEventFileReadCount =
                 exact.exactEventFileReadCount,
             exactHeadFileReadCount =
@@ -1800,10 +1798,12 @@ object VexLifeContinuitySourceLocator {
                 2 ==
                 0 &&
                 generation.completedTurnCount ==
-                generation.sourceEventCount /
-                    2 &&
+                    generation.sourceEventCount /
+                        2 &&
                 generation.entries.size ==
-                generation.completedTurnCount,
+                    generation.completedTurnCount &&
+                generation.canonicalCompletedTurnCount >=
+                    generation.completedTurnCount,
         ) {
             "continuity source locator generation cardinality is invalid"
         }
@@ -1815,6 +1815,8 @@ object VexLifeContinuitySourceLocator {
                 generation.sourceConversationSequence ==
                     null &&
                     generation.sourceEventCount ==
+                    0 &&
+                    generation.canonicalCompletedTurnCount ==
                     0
             ) {
                 "continuity source locator empty generation has source coordinates"
@@ -1829,7 +1831,9 @@ object VexLifeContinuitySourceLocator {
                     generation.sourceConversationSequence !=
                     null &&
                     generation.sourceConversationSequence >=
-                    1
+                        1 &&
+                    generation.canonicalCompletedTurnCount >=
+                        1
             ) {
                 "continuity source locator generation head coordinates are invalid"
             }
@@ -1858,6 +1862,27 @@ object VexLifeContinuitySourceLocator {
                 generation.entries.size
         ) {
             "continuity source locator generation contains duplicate turn refs"
+        }
+        require(
+            generation.entries
+                .map(
+                    Entry::canonicalOrdinal,
+                )
+                .let {
+                    ordinals ->
+                    ordinals.distinct().size ==
+                        ordinals.size &&
+                        ordinals ==
+                            ordinals.sorted() &&
+                        ordinals.all {
+                            ordinal ->
+                            ordinal in
+                                0 until
+                                generation.canonicalCompletedTurnCount
+                        }
+                }
+        ) {
+            "continuity source locator generation canonical ordinals are invalid"
         }
         generation.entries.forEach {
             entry ->
