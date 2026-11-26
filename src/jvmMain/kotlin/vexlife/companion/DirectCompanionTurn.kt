@@ -109,13 +109,6 @@ object DirectCompanionTurn {
          * every provider stage in this turn; a later profile edit belongs to the next Send.
          */
         val contextProfile: VexLifeContextProfile.Effective? = null,
-        /**
-         * Product-service retries may arrive after the Composer draft has already been consumed.
-         * When true, an empty attachment list may match already-durable attachments for an existing
-         * idempotency identity. It never adds attachments to a new request.
-         */
-        val reuseDurableRequestAttachmentsWhenEmpty: Boolean =
-            false,
     ) {
         init {
             requireRef(
@@ -839,8 +832,6 @@ object DirectCompanionTurn {
                         identity = identity,
                         content = intent.content,
                         requestAttachments = intent.requestAttachments,
-                        reuseDurableRequestAttachmentsWhenEmpty =
-                            intent.reuseDurableRequestAttachmentsWhenEmpty,
                         browserContext = intent.browserContext,
                         productHome = productHome,
                     )
@@ -2768,7 +2759,6 @@ object DirectCompanionTurn {
         identity: Identity,
         content: String,
         requestAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
-        reuseDurableRequestAttachmentsWhenEmpty: Boolean,
         browserContext: DirectPromptContext.BrowserContext?,
         productHome: Path,
     ): Result? {
@@ -2795,8 +2785,6 @@ object DirectCompanionTurn {
                 productHome = productHome,
                 request = canonicalRequest,
                 expected = requestAttachments,
-                allowExistingWhenExpectedEmpty =
-                    reuseDurableRequestAttachmentsWhenEmpty,
             )
 
             val response =
@@ -2894,8 +2882,6 @@ object DirectCompanionTurn {
             productHome = productHome,
             request = failed.requestEvent,
             expected = requestAttachments,
-            allowExistingWhenExpectedEmpty =
-                reuseDurableRequestAttachmentsWhenEmpty,
         )
 
         val receipt =
@@ -2925,7 +2911,6 @@ object DirectCompanionTurn {
         productHome: Path,
         request: DirectConversationStore.Event,
         expected: List<VexLifeLocalArtifact.RequestAttachment>,
-        allowExistingWhenExpectedEmpty: Boolean,
     ) {
         val actual =
             VexLifeLocalArtifactStore(
@@ -2937,11 +2922,7 @@ object DirectCompanionTurn {
                 ?.attachments
                 .orEmpty()
         require(
-            (
-                allowExistingWhenExpectedEmpty &&
-                    expected.isEmpty()
-            ) ||
-                actual ==
+            actual ==
                 expected,
         ) {
             "idempotencyKey already identifies a durable human request with different local artifacts"
