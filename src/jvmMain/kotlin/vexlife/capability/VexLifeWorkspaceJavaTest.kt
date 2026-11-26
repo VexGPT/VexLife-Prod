@@ -1127,8 +1127,8 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         disposition =
                             DispositionHostFailed,
                         testStderr =
-                            process.stderr.take(
-                                VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+                            runnerProcessFailure(
+                                process,
                             ),
                         stderrTruncated =
                             process.stderrTruncated,
@@ -1143,6 +1143,10 @@ class VexLifeWorkspaceJavaTest internal constructor(
                         ?: RunnerResult(
                             disposition =
                                 DispositionHostFailed,
+                            testStderr =
+                                runnerProtocolFailure(
+                                    process,
+                                ),
                         )
                 }
 
@@ -1227,6 +1231,81 @@ class VexLifeWorkspaceJavaTest internal constructor(
             )
         }
     }
+
+    private fun runnerProcessFailure(
+        process: ProcessResult,
+    ): String {
+        val label =
+            if (
+                process.stdoutTruncated
+            ) {
+                "HOST_RUNNER_PROTOCOL_STDOUT_TRUNCATED"
+            } else {
+                "HOST_RUNNER_PROCESS_EXIT:" +
+                    process.exitCode
+            }
+        val stderr =
+            sanitizeHostDiagnostic(
+                process.stderr,
+            )
+        return (
+            if (
+                stderr.isBlank()
+            ) {
+                label
+            } else {
+                label +
+                    ":" +
+                    stderr
+            }
+        )
+            .take(
+                VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+            )
+    }
+
+    private fun runnerProtocolFailure(
+        process: ProcessResult,
+    ): String =
+        (
+            "HOST_RUNNER_RESULT_INVALID:" +
+                "exit=" +
+                process.exitCode +
+                ":stdoutBytes=" +
+                process.stdout
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+                    .size +
+                ":" +
+                sanitizeHostDiagnostic(
+                    process.stderr,
+                )
+        )
+            .trimEnd(
+                ':',
+            )
+            .take(
+                VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+            )
+
+    private fun sanitizeHostDiagnostic(
+        value: String,
+    ): String =
+        value
+            .replace(
+                '\n',
+                ' ',
+            )
+            .replace(
+                '\r',
+                ' ',
+            )
+            .replace(
+                '\t',
+                ' ',
+            )
+            .trim()
 
     fun test(
         operationRef: String,

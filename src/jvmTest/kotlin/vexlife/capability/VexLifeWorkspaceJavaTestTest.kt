@@ -464,6 +464,76 @@ class VexLifeWorkspaceJavaTestTest {
         }
 
     @Test
+    fun outerRunnerFailurePreservesExitAndRunnerReachedEvidence() =
+        withFixture {
+            fixture ->
+            writeProject(
+                fixture.source,
+            )
+            val owner =
+                VexLifeWorkspaceJavaTest(
+                    productHome =
+                        fixture.home,
+                    localSources =
+                        fixture.localSources,
+                    workspaceRuns =
+                        fixture.runs,
+                    runtimeSource = {
+                        runtime()
+                    },
+                    runner = {
+                        VexLifeWorkspaceJavaTest.ProcessResult(
+                            started =
+                                true,
+                            exitCode =
+                                23,
+                            stdout =
+                                "",
+                            stderr =
+                                "VEXLIFE_WORKSPACE_JAVA_TEST_RUNNER_STARTED\n",
+                            timedOut =
+                                false,
+                            stdoutTruncated =
+                                false,
+                            stderrTruncated =
+                                false,
+                        )
+                    },
+                )
+
+            val receipt =
+                assertIs<VexLifeWorkspaceJavaTest.Outcome.Completed>(
+                    owner.test(
+                        operationRef =
+                            "operation.test.outer-runner-failure",
+                        sourceRef =
+                            fixture.sourceRef,
+                        request =
+                            request(),
+                    ),
+                )
+                    .receipt
+
+            assertEquals(
+                VexLifeWorkspaceJavaTest.DispositionHostFailed,
+                receipt.disposition,
+            )
+            assertTrue(
+                receipt.testStderr.startsWith(
+                    "HOST_RUNNER_PROCESS_EXIT:23:",
+                ),
+            )
+            assertTrue(
+                receipt.testStderr.contains(
+                    "VEXLIFE_WORKSPACE_JAVA_TEST_RUNNER_STARTED",
+                ),
+            )
+            assertTrue(
+                receipt.cleanupComplete,
+            )
+        }
+
+    @Test
     fun compileAndTestFailuresRemainUsefulCompletedReceipts() =
         withFixture {
             fixture ->

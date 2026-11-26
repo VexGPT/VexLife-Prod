@@ -685,6 +685,9 @@ internal object VexLifeWorkspaceJavaTestProcess {
 }
 
 fun main(args: Array<String>) {
+    System.err.println(
+        "VEXLIFE_WORKSPACE_JAVA_TEST_RUNNER_STARTED",
+    )
     val result =
         runCatching {
                 require(
