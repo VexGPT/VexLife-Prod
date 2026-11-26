@@ -166,9 +166,9 @@ object VexLifeContextRevisit {
      * The continuity sources one human turn holds, bound by that turn rather than chosen by the
      * capability bridge: its own Conversation owner (the lease it already holds), the Memory
      * projection its prompt used, its own working position, and what its prompt already carries.
-     * Each owner is read at most once per turn, on first need, however many revisit calls the turn
-     * makes; later calls reuse what was read. The values stay with their owners; this only carries
-     * them for one turn.
+     * Full owner snapshots are cached on first need. A distinct supported indexed revisit may use
+     * one bounded exact Conversation view instead of forcing the full snapshot; later identical
+     * requests reuse that view. The values stay with their owners; this only carries turn custody.
      */
     class TurnSources(
         private val readConversation: () -> DirectConversationStore.Snapshot,
