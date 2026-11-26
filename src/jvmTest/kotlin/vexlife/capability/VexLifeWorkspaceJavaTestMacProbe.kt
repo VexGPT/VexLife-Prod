@@ -564,9 +564,41 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     result.exitCode !=
                     134
 
-            fun safetyPass(
+            data class SafetyResult(
+                val outsideReadDenied: Boolean,
+                val outsideWriteDenied: Boolean,
+                val shellControlPass: Boolean,
+                val childDenied: Boolean,
+                val networkControlPass: Boolean,
+                val networkDenied: Boolean,
+            ) {
+                val safe: Boolean
+                    get() =
+                        outsideReadDenied &&
+                            outsideWriteDenied &&
+                            shellControlPass &&
+                            childDenied &&
+                            networkControlPass &&
+                            networkDenied
+
+                fun render(): String =
+                    "readDenied=" +
+                        outsideReadDenied +
+                        ",writeDenied=" +
+                        outsideWriteDenied +
+                        ",shellControl=" +
+                        shellControlPass +
+                        ",childDenied=" +
+                        childDenied +
+                        ",networkControl=" +
+                        networkControlPass +
+                        ",networkDenied=" +
+                        networkDenied
+            }
+
+            fun safetyResult(
                 candidate: Candidate,
-            ): Boolean {
+            ): SafetyResult {
                 val read =
                     run(
                         candidate.profile,
@@ -653,29 +685,37 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             1_500,
                     )
 
-                return deniedWithoutAbort(
-                    read,
-                ) &&
-                    !read.stdout.contains(
-                        "OUTSIDE_PERSON_SENTINEL",
-                    ) &&
-                    deniedWithoutAbort(
-                        write,
-                    ) &&
-                    !Files.exists(
-                        outsideWrite,
-                    ) &&
-                    startedNormally(
-                        shellControl,
-                    ) &&
-                    deniedWithoutAbort(
-                        child,
-                    ) &&
-                    networkControl.started &&
-                    networkControl.timedOut &&
-                    deniedWithoutAbort(
-                        network,
-                    )
+                return SafetyResult(
+                    outsideReadDenied =
+                        deniedWithoutAbort(
+                            read,
+                        ) &&
+                            !read.stdout.contains(
+                                "OUTSIDE_PERSON_SENTINEL",
+                            ),
+                    outsideWriteDenied =
+                        deniedWithoutAbort(
+                            write,
+                        ) &&
+                            !Files.exists(
+                                outsideWrite,
+                            ),
+                    shellControlPass =
+                        startedNormally(
+                            shellControl,
+                        ),
+                    childDenied =
+                        deniedWithoutAbort(
+                            child,
+                        ),
+                    networkControlPass =
+                        networkControl.started &&
+                            networkControl.timedOut,
+                    networkDenied =
+                        deniedWithoutAbort(
+                            network,
+                        ),
+                )
             }
 
             val globalProfile =
@@ -706,8 +746,16 @@ object VexLifeWorkspaceJavaTestMacProbe {
             data class Observation(
                 val candidate: Candidate,
                 val startup: VexLifeWorkspaceJavaTest.ProcessResult,
-                val safe: Boolean,
-            )
+                val safety: SafetyResult?,
+            ) {
+                val safe: Boolean
+                    get() =
+                        startedNormally(
+                            startup,
+                        ) &&
+                            safety?.safe ==
+                            true
+            }
 
             val observations =
                 candidates.map {
@@ -722,13 +770,18 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             candidate,
                         startup =
                             startup,
-                        safe =
-                            startedNormally(
-                                startup,
-                            ) &&
-                                safetyPass(
+                        safety =
+                            if (
+                                startedNormally(
+                                    startup,
+                                )
+                            ) {
+                                safetyResult(
                                     candidate,
-                                ),
+                                )
+                            } else {
+                                null
+                            },
                     )
                 }
             val selected =
@@ -744,6 +797,11 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     startup.timedOut +
                     ",safe=" +
                     safe +
+                    ",predicates=" +
+                    (
+                        safety?.render() ?:
+                            "NOT_RUN"
+                    ) +
                     ",stderr=" +
                     startup.stderr +
                     "}"
