@@ -160,6 +160,11 @@ class DirectConversationStore(
         val head: Head?,
         val events: List<Event>,
         val canonicalEvents: List<Event>,
+        /**
+         * Exact immutable completed-head projections already validated while this full snapshot was
+         * formed. This is canonical snapshot evidence, not a second head ledger.
+         */
+        val completedHeads: List<Head>,
         val abandonedAttempts: List<AbandonedAttempt>,
     )
 
@@ -2025,6 +2030,7 @@ class DirectConversationStore(
                 head = null,
                 events = events,
                 canonicalEvents = emptyList(),
+                completedHeads = emptyList(),
                 abandonedAttempts = abandoned,
             )
         }
@@ -2121,10 +2127,11 @@ class DirectConversationStore(
             "canonical Conversation current head differs from its immutable receipt"
         }
 
-        validateImmutableHeadLineage(
-            currentHead = headRecord,
-            chain = chain,
-        )
+        val completedHeads =
+            validateImmutableHeadLineage(
+                currentHead = headRecord,
+                chain = chain,
+            )
 
         val abandoned =
             classifyAbandonedAttempts(
@@ -2140,6 +2147,7 @@ class DirectConversationStore(
                 ),
             events = events,
             canonicalEvents = chain,
+            completedHeads = completedHeads,
             abandonedAttempts = abandoned,
         )
     }
@@ -2377,7 +2385,7 @@ class DirectConversationStore(
     private fun validateImmutableHeadLineage(
         currentHead: VexLifeConversationContract.Head,
         chain: List<Event>,
-    ) {
+    ): List<Head> {
         val pairCount =
             chain.size /
                 2
@@ -2437,6 +2445,8 @@ class DirectConversationStore(
             "canonical immutable head lineage count does not match completed turns"
         }
 
+        val projections =
+            mutableListOf<Head>()
         reversed.forEachIndexed {
             index,
             historical,
@@ -2484,7 +2494,13 @@ class DirectConversationStore(
             ) {
                 "canonical immutable head lineage does not bind the exact completed pair"
             }
+            projections +=
+                headProjection(
+                    value = historical,
+                    requestEventHash = request.eventHash,
+                )
         }
+        return projections
     }
 
     private fun readImmediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? {
