@@ -14,6 +14,7 @@ import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
@@ -609,6 +610,13 @@ object DirectCompanionTurn {
          */
         val continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
         /**
+         * Volatile exact-coordinate index for Product service send-attempt identity.
+         *
+         * This is acceleration only. Conversation remains canonical and every indexed hit is
+         * source-reopened before it may affect duplicate/recovery behavior.
+         */
+        val conversationAttemptIndex: DirectConversationAttemptIndex? = null,
+        /**
          * Qualified static-image interpreter. null means this turn has no visual-input realization.
          *
          * It may derive bounded request context only; it does not write Conversation or own the
@@ -711,6 +719,7 @@ object DirectCompanionTurn {
         capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
             VexLifeCapabilityBridge.OwnerBindings(),
         continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
+        conversationAttemptIndex: DirectConversationAttemptIndex? = null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -761,6 +770,8 @@ object DirectCompanionTurn {
                         continuitySourceLocatorBackend != null,
                     continuitySourceLocatorBackend =
                         continuitySourceLocatorBackend,
+                    conversationAttemptIndex =
+                        conversationAttemptIndex,
                 ),
         )
 
@@ -811,7 +822,9 @@ object DirectCompanionTurn {
             )
         val conversation =
             DirectConversationStore(
-                productHome,
+                productHome = productHome,
+                attemptIndex =
+                    hooks.conversationAttemptIndex,
             )
         val contextStore =
             DirectTurnContextStore(
@@ -823,11 +836,13 @@ object DirectCompanionTurn {
                 instanceRef = BrowserCompanionInstanceRef,
             ) {
                 val before =
-                    currentForRequestAdmission()
+                    currentForRequestAdmission(
+                        identity.requestMessageRef,
+                    )
 
                 val recovered =
                     completedDuplicate(
-                        snapshot = before,
+                        admission = before,
                         contextStore = contextStore,
                         identity = identity,
                         content = intent.content,
@@ -2754,7 +2769,7 @@ object DirectCompanionTurn {
     }
 
     private fun completedDuplicate(
-        snapshot: DirectConversationStore.Snapshot,
+        admission: DirectConversationStore.RequestAdmission,
         contextStore: DirectTurnContextStore,
         identity: Identity,
         content: String,
@@ -2763,7 +2778,7 @@ object DirectCompanionTurn {
         productHome: Path,
     ): Result? {
         val canonicalRequest =
-            snapshot.canonicalEvents
+            admission.matchingCanonicalEvents
                 .firstOrNull {
                     it.messageRef ==
                         identity.requestMessageRef
@@ -2789,7 +2804,7 @@ object DirectCompanionTurn {
 
             val response =
                 requireNotNull(
-                    snapshot.canonicalEvents
+                    admission.matchingCanonicalEvents
                         .firstOrNull {
                             it.eventKind ==
                                 "RESPONSE" &&
@@ -2839,7 +2854,7 @@ object DirectCompanionTurn {
                     ),
                 currentConversationHeadSha256 =
                     requireNotNull(
-                        snapshot.head,
+                        admission.head,
                     )
                         .conversationHeadSha256,
                 contextPath = context.contextPath,
@@ -2857,8 +2872,8 @@ object DirectCompanionTurn {
         }
 
         val failed =
-            snapshot.abandonedAttempts
-                .firstOrNull {
+            admission.matchingAbandonedAttempt
+                ?.takeIf {
                     it.requestEvent.messageRef ==
                         identity.requestMessageRef
                 }
@@ -2893,7 +2908,7 @@ object DirectCompanionTurn {
             receipt
                 ?.exactNextSafeRoute
                 ?: if (
-                    snapshot.head ==
+                    admission.head ==
                         null
                 ) {
                     "FORM_NEW_SEND_ATTEMPT_AND_RETRY"
