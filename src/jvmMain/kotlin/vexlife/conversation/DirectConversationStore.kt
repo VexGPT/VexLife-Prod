@@ -849,6 +849,11 @@ class DirectConversationStore(
                 pendingResponse =
                     response
             }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
 
             return response
         }
@@ -1004,6 +1009,11 @@ class DirectConversationStore(
                 pendingResponse =
                     response
             }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
             return response
         }
 
@@ -1161,6 +1171,12 @@ class DirectConversationStore(
             ) {
                 "canonical Conversation current head did not commit exactly"
             }
+            attemptIndex
+                ?.noteCommitted(
+                    head = current.head,
+                    request = request,
+                    response = response,
+                )
             if (
                 pendingRequest ==
                     request
