@@ -482,7 +482,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
                 listOf(
                     Candidate(
                         name =
-                            "M1_CURRENT_NARROW",
+                            "M1_NARROW_CONTROL",
                         profile =
                             commonProfile,
                     ),
@@ -604,13 +604,34 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             idCanary.toString(),
                         ),
                     )
+                val localNetworkControlProfile =
+                    candidate.profile +
+                        """
+                        |(allow network-bind (local ip "localhost:*"))
+                        |(allow network-inbound (local ip "localhost:*"))
+                        |(allow system-socket
+                        |  (require-all
+                        |    (socket-domain AF_SYSTEM)
+                        |    (socket-protocol 2)))
+                        |(allow mach-lookup
+                        |  (global-name "com.apple.bsd.dirhelper")
+                        |  (global-name "com.apple.system.opendirectoryd.membership")
+                        |  (global-name "com.apple.SecurityServer")
+                        |  (global-name "com.apple.networkd")
+                        |  (global-name "com.apple.ocspd")
+                        |  (global-name "com.apple.trustd.agent")
+                        |  (global-name "com.apple.SystemConfiguration.DNSConfiguration")
+                        |  (global-name "com.apple.SystemConfiguration.configd"))
+                        |(allow sysctl-read
+                        |  (sysctl-name-regex #"^net.routetable"))
+                        """.trimMargin() +
+                        "\n"
                 val networkControl =
                     run(
-                        candidate.profile +
-                            "(allow network-bind (local ip \"localhost:*\"))\n" +
-                            "(allow network-inbound (local ip \"localhost:*\"))\n",
+                        localNetworkControlProfile,
                         networkCanary,
                         listOf(
+                            "-n",
                             "-l",
                             "127.0.0.1",
                             "54321",
@@ -623,6 +644,7 @@ object VexLifeWorkspaceJavaTestMacProbe {
                         candidate.profile,
                         networkCanary,
                         listOf(
+                            "-n",
                             "-l",
                             "127.0.0.1",
                             "54321",
@@ -681,6 +703,12 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     global.stderr
             }
 
+            data class Observation(
+                val candidate: Candidate,
+                val startup: VexLifeWorkspaceJavaTest.ProcessResult,
+                val safe: Boolean,
+            )
+
             val observations =
                 candidates.map {
                     candidate ->
@@ -689,45 +717,36 @@ object VexLifeWorkspaceJavaTestMacProbe {
                             candidate.profile,
                             trueCanary,
                         )
-                    val safe =
-                        if (
+                    Observation(
+                        candidate =
+                            candidate,
+                        startup =
+                            startup,
+                        safe =
                             startedNormally(
                                 startup,
-                            )
-                        ) {
-                            safetyPass(
-                                candidate,
-                            )
-                        } else {
-                            false
-                        }
-                    candidate.name +
-                        "{exit=" +
-                        startup.exitCode +
-                        ",timedOut=" +
-                        startup.timedOut +
-                        ",safe=" +
-                        safe +
-                        ",stderr=" +
-                        startup.stderr +
-                        "}"
+                            ) &&
+                                safetyPass(
+                                    candidate,
+                                ),
+                    )
+                }
+            val selected =
+                observations.firstOrNull {
+                    it.safe
                 }
 
-            val selected =
-                candidates.firstOrNull {
-                    candidate ->
-                    val startup =
-                        run(
-                            candidate.profile,
-                            trueCanary,
-                        )
-                    startedNormally(
-                        startup,
-                    ) &&
-                        safetyPass(
-                            candidate,
-                        )
-                }
+            fun Observation.render(): String =
+                candidate.name +
+                    "{exit=" +
+                    startup.exitCode +
+                    ",timedOut=" +
+                    startup.timedOut +
+                    ",safe=" +
+                    safe +
+                    ",stderr=" +
+                    startup.stderr +
+                    "}"
 
             requireNotNull(
                 selected,
@@ -739,7 +758,9 @@ object VexLifeWorkspaceJavaTestMacProbe {
                     " observations=" +
                     observations.joinToString(
                         ";",
-                    )
+                    ) {
+                        it.render()
+                    }
             }
 
             println(
@@ -749,11 +770,13 @@ object VexLifeWorkspaceJavaTestMacProbe {
                         "os.version",
                     ) +
                     " selected=" +
-                    selected.name +
+                    selected.candidate.name +
                     " observations=" +
                     observations.joinToString(
                         ";",
-                    ),
+                    ) {
+                        it.render()
+                    },
             )
         } finally {
             parent
