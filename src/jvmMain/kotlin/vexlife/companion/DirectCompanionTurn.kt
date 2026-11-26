@@ -821,11 +821,17 @@ object DirectCompanionTurn {
                 intent.idempotencyKey,
             )
         val conversation =
-            DirectConversationStore(
-                productHome = productHome,
-                attemptIndex =
-                    hooks.conversationAttemptIndex,
-            )
+            hooks.conversationAttemptIndex
+                ?.let {
+                    attemptIndex ->
+                    DirectConversationStore(
+                        productHome = productHome,
+                        attemptIndex = attemptIndex,
+                    )
+                }
+                ?: DirectConversationStore(
+                    productHome = productHome,
+                )
         val contextStore =
             DirectTurnContextStore(
                 productHome,
