@@ -31,11 +31,25 @@ import vexlife.model.heretic.HereticProductIdentity
  * durable. Historical v1 and Semantic Relay v2 events are read under their accepted contracts;
  * product-local authoring remains v1 until a rightful Semantic Relay author supplies metadata.
  */
-class DirectConversationStore(
+class DirectConversationStore private constructor(
     productHome: Path,
-    private val attemptIndex: DirectConversationAttemptIndex? =
-        null,
+    private val attemptIndex: DirectConversationAttemptIndex?,
 ) {
+    constructor(
+        productHome: Path,
+    ) : this(
+        productHome = productHome,
+        attemptIndex = null,
+    )
+
+    internal constructor(
+        productHome: Path,
+        attemptIndex: DirectConversationAttemptIndex,
+    ) : this(
+        productHome = productHome,
+        attemptIndex = attemptIndex,
+    )
+
     companion object {
         const val EventSchema =
             VexLifeConversationContract.EventSchemaV1
