@@ -395,6 +395,27 @@ val serviceImageJdk21 =
             )
         }
 
+val serviceImageJavaLauncher21 =
+    extensions
+        .getByType(
+            JavaToolchainService::class.java,
+        )
+        .launcherFor {
+            languageVersion.set(
+                JavaLanguageVersion.of(
+                    21,
+                ),
+            )
+        }
+
+tasks.named<org.gradle.api.tasks.testing.Test>(
+    "jvmTest",
+) {
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+}
+
 val serviceLauncherSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/bin/vexlife-prod-service",
@@ -1678,6 +1699,7 @@ tasks.register(
 
         val runtimeProviderModules =
             setOf(
+                "jdk.compiler",
                 "jdk.crypto.ec",
             )
         val moduleSet =
@@ -1695,10 +1717,12 @@ tasks.register(
                 moduleSet &&
                 "java.net.http" in
                 moduleSet &&
+                "jdk.compiler" in
+                moduleSet &&
                 "jdk.crypto.ec" in
                 moduleSet,
         ) {
-            "service runtime image must include jdk.httpserver + java.net.http + Java 21 SunEC provider"
+            "service runtime image must include jdk.httpserver + java.net.http + jdk.compiler + Java 21 SunEC provider"
         }
 
         val output =
@@ -3862,4 +3886,110 @@ tasks.register<JavaExec>("continuityPressure") {
     classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
+}
+
+/**
+ * Mac-only C3-R1 proof. This stays on the JVM test classpath so the probe itself does not ship in
+ * Product. The assembled private service image is the runtime under proof.
+ */
+tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
+    group = "verification"
+    description = "Prove the C3-R1 sandboxed Java project-test owner against the exact macOS private service image."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.capability.VexLifeWorkspaceJavaTestMacProbeKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val compilerInstallation =
+            serviceImageJdk21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        val launcherInstallation =
+            serviceImageJavaLauncher21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        require(
+            launcherInstallation ==
+                compilerInstallation,
+        ) {
+            "C3-R1 Mac proof launcher must use the exact JDK 21 installation that formed the private service image"
+        }
+
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "C3-R1 Mac proof requires one exact Product source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "C3-R1 Mac proof private service image is missing: $imageRoot"
+        }
+
+        setArgs(
+            listOf(
+                imageRoot.toString(),
+                sourceSha,
+            ),
+        )
+    }
 }
