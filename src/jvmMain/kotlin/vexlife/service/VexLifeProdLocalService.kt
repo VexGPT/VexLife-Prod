@@ -146,7 +146,7 @@ class VexLifeProdLocalService private constructor(
     private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
     private val partnerInference: VexLifeProdPartnerInference?,
     private val partnerConnectionLiveEffectsEnabled: Boolean,
-    private val conversationAttemptIndex: DirectConversationAttemptIndex,
+    private val conversationAttemptIndex: DirectConversationAttemptIndex?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
@@ -1602,6 +1602,7 @@ class VexLifeProdLocalService private constructor(
             partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
             partnerConnectionLiveEffectsEnabled: Boolean = false,
+            conversationAttemptIndex: DirectConversationAttemptIndex? = null,
             promptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
@@ -1673,6 +1674,8 @@ class VexLifeProdLocalService private constructor(
                 partnerInference = partnerInference,
                 partnerConnectionLiveEffectsEnabled =
                     partnerConnectionLiveEffectsEnabled,
+                conversationAttemptIndex =
+                    conversationAttemptIndex,
                 promptPreparation = promptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
@@ -1757,22 +1760,28 @@ class VexLifeProdLocalService private constructor(
                 "VexLife service requires one absolute canonical Home"
             }
 
-            // Reuse the already-required construction validation snapshot to seed one volatile
-            // service-lifetime exact attempt index. This adds no second startup enumeration and no
-            // durable Conversation authority.
-            val realizedConversationAttemptIndex =
+            // Production may reuse this already-required construction validation snapshot to
+            // seed its one shared volatile attempt index. Generic/test service construction keeps
+            // the historical no-index route unless the caller explicitly shares the same index with
+            // its turn executor.
+            val constructionStore =
                 conversationAttemptIndex
-                    ?: DirectConversationAttemptIndex()
+                    ?.let {
+                        index ->
+                        DirectConversationStore(
+                            productHome = productHome,
+                            attemptIndex = index,
+                        )
+                    }
+                    ?: DirectConversationStore(
+                        productHome,
+                    )
             val constructionSnapshot =
-                DirectConversationStore(
-                    productHome = productHome,
-                    attemptIndex =
-                        realizedConversationAttemptIndex,
+                constructionStore.current()
+            conversationAttemptIndex
+                ?.rebuild(
+                    constructionSnapshot,
                 )
-                    .current()
-            realizedConversationAttemptIndex.rebuild(
-                constructionSnapshot,
-            )
 
             val releaseUpdates =
                 VexLifeReleaseUpdates(
@@ -1845,7 +1854,7 @@ class VexLifeProdLocalService private constructor(
                         partnerConnectionLiveEffectsEnabled =
                             partnerConnectionLiveEffectsEnabled,
                         conversationAttemptIndex =
-                            realizedConversationAttemptIndex,
+                            conversationAttemptIndex,
                         promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
@@ -6281,15 +6290,24 @@ class VexLifeProdLocalService private constructor(
             DirectCompanionTurn.requestMessageRefFor(
                 idempotencyKey,
             )
-        val request =
-            DirectConversationStore(
-                productHome =
-                    Path.of(
-                        startupSetup.productHome,
-                    ),
-                attemptIndex =
-                    conversationAttemptIndex,
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
             )
+        val conversation =
+            conversationAttemptIndex
+                ?.let {
+                    index ->
+                    DirectConversationStore(
+                        productHome = productHome,
+                        attemptIndex = index,
+                    )
+                }
+                ?: DirectConversationStore(
+                    productHome,
+                )
+        val request =
+            conversation
                 .requestEventForMessageRef(
                     requestMessageRef,
                 )
