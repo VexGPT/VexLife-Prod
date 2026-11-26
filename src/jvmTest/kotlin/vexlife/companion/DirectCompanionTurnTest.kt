@@ -3238,6 +3238,14 @@ class DirectCompanionTurnTest {
                 idempotencyKey = "send.self-development.failure",
                 content = "Please answer",
             )
+        val conversationAttemptIndex =
+            DirectConversationAttemptIndex()
+        conversationAttemptIndex.rebuild(
+            DirectConversationStore(
+                home,
+            )
+                .current(),
+        )
 
         try {
             val error =
@@ -3249,6 +3257,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3309,6 +3319,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -3349,6 +3361,8 @@ class DirectCompanionTurnTest {
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
+                            conversationAttemptIndex =
+                                conversationAttemptIndex,
                             transport =
                                 DirectCompanionConnection.Transport {
                                     calls +=
