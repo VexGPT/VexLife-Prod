@@ -277,6 +277,8 @@ class DirectConversationStore(
             null
         private var pendingResponse: Event? =
             null
+        private var reusableAdmissionSnapshot: Snapshot? =
+            null
 
         /** Canonical Home-owned person identity used by request/response participant formation. */
         fun canonicalPersonRef(): String =
@@ -284,6 +286,18 @@ class DirectConversationStore(
 
         fun current(): Snapshot =
             readCurrentComplete()
+
+        /**
+         * Full recovery/idempotency snapshot that this exact writer lease may reuse once for request
+         * admission. The object identity is the lease-local capability; a snapshot from another
+         * lease is never accepted merely because the completed head still matches.
+         */
+        internal fun currentForRequestAdmission(): Snapshot =
+            readCurrentComplete()
+                .also {
+                    reusableAdmissionSnapshot =
+                        it
+                }
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
@@ -1051,6 +1065,12 @@ class DirectConversationStore(
                 admissionSnapshot !=
                     null
             ) {
+                require(
+                    admissionSnapshot ===
+                        reusableAdmissionSnapshot
+                ) {
+                    "canonical request admission snapshot was not issued by this writer lease"
+                }
                 val currentHead =
                     readHeadRecord()
                 require(
@@ -1061,6 +1081,8 @@ class DirectConversationStore(
                 ) {
                     "canonical request admission snapshot is no longer current"
                 }
+                reusableAdmissionSnapshot =
+                    null
             }
             return snapshot
         }
