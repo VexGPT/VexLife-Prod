@@ -29,6 +29,7 @@ import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
@@ -720,6 +721,7 @@ object DirectCompanionTurn {
             VexLifeCapabilityBridge.OwnerBindings(),
         continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
         conversationAttemptIndex: DirectConversationAttemptIndex? = null,
+        memoryHotPath: VexLifeCurrentMemoryHotPath? = null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -741,14 +743,40 @@ object DirectCompanionTurn {
                     reobserveSameRuntimeEvidence = {
                         session.observeCurrentQualifiedRuntimeEvidence()
                     },
+                    currentMemoryContext = {
+                        productHome,
+                        ->
+                        memoryHotPath
+                            ?.readContext()
+                            ?: VexLifeCurrentMemoryReader.readCurrent(
+                                productHome,
+                            )
+                    },
+                    memoryContextAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        memoryHotPath
+                            ?.readContext(
+                                memoryTokenCap,
+                            )
+                            ?: VexLifeCurrentMemoryReader.readCurrent(
+                                productHome = productHome,
+                                memoryTokenCap = memoryTokenCap,
+                            )
+                    },
                     memoryProviderSelectionAtCap = {
                         productHome,
                         memoryTokenCap,
                         ->
-                        VexLifeCurrentMemoryProviderSelection.read(
-                            productHome = productHome,
-                            memoryTokenCap = memoryTokenCap,
-                        )
+                        memoryHotPath
+                            ?.readSelection(
+                                memoryTokenCap,
+                            )
+                            ?: VexLifeCurrentMemoryProviderSelection.read(
+                                productHome = productHome,
+                                memoryTokenCap = memoryTokenCap,
+                            )
                     },
                     progressObserver = progressObserver,
                     cancellation = cancellation,

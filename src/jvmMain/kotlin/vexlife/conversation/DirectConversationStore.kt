@@ -189,6 +189,13 @@ class DirectConversationStore(
     )
 
     @ConsistentCopyVisibility
+    data class CurrentHeadCoordinate internal constructor(
+        val conversationHeadSha256: String,
+        val priorConversationHeadSha256: String?,
+        val sequence: Long,
+    )
+
+    @ConsistentCopyVisibility
     data class HistoricalCompletedTurn internal constructor(
         val head: Head,
         val requestEvent: Event,
@@ -1463,6 +1470,42 @@ class DirectConversationStore(
                 )
                     .block()
             }
+    }
+
+    internal fun currentHeadCoordinate(): CurrentHeadCoordinate? {
+        val current =
+            readHeadRecord()
+                ?: return null
+        val immutable =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                    ownedRoot = productHome,
+                    path =
+                        immutableHeadPath(
+                            current.conversationHeadSha256,
+                        ),
+                ),
+            ) {
+                "canonical Conversation current head lacks its immutable receipt"
+            }
+        validateCanonicalHeadRecord(
+            immutable,
+        )
+        require(
+            immutable ==
+                current,
+        ) {
+            "canonical Conversation current head differs from its immutable receipt"
+        }
+
+        return CurrentHeadCoordinate(
+            conversationHeadSha256 =
+                current.conversationHeadSha256,
+            priorConversationHeadSha256 =
+                current.priorConversationHeadSha256,
+            sequence =
+                current.sequence,
+        )
     }
 
     fun threadWriterCurrentness(): ThreadWriterCurrentness {
