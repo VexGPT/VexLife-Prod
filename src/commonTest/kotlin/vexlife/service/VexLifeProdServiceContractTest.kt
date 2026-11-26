@@ -11,6 +11,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 class VexLifeProdServiceContractTest {
     @Test
@@ -98,6 +99,14 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/workspace-checks/control",
             VexLifeProdServiceContract.WorkspaceChecksControlPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-runs",
+            VexLifeProdServiceContract.WorkspaceRunsPath,
+        )
+        assertEquals(
+            "/api/v1/workspace-runs/control",
+            VexLifeProdServiceContract.WorkspaceRunsControlPath,
         )
         assertEquals(
             "/api/v1/context",
@@ -787,6 +796,86 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.WorkspaceChecksControlRequest(
                 controlRef =
                     VexLifeWorkspaceEffectsFamily.ControlAllow,
+                sourceRef =
+                    sourceRef,
+            )
+        }
+    }
+
+    @Test
+    fun workspaceRunProjectionAndControlKeepProjectExecutionSeparate() {
+        val sourceRef =
+            VexLifeLocalSourcesFamily.sourceRefForSha256(
+                "e".repeat(
+                    64,
+                ),
+            )
+        val grant =
+            VexLifeWorkspaceRunsFamily.Grant(
+                grantRef =
+                    VexLifeWorkspaceRunsFamily.GrantRefPrefix +
+                        "f".repeat(
+                            64,
+                        ),
+                sourceRef =
+                    sourceRef,
+                sourceGrantedAt =
+                    "2026-11-26T08:00:00Z",
+                grantedAt =
+                    "2026-11-26T08:01:00Z",
+            )
+        val projection =
+            VexLifeProdServiceContract.WorkspaceRunsProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceRunsProjectionSchema,
+                state =
+                    VexLifeWorkspaceRunsFamily.StateGranted,
+                grants =
+                    listOf(
+                        grant,
+                    ),
+                effectsPerformed =
+                    false,
+            )
+        val response =
+            VexLifeProdServiceContract.WorkspaceRunsControlResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.WorkspaceRunsControlResponseSchema,
+                controlRef =
+                    VexLifeWorkspaceRunsFamily.ControlRevoke,
+                sourceRef =
+                    sourceRef,
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED,
+                runs =
+                    VexLifeProdServiceContract.WorkspaceRunsProjection(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceRunsProjectionSchema,
+                        state =
+                            VexLifeWorkspaceRunsFamily.StateEmpty,
+                        grants =
+                            emptyList(),
+                        effectsPerformed =
+                            false,
+                    ),
+                grantMutationPerformed =
+                    true,
+            )
+
+        assertEquals(
+            sourceRef,
+            projection.grants.single().sourceRef,
+        )
+        assertTrue(
+            response.grantMutationPerformed,
+        )
+        assertFalse(
+            response.runs.effectsPerformed,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeProdServiceContract.WorkspaceRunsControlRequest(
+                controlRef =
+                    VexLifeWorkspaceChecksFamily.ControlAllow,
                 sourceRef =
                     sourceRef,
             )
