@@ -1484,25 +1484,35 @@ object VexLifeContinuitySourceLocator {
             if (
                 query.queryTerms.isNotEmpty()
             ) {
-                val lookup =
-                    indexedBackend.candidateEntryIndexes(
-                        queryFingerprints =
-                            query.queryTerms.map {
-                                term ->
-                                trigramFingerprints(
-                                    normalized =
-                                        term,
-                                    backend =
-                                        backend,
-                                )
-                            },
-                        speakerScope =
-                            query.speakerScope,
-                    )
-                postingLookupCount +=
-                    lookup.postingLookupCount
+                var conjunctiveCandidates: Set<Int>? =
+                    null
+                query.queryTerms.forEach {
+                    term ->
+                    val lookup =
+                        indexedBackend.candidateEntryIndexes(
+                            queryFingerprints =
+                                listOf(
+                                    trigramFingerprints(
+                                        normalized =
+                                            term,
+                                        backend =
+                                            backend,
+                                    ),
+                                ),
+                            speakerScope =
+                                query.speakerScope,
+                        )
+                    postingLookupCount +=
+                        lookup.postingLookupCount
+                    conjunctiveCandidates =
+                        conjunctiveCandidates
+                            ?.intersect(
+                                lookup.entryIndexes,
+                            )
+                            ?: lookup.entryIndexes
+                }
                 directIndexes +=
-                    lookup.entryIndexes
+                    conjunctiveCandidates.orEmpty()
             }
         }
         val allSeedRefs =
