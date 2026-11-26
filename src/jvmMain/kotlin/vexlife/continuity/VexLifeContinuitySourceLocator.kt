@@ -36,6 +36,8 @@ object VexLifeContinuitySourceLocator {
     const val MaximumQueryTermCharacters = 160
     const val MaximumExactCandidateReopens = 48
     const val MaximumReturnedTurns = 3
+    const val MaximumNeighborhoodDirectTurns = 24
+    const val MaximumNeighborhoodTurns = 48
 
     enum class SpeakerScope {
         ANY,
@@ -53,6 +55,7 @@ object VexLifeContinuitySourceLocator {
         SOURCE_LIFECYCLE_BINDING_MISMATCH,
         EXACT_VERIFICATION_MISS,
         SOURCE_COORDINATE_MISMATCH,
+        INDEXED_NEIGHBORHOOD_UNAVAILABLE,
     }
 
     data class SourceCoordinates(
@@ -492,6 +495,37 @@ object VexLifeContinuitySourceLocator {
         val requestEvent: DirectConversationStore.Event,
         val responseEvent: DirectConversationStore.Event,
     )
+
+    data class NeighborhoodQuery(
+        val queryTerms: List<String>,
+        val speakerScope: SpeakerScope,
+        val seedRefs: Set<String> = emptySet(),
+    )
+
+    sealed interface NeighborhoodOutcome {
+        data class Ready(
+            val currentConversationHeadSha256: String?,
+            val generationConversationHeadSha256: String?,
+            val turns: List<VexLifeTurnNavigation.Turn>,
+            val directTurnRefs: Set<String>,
+            val unresolvedSeedRefs: Set<String>,
+            val totalCompletedTurnCount: Int,
+            val exactEventFileReadCount: Int,
+            val exactHeadFileReadCount: Int,
+            val wholeHistoryHeadTraversalPerformed: Boolean,
+            val derivedEntryScanCount: Int,
+            val derivedPostingLookupCount: Int,
+            val derivedRefLookupCount: Int,
+            val wholeHistoryEventEnumerationPerformed: Boolean = false,
+            val canonicalSourceMutationPerformed: Boolean = false,
+        ) : NeighborhoodOutcome
+
+        data class FallbackRequired(
+            val reason: FallbackReason,
+            val currentConversationHeadSha256: String?,
+            val generationConversationHeadSha256: String?,
+        ) : NeighborhoodOutcome
+    }
 
     sealed interface LocateOutcome {
         val currentConversationHeadSha256: String?
@@ -1244,6 +1278,486 @@ object VexLifeContinuitySourceLocator {
                 derivedEntryScanCount,
             derivedPostingLookupCount =
                 derivedPostingLookupCount,
+        )
+    }
+
+    /**
+     * Resolve one bounded Conversation neighborhood for ContextRevisit without projecting the whole
+     * thread. Direct lexical/seed rows are nominated by the current indexed backend; only exact
+     * immediate canonical neighbors are added for one typed expansion step.
+     */
+    fun locateNeighborhood(
+        conversationOwner: DirectConversationStore.Locked,
+        queries: List<NeighborhoodQuery>,
+        backend: Backend,
+        sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
+    ): NeighborhoodOutcome {
+        requirePortableRef(
+            sourceLifecycleBindingRef,
+            "sourceLifecycleBindingRef",
+        )
+        if (
+            queries.isEmpty() ||
+            queries.size >
+                6
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.UNSUPPORTED_QUERY,
+                currentConversationHeadSha256 =
+                    conversationOwner
+                        .immediatePriorCompletedTurn()
+                        ?.head
+                        ?.conversationHeadSha256,
+                generationConversationHeadSha256 =
+                    null,
+            )
+        }
+        val indexedBackend =
+            backend as? IndexedBackend
+                ?: return NeighborhoodOutcome.FallbackRequired(
+                    reason =
+                        FallbackReason.INDEXED_NEIGHBORHOOD_UNAVAILABLE,
+                    currentConversationHeadSha256 =
+                        conversationOwner
+                            .immediatePriorCompletedTurn()
+                            ?.head
+                            ?.conversationHeadSha256,
+                    generationConversationHeadSha256 =
+                        null,
+                )
+        val normalizedQueries =
+            queries.map {
+                query ->
+                query.copy(
+                    queryTerms =
+                        query.queryTerms
+                            .map(
+                                ::normalize,
+                            )
+                            .filter(
+                                String::isNotEmpty,
+                            )
+                            .distinct(),
+                    seedRefs =
+                        query.seedRefs
+                            .map(
+                                String::trim,
+                            )
+                            .filter(
+                                String::isNotEmpty,
+                            )
+                            .toSet(),
+                )
+            }
+        if (
+            normalizedQueries.any {
+                query ->
+                query.queryTerms.size >
+                    MaximumQueryTerms ||
+                    query.queryTerms.any {
+                        term ->
+                        term.length !in
+                            3..MaximumQueryTermCharacters
+                    } ||
+                    (
+                        query.queryTerms.isEmpty() &&
+                            query.seedRefs.isEmpty()
+                    )
+            }
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.UNSUPPORTED_QUERY,
+                currentConversationHeadSha256 =
+                    conversationOwner
+                        .immediatePriorCompletedTurn()
+                        ?.head
+                        ?.conversationHeadSha256,
+                generationConversationHeadSha256 =
+                    null,
+            )
+        }
+
+        val currentHead =
+            conversationOwner
+                .immediatePriorCompletedTurn()
+                ?.head
+        val currentHeadSha =
+            currentHead
+                ?.conversationHeadSha256
+        val generation =
+            when (
+                val load =
+                    backend.load()
+            ) {
+                BackendLoad.Absent ->
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.ABSENT,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            null,
+                    )
+
+                is BackendLoad.Corrupt ->
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.CORRUPT,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            null,
+                    )
+
+                is BackendLoad.Ready ->
+                    try {
+                        requireGeneration(
+                            load.generation,
+                        )
+                        load.generation
+                    } catch (
+                        _: RuntimeException,
+                    ) {
+                        return NeighborhoodOutcome.FallbackRequired(
+                            reason =
+                                FallbackReason.CORRUPT,
+                            currentConversationHeadSha256 =
+                                currentHeadSha,
+                            generationConversationHeadSha256 =
+                                load.generation
+                                    .sourceConversationHeadSha256,
+                        )
+                    }
+            }
+        if (
+            generation.fingerprintBindingRef !=
+                backend.fingerprintBindingRef
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+        if (
+            generation.sourceLifecycleBindingRef !=
+                sourceLifecycleBindingRef
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHeadSha ||
+            generation.sourceConversationSequence !=
+                currentHead
+                    ?.sequence
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.STALE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val directIndexes =
+            linkedSetOf<Int>()
+        var postingLookupCount =
+            0
+        normalizedQueries.forEach {
+            query ->
+            if (
+                query.queryTerms.isNotEmpty()
+            ) {
+                val lookup =
+                    indexedBackend.candidateEntryIndexes(
+                        queryFingerprints =
+                            query.queryTerms.map {
+                                term ->
+                                trigramFingerprints(
+                                    normalized =
+                                        term,
+                                    backend =
+                                        backend,
+                                )
+                            },
+                        speakerScope =
+                            query.speakerScope,
+                    )
+                postingLookupCount +=
+                    lookup.postingLookupCount
+                directIndexes +=
+                    lookup.entryIndexes
+            }
+        }
+        val allSeedRefs =
+            normalizedQueries
+                .flatMap {
+                    query ->
+                    query.seedRefs
+                }
+                .toSet()
+        val refLookup =
+            indexedBackend.entryIndexesForRefs(
+                allSeedRefs,
+            )
+        directIndexes +=
+            refLookup.entryIndexesByRef.values
+        val unresolvedSeedRefs =
+            allSeedRefs -
+                refLookup.entryIndexesByRef.keys
+
+        if (
+            directIndexes.size >
+                MaximumNeighborhoodDirectTurns
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.CANDIDATE_SET_TOO_LARGE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val neighborhoodIndexes =
+            linkedSetOf<Int>()
+        fun addIfCanonicalNeighbor(
+            leftIndex: Int,
+            rightIndex: Int,
+        ) {
+            if (
+                leftIndex !in
+                    generation.entries.indices ||
+                rightIndex !in
+                    generation.entries.indices
+            ) {
+                return
+            }
+            val left =
+                generation.entries[
+                    leftIndex
+                ]
+            val right =
+                generation.entries[
+                    rightIndex
+                ]
+            if (
+                right.coordinates.request.sequence ==
+                    left.coordinates.request.sequence +
+                        2
+            ) {
+                neighborhoodIndexes +=
+                    leftIndex
+                neighborhoodIndexes +=
+                    rightIndex
+            }
+        }
+        directIndexes.forEach {
+            index ->
+            require(
+                index in
+                    generation.entries.indices
+            ) {
+                "indexed locator neighborhood points outside the current generation"
+            }
+            neighborhoodIndexes +=
+                index
+            addIfCanonicalNeighbor(
+                index -
+                    1,
+                index,
+            )
+            addIfCanonicalNeighbor(
+                index,
+                index +
+                    1,
+            )
+        }
+        if (
+            neighborhoodIndexes.size >
+                MaximumNeighborhoodTurns
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.CANDIDATE_SET_TOO_LARGE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val selectedEntries =
+            neighborhoodIndexes
+                .sorted()
+                .map {
+                    index ->
+                    generation.entries[
+                        index
+                    ]
+                }
+        if (
+            selectedEntries.isEmpty()
+        ) {
+            return NeighborhoodOutcome.Ready(
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+                turns =
+                    emptyList(),
+                directTurnRefs =
+                    emptySet(),
+                unresolvedSeedRefs =
+                    unresolvedSeedRefs,
+                totalCompletedTurnCount =
+                    currentHead
+                        ?.sequence
+                        ?.let {
+                            sequence ->
+                            (sequence /
+                                2 +
+                                1)
+                                .toInt()
+                        }
+                        ?: 0,
+                exactEventFileReadCount = 0,
+                exactHeadFileReadCount = 0,
+                wholeHistoryHeadTraversalPerformed = false,
+                derivedEntryScanCount = 0,
+                derivedPostingLookupCount =
+                    postingLookupCount,
+                derivedRefLookupCount =
+                    refLookup.refLookupCount,
+            )
+        }
+
+        val addresses =
+            selectedEntries
+                .flatMap {
+                    entry ->
+                    listOf(
+                        entry.coordinates.request,
+                        entry.coordinates.response,
+                    )
+                }
+                .sortedBy(
+                    DirectConversationStore.EventAddress::sequence,
+                )
+        val exact =
+            try {
+                conversationOwner
+                    .exactCommittedConversationEvents(
+                        addresses,
+                    )
+            } catch (
+                _: RuntimeException,
+            ) {
+                return NeighborhoodOutcome.FallbackRequired(
+                    reason =
+                        FallbackReason.SOURCE_COORDINATE_MISMATCH,
+                    currentConversationHeadSha256 =
+                        currentHeadSha,
+                    generationConversationHeadSha256 =
+                        generation.sourceConversationHeadSha256,
+                )
+            }
+        val byRef =
+            exact.events.associateBy(
+                DirectConversationStore.Event::eventRef,
+            )
+        val turns =
+            selectedEntries.map {
+                entry ->
+                val request =
+                    requireNotNull(
+                        byRef[
+                            entry.coordinates.request.eventRef
+                        ],
+                    )
+                val response =
+                    requireNotNull(
+                        byRef[
+                            entry.coordinates.response.eventRef
+                        ],
+                    )
+                requireCompletedPair(
+                    request = request,
+                    response = response,
+                )
+                require(
+                    request.turnRef ==
+                        entry.turnRef
+                ) {
+                    "indexed locator neighborhood turn ref differs from canonical source"
+                }
+                VexLifeTurnNavigation.projectPair(
+                    request = request,
+                    response = response,
+                )
+            }
+                .sortedBy(
+                    VexLifeTurnNavigation.Turn::ordinal,
+                )
+
+        return NeighborhoodOutcome.Ready(
+            currentConversationHeadSha256 =
+                currentHeadSha,
+            generationConversationHeadSha256 =
+                generation.sourceConversationHeadSha256,
+            turns =
+                turns,
+            directTurnRefs =
+                directIndexes
+                    .map {
+                        index ->
+                        generation.entries[
+                            index
+                        ]
+                            .turnRef
+                    }
+                    .toSet(),
+            unresolvedSeedRefs =
+                unresolvedSeedRefs,
+            totalCompletedTurnCount =
+                currentHead
+                    ?.sequence
+                    ?.let {
+                        sequence ->
+                        (sequence /
+                            2 +
+                            1)
+                            .toInt()
+                    }
+                    ?: 0,
+            exactEventFileReadCount =
+                exact.exactEventFileReadCount,
+            exactHeadFileReadCount =
+                exact.exactHeadFileReadCount,
+            wholeHistoryHeadTraversalPerformed =
+                exact.wholeHistoryHeadTraversalPerformed,
+            derivedEntryScanCount = 0,
+            derivedPostingLookupCount =
+                postingLookupCount,
+            derivedRefLookupCount =
+                refLookup.refLookupCount,
         )
     }
 
