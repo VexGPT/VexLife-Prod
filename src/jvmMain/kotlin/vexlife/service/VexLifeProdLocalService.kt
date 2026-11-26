@@ -1779,9 +1779,17 @@ class VexLifeProdLocalService private constructor(
             val constructionSnapshot =
                 constructionStore.current()
             conversationAttemptIndex
-                ?.rebuild(
-                    constructionSnapshot,
-                )
+                ?.let {
+                    index ->
+                    runCatching {
+                        index.rebuild(
+                            constructionSnapshot,
+                        )
+                    }
+                        .onFailure {
+                            index.invalidate()
+                        }
+                }
 
             val releaseUpdates =
                 VexLifeReleaseUpdates(
