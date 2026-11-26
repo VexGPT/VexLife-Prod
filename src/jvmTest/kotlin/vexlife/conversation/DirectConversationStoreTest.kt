@@ -219,6 +219,10 @@ class DirectConversationStoreTest {
                         productHome = productHome,
                         request = request,
                         response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-25T12:00:02Z",
+                            ),
                     )
                 val committed =
                     commitCompletedTurn(
