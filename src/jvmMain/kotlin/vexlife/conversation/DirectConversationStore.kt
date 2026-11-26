@@ -1240,8 +1240,9 @@ class DirectConversationStore(
         }
 
         private fun requestAdmissionSnapshot(
-            admissionSnapshot: Snapshot?,
-        ): Snapshot {
+            admissionSnapshot: RequestAdmission?,
+            requestMessageRef: String,
+        ): RequestAdmission {
             require(
                 pendingRequest ==
                     null &&
@@ -1250,25 +1251,40 @@ class DirectConversationStore(
             ) {
                 "canonical writer lease already owns one pending request"
             }
-            val snapshot =
+            val admission =
                 admissionSnapshot
-                    ?: readCurrentComplete()
+                    ?: run {
+                        val snapshot =
+                            readCurrentComplete()
+                        attemptIndex
+                            ?.rebuild(
+                                snapshot,
+                            )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
             if (
                 admissionSnapshot !=
                     null
             ) {
                 require(
                     admissionSnapshot ===
-                        reusableAdmissionSnapshot
+                        reusableAdmissionSnapshot &&
+                        admissionSnapshot.requestMessageRef ==
+                        requestMessageRef
                 ) {
-                    "canonical request admission snapshot was not issued by this writer lease"
+                    "canonical request admission snapshot was not issued for this exact writer lease/request identity"
                 }
                 val currentHead =
                     readHeadRecord()
                 require(
                     currentHead
                         ?.conversationHeadSha256 ==
-                        snapshot.head
+                        admission.head
                             ?.conversationHeadSha256
                 ) {
                     "canonical request admission snapshot is no longer current"
@@ -1276,7 +1292,68 @@ class DirectConversationStore(
                 reusableAdmissionSnapshot =
                     null
             }
-            return snapshot
+            return admission
+        }
+
+        private fun admissionFromSnapshot(
+            snapshot: Snapshot,
+            requestMessageRef: String,
+            wholeHistoryEventEnumerationPerformed: Boolean,
+        ): RequestAdmission {
+            val canonicalRequest =
+                snapshot.canonicalEvents
+                    .singleOrNull {
+                        it.eventKind ==
+                            VexLifeConversationContract.RequestKind &&
+                            it.messageRef ==
+                            requestMessageRef
+                    }
+            val canonicalEvents =
+                canonicalRequest
+                    ?.let {
+                        request ->
+                        snapshot.canonicalEvents
+                            .filter {
+                                it.turnRef ==
+                                    request.turnRef
+                            }
+                            .also {
+                                pair ->
+                                require(
+                                    pair.size ==
+                                        2
+                                ) {
+                                    "canonical request identity does not own one complete pair"
+                                }
+                            }
+                    }
+                    .orEmpty()
+            val abandoned =
+                snapshot.abandonedAttempts
+                    .singleOrNull {
+                        it.requestEvent.messageRef ==
+                            requestMessageRef
+                    }
+            require(
+                canonicalEvents.isEmpty() ||
+                    abandoned ==
+                    null
+            ) {
+                "canonical request identity cannot be both committed and abandoned"
+            }
+
+            return RequestAdmission(
+                requestMessageRef =
+                    requestMessageRef,
+                head =
+                    snapshot.head,
+                matchingCanonicalEvents =
+                    canonicalEvents,
+                matchingAbandonedAttempt =
+                    abandoned,
+                wholeHistoryEventEnumerationPerformed =
+                    wholeHistoryEventEnumerationPerformed,
+            )
         }
     }
 
