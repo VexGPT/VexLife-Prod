@@ -18,6 +18,7 @@ import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 /**
  * Every semantic ref a `workspace` or `release-alerts` key may present through its `dataKey`,
@@ -89,6 +90,7 @@ object VexLifeWorkspaceElements {
         VexLifeLocalSourcesFamily.ControlRefs.forEach { add("local-sources:control:$it") }
         VexLifeWorkspaceEffectsFamily.ControlRefs.forEach { add("workspace-effects:control:$it") }
         VexLifeWorkspaceChecksFamily.ControlRefs.forEach { add("workspace-checks:control:$it") }
+        VexLifeWorkspaceRunsFamily.ControlRefs.forEach { add("workspace-runs:control:$it") }
         VexLifePrivateModeFamily.StateRefs.forEach { add("private-mode:state:$it") }
         VexLifePrivateModeFamily.ControlRefs.forEach { add("private-mode:control:$it") }
         VexLifeContextProfileFamily.StateRefs.forEach { add("context-profile:state:$it") }

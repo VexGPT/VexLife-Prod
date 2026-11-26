@@ -329,6 +329,15 @@ object VexLifeWorkspaceBlueprint :
         SettingsLocalSources.control(
             "stop-checks",
         )
+    /** Project-code test authority is separate from read, write and Product-owned checks. */
+    val LocalSourceAllowTests =
+        SettingsLocalSources.control(
+            "allow-tests",
+        )
+    val LocalSourceStopTests =
+        SettingsLocalSources.control(
+            "stop-tests",
+        )
 
     val SettingsContinuity =
         Settings.region(
