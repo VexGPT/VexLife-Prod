@@ -1065,6 +1065,10 @@ class VexLifeWorkspaceJavaTest internal constructor(
                                 "-Duser.home=" +
                                     home,
                                 "-XX:-UsePerfData",
+                                "-XX:ErrorFile=" +
+                                    scratch.path.resolve(
+                                        JvmCrashFilePattern,
+                                    ),
                                 "-Xmx192m",
                                 "-XX:ActiveProcessorCount=2",
                                 "-cp",
@@ -1128,7 +1132,10 @@ class VexLifeWorkspaceJavaTest internal constructor(
                             DispositionHostFailed,
                         testStderr =
                             runnerProcessFailure(
-                                process,
+                                process =
+                                    process,
+                                scratch =
+                                    scratch.path,
                             ),
                         stderrTruncated =
                             process.stderrTruncated,
@@ -1234,6 +1241,7 @@ class VexLifeWorkspaceJavaTest internal constructor(
 
     private fun runnerProcessFailure(
         process: ProcessResult,
+        scratch: Path,
     ): String {
         val label =
             if (
@@ -1248,21 +1256,71 @@ class VexLifeWorkspaceJavaTest internal constructor(
             sanitizeHostDiagnostic(
                 process.stderr,
             )
+        val crash =
+            jvmCrashReport(
+                scratch,
+            )
         return (
-            if (
-                stderr.isBlank()
-            ) {
-                label
-            } else {
-                label +
-                    ":" +
-                    stderr
-            }
+            listOf(
+                label,
+                stderr,
+                crash,
+            )
+                .filter(
+                    String::isNotBlank,
+                )
+                .joinToString(
+                    ":",
+                )
         )
             .take(
                 VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
             )
     }
+
+    private fun jvmCrashReport(
+        scratch: Path,
+    ): String =
+        runCatching {
+                Files.newDirectoryStream(
+                    scratch,
+                    "hs_err_pid*.log",
+                )
+                    .use {
+                        paths ->
+                        val crash =
+                            paths
+                                .asSequence()
+                                .filter {
+                                    Files.isRegularFile(
+                                        it,
+                                        LinkOption.NOFOLLOW_LINKS,
+                                    )
+                                }
+                                .sortedBy {
+                                    it.fileName.toString()
+                                }
+                                .firstOrNull()
+                                ?: return@use ""
+                        val bytes =
+                            readNoFollow(
+                                crash,
+                                MaximumJvmCrashReportBytes,
+                            )
+                                ?: return@use "JVM_CRASH_REPORT_UNREADABLE:" +
+                                    crash.fileName
+                        "JVM_CRASH_REPORT:" +
+                            sanitizeHostDiagnostic(
+                                String(
+                                    bytes,
+                                    StandardCharsets.UTF_8,
+                                ),
+                            )
+                    }
+            }
+            .getOrDefault(
+                "",
+            )
 
     private fun runnerProtocolFailure(
         process: ProcessResult,
@@ -1611,6 +1669,12 @@ class VexLifeWorkspaceJavaTest internal constructor(
 
         const val MaximumProtocolStderrBytes =
             32_768
+
+        const val MaximumJvmCrashReportBytes =
+            1_048_576
+
+        const val JvmCrashFilePattern =
+            "hs_err_pid%p.log"
 
         const val SecurityPolicyFileName =
             "java-test.policy"

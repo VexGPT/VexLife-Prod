@@ -534,6 +534,112 @@ class VexLifeWorkspaceJavaTestTest {
         }
 
     @Test
+    fun outerJvmAbortPreservesBoundedJvmCrashReport() =
+        withFixture {
+            fixture ->
+            writeProject(
+                fixture.source,
+            )
+            var observedErrorFile: String? =
+                null
+            val owner =
+                VexLifeWorkspaceJavaTest(
+                    productHome =
+                        fixture.home,
+                    localSources =
+                        fixture.localSources,
+                    workspaceRuns =
+                        fixture.runs,
+                    runtimeSource = {
+                        runtime()
+                    },
+                    runner = {
+                        spec ->
+                        val errorFile =
+                            spec.arguments
+                                .single {
+                                    it.startsWith(
+                                        "-XX:ErrorFile=",
+                                    )
+                                }
+                                .removePrefix(
+                                    "-XX:ErrorFile=",
+                                )
+                        observedErrorFile =
+                            errorFile
+                        val crash =
+                            Path.of(
+                                errorFile.replace(
+                                    "%p",
+                                    "4242",
+                                ),
+                            )
+                        assertTrue(
+                            crash.startsWith(
+                                spec.workingDirectory,
+                            ),
+                        )
+                        Files.writeString(
+                            crash,
+                            "fatal synthetic JVM startup abort\n",
+                        )
+                        VexLifeWorkspaceJavaTest.ProcessResult(
+                            started =
+                                true,
+                            exitCode =
+                                134,
+                            stdout =
+                                "",
+                            stderr =
+                                "",
+                            timedOut =
+                                false,
+                            stdoutTruncated =
+                                false,
+                            stderrTruncated =
+                                false,
+                        )
+                    },
+                )
+
+            val receipt =
+                assertIs<VexLifeWorkspaceJavaTest.Outcome.Completed>(
+                    owner.test(
+                        operationRef =
+                            "operation.test.outer-jvm-abort",
+                        sourceRef =
+                            fixture.sourceRef,
+                        request =
+                            request(),
+                    ),
+                )
+                    .receipt
+
+            assertNotNull(
+                observedErrorFile,
+            )
+            assertTrue(
+                receipt.testStderr.startsWith(
+                    "HOST_RUNNER_PROCESS_EXIT:134:",
+                ),
+            )
+            assertTrue(
+                receipt.testStderr.contains(
+                    "JVM_CRASH_REPORT:fatal synthetic JVM startup abort",
+                ),
+            )
+            assertTrue(
+                receipt.testStderr.toByteArray(
+                    StandardCharsets.UTF_8,
+                ).size <=
+                    VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+            )
+            assertTrue(
+                receipt.cleanupComplete,
+            )
+        }
+
+    @Test
     fun compileAndTestFailuresRemainUsefulCompletedReceipts() =
         withFixture {
             fixture ->
