@@ -154,7 +154,7 @@ class DirectConversationStoreTest {
     }
 
     @Test
-    fun admissionSnapshotCanBeReusedOnceInsideLeaseButStaleSnapshotIsRejected() {
+    fun admissionSnapshotIsBoundToOneWriterLeaseAndConsumedOnce() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-direct-conversation-admission-snapshot-",
@@ -173,14 +173,28 @@ class DirectConversationStoreTest {
                 DirectConversationStore(
                     productHome,
                 )
+            lateinit var foreignAdmission: DirectConversationStore.Snapshot
 
             store.withWriterLease {
-                val admission =
-                    current()
+                foreignAdmission =
+                    currentForRequestAdmission()
                 assertNull(
-                    admission.head,
+                    foreignAdmission.head,
                 )
+            }
 
+            store.withWriterLease {
+                assertFailsWith<IllegalArgumentException> {
+                    beginRequest(
+                        turnRef = "turn.self-development.admission.foreign",
+                        requestMessageRef = "message.self-development.human.admission.foreign",
+                        content = "A snapshot from another lease must not write.",
+                        admissionSnapshot = foreignAdmission,
+                    )
+                }
+
+                val admission =
+                    currentForRequestAdmission()
                 val request =
                     beginRequest(
                         turnRef = "turn.self-development.admission.001",
@@ -219,9 +233,9 @@ class DirectConversationStoreTest {
                 )
                 assertFailsWith<IllegalArgumentException> {
                     beginRequest(
-                        turnRef = "turn.self-development.admission.002",
-                        requestMessageRef = "message.self-development.human.admission.002",
-                        content = "A stale admission must not write.",
+                        turnRef = "turn.self-development.admission.replay",
+                        requestMessageRef = "message.self-development.human.admission.replay",
+                        content = "A consumed admission capability must not replay.",
                         admissionSnapshot = admission,
                     )
                 }
@@ -234,7 +248,7 @@ class DirectConversationStoreTest {
                 assertEquals(
                     2,
                     after.events.size,
-                    "stale admission failure must not append another canonical event",
+                    "rejected admission capabilities must not append canonical events",
                 )
             }
         } finally {
