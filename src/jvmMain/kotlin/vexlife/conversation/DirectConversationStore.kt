@@ -1032,6 +1032,38 @@ class DirectConversationStore(
 
             return current.head
         }
+
+        private fun requestAdmissionSnapshot(
+            admissionSnapshot: Snapshot?,
+        ): Snapshot {
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+            val snapshot =
+                admissionSnapshot
+                    ?: readCurrentComplete()
+            if (
+                admissionSnapshot !=
+                    null
+            ) {
+                val currentHead =
+                    readHeadRecord()
+                require(
+                    currentHead
+                        ?.conversationHeadSha256 ==
+                        snapshot.head
+                            ?.conversationHeadSha256
+                ) {
+                    "canonical request admission snapshot is no longer current"
+                }
+            }
+            return snapshot
+        }
     }
 
     private val productHome: Path =
@@ -1398,38 +1430,6 @@ class DirectConversationStore(
                 directory,
             )
         }
-    }
-
-    private fun Locked.requestAdmissionSnapshot(
-        admissionSnapshot: Snapshot?,
-    ): Snapshot {
-        require(
-            pendingRequest ==
-                null &&
-                pendingResponse ==
-                null
-        ) {
-            "canonical writer lease already owns one pending request"
-        }
-        val snapshot =
-            admissionSnapshot
-                ?: readCurrentComplete()
-        if (
-            admissionSnapshot !=
-                null
-        ) {
-            val currentHead =
-                readHeadRecord()
-            require(
-                currentHead
-                    ?.conversationHeadSha256 ==
-                    snapshot.head
-                        ?.conversationHeadSha256
-            ) {
-                "canonical request admission snapshot is no longer current"
-            }
-        }
-        return snapshot
     }
 
     private fun readCurrentComplete(): Snapshot {
