@@ -103,6 +103,8 @@ import vexlife.workspace.VexLifeWorkspaceEffectStore
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceCheckStore
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunStore
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 import vexlife.capability.VexLifeWorkspaceTextCheck
 import vexlife.capability.VexLifeWorkspaceJavaTest
 import vexlife.capability.VexLifeCapabilityBridge
@@ -294,6 +296,16 @@ class VexLifeProdLocalService private constructor(
 
     private val workspaceChecks =
         VexLifeWorkspaceCheckStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
+        )
+
+    private val workspaceRuns =
+        VexLifeWorkspaceRunStore(
             productHome =
                 Path.of(
                     startupSetup.productHome,
@@ -2559,6 +2571,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.WorkspaceChecksControlPath ->
                     handleWorkspaceChecksControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceRunsPath ->
+                    handleWorkspaceRuns(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceRunsControlPath ->
+                    handleWorkspaceRunsControl(
                         exchange,
                     )
 
@@ -5828,6 +5850,126 @@ class VexLifeProdLocalService private constructor(
                                 "workspace.status.workspace-checks-limit-reached"
                             else ->
                                 "workspace.status.workspace-checks-not-granted"
+                        },
+                )
+        }
+    }
+
+    private fun workspaceRunsProjection(): VexLifeProdServiceContract.WorkspaceRunsProjection {
+        val state = workspaceRuns.state()
+        return VexLifeProdServiceContract.WorkspaceRunsProjection(
+            schemaVersion = VexLifeProdServiceContract.WorkspaceRunsProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceRuns(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceRunsProjection(),
+        )
+    }
+
+    private fun handleWorkspaceRunsControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceRunsControlRequest>(
+                exchange,
+            )
+        val control =
+            when (request.controlRef) {
+                VexLifeWorkspaceRunsFamily.ControlAllow ->
+                    VexLifeWorkspaceRunsFamily.Allow(request.sourceRef)
+                VexLifeWorkspaceRunsFamily.ControlRevoke ->
+                    VexLifeWorkspaceRunsFamily.Revoke(request.sourceRef)
+                else -> error("Workspace Runs Control is unknown")
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceRunsControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceRunsControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceRunsControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        runs = workspaceRunsProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(localSourcesMutationLock) {
+                VexLifeWorkspaceRunsFamily.resolve(
+                    currentState = workspaceRuns.state(),
+                    control = control,
+                )?.effect
+            }
+        if (semanticEffect == null) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceRunsControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (control is VexLifeWorkspaceRunsFamily.Allow) {
+                        "workspace.status.workspace-runs-already-granted"
+                    } else {
+                        "workspace.status.workspace-runs-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(localSourcesMutationLock) {
+                when (semanticEffect) {
+                    is VexLifeWorkspaceRunsFamily.Effect.GrantRuns ->
+                        workspaceRuns.grant(semanticEffect.sourceRef)
+                    is VexLifeWorkspaceRunsFamily.Effect.RevokeRuns ->
+                        workspaceRuns.revoke(semanticEffect.sourceRef)
+                }
+            }
+
+        when (realized) {
+            is VexLifeWorkspaceRunStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED,
+                    reasonKey =
+                        if (control is VexLifeWorkspaceRunsFamily.Allow) {
+                            "workspace.status.workspace-runs-granted"
+                        } else {
+                            "workspace.status.workspace-runs-revoked"
+                        },
+                )
+            is VexLifeWorkspaceRunStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REFUSED,
+                    reasonKey =
+                        when (realized.reason) {
+                            VexLifeWorkspaceRunStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-runs-source-not-current"
+                            VexLifeWorkspaceRunStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-runs-already-granted"
+                            VexLifeWorkspaceRunStore.RefusedLimitReached ->
+                                "workspace.status.workspace-runs-limit-reached"
+                            else ->
+                                "workspace.status.workspace-runs-not-granted"
                         },
                 )
         }
