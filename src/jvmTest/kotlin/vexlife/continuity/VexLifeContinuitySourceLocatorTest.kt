@@ -774,6 +774,52 @@ class VexLifeContinuitySourceLocatorTest {
                     ),
                     missingSeed.unresolvedSeedRefs,
                 )
+
+                val corrections =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            emptyList(),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                                        typedEdges =
+                                            setOf(
+                                                VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                            ),
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    setOf(
+                        turns[1].first.turnRef,
+                    ),
+                    corrections.directTurnRefs,
+                )
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[1].first.turnRef,
+                        turns[2].first.turnRef,
+                    ),
+                    corrections.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "typed-edge lookup returns the correction plus exact immediate canonical neighbors",
+                )
+                assertEquals(
+                    1,
+                    corrections.derivedTypedEdgeLookupCount,
+                )
+                assertEquals(
+                    0,
+                    corrections.derivedEntryScanCount,
+                )
             }
         }
     }

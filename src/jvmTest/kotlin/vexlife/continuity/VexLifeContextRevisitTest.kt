@@ -521,6 +521,16 @@ class VexLifeContextRevisitTest {
                                         seedRefs =
                                             query.seedRefs
                                                 .toSet(),
+                                        typedEdges =
+                                            if (
+                                                query.corrections
+                                            ) {
+                                                setOf(
+                                                    VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                                )
+                                            } else {
+                                                emptySet()
+                                            },
                                     )
                                 },
                             backend =
@@ -551,6 +561,8 @@ class VexLifeContextRevisitTest {
                                     outcome.derivedPostingLookupCount,
                                 derivedRefLookupCount =
                                     outcome.derivedRefLookupCount,
+                                derivedTypedEdgeLookupCount =
+                                    outcome.derivedTypedEdgeLookupCount,
                             )
 
                         is VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired ->
@@ -702,12 +714,67 @@ class VexLifeContextRevisitTest {
                         "The sapphire seed is stored here.",
                     ),
                 )
+
+                val correctionRequest =
+                    request(
+                        """{"queries":[{"corrections":true}],"scopes":["CONVERSATION"]}""",
+                    )
+                assertTrue(
+                    VexLifeContextRevisit.supportsIndexedConversationView(
+                        correctionRequest,
+                    ),
+                )
+                val correctionSources =
+                    turnSources.sources(
+                        correctionRequest,
+                    )
+                assertEquals(
+                    0,
+                    fullConversationReads,
+                    "global correction typed-edge lookup must not force the full Conversation snapshot",
+                )
+                val correctionView =
+                    assertIs<VexLifeContextRevisit.ConversationView>(
+                        correctionSources.conversationView,
+                    )
+                assertTrue(
+                    correctionView.derivedTypedEdgeLookupCount >
+                        0,
+                )
+                val correctionResult =
+                    VexLifeContextRevisit.revisit(
+                        request =
+                            correctionRequest,
+                        sources =
+                            correctionSources,
+                        estimateTokens =
+                            ::estimate,
+                    )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "I'm not frustrated. I want exact causal detail.",
+                    ),
+                )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "opens like a correction",
+                    ),
+                    "global corrections:true directly locates the correction turn as CORRECTIONS",
+                )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "the person's next message corrects this reply (" +
+                            turns[1].first.turnRef +
+                            ")",
+                    ),
+                    "one typed step from the correction turn must retain CORRECTED_BY on the exact prior turn",
+                )
             }
         }
     }
 
     @Test
-    fun windowOrGlobalCorrectionRequestFallsBackToFullConversationSnapshot() {
+    fun windowRequestFallsBackToFullConversationSnapshot() {
         ContinuityTurnFixture().use {
             fixture ->
             fixture.commit(
@@ -818,42 +885,6 @@ class VexLifeContextRevisitTest {
                     windowResult.returnedSourceRefs.isNotEmpty(),
                 )
 
-                val correctionRequest =
-                    request(
-                        """{"queries":[{"corrections":true}],"scopes":["CONVERSATION"]}""",
-                    )
-                assertFalse(
-                    VexLifeContextRevisit.supportsIndexedConversationView(
-                        correctionRequest,
-                    ),
-                )
-                val correctionSources =
-                    turnSources.sources(
-                        correctionRequest,
-                    )
-                assertEquals(
-                    2,
-                    indexedViewAttempts,
-                )
-                assertEquals(
-                    1,
-                    fullConversationReads,
-                    "the full canonical snapshot is cached after the first broad fallback",
-                )
-                val correctionResult =
-                    VexLifeContextRevisit.revisit(
-                        request =
-                            correctionRequest,
-                        sources =
-                            correctionSources,
-                        estimateTokens =
-                            ::estimate,
-                    )
-                assertTrue(
-                    correctionResult.text.contains(
-                        "Actually, this is corrected.",
-                    ),
-                )
             }
         }
     }

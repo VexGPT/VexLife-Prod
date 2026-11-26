@@ -27,7 +27,7 @@ import vexlife.conversation.DirectConversationStore
  */
 object VexLifeContinuitySourceLocator {
     const val GenerationSchema =
-        "vexlife-prod.continuity-source-locator-generation/v3"
+        "vexlife-prod.continuity-source-locator-generation/v4"
 
     const val UnboundSourceLifecycleBindingRef =
         "lifecycle.unbound"
@@ -43,6 +43,11 @@ object VexLifeContinuitySourceLocator {
         ANY,
         HUMAN,
         VEX,
+    }
+
+    enum class TypedEdgeKind {
+        CORRECTS_PREVIOUS,
+        POINTS_BACK_PREVIOUS,
     }
 
     enum class FallbackReason {
@@ -73,6 +78,7 @@ object VexLifeContinuitySourceLocator {
         val coordinates: SourceCoordinates,
         val requestFingerprints: Set<String>,
         val responseFingerprints: Set<String>,
+        val typedEdges: Set<TypedEdgeKind>,
     )
 
     /**
@@ -140,8 +146,13 @@ object VexLifeContinuitySourceLocator {
         val refLookupCount: Int,
     )
 
+    data class IndexedTypedEdgeLookup(
+        val entryIndexes: Set<Int>,
+        val typedEdgeLookupCount: Int,
+    )
+
     /**
-     * Optional realization capability for a true inverted lexical index.
+     * Optional realization capability for inverted lexical/ref/typed-edge lookup.
      *
      * Product semantics do not require this exact data structure. A backend that does not implement
      * it preserves the prior linear derived-entry scan; a qualified backend may instead answer
@@ -156,6 +167,10 @@ object VexLifeContinuitySourceLocator {
         fun entryIndexesForRefs(
             refs: Set<String>,
         ): IndexedRefLookup
+
+        fun entryIndexesForTypedEdges(
+            typedEdges: Set<TypedEdgeKind>,
+        ): IndexedTypedEdgeLookup
 
         fun replaceAfterAppend(
             priorGeneration: Generation,
@@ -201,6 +216,9 @@ object VexLifeContinuitySourceLocator {
         private val entryIndexByRef =
             linkedMapOf<String, Int>()
 
+        private val entryIndexesByTypedEdge =
+            linkedMapOf<TypedEdgeKind, MutableSet<Int>>()
+
         override fun fingerprint(value: String): String {
             val mac =
                 Mac.getInstance("HmacSHA256")
@@ -239,6 +257,7 @@ object VexLifeContinuitySourceLocator {
             requestPostings.clear()
             responsePostings.clear()
             entryIndexByRef.clear()
+            entryIndexesByTypedEdge.clear()
             generation.entries.forEachIndexed(
                 ::indexEntry,
             )
@@ -262,7 +281,9 @@ object VexLifeContinuitySourceLocator {
                         priorGeneration.sourceConversationSequence ==
                             null &&
                         requestPostings.isEmpty() &&
-                        responsePostings.isEmpty()
+                        responsePostings.isEmpty() &&
+                        entryIndexByRef.isEmpty() &&
+                        entryIndexesByTypedEdge.isEmpty()
                 ) {
                     "indexed locator append cannot bootstrap from a non-empty missing generation"
                 }
@@ -411,12 +432,34 @@ object VexLifeContinuitySourceLocator {
             )
         }
 
+        override fun entryIndexesForTypedEdges(
+            typedEdges: Set<TypedEdgeKind>,
+        ): IndexedTypedEdgeLookup {
+            val indexes =
+                linkedSetOf<Int>()
+            typedEdges.forEach {
+                edge ->
+                indexes +=
+                    entryIndexesByTypedEdge[
+                        edge
+                    ]
+                        .orEmpty()
+            }
+            return IndexedTypedEdgeLookup(
+                entryIndexes =
+                    indexes,
+                typedEdgeLookupCount =
+                    typedEdges.size,
+            )
+        }
+
         override fun clear() {
             generation =
                 null
             requestPostings.clear()
             responsePostings.clear()
             entryIndexByRef.clear()
+            entryIndexesByTypedEdge.clear()
         }
 
         private fun indexEntry(
@@ -465,6 +508,18 @@ object VexLifeContinuitySourceLocator {
                     "indexed locator contains duplicate turn/event ref"
                 }
             }
+            entry.typedEdges.forEach {
+                edge ->
+                entryIndexesByTypedEdge
+                    .getOrPut(
+                        edge,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
         }
     }
 
@@ -502,6 +557,7 @@ object VexLifeContinuitySourceLocator {
         val queryTerms: List<String>,
         val speakerScope: SpeakerScope,
         val seedRefs: Set<String> = emptySet(),
+        val typedEdges: Set<TypedEdgeKind> = emptySet(),
     )
 
     sealed interface NeighborhoodOutcome {
@@ -518,6 +574,7 @@ object VexLifeContinuitySourceLocator {
             val derivedEntryScanCount: Int,
             val derivedPostingLookupCount: Int,
             val derivedRefLookupCount: Int,
+            val derivedTypedEdgeLookupCount: Int,
             val wholeHistoryEventEnumerationPerformed: Boolean = false,
             val canonicalSourceMutationPerformed: Boolean = false,
         ) : NeighborhoodOutcome
@@ -644,6 +701,10 @@ object VexLifeContinuitySourceLocator {
                                     fingerprints(
                                         response.content,
                                         backend,
+                                    ),
+                                typedEdges =
+                                    typedEdges(
+                                        request.content,
                                     ),
                             ),
                         )
@@ -822,6 +883,10 @@ object VexLifeContinuitySourceLocator {
                     fingerprints(
                         response.content,
                         backend,
+                    ),
+                typedEdges =
+                    typedEdges(
+                        request.content,
                     ),
             )
         val updated =
@@ -1377,7 +1442,8 @@ object VexLifeContinuitySourceLocator {
                     } ||
                     (
                         query.queryTerms.isEmpty() &&
-                            query.seedRefs.isEmpty()
+                            query.seedRefs.isEmpty() &&
+                            query.typedEdges.isEmpty()
                     )
             }
         ) {
@@ -1545,6 +1611,19 @@ object VexLifeContinuitySourceLocator {
         val unresolvedSeedRefs =
             allSeedRefs -
                 refLookup.entryIndexesByRef.keys
+        val allTypedEdges =
+            normalizedQueries
+                .flatMap {
+                    query ->
+                    query.typedEdges
+                }
+                .toSet()
+        val typedEdgeLookup =
+            indexedBackend.entryIndexesForTypedEdges(
+                allTypedEdges,
+            )
+        directIndexes +=
+            typedEdgeLookup.entryIndexes
 
         if (
             directIndexes.size >
@@ -1661,6 +1740,8 @@ object VexLifeContinuitySourceLocator {
                     postingLookupCount,
                 derivedRefLookupCount =
                     refLookup.refLookupCount,
+                derivedTypedEdgeLookupCount =
+                    typedEdgeLookup.typedEdgeLookupCount,
             )
         }
 
@@ -1766,8 +1847,35 @@ object VexLifeContinuitySourceLocator {
                 postingLookupCount,
             derivedRefLookupCount =
                 refLookup.refLookupCount,
+            derivedTypedEdgeLookupCount =
+                typedEdgeLookup.typedEdgeLookupCount,
         )
     }
+
+    private fun typedEdges(
+        requestContent: String,
+    ): Set<TypedEdgeKind> =
+        buildSet {
+            if (
+                VexLifeTurnNavigation.correctionCueOrNull(
+                    requestContent,
+                ) !=
+                null
+            ) {
+                add(
+                    TypedEdgeKind.CORRECTS_PREVIOUS,
+                )
+            }
+            if (
+                VexLifeTurnNavigation.pointsBack(
+                    requestContent,
+                )
+            ) {
+                add(
+                    TypedEdgeKind.POINTS_BACK_PREVIOUS,
+                )
+            }
+        }
 
     private data class ApproximateCandidate(
         val entry: Entry,
@@ -1912,7 +2020,11 @@ object VexLifeContinuitySourceLocator {
                     ) &&
                     entry.responseFingerprints.all(
                         ::isFingerprint,
-                    )
+                    ) &&
+                    entry.typedEdges.all {
+                        it in
+                            TypedEdgeKind.entries
+                    }
             ) {
                 "continuity source locator entry is invalid"
             }

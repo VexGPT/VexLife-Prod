@@ -145,6 +145,7 @@ object VexLifeContextRevisit {
         val derivedEntryScanCount: Int,
         val derivedPostingLookupCount: Int,
         val derivedRefLookupCount: Int,
+        val derivedTypedEdgeLookupCount: Int,
     )
 
     data class Sources(
@@ -438,8 +439,7 @@ object VexLifeContextRevisit {
             request.queries.all {
                 query ->
                 query.window ==
-                    null &&
-                    !query.corrections
+                    null
             }
 
     fun parse(arguments: JsonObject): Parsed {
