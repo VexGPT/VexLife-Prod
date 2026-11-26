@@ -100,6 +100,13 @@ object DirectCompanionTurn {
          */
         val requestAttachments: List<VexLifeLocalArtifact.RequestAttachment> =
             emptyList(),
+        /**
+         * Product-service retries may arrive after the Composer draft has already been consumed.
+         * When true, an empty attachment list may match already-durable attachments for an existing
+         * idempotency identity. It never adds attachments to a new request.
+         */
+        val reuseDurableRequestAttachmentsWhenEmpty: Boolean =
+            false,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
@@ -832,6 +839,8 @@ object DirectCompanionTurn {
                         identity = identity,
                         content = intent.content,
                         requestAttachments = intent.requestAttachments,
+                        reuseDurableRequestAttachmentsWhenEmpty =
+                            intent.reuseDurableRequestAttachmentsWhenEmpty,
                         browserContext = intent.browserContext,
                         productHome = productHome,
                     )
@@ -873,6 +882,7 @@ object DirectCompanionTurn {
                                 requestMessageRef = identity.requestMessageRef,
                                 content = intent.content,
                                 formedAt = hooks.now(),
+                                admissionSnapshot = before,
                             )
                         } else {
                             beginRequestV2(
@@ -888,6 +898,7 @@ object DirectCompanionTurn {
                                         ),
                                     ),
                                 formedAt = hooks.now(),
+                                admissionSnapshot = before,
                             )
                         }
                     // The person's exact REQUEST words are durable before any resource relation
@@ -2757,6 +2768,7 @@ object DirectCompanionTurn {
         identity: Identity,
         content: String,
         requestAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
+        reuseDurableRequestAttachmentsWhenEmpty: Boolean,
         browserContext: DirectPromptContext.BrowserContext?,
         productHome: Path,
     ): Result? {
@@ -2783,6 +2795,8 @@ object DirectCompanionTurn {
                 productHome = productHome,
                 request = canonicalRequest,
                 expected = requestAttachments,
+                allowExistingWhenExpectedEmpty =
+                    reuseDurableRequestAttachmentsWhenEmpty,
             )
 
             val response =
@@ -2880,6 +2894,8 @@ object DirectCompanionTurn {
             productHome = productHome,
             request = failed.requestEvent,
             expected = requestAttachments,
+            allowExistingWhenExpectedEmpty =
+                reuseDurableRequestAttachmentsWhenEmpty,
         )
 
         val receipt =
@@ -2909,6 +2925,7 @@ object DirectCompanionTurn {
         productHome: Path,
         request: DirectConversationStore.Event,
         expected: List<VexLifeLocalArtifact.RequestAttachment>,
+        allowExistingWhenExpectedEmpty: Boolean,
     ) {
         val actual =
             VexLifeLocalArtifactStore(
@@ -2920,7 +2937,11 @@ object DirectCompanionTurn {
                 ?.attachments
                 .orEmpty()
         require(
-            actual ==
+            (
+                allowExistingWhenExpectedEmpty &&
+                    expected.isEmpty()
+            ) ||
+                actual ==
                 expected,
         ) {
             "idempotencyKey already identifies a durable human request with different local artifacts"
