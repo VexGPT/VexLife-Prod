@@ -107,6 +107,52 @@ class VexLifeWorkspaceJavaTestProcessTest {
         )
     }
 
+
+    @Test
+    fun processStartFailureReturnsBoundedHostDiagnostic() {
+        val working =
+            Files.createTempDirectory(
+                "vexlife-workspace-java-test-process-start-failure-",
+            )
+                .toRealPath()
+        try {
+            val result =
+                VexLifeWorkspaceJavaTestProcess.runChild(
+                    program =
+                        working.resolve(
+                            "missing-java",
+                        ),
+                    arguments =
+                        emptyList(),
+                    workingDirectory =
+                        working,
+                    timeoutMs =
+                        1_000,
+                )
+
+            assertFalse(
+                result.started,
+            )
+            assertEquals(
+                null,
+                result.exitCode,
+            )
+            assertTrue(
+                result.stderr.startsWith(
+                    "PROCESS_START_FAILED:",
+                ),
+            )
+            assertTrue(
+                result.stderr.length <=
+                    VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+            )
+        } finally {
+            working
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     @Test
     fun compilerAndTestMainPassWithoutProjectToolchainOrPackageManager() =
         withScratch {

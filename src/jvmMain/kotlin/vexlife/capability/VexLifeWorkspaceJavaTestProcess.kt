@@ -32,7 +32,7 @@ internal object VexLifeWorkspaceJavaTestProcess {
         val truncated: Boolean,
     )
 
-    private data class ChildResult(
+    internal data class ChildResult(
         val started: Boolean,
         val exitCode: Int?,
         val stdout: String,
@@ -268,6 +268,8 @@ internal object VexLifeWorkspaceJavaTestProcess {
             return hostFailed(
                 diagnostics =
                     compileDiagnostics,
+                testStderr =
+                    child.stderr,
             )
         }
         if (
@@ -424,7 +426,7 @@ internal object VexLifeWorkspaceJavaTestProcess {
             }
             .getOrNull()
 
-    private fun runChild(
+    internal fun runChild(
         program: Path,
         arguments: List<String>,
         workingDirectory: Path,
@@ -529,7 +531,7 @@ internal object VexLifeWorkspaceJavaTestProcess {
                     stderr.truncated,
             )
         } catch (
-            _: Exception,
+            failure: Exception,
         ) {
             ChildResult(
                 started =
@@ -539,7 +541,9 @@ internal object VexLifeWorkspaceJavaTestProcess {
                 stdout =
                     "",
                 stderr =
-                    "",
+                    processStartFailure(
+                        failure,
+                    ),
                 timedOut =
                     false,
                 stdoutTruncated =
@@ -548,6 +552,19 @@ internal object VexLifeWorkspaceJavaTestProcess {
                     false,
             )
         }
+
+    private fun processStartFailure(
+        failure: Exception,
+    ): String =
+        (
+            "PROCESS_START_FAILED:" +
+                failure::class.java.name +
+                ":" +
+                failure.message.orEmpty()
+        )
+            .take(
+                VexLifeWorkspaceJavaTestDefinitions.MaximumStderrBytes,
+            )
 
     private fun capture(
         input: InputStream,
@@ -617,12 +634,16 @@ internal object VexLifeWorkspaceJavaTestProcess {
     private fun hostFailed(
         diagnostics: List<VexLifeWorkspaceJavaTest.CompilerDiagnostic> =
             emptyList(),
+        testStderr: String =
+            "",
     ): VexLifeWorkspaceJavaTest.RunnerResult =
         VexLifeWorkspaceJavaTest.RunnerResult(
             disposition =
                 VexLifeWorkspaceJavaTest.DispositionHostFailed,
             diagnostics =
                 diagnostics,
+            testStderr =
+                testStderr,
         )
 }
 
