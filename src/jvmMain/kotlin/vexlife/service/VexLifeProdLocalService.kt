@@ -6283,18 +6283,17 @@ class VexLifeProdLocalService private constructor(
             )
         val request =
             DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
+                productHome =
+                    Path.of(
+                        startupSetup.productHome,
+                    ),
+                attemptIndex =
+                    conversationAttemptIndex,
             )
-                .current()
-                .events
-                .firstOrNull {
-                    it.eventKind ==
-                        VexLifeConversationContract.RequestKind &&
-                        it.messageRef ==
-                        requestMessageRef
-                }
+                .requestEventForMessageRef(
+                    requestMessageRef,
+                )
+                .requestEvent
                 ?: return null
 
         return localArtifactStore
