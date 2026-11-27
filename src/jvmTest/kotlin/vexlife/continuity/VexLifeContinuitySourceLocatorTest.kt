@@ -1366,6 +1366,322 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun semanticNeighborhoodNominationBridgesMeridianParaphraseThenReopensExactCanonicalSource() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "The paper crane is named Meridian-7.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Later unrelated turn.",
+                        vex = "later",
+                        at = Instant.parse("2026-11-20T08:05:00Z"),
+                    ),
+                )
+            val backend =
+                DeterministicSemanticBackend(
+                    fingerprintBindingRef =
+                        "fingerprint.test.semantic-meridian",
+                    semanticRepresentationBindingRef =
+                        "semantic.test.meridian-v1",
+                )
+
+            fixture.store.withWriterLease {
+                val before =
+                    fixture.homeTree()
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "bird",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "bird-shaped",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "identifier",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    setOf(
+                        turns[0].first.turnRef,
+                    ),
+                    outcome.directTurnRefs,
+                )
+                assertEquals(
+                    setOf(
+                        turns[0].first.turnRef,
+                    ),
+                    outcome.semanticDirectTurnRefs,
+                    "semantic ranking may nominate only the source coordinate; canonical Conversation still supplies the returned turn",
+                )
+                assertEquals(
+                    3,
+                    outcome.derivedSemanticLookupCount,
+                    "each alternate semantic vantage is a bounded derived lookup",
+                )
+                assertTrue(
+                    outcome.derivedPostingLookupCount >
+                        0,
+                    "lexical postings are attempted before semantic nomination",
+                )
+                assertTrue(
+                    outcome.exactEventFileReadCount >=
+                        2,
+                    "semantic nomination must descend through exact canonical event reopen",
+                )
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[1].first.turnRef,
+                    ),
+                    outcome.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "semantic direct hit keeps the existing exact immediate-neighbor expansion law",
+                )
+                assertFalse(
+                    outcome.wholeHistoryHeadTraversalPerformed,
+                )
+                assertFalse(
+                    outcome.canonicalSourceMutationPerformed,
+                )
+                assertEquals(
+                    before,
+                    fixture.homeTree(),
+                    "semantic nomination + canonical reopen must remain read-only",
+                )
+
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+                val renderedGeneration =
+                    generation.toString()
+                        .lowercase()
+                assertFalse(
+                    "paper crane" in
+                        renderedGeneration,
+                    "raw source content belongs only to ephemeral semantic ingestion, not the portable locator generation",
+                )
+                assertFalse(
+                    "meridian-7" in
+                        renderedGeneration,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun lexicalNeighborhoodHitDoesNotInvokeSemanticNomination() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turn =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "The paper crane is named Meridian-7.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val backend =
+                DeterministicSemanticBackend(
+                    fingerprintBindingRef =
+                        "fingerprint.test.semantic-lexical-first",
+                    semanticRepresentationBindingRef =
+                        "semantic.test.lexical-first-v1",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "paper crane",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    setOf(
+                        turn.first.turnRef,
+                    ),
+                    outcome.directTurnRefs,
+                )
+                assertTrue(
+                    outcome.semanticDirectTurnRefs.isEmpty(),
+                )
+                assertEquals(
+                    0,
+                    outcome.derivedSemanticLookupCount,
+                    "semantic nomination must not widen an already-satisfied lexical query",
+                )
+                assertEquals(
+                    0,
+                    backend.semanticLookupInvocations,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun staleReboundOrCorruptSemanticIndexFailsClosedInsteadOfBecomingNotFound() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human =
+                        "The paper crane is named Meridian-7.",
+                    vex = "recorded",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+            )
+            val backend =
+                DeterministicSemanticBackend(
+                    fingerprintBindingRef =
+                        "fingerprint.test.semantic-fail-closed",
+                    semanticRepresentationBindingRef =
+                        "semantic.test.fail-closed-v1",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+
+                backend.forceStaleLookup =
+                    true
+                val stale =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "bird-shaped",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_INDEX_STALE,
+                    stale.reason,
+                )
+
+                backend.forceStaleLookup =
+                    false
+                backend.forceBindingMismatch =
+                    true
+                val rebound =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "bird-shaped",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_REPRESENTATION_BINDING_MISMATCH,
+                    rebound.reason,
+                )
+
+                backend.forceBindingMismatch =
+                    false
+                backend.forceCorruptIndex =
+                    true
+                val corrupt =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "bird-shaped",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_INDEX_CORRUPT,
+                    corrupt.reason,
+                )
+            }
+        }
+    }
+
+    @Test
     fun corruptOrUnsupportedLocatorNeverBecomesNotFound() {
         ContinuityTurnFixture().use {
             fixture ->
@@ -1443,6 +1759,240 @@ class VexLifeContinuitySourceLocatorTest {
                 )
             }
         }
+    private class DeterministicSemanticBackend(
+        fingerprintBindingRef: String,
+        override val semanticRepresentationBindingRef: String,
+    ) : VexLifeContinuitySourceLocator.SemanticIndexedBackend {
+        private val lexical =
+            VexLifeContinuitySourceLocator.InMemoryBackend(
+                secret =
+                    ByteArray(32) {
+                        83
+                    },
+                fingerprintBindingRef =
+                    fingerprintBindingRef,
+            )
+
+        private var semanticGeneration:
+            VexLifeContinuitySourceLocator.Generation? =
+            null
+
+        private var semanticSources:
+            List<VexLifeContinuitySourceLocator.SemanticSourceContent> =
+            emptyList()
+
+        var semanticLookupInvocations: Int =
+            0
+            private set
+
+        var forceStaleLookup: Boolean =
+            false
+
+        var forceBindingMismatch: Boolean =
+            false
+
+        var forceCorruptIndex: Boolean =
+            false
+
+        override val fingerprintBindingRef: String
+            get() =
+                lexical.fingerprintBindingRef
+
+        override fun fingerprint(
+            value: String,
+        ): String =
+            lexical.fingerprint(
+                value,
+            )
+
+        override fun load(): VexLifeContinuitySourceLocator.BackendLoad =
+            lexical.load()
+
+        override fun replace(
+            generation: VexLifeContinuitySourceLocator.Generation,
+        ) =
+            error(
+                "semantic backend must receive canonical source content through replaceWithSemanticSources",
+            )
+
+        override fun clear() {
+            lexical.clear()
+            semanticGeneration =
+                null
+            semanticSources =
+                emptyList()
+        }
+
+        override fun candidateEntryIndexes(
+            queryFingerprints: List<Set<String>>,
+            speakerScope: VexLifeContinuitySourceLocator.SpeakerScope,
+        ): VexLifeContinuitySourceLocator.IndexedCandidateLookup =
+            lexical.candidateEntryIndexes(
+                queryFingerprints =
+                    queryFingerprints,
+                speakerScope =
+                    speakerScope,
+            )
+
+        override fun entryIndexesForRefs(
+            refs: Set<String>,
+        ): VexLifeContinuitySourceLocator.IndexedRefLookup =
+            lexical.entryIndexesForRefs(
+                refs,
+            )
+
+        override fun entryIndexesForTypedEdges(
+            typedEdges: Set<VexLifeContinuitySourceLocator.TypedEdgeKind>,
+        ): VexLifeContinuitySourceLocator.IndexedTypedEdgeLookup =
+            lexical.entryIndexesForTypedEdges(
+                typedEdges,
+            )
+
+        override fun replaceAfterAppend(
+            priorGeneration: VexLifeContinuitySourceLocator.Generation,
+            generation: VexLifeContinuitySourceLocator.Generation,
+            appendedEntry: VexLifeContinuitySourceLocator.Entry,
+        ) =
+            error(
+                "semantic backend append must receive canonical source content through replaceAfterAppendWithSemanticSource",
+            )
+
+        override fun replaceWithSemanticSources(
+            generation: VexLifeContinuitySourceLocator.Generation,
+            sourceContents: List<VexLifeContinuitySourceLocator.SemanticSourceContent>,
+        ) {
+            require(
+                sourceContents.map(
+                    VexLifeContinuitySourceLocator.SemanticSourceContent::entryIndex,
+                ) ==
+                    generation.entries.indices.toList(),
+            ) {
+                "semantic test backend requires one source payload per derived entry"
+            }
+            lexical.replace(
+                generation,
+            )
+            semanticGeneration =
+                generation
+            semanticSources =
+                sourceContents
+                    .map {
+                        it.copy()
+                    }
+        }
+
+        override fun replaceAfterAppendWithSemanticSource(
+            priorGeneration: VexLifeContinuitySourceLocator.Generation,
+            generation: VexLifeContinuitySourceLocator.Generation,
+            appendedEntry: VexLifeContinuitySourceLocator.Entry,
+            appendedSource: VexLifeContinuitySourceLocator.SemanticSourceContent,
+        ) {
+            require(
+                appendedSource.entryIndex ==
+                    generation.entries.lastIndex,
+            )
+            lexical.replaceAfterAppend(
+                priorGeneration =
+                    priorGeneration,
+                generation =
+                    generation,
+                appendedEntry =
+                    appendedEntry,
+            )
+            semanticGeneration =
+                generation
+            semanticSources =
+                semanticSources +
+                    appendedSource.copy()
+        }
+
+        override fun semanticCandidateEntryIndexes(
+            queryTerms: List<String>,
+            speakerScope: VexLifeContinuitySourceLocator.SpeakerScope,
+        ): VexLifeContinuitySourceLocator.SemanticCandidateLookup {
+            semanticLookupInvocations +=
+                1
+            val generation =
+                requireNotNull(
+                    semanticGeneration,
+                )
+            val normalized =
+                queryTerms
+                    .map {
+                        it.lowercase()
+                    }
+            val meridianRequested =
+                normalized.any {
+                    term ->
+                    term == "bird" ||
+                        term == "bird-shaped" ||
+                        term == "identifier"
+                }
+            val meridianIndex =
+                semanticSources
+                    .singleOrNull {
+                        source ->
+                        "paper crane" in
+                            source.requestContent
+                                .lowercase() &&
+                            "meridian-7" in
+                                source.requestContent
+                                    .lowercase()
+                    }
+                    ?.entryIndex
+            val indexes =
+                when {
+                    forceCorruptIndex ->
+                        setOf(
+                            generation.entries.size +
+                                7,
+                        )
+
+                    meridianRequested &&
+                        meridianIndex !=
+                        null ->
+                        setOf(
+                            meridianIndex,
+                        )
+
+                    else ->
+                        emptySet()
+                }
+
+            return VexLifeContinuitySourceLocator.SemanticCandidateLookup(
+                entryIndexes =
+                    indexes,
+                semanticLookupCount =
+                    1,
+                representationBindingRef =
+                    if (
+                        forceBindingMismatch
+                    ) {
+                        "semantic.test.other-binding"
+                    } else {
+                        semanticRepresentationBindingRef
+                    },
+                sourceConversationHeadSha256 =
+                    if (
+                        forceStaleLookup
+                    ) {
+                        "0".repeat(
+                            64,
+                        )
+                    } else {
+                        generation
+                            .sourceConversationHeadSha256
+                    },
+                sourceConversationSequence =
+                    generation
+                        .sourceConversationSequence,
+                sourceLifecycleBindingRef =
+                    generation
+                        .sourceLifecycleBindingRef,
+            )
+        }
+    }
+
     }
 }
 
