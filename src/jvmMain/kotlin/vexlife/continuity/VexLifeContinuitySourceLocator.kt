@@ -61,6 +61,9 @@ object VexLifeContinuitySourceLocator {
         EXACT_VERIFICATION_MISS,
         SOURCE_COORDINATE_MISMATCH,
         INDEXED_NEIGHBORHOOD_UNAVAILABLE,
+        SEMANTIC_INDEX_STALE,
+        SEMANTIC_REPRESENTATION_BINDING_MISMATCH,
+        SEMANTIC_INDEX_CORRUPT,
     }
 
     data class SourceCoordinates(
@@ -150,6 +153,58 @@ object VexLifeContinuitySourceLocator {
         val entryIndexes: Set<Int>,
         val typedEdgeLookupCount: Int,
     )
+
+    /**
+     * Ephemeral canonical source content offered only while a semantic realization is rebuilding or
+     * catching up its own disposable index. This content never becomes part of [Generation].
+     */
+    data class SemanticSourceContent(
+        val entryIndex: Int,
+        val requestContent: String,
+        val responseContent: String,
+    )
+
+    data class SemanticCandidateLookup(
+        val entryIndexes: Set<Int>,
+        val semanticLookupCount: Int,
+        val representationBindingRef: String,
+        val sourceConversationHeadSha256: String?,
+        val sourceConversationSequence: Long?,
+        val sourceLifecycleBindingRef: String,
+    )
+
+    /**
+     * Optional semantic-neighborhood nomination seam behind the existing locator relationship.
+     *
+     * Product does not choose an embedding model, vector format, database or persistence technology
+     * here. A qualified realization may derive its own rebuildable representation from canonical
+     * source content while rebuild/catch-up already has those bytes in hand. The stored locator
+     * generation remains source-light.
+     *
+     * Similarity may nominate entry indexes only. It never creates semantic acceptance, and every
+     * nominated coordinate is still exact-reopened from canonical Conversation before ContextRevisit
+     * may expose it.
+     */
+    interface SemanticIndexedBackend : IndexedBackend {
+        val semanticRepresentationBindingRef: String
+
+        fun replaceWithSemanticSources(
+            generation: Generation,
+            sourceContents: List<SemanticSourceContent>,
+        )
+
+        fun replaceAfterAppendWithSemanticSource(
+            priorGeneration: Generation,
+            generation: Generation,
+            appendedEntry: Entry,
+            appendedSource: SemanticSourceContent,
+        )
+
+        fun semanticCandidateEntryIndexes(
+            queryTerms: List<String>,
+            speakerScope: SpeakerScope,
+        ): SemanticCandidateLookup
+    }
 
     /**
      * Optional realization capability for inverted lexical/ref/typed-edge lookup.
@@ -575,6 +630,8 @@ object VexLifeContinuitySourceLocator {
             val derivedPostingLookupCount: Int,
             val derivedRefLookupCount: Int,
             val derivedTypedEdgeLookupCount: Int,
+            val derivedSemanticLookupCount: Int = 0,
+            val semanticDirectTurnRefs: Set<String> = emptySet(),
             val wholeHistoryEventEnumerationPerformed: Boolean = false,
             val canonicalSourceMutationPerformed: Boolean = false,
         ) : NeighborhoodOutcome
@@ -740,9 +797,63 @@ object VexLifeContinuitySourceLocator {
         requireGeneration(
             generation,
         )
-        backend.replace(
-            generation,
-        )
+        if (
+            backend is
+            SemanticIndexedBackend
+        ) {
+            val entryIndexByRequestEventRef =
+                generation.entries
+                    .mapIndexed {
+                        entryIndex,
+                        entry,
+                        ->
+                        entry.coordinates.request.eventRef to
+                            entryIndex
+                    }
+                    .toMap()
+            val semanticSources =
+                buildList {
+                    var eventIndex =
+                        0
+                    while (
+                        eventIndex <
+                        events.size
+                    ) {
+                        val request =
+                            events[eventIndex]
+                        val response =
+                            events[eventIndex + 1]
+                        entryIndexByRequestEventRef[
+                            request.eventRef
+                        ]
+                            ?.let {
+                                entryIndex ->
+                                add(
+                                    SemanticSourceContent(
+                                        entryIndex =
+                                            entryIndex,
+                                        requestContent =
+                                            request.content,
+                                        responseContent =
+                                            response.content,
+                                    ),
+                                )
+                            }
+                        eventIndex +=
+                            2
+                    }
+                }
+            backend.replaceWithSemanticSources(
+                generation =
+                    generation,
+                sourceContents =
+                    semanticSources,
+            )
+        } else {
+            backend.replace(
+                generation,
+            )
+        }
 
         return RebuildReceipt(
             sourceConversationHeadSha256 =
@@ -917,6 +1028,27 @@ object VexLifeContinuitySourceLocator {
             updated,
         )
         if (
+            backend is
+            SemanticIndexedBackend
+        ) {
+            backend.replaceAfterAppendWithSemanticSource(
+                priorGeneration =
+                    priorGeneration,
+                generation =
+                    updated,
+                appendedEntry =
+                    appendedEntry,
+                appendedSource =
+                    SemanticSourceContent(
+                        entryIndex =
+                            priorGeneration.entries.size,
+                        requestContent =
+                            request.content,
+                        responseContent =
+                            response.content,
+                    ),
+            )
+        } else if (
             backend is
             IndexedBackend
         ) {
@@ -1557,42 +1689,171 @@ object VexLifeContinuitySourceLocator {
 
         val directIndexes =
             linkedSetOf<Int>()
+        val semanticDirectIndexes =
+            linkedSetOf<Int>()
         var postingLookupCount =
             0
-        normalizedQueries.forEach {
-            query ->
+        var semanticLookupCount =
+            0
+        val semanticBackend =
+            backend as?
+                SemanticIndexedBackend
+        for (
+            query in
+            normalizedQueries
+        ) {
             if (
-                query.queryTerms.isNotEmpty()
+                query.queryTerms.isEmpty()
             ) {
-                var conjunctiveCandidates: Set<Int>? =
-                    null
-                query.queryTerms.forEach {
-                    term ->
-                    val lookup =
-                        indexedBackend.candidateEntryIndexes(
-                            queryFingerprints =
-                                listOf(
-                                    trigramFingerprints(
-                                        normalized =
-                                            term,
-                                        backend =
-                                            backend,
-                                    ),
+                continue
+            }
+            var conjunctiveCandidates: Set<Int>? =
+                null
+            for (
+                term in
+                query.queryTerms
+            ) {
+                val lookup =
+                    indexedBackend.candidateEntryIndexes(
+                        queryFingerprints =
+                            listOf(
+                                trigramFingerprints(
+                                    normalized =
+                                        term,
+                                    backend =
+                                        backend,
                                 ),
-                            speakerScope =
-                                query.speakerScope,
+                            ),
+                        speakerScope =
+                            query.speakerScope,
+                    )
+                postingLookupCount +=
+                    lookup.postingLookupCount
+                conjunctiveCandidates =
+                    conjunctiveCandidates
+                        ?.intersect(
+                            lookup.entryIndexes,
                         )
-                    postingLookupCount +=
-                        lookup.postingLookupCount
-                    conjunctiveCandidates =
-                        conjunctiveCandidates
-                            ?.intersect(
-                                lookup.entryIndexes,
+                        ?: lookup.entryIndexes
+            }
+            val lexicalCandidates =
+                conjunctiveCandidates.orEmpty()
+            directIndexes +=
+                lexicalCandidates
+
+            if (
+                lexicalCandidates.isEmpty() &&
+                query.seedRefs.isEmpty() &&
+                query.typedEdges.isEmpty() &&
+                semanticBackend !=
+                    null
+            ) {
+                val expectedRepresentationBinding =
+                    try {
+                        requirePortableRef(
+                            semanticBackend
+                                .semanticRepresentationBindingRef,
+                            "semanticRepresentationBindingRef",
+                        )
+                        semanticBackend
+                            .semanticRepresentationBindingRef
+                    } catch (
+                        _: RuntimeException,
+                    ) {
+                        return NeighborhoodOutcome.FallbackRequired(
+                            reason =
+                                FallbackReason.SEMANTIC_INDEX_CORRUPT,
+                            currentConversationHeadSha256 =
+                                currentHeadSha,
+                            generationConversationHeadSha256 =
+                                generation
+                                    .sourceConversationHeadSha256,
+                        )
+                    }
+                val semanticLookup =
+                    try {
+                        semanticBackend
+                            .semanticCandidateEntryIndexes(
+                                queryTerms =
+                                    query.queryTerms,
+                                speakerScope =
+                                    query.speakerScope,
                             )
-                            ?: lookup.entryIndexes
+                    } catch (
+                        _: RuntimeException,
+                    ) {
+                        return NeighborhoodOutcome.FallbackRequired(
+                            reason =
+                                FallbackReason.SEMANTIC_INDEX_CORRUPT,
+                            currentConversationHeadSha256 =
+                                currentHeadSha,
+                            generationConversationHeadSha256 =
+                                generation
+                                    .sourceConversationHeadSha256,
+                        )
+                    }
+                if (
+                    semanticLookup.semanticLookupCount <
+                        0 ||
+                    semanticLookup.entryIndexes.any {
+                        it !in
+                            generation.entries.indices
+                    }
+                ) {
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.SEMANTIC_INDEX_CORRUPT,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            generation
+                                .sourceConversationHeadSha256,
+                    )
                 }
+                if (
+                    semanticLookup.representationBindingRef !=
+                        expectedRepresentationBinding
+                ) {
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.SEMANTIC_REPRESENTATION_BINDING_MISMATCH,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            generation
+                                .sourceConversationHeadSha256,
+                    )
+                }
+                if (
+                    semanticLookup.sourceConversationHeadSha256 !=
+                        generation
+                            .sourceConversationHeadSha256 ||
+                    semanticLookup.sourceConversationSequence !=
+                        generation
+                            .sourceConversationSequence ||
+                    semanticLookup.sourceLifecycleBindingRef !=
+                        generation
+                            .sourceLifecycleBindingRef
+                ) {
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.SEMANTIC_INDEX_STALE,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            generation
+                                .sourceConversationHeadSha256,
+                    )
+                }
+                semanticLookupCount +=
+                    semanticLookup
+                        .semanticLookupCount
+                semanticDirectIndexes +=
+                    semanticLookup
+                        .entryIndexes
                 directIndexes +=
-                    conjunctiveCandidates.orEmpty()
+                    semanticLookup
+                        .entryIndexes
             }
         }
         val allSeedRefs =
@@ -1742,6 +2003,10 @@ object VexLifeContinuitySourceLocator {
                     refLookup.refLookupCount,
                 derivedTypedEdgeLookupCount =
                     typedEdgeLookup.typedEdgeLookupCount,
+                derivedSemanticLookupCount =
+                    semanticLookupCount,
+                semanticDirectTurnRefs =
+                    emptySet(),
             )
         }
 
@@ -1849,6 +2114,18 @@ object VexLifeContinuitySourceLocator {
                 refLookup.refLookupCount,
             derivedTypedEdgeLookupCount =
                 typedEdgeLookup.typedEdgeLookupCount,
+            derivedSemanticLookupCount =
+                semanticLookupCount,
+            semanticDirectTurnRefs =
+                semanticDirectIndexes
+                    .map {
+                        index ->
+                        generation.entries[
+                            index
+                        ]
+                            .turnRef
+                    }
+                    .toSet(),
         )
     }
 
