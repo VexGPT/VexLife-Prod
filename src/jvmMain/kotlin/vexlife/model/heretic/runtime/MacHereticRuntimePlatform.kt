@@ -15,8 +15,10 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.continuity.VexLifeContinuity
 import vexlife.filesystem.VexOwnedPath
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticTextControlCapabilityWire
 import vexlife.platform.macos.MacUserLaunchdProcess
 
 /**
@@ -1224,9 +1226,14 @@ class MacHereticRuntimePlatform(
                                 2048,
                         )
                             ?: break
+                    val normalizedCapabilityControl =
+                        HereticTextControlCapabilityWire.normalize(
+                            profile = HereticCompanionRepresentation.Qwen4B,
+                            content = content,
+                        )
                     val parsed =
                         VexLifeCapabilityRequest.parseOrNull(
-                            content,
+                            normalizedCapabilityControl.canonicalControl,
                         )
                             ?: break
                     val call =
