@@ -444,7 +444,7 @@ internal object DirectWorkingFocus {
         listOf(
             PromptHeader,
             "This is Vex's bounded declarative current work. It is not Conversation, semantic Memory, source truth, private reasoning, Attention priority, or effect authority.",
-            "OBSERVED / HYPOTHESIS / UNRESOLVED standing belongs only to the retained relationship that names it. Exact source remains separately owned and may be reopened when needed.",
+            "OBSERVED / HYPOTHESIS / UNRESOLVED standing belongs only to the retained relationship that names it. Exact source remains separately owned and may be reopened when needed. Source refs are addresses, not read or effect authority.",
             VexContractJson.canonicalEncode(
                 packet,
             ),
