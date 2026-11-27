@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticTextControlCapabilityWire
 
 class MacHereticNativeToolQualificationTest {
     private class Runner(
@@ -298,6 +299,56 @@ class MacHereticNativeToolQualificationTest {
             }
             ```
             """.trimIndent()
+        val siblingVersionListControl =
+            """
+            ```json
+            {
+              "VEXLIFE_CAPABILITY_REQUEST": "v1",
+              "capability": "atlas",
+              "action": "list",
+              "arguments": {}
+            }
+            ```
+            """.trimIndent()
+
+        val normalizedSibling =
+            HereticTextControlCapabilityWire.normalize(
+                profile = HereticCompanionRepresentation.Qwen4B,
+                content = siblingVersionListControl,
+            )
+        assertEquals(
+            HereticTextControlCapabilityWire.Adaptation.QWEN4B_SIBLING_VERSION_V1,
+            normalizedSibling.adaptation,
+        )
+        assertEquals(
+            listControl,
+            normalizedSibling.canonicalControl,
+        )
+        assertEquals(
+            HereticTextControlCapabilityWire.Adaptation.NONE,
+            HereticTextControlCapabilityWire.normalize(
+                profile = HereticCompanionRepresentation.Qwen4B,
+                content =
+                    """{"VEXLIFE_CAPABILITY_REQUEST":"v2","capability":"atlas","action":"list","arguments":{}}""",
+            ).adaptation,
+        )
+        assertEquals(
+            HereticTextControlCapabilityWire.Adaptation.NONE,
+            HereticTextControlCapabilityWire.normalize(
+                profile = HereticCompanionRepresentation.Qwen4B,
+                content =
+                    """{"VEXLIFE_CAPABILITY_REQUEST":"v1","capability":"atlas","action":"list","arguments":{},"extra":"held"}""",
+            ).adaptation,
+        )
+        assertEquals(
+            HereticTextControlCapabilityWire.Adaptation.NONE,
+            HereticTextControlCapabilityWire.normalize(
+                profile = HereticCompanionRepresentation.Qwen9B,
+                content = siblingVersionListControl,
+            ).adaptation,
+            "A020 tolerance belongs only to the exact qualified Qwen 4B wire representation",
+        )
+
         val derivedControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
@@ -493,6 +544,51 @@ class MacHereticNativeToolQualificationTest {
                         "- workspace-test (not available this turn; actions: test)",
                     )
             },
+        )
+
+        val siblingVersionQualified =
+            qualify4BReach(
+                encodedReachStage(
+                    siblingVersionListControl,
+                ),
+                encodedReachStage(
+                    derivedControl,
+                ),
+            )
+        assertEquals(
+            HereticRuntimeQualification.VexReachQualificationRef,
+            siblingVersionQualified.qualification.vexReachQualificationRef,
+            "A020 wire shape must qualify only after normalization into the canonical Vex envelope",
+        )
+        assertEquals(
+            null,
+            siblingVersionQualified.qualification.providerNativeToolsQualificationRef,
+        )
+        assertEquals(
+            3,
+            siblingVersionQualified.calls.size,
+        )
+        assertTrue(
+            siblingVersionQualified.calls[
+                2
+            ].contains(
+                siblingVersionListControl,
+            ),
+            "provider history preserves the exact model-emitted wire bytes",
+        )
+        assertTrue(
+            siblingVersionQualified.calls[
+                2
+            ].any {
+                it.startsWith(
+                    VexLifeCapabilityRequest.ResultHeader +
+                        "\n",
+                ) &&
+                    it.contains(
+                        "- workspace-test (not available this turn; actions: test)",
+                    )
+            },
+            "the normalized A020 request must reach the same Product-owned Atlas result",
         )
 
         val providerStageScript =
