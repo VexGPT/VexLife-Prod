@@ -1030,11 +1030,9 @@ class MacHereticRuntimePlatform(
 
                 val qualificationSystemMessage =
                     "This is a synthetic no-effect VexLife text-control reach qualification. " +
-                        "Use the real VexLife request/return relationship. When you intend a capability request, " +
-                        "your whole reply for that provider stage must begin with " +
-                        VexLifeCapabilityRequest.RequestHeader +
-                        " and then one JSON object using the exact field names capability, action, and arguments. " +
-                        "Start by asking capability " +
+                        "Use the real VexLife request/return relationship. " +
+                        VexLifeCapabilityRequest.TextControlProviderInstruction +
+                        " Start by asking capability " +
                         atlas.handle +
                         " for action " +
                         atlasList.action +
@@ -1048,7 +1046,7 @@ class MacHereticRuntimePlatform(
                         " with arguments containing only capability set to the handle you discovered. " +
                         "Do not add human-facing prose to a capability-request stage."
                 val qualificationUserMessage =
-                    "Use the current capability registry to find the one registered capability whose action list is exactly test, then ask Atlas to describe that discovered capability before answering. Discover the handle from the returned registry; do not guess it from this request."
+                    "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered capability before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request."
 
                 val providerStageScript =
                     """
