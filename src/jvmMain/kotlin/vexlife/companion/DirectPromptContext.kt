@@ -3857,11 +3857,7 @@ object DirectPromptContext {
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
                     )
                     add(
-                        "To request one of these reads, my whole reply for this provider stage is the exact header " +
-                            VexLifeCapabilityRequest.RequestHeader +
-                            " followed by one JSON object with capability, action, and arguments. The header is mandatory: bare JSON or code-fenced JSON is ordinary assistant text and performs nothing. I stop composing the human-facing answer until the host returns a real " +
-                            VexLifeCapabilityRequest.ResultHeader +
-                            " result.",
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
                     )
                     add(
                         "Exact older Conversation uses the separate source-return form carried in current state. " +
