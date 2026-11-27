@@ -57,8 +57,9 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
     /**
      * One immutable consumption of a stable formation identity.
      *
-     * This is not a second truth store. It prevents a previously consumed formationRef from
-     * resurrecting a displaced/cleared focus or being rebound to different bytes.
+     * This is not a second truth store. It binds the proposal to the exact prior current state so
+     * interrupted pre-head commits can retry idempotently while a formation that actually moved
+     * currentness cannot resurrect a displaced/cleared focus or be rebound to different bytes.
      */
     @Serializable
     data class FormationBinding(
@@ -70,6 +71,7 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
         val formationRef: String,
         val workingFocusRef: String,
         val revisionFingerprint: String,
+        val priorStateFingerprintOrNull: String?,
         val semanticFingerprint: String,
     )
 
@@ -149,6 +151,7 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
         val formationRef: String,
         val workingFocusRef: String,
         val revisionFingerprint: String,
+        val priorStateFingerprintOrNull: String?,
     )
 
     @Serializable
@@ -273,15 +276,6 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
                 return MutationResult("IDEMPOTENT_CURRENT", false, before)
             }
         }
-        require(
-            readFormation(
-                paths(normalized.lineageRef, normalized.threadRef),
-                normalized.formationRef,
-            ) == null,
-        ) {
-            "working focus formationRef was already consumed; form fresh current truth with a fresh formationRef"
-        }
-
         val prior = normalized.priorRevisionRefOrNull?.let { priorRevisionRef ->
             requireNotNull(before) { "working focus update requires current focus" }
             require(before.state.state == FocusState.ACTIVE) {
@@ -294,7 +288,18 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
         }
         val focusRef = prior?.workingFocusRef ?: focusRef(normalized)
         val revision = formRevision(normalized, focusRef, prior)
-        val formation = formFormationBinding(revision)
+        val formation = formFormationBinding(revision, before)
+        val existingFormation =
+            readFormation(
+                paths(normalized.lineageRef, normalized.threadRef),
+                normalized.formationRef,
+            )
+        if (existingFormation != null) {
+            validateFormation(existingFormation)
+            require(existingFormation == formation) {
+                "working focus formationRef was already consumed by different/currently superseded truth"
+            }
+        }
         val state = formState(
             lineageRef = normalized.lineageRef,
             threadRef = normalized.threadRef,
@@ -436,7 +441,10 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
         }
     }
 
-    private fun formFormationBinding(revision: FocusRevision): FormationBinding {
+    private fun formFormationBinding(
+        revision: FocusRevision,
+        prior: Current?,
+    ): FormationBinding {
         val payload =
             FormationPayload(
                 FormationSchema,
@@ -447,6 +455,7 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
                 revision.formationRef,
                 revision.workingFocusRef,
                 revision.semanticFingerprint,
+                prior?.state?.semanticFingerprint,
             )
         return FormationBinding(
             payload.schemaVersion,
@@ -457,6 +466,7 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
             payload.formationRef,
             payload.workingFocusRef,
             payload.revisionFingerprint,
+            payload.priorStateFingerprintOrNull,
             semanticHash(payload),
         )
     }
@@ -526,6 +536,9 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
         requireRef(value.formationRef, "formation formationRef")
         requireRef(value.workingFocusRef, "formation workingFocusRef")
         requireSha256(value.revisionFingerprint, "formation revisionFingerprint")
+        value.priorStateFingerprintOrNull?.let {
+            requireSha256(it, "formation priorStateFingerprintOrNull")
+        }
         val payload =
             FormationPayload(
                 value.schemaVersion,
@@ -536,6 +549,7 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
                 value.formationRef,
                 value.workingFocusRef,
                 value.revisionFingerprint,
+                value.priorStateFingerprintOrNull,
             )
         require(value.semanticFingerprint == semanticHash(payload)) {
             "working focus formation semantic identity is invalid"
