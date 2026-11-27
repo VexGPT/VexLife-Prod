@@ -1228,7 +1228,7 @@ class MacHereticRuntimePlatform(
                             ?: break
                     val normalizedCapabilityControl =
                         HereticTextControlCapabilityWire.normalize(
-                            profile = HereticCompanionRepresentation.Qwen4B,
+                            profile = HereticCompanionRepresentation.Profiles.Qwen4B,
                             content = content,
                         )
                     val parsed =

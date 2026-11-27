@@ -34,7 +34,7 @@ internal object HereticTextControlCapabilityWire {
     ): Normalized {
         if (
             profile.profileRef !=
-                HereticCompanionRepresentation.Qwen4B.profileRef
+                HereticCompanionRepresentation.Profiles.Qwen4B.profileRef
         ) {
             return Normalized(
                 canonicalControl = content,

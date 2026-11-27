@@ -313,7 +313,7 @@ class MacHereticNativeToolQualificationTest {
 
         val normalizedSibling =
             HereticTextControlCapabilityWire.normalize(
-                profile = HereticCompanionRepresentation.Qwen4B,
+                profile = HereticCompanionRepresentation.Profiles.Qwen4B,
                 content = siblingVersionListControl,
             )
         assertEquals(
@@ -327,7 +327,7 @@ class MacHereticNativeToolQualificationTest {
         assertEquals(
             HereticTextControlCapabilityWire.Adaptation.NONE,
             HereticTextControlCapabilityWire.normalize(
-                profile = HereticCompanionRepresentation.Qwen4B,
+                profile = HereticCompanionRepresentation.Profiles.Qwen4B,
                 content =
                     """{"VEXLIFE_CAPABILITY_REQUEST":"v2","capability":"atlas","action":"list","arguments":{}}""",
             ).adaptation,
@@ -335,7 +335,7 @@ class MacHereticNativeToolQualificationTest {
         assertEquals(
             HereticTextControlCapabilityWire.Adaptation.NONE,
             HereticTextControlCapabilityWire.normalize(
-                profile = HereticCompanionRepresentation.Qwen4B,
+                profile = HereticCompanionRepresentation.Profiles.Qwen4B,
                 content =
                     """{"VEXLIFE_CAPABILITY_REQUEST":"v1","capability":"atlas","action":"list","arguments":{},"extra":"held"}""",
             ).adaptation,
@@ -343,7 +343,7 @@ class MacHereticNativeToolQualificationTest {
         assertEquals(
             HereticTextControlCapabilityWire.Adaptation.NONE,
             HereticTextControlCapabilityWire.normalize(
-                profile = HereticCompanionRepresentation.Qwen9B,
+                profile = HereticCompanionRepresentation.Profiles.Qwen9B,
                 content = siblingVersionListControl,
             ).adaptation,
             "A020 tolerance belongs only to the exact qualified Qwen 4B wire representation",
