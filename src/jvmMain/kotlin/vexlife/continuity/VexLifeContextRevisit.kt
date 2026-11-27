@@ -1043,8 +1043,9 @@ object VexLifeContextRevisit {
             }
             if (!anyFound || emptyQueries.isNotEmpty() || unresolvedSeeds.isNotEmpty()) {
                 appendLine(
-                    "Not found here is not the same as never happened. Words are matched exactly, so " +
-                        "another wording can find what this one missed; and the person may remember " +
+                    "Not found here is not the same as never happened. Exact lexical words are matched " +
+                        "as written; a qualified semantic candidate index may also nominate related old " +
+                        "source without making that relationship true by itself. The person may remember " +
                         "what is not reachable here and can share it."
                 )
             }
@@ -1209,7 +1210,16 @@ object VexLifeContextRevisit {
                     ) {
                         "searched $turnCount exact indexed-neighborhood turns against " +
                             "$totalCompletedTurnCount completed turns of this thread " +
-                            "(exact words; lexical candidate index, no meaning index yet)"
+                            if (
+                                sources.conversationView
+                                    .derivedSemanticLookupCount >
+                                    0
+                            ) {
+                                " (exact canonical source; lexical + semantic candidate nomination; " +
+                                    "similarity is not acceptance)"
+                            } else {
+                                " (exact words; lexical candidate index)"
+                            }
                     } else {
                         "searched $turnCount " +
                             (
