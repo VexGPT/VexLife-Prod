@@ -12,6 +12,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -403,6 +404,127 @@ class DirectCompanionTurnTest {
             assertTrue(
                 "capability.vexlife.web.read" in
                     frame.availableCapabilityRefs,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun qwen4BSiblingWireNormalizesToCanonicalEnvelopeBeforeBridgeAndContinuation() {
+        val home =
+            productHome()
+        val a020Wire =
+            """{"VEXLIFE_CAPABILITY_REQUEST":"v1","capability":"atlas","action":"list","arguments":{}}"""
+        val providerBodies =
+            mutableListOf<String>()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                providerBodies +=
+                    call.body
+                val content =
+                    if (
+                        calls ==
+                            1
+                    ) {
+                        a020Wire
+                    } else {
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.RequestHeader,
+                            ),
+                            "the second provider stage must carry the canonical Vex request envelope",
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.ResultHeader,
+                            ),
+                            "the second provider stage must carry the canonical Bridge result",
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                """\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\"""",
+                            ),
+                            "the Qwen-specific sibling wire dialect must not survive semantic continuation",
+                        )
+                        "Canonical envelope continuation reached."
+                    }
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": ${JsonPrimitive(content)}
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-canonical-wire-normalization.001",
+                            content =
+                                "Use Atlas if needed, then continue from the real owner result.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-27T22:00:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Canonical envelope continuation reached.",
+                result.content,
+            )
+            assertTrue(
+                providerBodies
+                    .first()
+                    .contains(
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
+                    ),
+                "ordinary Qwen text-control prompting teaches only the canonical Vex request reflex",
             )
         } finally {
             home.parent
