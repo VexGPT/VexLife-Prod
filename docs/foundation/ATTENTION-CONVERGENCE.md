@@ -195,12 +195,12 @@ truth.
 ```text
 source-owned current activity
 + A1 perceptibility surface
-+ bounded Vex/model relevance judgment
++ bounded Vex/model candidate nomination
         ↓
 validate exact activity binding
 validate exact candidate source bindings
         ↓
-selected candidate refs + deeper-source addresses
+nominated candidate refs + deeper-source addresses
 quiet candidate refs remain reachable
         ↓
 no source read yet
@@ -232,7 +232,7 @@ WORKING FOCUS ABSENT / NOT LANDED
   -> do not fabricate an Attention-owned substitute
 ```
 
-### Model judgment is candidate cognition, not source truth
+### Model nomination is candidate cognition, not source truth
 
 A2 does not implement a hard-coded semantic relevance scorer.
 
@@ -241,7 +241,7 @@ activity/candidate source bindings it judged. No rationale or private reasoning 
 contract.
 
 ```text
-MODEL JUDGMENT
+MODEL NOMINATION
 != SOURCE TRUTH
 != MEMORY ACCEPTANCE
 != PRIORITY
@@ -250,7 +250,7 @@ MODEL JUDGMENT
 
 The judgment must bind the current Activity and each selected candidate's current
 `sourceBindingRefs[]`. A stale activity or stale candidate generation fails closed rather than
-silently applying an old relevance decision to new source truth.
+silently applying an old nomination to new source truth.
 
 ### Selection budget is supplied, not invented as global policy
 
@@ -288,6 +288,76 @@ NOMINATED + HELD
 
 The rightful source/capability owner remains responsible for any later exact reopen.
 
+### Cross-lane convergence laws
+
+A2 is intentionally checked against current parallel architecture rather than treated as an isolated
+Attention subsystem.
+
+#### Long-Term Memory / LH-5
+
+Memory Depth owns **historical source location and exact source reopening**. Its semantic nomination
+work establishes an important law for Attention too:
+
+```text
+semantic resemblance / compact candidate signal
+-> reason to inspect exact source
+!= accepted meaning
+!= final current relevance
+```
+
+A2 therefore owns **candidate nomination for deeper inspection**, not final semantic relevance.
+The rightful source/capability owner must still reopen exact source before a later cognition stage
+treats the source content as understood.
+
+```text
+ATTENTION NOMINATION != MEMORY RETRIEVAL
+MEMORY SEMANTIC NOMINATION != ATTENTION
+BOTH MAY SHARE:
+  candidate -> exact source -> current judgment
+```
+
+Attention must consume that shape rather than build a second semantic index or source-retrieval
+owner.
+
+#### Multi-Vex / participant relationships
+
+Current Product prompt law already says current context is current only for the owner/subject it
+names. A2 therefore preserves and exact-binds both:
+
+```text
+Activity.subjectScopeRefs[]
+Candidate.subjectScopeRefs[]
+```
+
+A nomination formed against one owner/subject binding cannot silently apply after those scopes
+change.
+
+Attention does **not** decide whether two subjects are equivalent, whether a counterpart may see
+another subject's source, or whether one participant outranks another. Those remain with the
+rightful relationship/privacy/source owners.
+
+```text
+SUBJECT SCOPE != PRIORITY
+SUBJECT SCOPE != ACCESS GRANT
+CURRENT FOR SUBJECT A != GLOBALLY CURRENT
+```
+
+#### Family-B / whole-body canary
+
+Family-B is a downstream composition pressure, not an Attention semantic owner. Its lived builder
+canary pressures Conversation, Memory, source re-entry, capability effects, context pressure,
+restart and completion together.
+
+Attention should eventually be included in a similarly whole-body lived proof once A3/A4 are stable,
+but should not import the Family-B harness or model-reach ownership into Attention source.
+
+```text
+FAMILY-B CANARY = CONSUMER / PRESSURE SURFACE
+!= ATTENTION OWNER
+!= MEMORY OWNER
+!= CAPABILITY OWNER
+```
+
 ### A2 nonclaims
 
 A2 does **not** yet:
@@ -295,7 +365,7 @@ A2 does **not** yet:
 - perform the deeper source read;
 - insert the nomination into DirectPromptContext;
 - define source-required attention claims;
-- rank selected candidates;
+- rank nominated candidates;
 - define interruption/presentation order;
 - acknowledge anything;
 - displace or resume Working Focus;
