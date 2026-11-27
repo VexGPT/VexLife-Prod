@@ -82,6 +82,7 @@ import vexlife.partner.VexLifePartnerMacHostRealization
 import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifeContinuitySourceLocator
+import vexlife.continuity.VexLifeContinuitySemanticServiceSession
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -155,6 +156,7 @@ class VexLifeProdLocalService private constructor(
     private val conversationAttemptIndex: DirectConversationAttemptIndex?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val continuitySemanticRuntimeClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
     private val promptPreparation: VexLifePromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
@@ -1117,8 +1119,14 @@ class VexLifeProdLocalService private constructor(
 
             val promptPreparation =
                 VexLifePromptPreparation()
+            val continuitySemanticSession =
+                VexLifeContinuitySemanticServiceSession.establish(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
             val continuitySourceLocatorBackend =
-                VexLifeContinuitySourceLocator.InMemoryBackend()
+                continuitySemanticSession.backend
             val conversationAttemptIndex =
                 DirectConversationAttemptIndex()
             val currentMemoryHotPath =
@@ -1604,6 +1612,8 @@ class VexLifeProdLocalService private constructor(
                         .get()
                         .close()
                 },
+                continuitySemanticRuntimeClose =
+                    continuitySemanticSession::close,
                 runtimeSessionRelinquishForRestart = {
                     if (
                         vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
@@ -1677,6 +1687,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
             runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
@@ -1749,6 +1760,8 @@ class VexLifeProdLocalService private constructor(
                 promptPreparation = promptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                continuitySemanticRuntimeClose =
+                    continuitySemanticRuntimeClose,
                 runtimeSessionRelinquishForRestart =
                     runtimeSessionRelinquishForRestart,
                 releaseAlertsProjection = releaseAlertsProjection,
@@ -1798,6 +1811,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
             runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
@@ -1952,6 +1966,8 @@ class VexLifeProdLocalService private constructor(
                         promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        continuitySemanticRuntimeClose =
+                            continuitySemanticRuntimeClose,
                         runtimeSessionRelinquishForRestart =
                             runtimeSessionRelinquishForRestart,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
@@ -1997,6 +2013,10 @@ class VexLifeProdLocalService private constructor(
                 runCatching {
                     visionRuntime
                         ?.close()
+                }
+                runCatching {
+                    continuitySemanticRuntimeClose
+                        ?.invoke()
                 }
                 executor.shutdownNow()
                 throw error
@@ -2086,6 +2106,8 @@ class VexLifeProdLocalService private constructor(
         runCatching { localAsrRuntime.close() }
         var visionCloseFailure: Throwable? =
             null
+        var semanticRuntimeCloseFailure: Throwable? =
+            null
 
         try {
             visionRuntime
@@ -2094,6 +2116,16 @@ class VexLifeProdLocalService private constructor(
             error: Throwable,
         ) {
             visionCloseFailure =
+                error
+        }
+
+        try {
+            continuitySemanticRuntimeClose
+                ?.invoke()
+        } catch (
+            error: Throwable,
+        ) {
+            semanticRuntimeCloseFailure =
                 error
         }
 
@@ -2138,6 +2170,16 @@ class VexLifeProdLocalService private constructor(
             throw IllegalStateException(
                 "VexLife-Prod runtime Session did not close with the service",
                 runtimeCloseFailure,
+            )
+        }
+
+        if (
+            semanticRuntimeCloseFailure !=
+            null
+        ) {
+            throw IllegalStateException(
+                "VexLife-Prod Continuity semantic runtime did not close with the service",
+                semanticRuntimeCloseFailure,
             )
         }
 
