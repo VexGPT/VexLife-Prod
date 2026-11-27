@@ -81,7 +81,7 @@ class VexLifeContextRevisitTest {
             assertTrue(ship.first.eventRef in result.returnedSourceRefs)
             assertTrue(result.text.contains("We will ship the beta on Friday."))
             assertTrue(result.text.contains("Query \"launch\" found nothing in what was searched."))
-            assertTrue(result.text.contains("Words are matched exactly"))
+            assertTrue(result.text.contains("Exact lexical words are matched"))
         }
     }
 
@@ -770,6 +770,142 @@ class VexLifeContextRevisitTest {
                     "one typed step from the correction turn must retain CORRECTED_BY on the exact prior turn",
                 )
             }
+        }
+    }
+
+    @Test
+    fun semanticCandidateRouteReturnsExactSourceWithoutPretendingTheQueryWordsWereLiteralMatches() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "The paper crane is named Meridian-7.",
+                        "Recorded.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "Later unrelated turn.",
+                        "Later.",
+                        minutesAgo(80),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val semanticRequest =
+                request(
+                    """{"queries":[{"ref":"semantic","terms":["bird-shaped","identifier"],"speaker":"HUMAN"}],"scopes":["CONVERSATION"]}""",
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs =
+                                emptySet(),
+                            historicalCurrentizedEventRefs =
+                                emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns =
+                                projected,
+                            totalCompletedTurnCount =
+                                projected.size,
+                            conversationEventsRead =
+                                2,
+                            exactHeadFileReadCount =
+                                2,
+                            wholeHistoryHeadTraversalPerformed =
+                                false,
+                            derivedEntryScanCount =
+                                0,
+                            derivedPostingLookupCount =
+                                6,
+                            derivedRefLookupCount =
+                                0,
+                            derivedTypedEdgeLookupCount =
+                                0,
+                            derivedSemanticLookupCount =
+                                1,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[0]
+                                                .first
+                                                .turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request =
+                        semanticRequest,
+                    sources =
+                        sources,
+                    estimateTokens =
+                        ::estimate,
+                )
+
+            assertEquals(
+                State.RETURNED,
+                result.state,
+            )
+            assertTrue(
+                committed[0].first.eventRef in
+                    result.returnedSourceRefs,
+            )
+            assertTrue(
+                committed[0].second.eventRef in
+                    result.returnedSourceRefs,
+            )
+            assertTrue(
+                result.text.contains(
+                    "The paper crane is named Meridian-7.",
+                ),
+                "semantic nomination must return the exact canonical source words for Vex to inspect",
+            )
+            assertTrue(
+                result.text.contains(
+                    "semantic[semantic_candidate]",
+                ),
+                "semantic nomination must remain visibly distinct from literal TERMS matching",
+            )
+            assertFalse(
+                result.text.contains(
+                    "semantic[terms]",
+                ),
+                "semantic nomination must not rewrite resemblance into an exact lexical match",
+            )
+            assertTrue(
+                result.text.contains(
+                    "similarity is not acceptance",
+                ),
+            )
+            assertFalse(
+                result.text.contains(
+                    "Query \"semantic\" found nothing",
+                ),
+                "a source-nominated semantic candidate must survive the ContextRevisit exact-word layer",
+            )
         }
     }
 
