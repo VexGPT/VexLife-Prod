@@ -49,8 +49,8 @@ object VexLifeAttentionClaim {
                 requireRef(it, "acknowledgementRequirementRefOrNull")
             }
             requireRefs(
-                priorCandidateSourceBindingRefs,
-                "priorCandidateSourceBindingRefs",
+                candidateSourceBindingRefs,
+                "candidateSourceBindingRefs",
                 allowEmpty = false,
             )
             requireRefs(
@@ -120,13 +120,13 @@ object VexLifeAttentionClaim {
                 allowEmpty = false,
             )
             requireRefs(
-                priorCandidateSourceBindingRefs,
-                "priorCandidateSourceBindingRefs",
+                candidateSourceBindingRefs,
+                "candidateSourceBindingRefs",
                 allowEmpty = false,
             )
             requireRefs(
-                priorSubjectScopeRefs,
-                "priorSubjectScopeRefs",
+                subjectScopeRefs,
+                "subjectScopeRefs",
                 allowEmpty = true,
             )
         }
