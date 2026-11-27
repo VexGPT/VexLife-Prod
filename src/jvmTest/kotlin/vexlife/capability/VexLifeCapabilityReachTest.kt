@@ -93,6 +93,47 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun textControlInstructionAndParserKeepBareJsonOutsideMachineControl() {
+        val instruction =
+            VexLifeCapabilityRequest.TextControlProviderInstruction
+
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.RequestHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.ResultHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "bare JSON",
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "ordinary assistant text",
+            ),
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                ```json
+                {
+                  "capability": "registry",
+                  "action": "list",
+                  "arguments": {}
+                }
+                ```
+                """.trimIndent(),
+            ),
+            "A018-style bare JSON remains ordinary assistant text rather than a capability request",
+        )
+    }
+
+    @Test
     fun oneExactStructuredProtocolWrapperCarriesTheSameRequestMeaning() {
         val wrapped =
             assertIs<VexLifeCapabilityRequest.Parsed.Request>(
