@@ -64,9 +64,6 @@ object VexLifeAttentionClaim {
                 allowEmpty = false,
             )
             requireRef(requirementStandingRef, "requirementStandingRef")
-            acknowledgementRequirementRefOrNull?.let {
-                requireRef(it, "acknowledgementRequirementRefOrNull")
-            }
         }
     }
 
@@ -114,6 +111,9 @@ object VexLifeAttentionClaim {
             requireRef(acknowledgementRef, "acknowledgementRef")
             requireRef(actorRef, "actorRef")
             requireRef(requirementRef, "requirementRef")
+            acknowledgementRequirementRefOrNull?.let {
+                requireRef(it, "acknowledgementRequirementRefOrNull")
+            }
             requireRefs(
                 requirementBindingRefs,
                 "requirementBindingRefs",
