@@ -49,8 +49,8 @@ object VexLifeAttentionClaim {
                 requireRef(it, "acknowledgementRequirementRefOrNull")
             }
             requireRefs(
-                candidateSourceBindingRefs,
-                "candidateSourceBindingRefs",
+                priorCandidateSourceBindingRefs,
+                "priorCandidateSourceBindingRefs",
                 allowEmpty = false,
             )
             requireRefs(
@@ -120,13 +120,13 @@ object VexLifeAttentionClaim {
                 allowEmpty = false,
             )
             requireRefs(
-                candidateSourceBindingRefs,
-                "candidateSourceBindingRefs",
+                priorCandidateSourceBindingRefs,
+                "priorCandidateSourceBindingRefs",
                 allowEmpty = false,
             )
             requireRefs(
-                subjectScopeRefs,
-                "subjectScopeRefs",
+                priorSubjectScopeRefs,
+                "priorSubjectScopeRefs",
                 allowEmpty = true,
             )
         }
@@ -167,8 +167,8 @@ object VexLifeAttentionClaim {
         val requirementRef: String,
         val priorRequirementBindingRefs: List<String>,
         val candidateRef: String,
-        val candidateSourceBindingRefs: List<String>,
-        val subjectScopeRefs: List<String>,
+        val priorCandidateSourceBindingRefs: List<String>,
+        val priorSubjectScopeRefs: List<String>,
         val retirementBindingRefs: List<String>,
         val retirementStandingRef: String,
     ) {
@@ -184,13 +184,13 @@ object VexLifeAttentionClaim {
                 allowEmpty = false,
             )
             requireRefs(
-                candidateSourceBindingRefs,
-                "candidateSourceBindingRefs",
+                priorCandidateSourceBindingRefs,
+                "priorCandidateSourceBindingRefs",
                 allowEmpty = false,
             )
             requireRefs(
-                subjectScopeRefs,
-                "subjectScopeRefs",
+                priorSubjectScopeRefs,
+                "priorSubjectScopeRefs",
                 allowEmpty = true,
             )
             requireRefs(
@@ -369,13 +369,13 @@ object VexLifeAttentionClaim {
         )
         requireSameRefs(
             expected = claim.candidateSourceBindingRefs,
-            actual = observation.candidateSourceBindingRefs,
-            label = "attention retirement candidate source binding",
+            actual = observation.priorCandidateSourceBindingRefs,
+            label = "attention retirement prior candidate source binding",
         )
         requireSameRefs(
             expected = claim.subjectScopeRefs,
-            actual = observation.subjectScopeRefs,
-            label = "attention retirement subject scope",
+            actual = observation.priorSubjectScopeRefs,
+            label = "attention retirement prior subject scope",
         )
 
         return RetiredClaim(
