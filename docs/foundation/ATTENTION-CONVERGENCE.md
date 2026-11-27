@@ -1,4 +1,4 @@
-# VexLife Attention Convergence — source-addressed perceptibility
+# VexLife Attention Convergence — perceptibility + activity-scoped nomination
 
 `[VXG RealForever]`
 
@@ -187,24 +187,139 @@ This source does **not** yet:
 
 Those belong to later stages only when their exact relationship is earned.
 
+## A2 activity-scoped convergence
+
+A2 consumes A1 candidates without making the Activity or the candidate source into Attention-owned
+truth.
+
+```text
+source-owned current activity
++ A1 perceptibility surface
++ bounded Vex/model relevance judgment
+        ↓
+validate exact activity binding
+validate exact candidate source bindings
+        ↓
+selected candidate refs + deeper-source addresses
+quiet candidate refs remain reachable
+        ↓
+no source read yet
+no effect authority
+```
+
+Current source:
+
+```text
+src/commonMain/kotlin/vexlife/attention/VexLifeAttentionActivityConvergence.kt
+src/commonTest/kotlin/vexlife/attention/VexLifeAttentionActivityConvergenceTest.kt
+```
+
+### Activity is source-bound, not Attention-authored
+
+A2 does not define the complete Product activity ontology. It accepts one bounded Activity coordinate
+with exact `sourceBindingRefs[]`, optional subject scopes and an optional
+`workingFocusRefOrNull`.
+
+The optional Working Focus reference is important while Self-Inspection / Working Focus remains a
+separate trajectory:
+
+```text
+WORKING FOCUS PRESENT
+  -> preserve exact rightful-owner ref
+
+WORKING FOCUS ABSENT / NOT LANDED
+  -> null
+  -> do not fabricate an Attention-owned substitute
+```
+
+### Model judgment is candidate cognition, not source truth
+
+A2 does not implement a hard-coded semantic relevance scorer.
+
+The selected model/Vex may form a bounded `Judgment` containing only candidate refs and the exact
+activity/candidate source bindings it judged. No rationale or private reasoning is retained by this
+contract.
+
+```text
+MODEL JUDGMENT
+!= SOURCE TRUTH
+!= MEMORY ACCEPTANCE
+!= PRIORITY
+!= EFFECT AUTHORITY
+```
+
+The judgment must bind the current Activity and each selected candidate's current
+`sourceBindingRefs[]`. A stale activity or stale candidate generation fails closed rather than
+silently applying an old relevance decision to new source truth.
+
+### Selection budget is supplied, not invented as global policy
+
+A2 receives one caller/source-owned `SelectionBudget` with a positive-or-zero maximum selected
+candidate count. It enforces that bound but does not claim the number is the universal Attention
+operating envelope.
+
+A6 still owns the lived many-connection/context-budget measurement.
+
+### Quiet means quiet now
+
+Candidates not selected by this activity judgment are returned as `quietCandidateRefs[]`.
+
+```text
+QUIET NOW
+!= IRRELEVANT FOREVER
+!= SOURCE ABSENT
+!= SOURCE DELETED
+!= UNREACHABLE
+```
+
+A later activity may judge the same source differently after exact currentness is re-bound.
+
+### Reachability remains truthful
+
+A relevant candidate may still be `HELD`, `UNAVAILABLE` or `UNKNOWN`. A2 may preserve that
+nomination, but it cannot turn it into a successful read.
+
+```text
+NOMINATED + HELD
+= relevant relationship recognized
+!= source read
+!= source returned
+```
+
+The rightful source/capability owner remains responsible for any later exact reopen.
+
+### A2 nonclaims
+
+A2 does **not** yet:
+
+- perform the deeper source read;
+- insert the nomination into DirectPromptContext;
+- define source-required attention claims;
+- rank selected candidates;
+- define interruption/presentation order;
+- acknowledge anything;
+- displace or resume Working Focus;
+- create notifications;
+- persist model reasoning;
+- mutate Memory or Conversation;
+- grant effects.
+
 ## Next edge
 
-A2 must answer:
+A3 must answer:
 
-> Given current source-owned human-activity coordinates and this bounded candidate vocabulary, how
-> can Vex identify a small relevant candidate set and request deeper exact source while unrelated
-> connections remain quiet?
+> How can an already source-qualified current condition require present awareness, preserve any
+> displaced Working Focus, keep acknowledgement distinct from source resolution, and later return
+> to the prior work without Attention inventing domain severity or a global priority truth?
 
 That work must preserve:
 
 ```text
-MODEL RELEVANCE JUDGMENT != SOURCE TRUTH
-CANDIDATE SELECTION != SOURCE DELETION
-NOT SELECTED NOW != UNREACHABLE
-SOURCE REOPEN != ATTENTION EFFECT
+SOURCE-OWNED SIGNIFICANCE != GLOBAL PRIORITY
+ATTENTION CLAIM != SOURCE TRUTH
+ACKNOWLEDGED != SOURCE RESOLVED
+DISPLACED != DELETED
+RETURN != RECONSTRUCT FROM CHAT
 ```
 
-Working Focus is consumed only from its rightful then-current owner; A2 must not invent a substitute
-if the Self-Inspection/Working Focus trajectory has not landed.
-
-<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][PERCEPTIBILITY] -->
+<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][A2][PERCEPTIBILITY][ACTIVITY] -->
