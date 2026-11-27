@@ -12,7 +12,7 @@ class VexLifeWorkingFocusTest {
             lineageRef = "lineage.vex.current",
             threadRef = "thread.vex.current",
             formationRef = "receipt.vex.focus.proposal.1",
-            priorWorkingFocusRefOrNull = null,
+            priorRevisionRefOrNull = null,
             subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
             objective = "Understand the current Working Focus relationship.",
             currentQuestionOrNull = "Which owner should carry current focus?",
