@@ -89,26 +89,22 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
         )
     }
 
-    private fun retired(
+    private fun retirementObservation(
         claim: VexLifeAttentionClaim.Claim,
         retirementRef: String = "retirement.resource.storage.attention.001",
         retirementBindingRef: String = "binding.resource.storage.retirement.001",
     ) =
-        VexLifeAttentionClaim.retire(
-            claim = claim,
-            observation =
-                VexLifeAttentionClaim.SourceRetirementObservation(
-                    retirementRef = retirementRef,
-                    ownerRef = claim.ownerRef,
-                    sourceRef = claim.sourceRef,
-                    requirementRef = claim.requirementRef,
-                    priorRequirementBindingRefs = claim.requirementBindingRefs,
-                    candidateRef = claim.candidateRef,
-                    priorCandidateSourceBindingRefs = claim.candidateSourceBindingRefs,
-                    priorSubjectScopeRefs = claim.subjectScopeRefs,
-                    retirementBindingRefs = listOf(retirementBindingRef),
-                    retirementStandingRef = "standing.resource.storage.attention-retired",
-                ),
+        VexLifeAttentionClaim.SourceRetirementObservation(
+            retirementRef = retirementRef,
+            ownerRef = claim.ownerRef,
+            sourceRef = claim.sourceRef,
+            requirementRef = claim.requirementRef,
+            priorRequirementBindingRefs = claim.requirementBindingRefs,
+            candidateRef = claim.candidateRef,
+            priorCandidateSourceBindingRefs = claim.candidateSourceBindingRefs,
+            priorSubjectScopeRefs = claim.subjectScopeRefs,
+            retirementBindingRefs = listOf(retirementBindingRef),
+            retirementStandingRef = "standing.resource.storage.attention-retired",
         )
 
     @Test
@@ -262,7 +258,7 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
     }
 
     @Test
-    fun exactSourceRetirementReturnsExactDisplacedFocusAfterSourceRevalidation() {
+    fun exactSourceRetirementCanReturnAfterRestartWithoutOldClaimObject() {
         val home = Files.createTempDirectory("vexlife-attention-focus-resume-").toAbsolutePath()
         try {
             val owner = VexLifeWorkingFocusOwner(home)
@@ -277,13 +273,17 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
                     claim,
                 )
 
+            val retirement = retirementObservation(claim)
+            val retired = VexLifeAttentionClaim.retire(claim, retirement)
+            assertTrue(retired.requirementRetiredBySource)
+
             val resumed =
                 VexLifeAttentionWorkingFocusConvergence.resumeAfterSourceRetirement(
                     owner = owner,
                     lineageRef = lineageRef,
                     threadRef = threadRef,
                     displacedStateRef = assertNotNull(displaced.workingFocusStateRefOrNull),
-                    retiredClaim = retired(claim),
+                    retirementObservation = retirement,
                     revalidatedWorkingFocusSourceBindingRefs = revision.sourceBindingRefs,
                     formedAt = Instant.parse("2026-11-27T21:02:00Z"),
                 )
@@ -327,7 +327,7 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
                     lineageRef = lineageRef,
                     threadRef = threadRef,
                     displacedStateRef = assertNotNull(displaced.workingFocusStateRefOrNull),
-                    retiredClaim = retired(otherClaim),
+                    retirementObservation = retirementObservation(otherClaim),
                     revalidatedWorkingFocusSourceBindingRefs =
                         assertNotNull(active.current.revisionOrNull).sourceBindingRefs,
                 )
@@ -361,7 +361,7 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
                     lineageRef = lineageRef,
                     threadRef = threadRef,
                     displacedStateRef = assertNotNull(displaced.workingFocusStateRefOrNull),
-                    retiredClaim = retired(claim),
+                    retirementObservation = retirementObservation(claim),
                     revalidatedWorkingFocusSourceBindingRefs =
                         listOf("binding.focus.source.changed"),
                 )
