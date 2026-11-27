@@ -312,6 +312,171 @@ class VexLifeAttentionClaimTest {
             )
         }
     }
+    private fun retirementObservation(
+        claim: VexLifeAttentionClaim.Claim,
+        retirementRef: String = "retirement.resource.storage.8",
+        retirementBindingRef: String = "receipt.resource.storage.retirement.8",
+    ) =
+        VexLifeAttentionClaim.SourceRetirementObservation(
+            retirementRef = retirementRef,
+            ownerRef = claim.ownerRef,
+            sourceRef = claim.sourceRef,
+            requirementRef = claim.requirementRef,
+            priorRequirementBindingRefs = claim.requirementBindingRefs,
+            candidateRef = claim.candidateRef,
+            priorCandidateSourceBindingRefs = claim.candidateSourceBindingRefs,
+            priorSubjectScopeRefs = claim.subjectScopeRefs,
+            retirementBindingRefs = listOf(retirementBindingRef),
+            retirementStandingRef = "standing.resource.storage.attention-retired",
+        )
+
+    @Test
+    fun sourceOwnerMayRetireExactRequirementWithoutAttentionClaimingDomainResolution() {
+        val candidate = candidateFixture()
+        val claim =
+            VexLifeAttentionClaim.form(
+                candidate = candidate,
+                requirement = requirement(candidate),
+            )
+
+        val retired =
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation = retirementObservation(claim),
+            )
+
+        assertEquals(claim, retired.claim)
+        assertEquals("retirement.resource.storage.8", retired.retirementRef)
+        assertEquals(
+            listOf("receipt.resource.storage.retirement.8"),
+            retired.retirementBindingRefs,
+        )
+        assertEquals(true, retired.requirementRetiredBySource)
+        assertFalse(retired.sourceConditionResolvedByAttention)
+        assertFalse(retired.effectAuthorityGranted)
+    }
+
+    @Test
+    fun retirementBindsTheExactPriorClaimButAllowsTheSourceToAdvance() {
+        val candidate = candidateFixture()
+        val claim =
+            VexLifeAttentionClaim.form(
+                candidate = candidate,
+                requirement = requirement(candidate),
+            )
+
+        val retired =
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation =
+                    retirementObservation(
+                        claim = claim,
+                        retirementBindingRef =
+                            "receipt.resource.storage.source-generation.8",
+                    ),
+            )
+
+        assertEquals(
+            "receipt.resource.storage.source-generation.8",
+            retired.retirementBindingRefs.single(),
+        )
+        assertEquals(
+            claim.candidateSourceBindingRefs,
+            retired.claim.candidateSourceBindingRefs,
+            "retirement binds the prior claim generation; it does not require the source to stay there",
+        )
+    }
+
+    @Test
+    fun staleOrForeignRetirementCannotRetireAnotherClaim() {
+        val candidate = candidateFixture()
+        val claim =
+            VexLifeAttentionClaim.form(
+                candidate = candidate,
+                requirement = requirement(candidate),
+            )
+        val current = retirementObservation(claim)
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation =
+                    current.copy(
+                        priorRequirementBindingRefs =
+                            listOf("receipt.resource.storage.attention.old"),
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation =
+                    current.copy(
+                        priorCandidateSourceBindingRefs =
+                            listOf("receipt.resource.storage.current.old"),
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation =
+                    current.copy(
+                        priorSubjectScopeRefs = listOf("subject.other-home"),
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation =
+                    current.copy(
+                        ownerRef = "owner.foreign",
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun acknowledgementAndRetirementRemainIndependentRelationships() {
+        val candidate = candidateFixture()
+        val claim =
+            VexLifeAttentionClaim.form(
+                candidate = candidate,
+                requirement = requirement(candidate),
+            )
+
+        val acknowledged =
+            VexLifeAttentionClaim.acknowledge(
+                claim = claim,
+                observation =
+                    VexLifeAttentionClaim.AcknowledgementObservation(
+                        acknowledgementRef = "ack.resource.storage.7",
+                        actorRef = "actor.human.current",
+                        requirementRef = claim.requirementRef,
+                        requirementBindingRefs = claim.requirementBindingRefs,
+                        acknowledgementRequirementRefOrNull =
+                            claim.acknowledgementRequirementRefOrNull,
+                        candidateSourceBindingRefs = claim.candidateSourceBindingRefs,
+                        subjectScopeRefs = claim.subjectScopeRefs,
+                    ),
+            )
+
+        assertFalse(acknowledged.sourceResolutionObservedByAcknowledgement)
+
+        val retired =
+            VexLifeAttentionClaim.retire(
+                claim = claim,
+                observation = retirementObservation(claim),
+            )
+
+        assertEquals(true, retired.requirementRetiredBySource)
+        assertFalse(retired.sourceConditionResolvedByAttention)
+    }
+
 }
 
 // [VXG RealForever]
