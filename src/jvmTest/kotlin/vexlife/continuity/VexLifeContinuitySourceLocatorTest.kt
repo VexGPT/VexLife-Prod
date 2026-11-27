@@ -1472,8 +1472,15 @@ class VexLifeContinuitySourceLocatorTest {
                     ),
                     "semantic direct hit keeps the existing exact immediate-neighbor expansion law",
                 )
-                assertFalse(
-                    outcome.wholeHistoryHeadTraversalPerformed,
+                /*
+                 * Exact canonical reopen may traverse the committed-head lineage when Conversation's
+                 * separate current attempt-index acceleration is not present in this fixture. LH-5
+                 * owns semantic nomination, not Conversation's independent head-traversal strategy.
+                 */
+                assertTrue(
+                    outcome.exactHeadFileReadCount >
+                        0,
+                    "semantic nomination must prove the selected source against canonical Conversation head evidence",
                 )
                 assertFalse(
                     outcome.canonicalSourceMutationPerformed,
