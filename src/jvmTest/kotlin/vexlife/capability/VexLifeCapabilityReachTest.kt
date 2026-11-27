@@ -200,6 +200,77 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun exactA020SiblingVersionMarkerCarriesTheSameRequestMeaningWithoutBroadJsonAdmission() {
+        val sibling =
+            assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                VexLifeCapabilityRequest.parseOrNull(
+                    """
+                    ```json
+                    {
+                      "VEXLIFE_CAPABILITY_REQUEST": "v1",
+                      "capability": "atlas",
+                      "action": "list",
+                      "arguments": {}
+                    }
+                    ```
+                    """.trimIndent(),
+                ),
+            )
+
+        assertEquals(
+            "atlas",
+            sibling.call.capability,
+        )
+        assertEquals(
+            "list",
+            sibling.call.action,
+        )
+        assertTrue(
+            sibling.call.arguments.isEmpty(),
+        )
+
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": "v2",
+                  "capability": "atlas",
+                  "action": "list",
+                  "arguments": {}
+                }
+                """.trimIndent(),
+            ),
+            "an unknown sibling protocol version must not be inferred as v1",
+        )
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": "v1",
+                  "capability": "atlas",
+                  "action": "list",
+                  "arguments": {},
+                  "extra": "not-admitted"
+                }
+                """.trimIndent(),
+            ),
+            "the sibling representation admits no unrelated outer keys",
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "capability": "atlas",
+                  "action": "list",
+                  "arguments": {}
+                }
+                """.trimIndent(),
+            ),
+            "ordinary bare JSON remains outside machine control without an admitted protocol marker",
+        )
+    }
+
+    @Test
     fun aHeaderWithoutAReadableRequestIsMalformedNotIgnored() {
         listOf(
                 "VEXLIFE_CAPABILITY_REQUEST/v1\nfetch the page please",
