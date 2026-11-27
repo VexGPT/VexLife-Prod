@@ -940,6 +940,16 @@ object VexLifeContextRevisit {
                         continue
                     }
 
+                    val branchCount =
+                        branches(
+                            current,
+                        )
+                    val matchedTermCount =
+                        matchedTerms[
+                            current.turnRef
+                        ]
+                            ?.size
+                            ?: 0
                     var end =
                         cursor +
                             1
@@ -950,7 +960,24 @@ object VexLifeContextRevisit {
                             baselineRanked[
                                 end
                             ],
-                        )
+                        ) &&
+                        branches(
+                            baselineRanked[
+                                end
+                            ],
+                        ) ==
+                            branchCount &&
+                        (
+                            matchedTerms[
+                                baselineRanked[
+                                    end
+                                ]
+                                    .turnRef
+                            ]
+                                ?.size
+                                ?: 0
+                        ) ==
+                            matchedTermCount
                     ) {
                         end +=
                             1
