@@ -887,37 +887,92 @@ object VexLifeContextRevisit {
                     it.route == Route.CORRECTED_BY ||
                     it.route == Route.CORRECTIONS
             }
-        val ranked =
+        val baselineRanked =
             nodes.sortedWith(
                 compareByDescending<VexLifeTurnNavigation.Turn> { branches(it) }
                     .thenByDescending { matchedTerms[it.turnRef]?.size ?: 0 }
-                    .thenComparator {
-                        left,
-                        right,
-                        ->
-                        val leftRank =
-                            semanticCandidateRankByTurnRef[
-                                left.turnRef
-                            ]
-                        val rightRank =
-                            semanticCandidateRankByTurnRef[
-                                right.turnRef
-                            ]
-                        if (
-                            leftRank !=
-                                null &&
-                            rightRank !=
-                                null
-                        ) {
-                            leftRank.compareTo(
-                                rightRank,
-                            )
-                        } else {
-                            0
-                        }
-                    }
                     .thenByDescending { it.request.sequence }
             )
+        fun semanticOnlyCandidate(
+            turn: VexLifeTurnNavigation.Turn,
+        ): Boolean {
+            val directMatches =
+                turnMatches
+                    .getValue(
+                        turn.turnRef,
+                    )
+                    .filter {
+                        it.route in
+                            directRoutes
+                    }
+            return directMatches.isNotEmpty() &&
+                directMatches.all {
+                    it.route ==
+                        Route.SEMANTIC_CANDIDATE
+                } &&
+                semanticCandidateRankByTurnRef[
+                    turn.turnRef
+                ] !=
+                null
+        }
+        val ranked =
+            buildList {
+                var cursor =
+                    0
+                while (
+                    cursor <
+                    baselineRanked.size
+                ) {
+                    val current =
+                        baselineRanked[
+                            cursor
+                        ]
+                    if (
+                        !semanticOnlyCandidate(
+                            current,
+                        )
+                    ) {
+                        add(
+                            current,
+                        )
+                        cursor +=
+                            1
+                        continue
+                    }
+
+                    var end =
+                        cursor +
+                            1
+                    while (
+                        end <
+                            baselineRanked.size &&
+                        semanticOnlyCandidate(
+                            baselineRanked[
+                                end
+                            ],
+                        )
+                    ) {
+                        end +=
+                            1
+                    }
+
+                    addAll(
+                        baselineRanked
+                            .subList(
+                                cursor,
+                                end,
+                            )
+                            .sortedBy {
+                                semanticCandidateRankByTurnRef
+                                    .getValue(
+                                        it.turnRef,
+                                    )
+                            },
+                    )
+                    cursor =
+                        end
+                }
+            }
 
         // Budget: resident turns are named, others get exact words until turns or tokens run out.
         val resident = mutableListOf<VexLifeTurnNavigation.Turn>()
