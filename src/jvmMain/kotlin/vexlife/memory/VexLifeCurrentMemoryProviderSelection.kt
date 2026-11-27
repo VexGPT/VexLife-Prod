@@ -25,16 +25,32 @@ internal object VexLifeCurrentMemoryProviderSelection {
     fun read(
         productHome: Path,
         memoryTokenCap: Int = VexLifeMemoryContract.MaximumMemoryTokens,
+    ): Selection =
+        form(
+            daily =
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = productHome,
+                    memoryTokenCap = memoryTokenCap,
+                ),
+            currentAcceptedSemantic =
+                VexLifeCurrentAcceptedSemanticProjection.read(
+                    productHome,
+                ),
+            memoryTokenCap =
+                memoryTokenCap,
+        )
+
+    internal fun form(
+        daily: VexLifeMemoryContract.Context,
+        currentAcceptedSemantic: VexLifeCurrentAcceptedSemanticProjection.Projection,
+        memoryTokenCap: Int,
     ): Selection {
         require(memoryTokenCap in 0..VexLifeMemoryContract.MaximumMemoryTokens) {
             "current Memory provider selection token cap is outside the admitted range"
         }
-
-        val daily =
-            VexLifeCurrentMemoryReader.readCurrent(
-                productHome = productHome,
-                memoryTokenCap = memoryTokenCap,
-            )
+        VexLifeMemoryContract.validateContext(
+            daily,
+        )
         require(daily.memoryTokenCap == memoryTokenCap) {
             "Daily Memory selection does not bind the admitted Memory token cap"
         }
@@ -52,33 +68,45 @@ internal object VexLifeCurrentMemoryProviderSelection {
                 }
                 .toSet()
         val remainingCurrentSemanticTokenCap = memoryTokenCap - daily.estimatedSystemMessageTokens
-        val currentAcceptedSemantic =
+        val currentAcceptedSemanticBlock =
             VexLifeCurrentAcceptedSemanticPromptBlock.form(
-                projection = VexLifeCurrentAcceptedSemanticProjection.read(productHome),
-                excludedStatementRefs = dailyStatementRefs,
-                memoryTokenCap = remainingCurrentSemanticTokenCap,
+                projection =
+                    currentAcceptedSemantic,
+                excludedStatementRefs =
+                    dailyStatementRefs,
+                memoryTokenCap =
+                    remainingCurrentSemanticTokenCap,
             )
         require(
-            dailyStatementRefs.intersect(currentAcceptedSemantic.statementRefs.toSet()).isEmpty()
+            dailyStatementRefs.intersect(
+                currentAcceptedSemanticBlock.statementRefs.toSet(),
+            )
+                .isEmpty()
         ) {
             "Daily and current accepted semantic provider selections overlap by statement ref"
         }
 
         val estimatedSelectedTokens =
-            daily.estimatedSystemMessageTokens + currentAcceptedSemantic.estimatedContentTokens
+            daily.estimatedSystemMessageTokens +
+                currentAcceptedSemanticBlock.estimatedContentTokens
         require(estimatedSelectedTokens <= memoryTokenCap) {
             "selected Memory provider components exceed the admitted Memory token cap"
         }
-        require(!currentAcceptedSemantic.effectsPerformed) {
+        require(!currentAcceptedSemanticBlock.effectsPerformed) {
             "current accepted semantic provider selection performed an effect"
         }
 
         return Selection(
-            memoryTokenCap = memoryTokenCap,
-            dailyContext = daily,
-            currentAcceptedSemanticBlock = currentAcceptedSemantic,
-            remainingCurrentSemanticTokenCap = remainingCurrentSemanticTokenCap,
-            estimatedSelectedTokens = estimatedSelectedTokens,
+            memoryTokenCap =
+                memoryTokenCap,
+            dailyContext =
+                daily,
+            currentAcceptedSemanticBlock =
+                currentAcceptedSemanticBlock,
+            remainingCurrentSemanticTokenCap =
+                remainingCurrentSemanticTokenCap,
+            estimatedSelectedTokens =
+                estimatedSelectedTokens,
             effectsPerformed = false,
         )
     }

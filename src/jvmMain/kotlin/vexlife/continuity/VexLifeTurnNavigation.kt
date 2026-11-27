@@ -50,26 +50,84 @@ object VexLifeTurnNavigation {
         require(canonicalEvents.size % 2 == 0) {
             "turn navigation requires complete REQUEST/RESPONSE pairs"
         }
-        return canonicalEvents.chunked(2).mapIndexed { ordinal, (request, response) ->
-            require(
-                request.eventKind == "REQUEST" &&
-                    response.eventKind == "RESPONSE" &&
-                    request.turnRef == response.turnRef &&
-                    response.sequence == request.sequence + 1
-            ) {
-                "turn navigation requires one exact REQUEST/RESPONSE pair per turn"
-            }
-            Turn(
-                turnRef = request.turnRef,
-                ordinal = ordinal,
+        return canonicalEvents.chunked(2).mapIndexed {
+            ordinal,
+            (request, response),
+            ->
+            projectPair(
                 request = request,
                 response = response,
-                requestedAt = Instant.parse(request.formedAt),
-                respondedAt = Instant.parse(response.formedAt),
-                correctionCue = correctionCueOrNull(request.content),
-                pointsBack = pointsBack(request.content),
+                ordinal = ordinal,
             )
         }
+    }
+
+    /**
+     * Project one exact canonical completed pair without requiring the whole Conversation.
+     *
+     * [ordinal] is the pair's position in the canonical completed-head lineage. It must not be
+     * inferred from the physical event sequence: abandoned/off-head attempts may consume event
+     * sequence coordinates without becoming completed Conversation turns.
+     */
+    fun projectPair(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        ordinal: Int,
+    ): Turn {
+        require(
+            request.eventKind ==
+                "REQUEST" &&
+                response.eventKind ==
+                    "RESPONSE" &&
+                request.turnRef ==
+                    response.turnRef &&
+                request.sequence >=
+                    0 &&
+                request.sequence %
+                    2 ==
+                    0L &&
+                response.sequence ==
+                    request.sequence +
+                    1 &&
+                response.priorEventHash ==
+                    request.eventHash
+        ) {
+            "turn navigation requires one exact canonical REQUEST/RESPONSE pair"
+        }
+        return Turn(
+            turnRef =
+                request.turnRef,
+            ordinal =
+                ordinal
+                    .also {
+                        require(
+                            it >=
+                                0
+                        ) {
+                            "turn navigation canonical ordinal must be non-negative"
+                        }
+                    },
+            request =
+                request,
+            response =
+                response,
+            requestedAt =
+                Instant.parse(
+                    request.formedAt,
+                ),
+            respondedAt =
+                Instant.parse(
+                    response.formedAt,
+                ),
+            correctionCue =
+                correctionCueOrNull(
+                    request.content,
+                ),
+            pointsBack =
+                pointsBack(
+                    request.content,
+                ),
+        )
     }
 
     /** Human time between the end of [earlier] and the start of [later]. */

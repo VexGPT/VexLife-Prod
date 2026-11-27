@@ -22,6 +22,7 @@ internal class DirectConversationAttemptIndex {
         val turnRef: String,
         val request: DirectConversationStore.EventAddress,
         val response: DirectConversationStore.EventAddress?,
+        val committedHeadSha256: String?,
         val committed: Boolean,
     )
 
@@ -29,6 +30,7 @@ internal class DirectConversationAttemptIndex {
         val sourceConversationHeadSha256: String?,
         val sourceConversationSequence: Long?,
         val entriesByRequestMessageRef: Map<String, Entry>,
+        val committedEntriesByEventRef: Map<String, Entry>,
     )
 
     sealed interface Load {
@@ -84,6 +86,14 @@ internal class DirectConversationAttemptIndex {
             val entries =
                 linkedMapOf<String, Entry>()
 
+            require(
+                snapshot.completedHeads.size *
+                    2 ==
+                    snapshot.canonicalEvents.size
+            ) {
+                "Conversation attempt index rebuild requires one validated completed head per canonical pair"
+            }
+
             var index =
                 0
             while (
@@ -99,10 +109,27 @@ internal class DirectConversationAttemptIndex {
                         index +
                             1
                     ]
+                val head =
+                    snapshot.completedHeads[
+                        index /
+                            2
+                    ]
                 requirePair(
                     request = request,
                     response = response,
                 )
+                require(
+                    head.requestEventHash ==
+                        request.eventHash &&
+                        head.eventHash ==
+                            response.eventHash &&
+                        head.turnRef ==
+                            request.turnRef &&
+                        head.sequence ==
+                            response.sequence
+                ) {
+                    "Conversation attempt index rebuild completed head does not bind its exact pair"
+                }
                 putUnique(
                     entries = entries,
                     entry =
@@ -117,6 +144,8 @@ internal class DirectConversationAttemptIndex {
                                 address(
                                     response,
                                 ),
+                            committedHeadSha256 =
+                                head.conversationHeadSha256,
                             committed = true,
                         ),
                 )
@@ -151,6 +180,7 @@ internal class DirectConversationAttemptIndex {
                                     ?.let(
                                         ::address,
                                     ),
+                            committedHeadSha256 = null,
                             committed = false,
                         ),
                 )
@@ -166,6 +196,10 @@ internal class DirectConversationAttemptIndex {
                             ?.sequence,
                     entriesByRequestMessageRef =
                         entries.toMap(),
+                    committedEntriesByEventRef =
+                        committedEntriesByEventRef(
+                            entries.values,
+                        ),
                 )
             generation =
                 rebuilt
@@ -221,6 +255,7 @@ internal class DirectConversationAttemptIndex {
                                             request,
                                         ),
                                     response = null,
+                                    committedHeadSha256 = null,
                                     committed = false,
                                 )
                         ),
@@ -320,6 +355,16 @@ internal class DirectConversationAttemptIndex {
                 "Conversation attempt index commit does not bind its exact pair/head"
             }
 
+            val committed =
+                existing.copy(
+                    response =
+                        address(
+                            response,
+                        ),
+                    committedHeadSha256 =
+                        head.conversationHeadSha256,
+                    committed = true,
+                )
             before.copy(
                 sourceConversationHeadSha256 =
                     head.conversationHeadSha256,
@@ -329,13 +374,15 @@ internal class DirectConversationAttemptIndex {
                     before.entriesByRequestMessageRef +
                         (
                             request.messageRef to
-                                existing.copy(
-                                    response =
-                                        address(
-                                            response,
-                                        ),
-                                    committed = true,
-                                )
+                                committed
+                        ),
+                committedEntriesByEventRef =
+                    before.committedEntriesByEventRef +
+                        mapOf(
+                            request.eventRef to
+                                committed,
+                            response.eventRef to
+                                committed,
                         ),
             )
         }
@@ -371,6 +418,46 @@ internal class DirectConversationAttemptIndex {
                     null
                 false
             }
+        }
+
+    private fun committedEntriesByEventRef(
+        entries: Collection<Entry>,
+    ): Map<String, Entry> =
+        buildMap {
+            entries
+                .filter(
+                    Entry::committed,
+                )
+                .forEach {
+                    entry ->
+                    requireNotNull(
+                        entry.response,
+                    ) {
+                        "committed Conversation attempt index entry has no response coordinate"
+                    }
+                    requireNotNull(
+                        entry.committedHeadSha256,
+                    ) {
+                        "committed Conversation attempt index entry has no completed head coordinate"
+                    }
+                    require(
+                        put(
+                            entry.request.eventRef,
+                            entry,
+                        ) ==
+                            null &&
+                            put(
+                                requireNotNull(
+                                    entry.response,
+                                )
+                                    .eventRef,
+                                entry,
+                            ) ==
+                            null
+                    ) {
+                        "Conversation attempt index rebuild observed duplicate committed event identity"
+                    }
+                }
         }
 
     private fun putUnique(

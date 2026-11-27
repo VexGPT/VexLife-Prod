@@ -136,6 +136,18 @@ object VexLifeContextRevisit {
     )
 
     /** What the owners said when asked; a null value carries its reason in the matching gap. */
+    data class ConversationView(
+        val turns: List<VexLifeTurnNavigation.Turn>,
+        val totalCompletedTurnCount: Int,
+        val conversationEventsRead: Int,
+        val exactHeadFileReadCount: Int,
+        val wholeHistoryHeadTraversalPerformed: Boolean,
+        val derivedEntryScanCount: Int,
+        val derivedPostingLookupCount: Int,
+        val derivedRefLookupCount: Int,
+        val derivedTypedEdgeLookupCount: Int,
+    )
+
     data class Sources(
         val conversation: DirectConversationStore.Snapshot?,
         val conversationGap: String?,
@@ -148,15 +160,16 @@ object VexLifeContextRevisit {
         val promptResidentStatementRefs: Set<String> = emptySet(),
         val now: Instant,
         val conversationLifecycle: ConversationLifecycle? = null,
+        val conversationView: ConversationView? = null,
     )
 
     /**
      * The continuity sources one human turn holds, bound by that turn rather than chosen by the
      * capability bridge: its own Conversation owner (the lease it already holds), the Memory
      * projection its prompt used, its own working position, and what its prompt already carries.
-     * Each owner is read at most once per turn, on first need, however many revisit calls the turn
-     * makes; later calls reuse what was read. The values stay with their owners; this only carries
-     * them for one turn.
+     * Full owner snapshots are cached on first need. A distinct supported indexed revisit may use
+     * one bounded exact Conversation view instead of forcing the full snapshot; later identical
+     * requests reuse that view. The values stay with their owners; this only carries turn custody.
      */
     class TurnSources(
         private val readConversation: () -> DirectConversationStore.Snapshot,
@@ -170,10 +183,15 @@ object VexLifeContextRevisit {
         private val promptResidentStatementRefs: () -> Set<String>,
         private val now: () -> Instant,
         private val readConversationLifecycle: (() -> ConversationLifecycle)? = null,
+        private val readConversationView:
+            ((Request, ConversationLifecycle?) -> ConversationView?)? =
+            null,
     ) {
         private var conversation: kotlin.Result<DirectConversationStore.Snapshot>? = null
         private var working: kotlin.Result<WorkingDirectory?>? = null
         private var conversationLifecycle: kotlin.Result<ConversationLifecycle>? = null
+        private val conversationViews =
+            linkedMapOf<Request, kotlin.Result<ConversationView?>>()
 
         /** Owner reads this turn has performed so far, and their total time. */
         var ownerReads: Int = 0
@@ -192,13 +210,28 @@ object VexLifeContextRevisit {
                     outcome
                 }
 
-        fun sources(scopes: Set<Scope>): Sources {
+        fun sources(
+            request: Request,
+        ): Sources =
+            sources(
+                scopes = request.scopes,
+                request = request,
+            )
+
+        fun sources(
+            scopes: Set<Scope>,
+        ): Sources =
+            sources(
+                scopes = scopes,
+                request = null,
+            )
+
+        private fun sources(
+            scopes: Set<Scope>,
+            request: Request?,
+        ): Sources {
             fun gap(error: Throwable) =
                 "could not be read now: " + (error.message ?: error.javaClass.simpleName)
-            val conversationRead =
-                if (Scope.CONVERSATION in scopes)
-                    once(conversation, readConversation).also { conversation = it }
-                else null
             val lifecycleRead =
                 if (
                     Scope.CONVERSATION in scopes &&
@@ -215,6 +248,73 @@ object VexLifeContextRevisit {
                 } else {
                     null
                 }
+            val conversationViewReader =
+                readConversationView
+            val neighborhoodRead =
+                if (
+                    Scope.CONVERSATION in
+                        scopes &&
+                    lifecycleRead
+                        ?.exceptionOrNull() ==
+                        null &&
+                    request !=
+                        null &&
+                    conversationViewReader !=
+                        null
+                ) {
+                    conversationViews[
+                        request
+                    ]
+                        ?: run {
+                            val started =
+                                System.nanoTime()
+                            val outcome =
+                                runCatching {
+                                    conversationViewReader(
+                                        request,
+                                        lifecycleRead
+                                            ?.getOrNull(),
+                                    )
+                                }
+                            ownerReads +=
+                                1
+                            ownerReadNanos +=
+                                System.nanoTime() -
+                                    started
+                            conversationViews[
+                                request
+                            ] =
+                                outcome
+                            outcome
+                        }
+                } else {
+                    null
+                }
+            val conversationView =
+                neighborhoodRead
+                    ?.getOrNull()
+            val conversationRead =
+                if (
+                    Scope.CONVERSATION in
+                        scopes &&
+                    lifecycleRead
+                        ?.exceptionOrNull() ==
+                        null &&
+                    conversationView ==
+                        null
+                ) {
+                    once(
+                        conversation,
+                        readConversation,
+                    )
+                        .also {
+                            conversation =
+                                it
+                        }
+                } else {
+                    null
+                }
+
             val workingRead =
                 if (Scope.WORKING_CONTINUITY in scopes)
                     once(working, readWorking).also { working = it }
@@ -260,6 +360,8 @@ object VexLifeContextRevisit {
                 conversationLifecycle =
                     lifecycleRead
                         ?.getOrNull(),
+                conversationView =
+                    conversationView,
             )
         }
 
@@ -328,6 +430,17 @@ object VexLifeContextRevisit {
         val returnedTokens: Int,
         val frontierSize: Int,
     )
+
+    fun supportsIndexedConversationView(
+        request: Request,
+    ): Boolean =
+        Scope.CONVERSATION in
+            request.scopes &&
+            request.queries.all {
+                query ->
+                query.window ==
+                    null
+            }
 
     fun parse(arguments: JsonObject): Parsed {
         val scopes =
@@ -442,12 +555,46 @@ object VexLifeContextRevisit {
             sources.conversationLifecycle
                 ?.blockedEventRefs
                 .orEmpty()
-        val turns =
-            if (conversationInScope && sources.conversation != null)
-                VexLifeTurnNavigation.project(
-                    sources.conversation.canonicalEvents,
+        require(
+            sources.conversationView ==
+                null ||
+                supportsIndexedConversationView(
+                    request,
                 )
-            else emptyList()
+        ) {
+            "indexed Conversation neighborhood cannot satisfy this revisit request"
+        }
+        val turns =
+            when {
+                !conversationInScope ->
+                    emptyList()
+
+                sources.conversationView !=
+                    null ->
+                    sources.conversationView
+                        .turns
+
+                sources.conversation !=
+                    null ->
+                    VexLifeTurnNavigation.project(
+                        sources.conversation.canonicalEvents,
+                    )
+
+                else ->
+                    emptyList()
+            }
+        val totalCompletedTurnCount =
+            sources.conversationView
+                ?.totalCompletedTurnCount
+                ?: turns.size
+        val conversationAvailable =
+            conversationInScope &&
+                (
+                    sources.conversationView !=
+                        null ||
+                        sources.conversation !=
+                            null
+                )
         fun conversationTurnAdmitted(
             turn: VexLifeTurnNavigation.Turn,
         ): Boolean =
@@ -472,6 +619,10 @@ object VexLifeContextRevisit {
                     )
                 }
                 .toMap()
+        val turnByOrdinal =
+            admittedTurns.associateBy(
+                VexLifeTurnNavigation.Turn::ordinal,
+            )
         val pages =
             if (Scope.MEMORY in request.scopes) sources.memory?.pages.orEmpty() else emptyList()
         val pageByStatement = pages.associateBy { it.statementRef }
@@ -491,7 +642,13 @@ object VexLifeContextRevisit {
 
         for (query in request.queries) {
             val before = turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size }
-            val inWindow = windowPredicate(query.window, turns, sources.now)
+            val inWindow =
+                windowPredicate(
+                    window = query.window,
+                    totalCompletedTurnCount =
+                        totalCompletedTurnCount,
+                    now = sources.now,
+                )
             val normalizedTerms = query.terms.map(::normalize)
 
             if (query.terms.isNotEmpty()) {
@@ -591,7 +748,7 @@ object VexLifeContextRevisit {
             val queryRef = turnMatches.getValue(turn.turnRef).first().queryRef
             turn.correctsOrdinal
                 ?.let(
-                    turns::getOrNull,
+                    turnByOrdinal::get,
                 )
                 ?.takeIf(
                     ::conversationTurnAdmitted,
@@ -607,22 +764,20 @@ object VexLifeContextRevisit {
                         ),
                     )
                 }
-            turns
-                .getOrNull(
-                    turn.ordinal +
-                        1,
-                )
+            turnByOrdinal[
+                turn.ordinal +
+                    1
+            ]
                 ?.takeIf(
                     ::conversationTurnAdmitted,
                 )
                 ?.takeIf { it.correctionCue != null }
                 ?.let { hitTurn(it, Match(queryRef, Route.CORRECTS, turn.turnRef)) }
             if (turn.pointsBack && turn.ordinal > 0) {
-                turns
-                    .getOrNull(
-                        turn.ordinal -
-                            1,
-                    )
+                turnByOrdinal[
+                    turn.ordinal -
+                        1
+                ]
                     ?.takeIf(
                         ::conversationTurnAdmitted,
                     )
@@ -668,7 +823,12 @@ object VexLifeContextRevisit {
         val frontier = mutableListOf<String>()
         var tokens = estimateTokens(Header) + 200
         var truncated = false
-        val lastOrdinal = turns.lastOrNull()?.ordinal ?: 0
+        val lastOrdinal =
+            maxOf(
+                0,
+                totalCompletedTurnCount -
+                    1,
+            )
         for (turn in ranked) {
             if (
                 turn.request.eventRef in sources.promptResidentEventRefs &&
@@ -772,6 +932,7 @@ object VexLifeContextRevisit {
                         admittedTurns.size,
                         pages.size,
                         conversationInScope,
+                        totalCompletedTurnCount,
                     )
             )
             gapsLine(request, sources)?.let(::appendLine)
@@ -858,7 +1019,18 @@ object VexLifeContextRevisit {
             matchRouteCount =
                 turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size },
             conversationEventsRead =
-                if (conversationInScope) sources.conversation?.canonicalEvents?.size ?: 0 else 0,
+                if (
+                    conversationInScope
+                ) {
+                    sources.conversationView
+                        ?.conversationEventsRead
+                        ?: sources.conversation
+                            ?.canonicalEvents
+                            ?.size
+                        ?: 0
+                } else {
+                    0
+                },
             returnedTokens = estimateTokens(text.trimEnd()),
             returnedNodeCount = chosen.size + returnedPages.size,
         )
@@ -973,22 +1145,40 @@ object VexLifeContextRevisit {
         turnCount: Int,
         pageCount: Int,
         conversationInScope: Boolean,
+        totalCompletedTurnCount: Int,
     ): String =
         listOfNotNull(
-                if (conversationInScope && sources.conversation != null)
-                    "searched $turnCount " +
-                        (
-                            if (
-                                sources.conversationLifecycle !=
-                                    null
-                            ) {
-                                "lifecycle-admitted "
-                            } else {
-                                ""
-                            }
-                            ) +
-                        "completed turns of this thread (exact words; no meaning index yet)"
-                else null,
+                if (
+                    conversationInScope &&
+                    (
+                        sources.conversation !=
+                            null ||
+                            sources.conversationView !=
+                                null
+                    )
+                ) {
+                    if (
+                        sources.conversationView !=
+                        null
+                    ) {
+                        "searched $turnCount exact indexed-neighborhood turns against " +
+                            "$totalCompletedTurnCount completed turns of this thread " +
+                            "(exact words; lexical candidate index, no meaning index yet)"
+                    } else {
+                        "searched $turnCount " +
+                            (
+                                if (
+                                    sources.conversationLifecycle !=
+                                        null
+                                ) {
+                                    "lifecycle-admitted "
+                                } else {
+                                    ""
+                                }
+                                ) +
+                            "completed turns of this thread (exact words; no meaning index yet)"
+                    }
+                } else null,
                 if (Scope.MEMORY in request.scopes && sources.memory != null)
                     "$pageCount Memory pages (projection ${sources.memory.projectionState}" +
                         (if (
@@ -1010,7 +1200,12 @@ object VexLifeContextRevisit {
         listOfNotNull(
                 sources.conversationGap
                     ?.takeIf {
-                        Scope.CONVERSATION in request.scopes && sources.conversation == null
+                        Scope.CONVERSATION in
+                            request.scopes &&
+                            sources.conversation ==
+                                null &&
+                            sources.conversationView ==
+                                null
                     }
                     ?.let { "Conversation — $it" },
                 sources.memoryGap
@@ -1055,12 +1250,20 @@ object VexLifeContextRevisit {
 
     private fun windowPredicate(
         window: Window?,
-        turns: List<VexLifeTurnNavigation.Turn>,
+        totalCompletedTurnCount: Int,
         now: Instant,
     ): (VexLifeTurnNavigation.Turn) -> Boolean {
         if (window == null) return { true }
         val byTime = window.lastHours?.let { now.minus(Duration.ofHours(it.toLong())) }
-        val byTurns = window.lastTurns?.let { maxOf(0, turns.size - it) }
+        val byTurns =
+            window.lastTurns
+                ?.let {
+                    maxOf(
+                        0,
+                        totalCompletedTurnCount -
+                            it,
+                    )
+                }
         return { turn ->
             (byTime != null && !turn.respondedAt.isBefore(byTime)) ||
                 (byTurns != null && turn.ordinal >= byTurns)

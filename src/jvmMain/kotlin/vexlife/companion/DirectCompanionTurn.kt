@@ -29,6 +29,7 @@ import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
@@ -740,6 +741,7 @@ object DirectCompanionTurn {
             VexLifeCapabilityBridge.OwnerBindings(),
         continuitySourceLocatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
         conversationAttemptIndex: DirectConversationAttemptIndex? = null,
+        memoryHotPath: VexLifeCurrentMemoryHotPath? = null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -761,14 +763,40 @@ object DirectCompanionTurn {
                     reobserveSameRuntimeEvidence = {
                         session.observeCurrentQualifiedRuntimeEvidence()
                     },
+                    currentMemoryContext = {
+                        productHome,
+                        ->
+                        memoryHotPath
+                            ?.readContext()
+                            ?: VexLifeCurrentMemoryReader.readCurrent(
+                                productHome,
+                            )
+                    },
+                    memoryContextAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        memoryHotPath
+                            ?.readContext(
+                                memoryTokenCap,
+                            )
+                            ?: VexLifeCurrentMemoryReader.readCurrent(
+                                productHome = productHome,
+                                memoryTokenCap = memoryTokenCap,
+                            )
+                    },
                     memoryProviderSelectionAtCap = {
                         productHome,
                         memoryTokenCap,
                         ->
-                        VexLifeCurrentMemoryProviderSelection.read(
-                            productHome = productHome,
-                            memoryTokenCap = memoryTokenCap,
-                        )
+                        memoryHotPath
+                            ?.readSelection(
+                                memoryTokenCap,
+                            )
+                            ?: VexLifeCurrentMemoryProviderSelection.read(
+                                productHome = productHome,
+                                memoryTokenCap = memoryTokenCap,
+                            )
                     },
                     progressObserver = progressObserver,
                     cancellation = cancellation,
@@ -1579,8 +1607,9 @@ object DirectCompanionTurn {
         val providerRequests = mutableListOf<ProviderRequestView>()
         val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
-        // Memory and working position belong to it; the bridge only admits the request. Each owner
-        // is read at most once for the whole turn, on first need.
+        // Memory and working position belong to it; the bridge only admits the request. Full owner
+        // snapshots remain cached once per turn. A supported indexed revisit may instead perform one
+        // bounded exact Conversation-neighborhood read for that distinct revisit request.
         val turnSources =
             VexLifeContextRevisit.TurnSources(
                 readConversation = { conversationOwner.current() },
@@ -1612,6 +1641,153 @@ object DirectCompanionTurn {
                     base.promptResidentMemoryStatementRefs
                 },
                 now = hooks.now,
+                readConversationView =
+                    hooks.continuitySourceLocatorBackend
+                        ?.let {
+                            locatorBackend ->
+                            {
+                                revisitRequest,
+                                lifecycle,
+                                ->
+                                if (
+                                    !VexLifeContextRevisit
+                                        .supportsIndexedConversationView(
+                                            revisitRequest,
+                                        )
+                                ) {
+                                    null
+                                } else {
+                                    val neighborhoodQueries =
+                                        revisitRequest.queries.map {
+                                            query ->
+                                            VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                                queryTerms =
+                                                    query.terms,
+                                                speakerScope =
+                                                    when (
+                                                        query.speaker
+                                                    ) {
+                                                        VexLifeContextRevisit.Speaker.ANY ->
+                                                            VexLifeContinuitySourceLocator.SpeakerScope.ANY
+
+                                                        VexLifeContextRevisit.Speaker.HUMAN ->
+                                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN
+
+                                                        VexLifeContextRevisit.Speaker.VEX ->
+                                                            VexLifeContinuitySourceLocator.SpeakerScope.VEX
+                                                    },
+                                                seedRefs =
+                                                    query.seedRefs
+                                                        .toSet(),
+                                                typedEdges =
+                                                    if (
+                                                        query.corrections
+                                                    ) {
+                                                        setOf(
+                                                            VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                                        )
+                                                    } else {
+                                                        emptySet()
+                                                    },
+                                            )
+                                        }
+                                    val lifecycleBindingRef =
+                                        lifecycle
+                                            ?.bindingRef
+                                            ?: VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef
+                                    var outcome =
+                                        runCatching {
+                                            VexLifeContinuitySourceLocator.locateNeighborhood(
+                                                conversationOwner =
+                                                    conversationOwner,
+                                                queries =
+                                                    neighborhoodQueries,
+                                                backend =
+                                                    locatorBackend,
+                                                sourceLifecycleBindingRef =
+                                                    lifecycleBindingRef,
+                                            )
+                                        }
+                                            .getOrNull()
+                                    if (
+                                        outcome is
+                                        VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired &&
+                                        outcome.reason in
+                                        setOf(
+                                            VexLifeContinuitySourceLocator.FallbackReason.ABSENT,
+                                            VexLifeContinuitySourceLocator.FallbackReason.STALE,
+                                            VexLifeContinuitySourceLocator.FallbackReason.CORRUPT,
+                                            VexLifeContinuitySourceLocator.FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                                            VexLifeContinuitySourceLocator.FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+                                        )
+                                    ) {
+                                        val rebuilt =
+                                            runCatching {
+                                                VexLifeContinuitySourceLocator.rebuild(
+                                                    conversationOwner =
+                                                        conversationOwner,
+                                                    backend =
+                                                        locatorBackend,
+                                                    sourceLifecycleBindingRef =
+                                                        lifecycleBindingRef,
+                                                    excludedEventRefs =
+                                                        lifecycle
+                                                            ?.blockedEventRefs
+                                                            .orEmpty(),
+                                                )
+                                            }
+                                                .isSuccess
+                                        if (
+                                            rebuilt
+                                        ) {
+                                            outcome =
+                                                runCatching {
+                                                    VexLifeContinuitySourceLocator.locateNeighborhood(
+                                                        conversationOwner =
+                                                            conversationOwner,
+                                                        queries =
+                                                            neighborhoodQueries,
+                                                        backend =
+                                                            locatorBackend,
+                                                        sourceLifecycleBindingRef =
+                                                            lifecycleBindingRef,
+                                                    )
+                                                }
+                                                    .getOrNull()
+                                        }
+                                    }
+                                    when (
+                                        val ready =
+                                            outcome
+                                    ) {
+                                        is VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready ->
+                                            VexLifeContextRevisit.ConversationView(
+                                                turns =
+                                                    ready.turns,
+                                                totalCompletedTurnCount =
+                                                    ready.totalCompletedTurnCount,
+                                                conversationEventsRead =
+                                                    ready.exactEventFileReadCount,
+                                                exactHeadFileReadCount =
+                                                    ready.exactHeadFileReadCount,
+                                                wholeHistoryHeadTraversalPerformed =
+                                                    ready.wholeHistoryHeadTraversalPerformed,
+                                                derivedEntryScanCount =
+                                                    ready.derivedEntryScanCount,
+                                                derivedPostingLookupCount =
+                                                    ready.derivedPostingLookupCount,
+                                                derivedRefLookupCount =
+                                                    ready.derivedRefLookupCount,
+                                                derivedTypedEdgeLookupCount =
+                                                    ready.derivedTypedEdgeLookupCount,
+                                            )
+
+                                        else ->
+                                            null
+                                    }
+                                }
+                            }
+                        },
                 readConversationLifecycle = {
                     VexLifeCurrentMemoryReader
                         .readConversationRecallMembrane(

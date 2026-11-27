@@ -96,6 +96,15 @@ class VexLifeContinuitySourceLocatorTest {
                     outcome.wholeHistoryEventEnumerationPerformed,
                     "current locator lookup must not enumerate the whole Conversation event directory",
                 )
+                assertEquals(
+                    0,
+                    outcome.derivedEntryScanCount,
+                    "default locator backend must use inverted postings rather than scan derived lifetime entries",
+                )
+                assertTrue(
+                    outcome.derivedPostingLookupCount >
+                        0,
+                )
                 assertFalse(
                     outcome.canonicalSourceMutationPerformed,
                 )
@@ -280,6 +289,40 @@ class VexLifeContinuitySourceLocatorTest {
                 assertFalse(
                     located.wholeHistoryEventEnumerationPerformed,
                 )
+                assertEquals(
+                    0,
+                    located.derivedEntryScanCount,
+                )
+                assertTrue(
+                    located.derivedPostingLookupCount >
+                        0,
+                )
+
+                val locatedSecond =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "later unrelated",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    second.first.eventRef,
+                    locatedSecond.candidates
+                        .single()
+                        .requestEvent
+                        .eventRef,
+                    "incremental catch-up must add the new turn to postings without a lifetime rebuild",
+                )
+                assertEquals(
+                    0,
+                    locatedSecond.derivedEntryScanCount,
+                )
             }
         }
     }
@@ -425,6 +468,499 @@ class VexLifeContinuitySourceLocatorTest {
                         second,
                     ),
                     "backend realization must not change canonical candidate identity",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun indexedBackendAvoidsDerivedLifetimeScanWhileGenericBackendPreservesFallback() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "First ordinary note.",
+                        vex = "first",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "The indexed token is quartz-river-73.",
+                        vex = "recorded",
+                        at = Instant.parse("2026-11-20T09:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Third unrelated note.",
+                        vex = "third",
+                        at = Instant.parse("2026-11-20T10:00:00Z"),
+                    ),
+                )
+            val indexed =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            59
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.inverted-index",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = indexed,
+                )
+            }
+            val generation =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    indexed.load(),
+                )
+                    .generation
+            val generic =
+                object : VexLifeContinuitySourceLocator.Backend {
+                    override val fingerprintBindingRef =
+                        indexed.fingerprintBindingRef
+
+                    override fun fingerprint(
+                        value: String,
+                    ): String =
+                        indexed.fingerprint(
+                            value,
+                        )
+
+                    override fun load(): VexLifeContinuitySourceLocator.BackendLoad =
+                        VexLifeContinuitySourceLocator.BackendLoad.Ready(
+                            generation,
+                        )
+
+                    override fun replace(
+                        generation: VexLifeContinuitySourceLocator.Generation,
+                    ) =
+                        error(
+                            "generic comparison backend must remain read-only",
+                        )
+
+                    override fun clear() =
+                        Unit
+                }
+
+            fixture.store.withWriterLease {
+                val indexedFound =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "quartz-river-73",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend =
+                                indexed,
+                        ),
+                    )
+                val genericFound =
+                    assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = this,
+                            queryTerms =
+                                listOf(
+                                    "quartz-river-73",
+                                ),
+                            speakerScope =
+                                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                            backend =
+                                generic,
+                        ),
+                    )
+
+                assertEquals(
+                    turns[1].first.eventRef,
+                    indexedFound.candidates
+                        .single()
+                        .requestEvent
+                        .eventRef,
+                )
+                assertEquals(
+                    indexedFound.candidates,
+                    genericFound.candidates,
+                    "backend query acceleration must not change canonical candidate identity",
+                )
+                assertEquals(
+                    0,
+                    indexedFound.derivedEntryScanCount,
+                )
+                assertTrue(
+                    indexedFound.derivedPostingLookupCount >
+                        0,
+                )
+                assertEquals(
+                    generation.entries.size,
+                    genericFound.derivedEntryScanCount,
+                    "generic backend preserves the prior derived-entry scan fallback",
+                )
+                assertEquals(
+                    0,
+                    genericFound.derivedPostingLookupCount,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun indexedNeighborhoodReturnsExactDirectAndImmediateTypedNeighborsWithoutDerivedScan() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "Why does the cache miss here?",
+                        vex = "You seem frustrated, so I will keep this short.",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "I'm not frustrated. I want exact causal detail.",
+                        vex = "Understood. Here is the exact chain.",
+                        at = Instant.parse("2026-11-20T08:05:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "The sapphire seed is stored here.",
+                        vex = "Seed recorded.",
+                        at = Instant.parse("2026-11-20T08:10:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Unrelated trailing turn.",
+                        vex = "Trailing.",
+                        at = Instant.parse("2026-11-20T08:15:00Z"),
+                    ),
+                )
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            71
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.neighborhood",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+
+                val lexical =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "cache miss",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    setOf(
+                        turns[0].first.turnRef,
+                    ),
+                    lexical.directTurnRefs,
+                )
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[1].first.turnRef,
+                    ),
+                    lexical.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "lexical neighborhood includes only the direct turn and its exact next canonical neighbor",
+                )
+                assertEquals(
+                    4,
+                    lexical.totalCompletedTurnCount,
+                )
+                assertEquals(
+                    0,
+                    lexical.derivedEntryScanCount,
+                )
+                assertTrue(
+                    lexical.derivedPostingLookupCount >
+                        0,
+                )
+                assertEquals(
+                    0,
+                    lexical.derivedRefLookupCount,
+                )
+
+                val seeded =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            emptyList(),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                                        seedRefs =
+                                            setOf(
+                                                turns[2].second.eventRef,
+                                            ),
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    setOf(
+                        turns[2].first.turnRef,
+                    ),
+                    seeded.directTurnRefs,
+                )
+                assertEquals(
+                    listOf(
+                        turns[1].first.turnRef,
+                        turns[2].first.turnRef,
+                        turns[3].first.turnRef,
+                    ),
+                    seeded.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                )
+                assertEquals(
+                    1,
+                    seeded.derivedRefLookupCount,
+                )
+                assertTrue(
+                    seeded.unresolvedSeedRefs.isEmpty(),
+                )
+
+                val missingSeed =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            emptyList(),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                                        seedRefs =
+                                            setOf(
+                                                "event.vexlife.missing.seed",
+                                            ),
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertTrue(
+                    missingSeed.turns.isEmpty(),
+                )
+                assertEquals(
+                    setOf(
+                        "event.vexlife.missing.seed",
+                    ),
+                    missingSeed.unresolvedSeedRefs,
+                )
+
+                val corrections =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            emptyList(),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.ANY,
+                                        typedEdges =
+                                            setOf(
+                                                VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                            ),
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    setOf(
+                        turns[1].first.turnRef,
+                    ),
+                    corrections.directTurnRefs,
+                )
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[1].first.turnRef,
+                        turns[2].first.turnRef,
+                    ),
+                    corrections.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "typed-edge lookup returns the correction plus exact immediate canonical neighbors",
+                )
+                assertEquals(
+                    1,
+                    corrections.derivedTypedEdgeLookupCount,
+                )
+                assertEquals(
+                    0,
+                    corrections.derivedEntryScanCount,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun canonicalOrdinalAndTypedNeighborSurviveAnAbandonedBranchAtTheSameSequence() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val first =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "The gap anchor is copper-lake.",
+                        vex = "Anchor recorded.",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                )
+                    .single()
+            val abandoned =
+                fixture.store.withWriterLease {
+                    beginRequest(
+                        turnRef =
+                            "turn.continuity.abandoned-branch",
+                        requestMessageRef =
+                            "message.continuity.human.abandoned-branch",
+                        content =
+                            "This durable request is intentionally left off-head.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T08:02:00Z",
+                            ),
+                    )
+                }
+            val second =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "Actually, copper-lake needs the canonical neighbor.",
+                        vex = "Canonical neighbor recorded.",
+                        at = Instant.parse("2026-11-20T08:05:00Z"),
+                    ),
+                )
+                    .single()
+
+            assertEquals(
+                abandoned.sequence,
+                second.first.sequence,
+                "an off-head branch and the later canonical successor lawfully reuse the same sequence coordinate from the last completed head",
+            )
+            assertTrue(
+                abandoned.eventRef !=
+                    second.first.eventRef &&
+                    abandoned.eventHash !=
+                        second.first.eventHash,
+                "branch identity remains exact event ref/hash, not sequence alone",
+            )
+
+            fixture.store.withWriterLease {
+                val snapshot =
+                    current()
+                val projected =
+                    VexLifeTurnNavigation.project(
+                        snapshot.canonicalEvents,
+                    )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    projected.map(
+                        VexLifeTurnNavigation.Turn::ordinal,
+                    ),
+                    "canonical turn ordinal is completed-lineage position, not physical event sequence",
+                )
+
+                val backend =
+                    VexLifeContinuitySourceLocator.InMemoryBackend(
+                        secret =
+                            ByteArray(32) {
+                                79
+                            },
+                        fingerprintBindingRef =
+                            "fingerprint.test.abandoned-gap",
+                    )
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                val generation =
+                    assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                        backend.load(),
+                    )
+                        .generation
+                assertEquals(
+                    2,
+                    generation.canonicalCompletedTurnCount,
+                )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    generation.entries.map(
+                        VexLifeContinuitySourceLocator.Entry::canonicalOrdinal,
+                    ),
+                )
+
+                val neighborhood =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            listOf(
+                                                "gap anchor",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+                assertEquals(
+                    listOf(
+                        first.first.turnRef,
+                        second.first.turnRef,
+                    ),
+                    neighborhood.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                    "typed immediate-neighbor expansion follows canonical completed lineage despite an abandoned branch at the same sequence",
+                )
+                assertEquals(
+                    listOf(
+                        0,
+                        1,
+                    ),
+                    neighborhood.turns.map(
+                        VexLifeTurnNavigation.Turn::ordinal,
+                    ),
                 )
             }
         }

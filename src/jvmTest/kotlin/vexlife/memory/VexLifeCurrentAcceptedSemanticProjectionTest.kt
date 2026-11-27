@@ -98,7 +98,18 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                     baseTime = Instant.parse("2026-11-18T09:20:00Z"),
                 )
             val after = VexLifeCurrentAcceptedSemanticProjection.read(home)
+            val rebound =
+                VexLifeCurrentAcceptedSemanticProjection.reobserve(
+                    projection = before,
+                    observedConversationHeadSha256 =
+                        later.headSha256,
+                )
 
+            assertEquals(
+                after,
+                rebound,
+                "re-observation from the already-validated semantic projection must equal a fresh canonical projection after unrelated Conversation advance",
+            )
             assertEquals(before.statements, after.statements)
             assertEquals(before.scoreHeadSha256, after.scoreHeadSha256)
             assertEquals(before.semanticAuthorityHeadSha256, after.semanticAuthorityHeadSha256)
