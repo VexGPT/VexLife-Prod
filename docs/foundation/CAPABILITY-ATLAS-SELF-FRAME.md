@@ -271,6 +271,11 @@ does not grant aliases such as invented field names, does not pretend malformed 
 and does not require first-shot serialization perfection when ordinary VexLife itself would have
 returned corrective evidence.
 
+Ordinary text-control prompt projection and exact-runtime qualification consume the same
+`VexLifeCapabilityRequest.TextControlProviderInstruction`. Qualification may add only its bounded
+synthetic goal; it does not own a second request grammar. This keeps the request marker, inert bare-JSON
+boundary and result-return relationship source-owned by the request contract.
+
 The parser is forgiving about **representation**, not meaning. Besides the canonical header-line
 form, it accepts one exact structured protocol/version wrapper when the model emits the same request
 meaning as nested JSON:
