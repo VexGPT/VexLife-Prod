@@ -164,6 +164,32 @@ class VexLifeWorkingFocusOwnerTest {
     }
 
     @Test
+    fun displacementBindingEnvelopeCannotExceedWorkingFocusRefBound() {
+        val home = Files.createTempDirectory("vexlife-working-focus-binding-bound-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val active = owner.setCurrent(draft())
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.displace(
+                    lineageRef = lineageRef,
+                    threadRef = threadRef,
+                    causeOwnerRef = "owner.vexlife-prod.attention",
+                    causeRef = "attention.claim.oversized",
+                    causeBindingRefs =
+                        (0..VexLifeWorkingFocus.MaximumRefs).map {
+                            index -> "binding.attention.claim.$index"
+                        },
+                )
+            }
+
+            assertEquals(active.current, owner.readCurrent(lineageRef, threadRef))
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun exactDisplacementResumesOnlyAfterSavedSourceBindingsRevalidate() {
         val home = Files.createTempDirectory("vexlife-working-focus-resume-").toAbsolutePath()
         try {
