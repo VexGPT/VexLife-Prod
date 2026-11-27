@@ -611,8 +611,20 @@ object VexLifeContinuitySourceLocator {
     data class NeighborhoodQuery(
         val queryTerms: List<String>,
         val speakerScope: SpeakerScope,
+        val queryRef: String = "",
         val seedRefs: Set<String> = emptySet(),
         val typedEdges: Set<TypedEdgeKind> = emptySet(),
+    )
+
+    /**
+     * Why one exact-reopened turn entered the bounded view despite no exact lexical hit.
+     *
+     * This is nomination provenance only. It does not claim that the query words occur in the
+     * source or that the source is semantically accepted as the same thing.
+     */
+    data class SemanticNeighborhoodMatch(
+        val queryRef: String,
+        val turnRef: String,
     )
 
     sealed interface NeighborhoodOutcome {
@@ -632,6 +644,7 @@ object VexLifeContinuitySourceLocator {
             val derivedTypedEdgeLookupCount: Int,
             val derivedSemanticLookupCount: Int = 0,
             val semanticDirectTurnRefs: Set<String> = emptySet(),
+            val semanticMatches: List<SemanticNeighborhoodMatch> = emptyList(),
             val wholeHistoryEventEnumerationPerformed: Boolean = false,
             val canonicalSourceMutationPerformed: Boolean = false,
         ) : NeighborhoodOutcome
@@ -1691,6 +1704,8 @@ object VexLifeContinuitySourceLocator {
             linkedSetOf<Int>()
         val semanticDirectIndexes =
             linkedSetOf<Int>()
+        val semanticMatches =
+            linkedSetOf<SemanticNeighborhoodMatch>()
         var postingLookupCount =
             0
         var semanticLookupCount =
@@ -1851,6 +1866,25 @@ object VexLifeContinuitySourceLocator {
                 semanticDirectIndexes +=
                     semanticLookup
                         .entryIndexes
+                if (
+                    query.queryRef.isNotBlank()
+                ) {
+                    semanticLookup
+                        .entryIndexes
+                        .forEach {
+                            index ->
+                            semanticMatches +=
+                                SemanticNeighborhoodMatch(
+                                    queryRef =
+                                        query.queryRef,
+                                    turnRef =
+                                        generation.entries[
+                                            index
+                                        ]
+                                            .turnRef,
+                                )
+                        }
+                }
                 directIndexes +=
                     semanticLookup
                         .entryIndexes
@@ -2007,6 +2041,8 @@ object VexLifeContinuitySourceLocator {
                     semanticLookupCount,
                 semanticDirectTurnRefs =
                     emptySet(),
+                semanticMatches =
+                    emptyList(),
             )
         }
 
@@ -2126,6 +2162,8 @@ object VexLifeContinuitySourceLocator {
                             .turnRef
                     }
                     .toSet(),
+            semanticMatches =
+                semanticMatches.toList(),
         )
     }
 
