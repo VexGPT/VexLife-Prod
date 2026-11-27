@@ -277,9 +277,12 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
             val retired = VexLifeAttentionClaim.retire(claim, retirement)
             assertTrue(retired.requirementRetiredBySource)
 
+            // Re-open the same durable Home through a fresh owner instance. Return depends on the
+            // persisted displacement + source retirement coordinates, not the old Claim object.
+            val restartedOwner = VexLifeWorkingFocusOwner(home)
             val resumed =
                 VexLifeAttentionWorkingFocusConvergence.resumeAfterSourceRetirement(
-                    owner = owner,
+                    owner = restartedOwner,
                     lineageRef = lineageRef,
                     threadRef = threadRef,
                     displacedStateRef = assertNotNull(displaced.workingFocusStateRefOrNull),
@@ -289,7 +292,7 @@ class VexLifeAttentionWorkingFocusConvergenceTest {
                 )
 
             assertTrue(resumed.resumePerformedNow)
-            val current = assertNotNull(owner.readCurrent(lineageRef, threadRef))
+            val current = assertNotNull(restartedOwner.readCurrent(lineageRef, threadRef))
             assertEquals(VexLifeWorkingFocusOwner.FocusState.ACTIVE, current.state.state)
             assertEquals(VexLifeWorkingFocusOwner.Transition.RESUME, current.state.transition)
             assertEquals(revision, current.revisionOrNull)
