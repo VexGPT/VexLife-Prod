@@ -248,6 +248,29 @@ Vex continues the same human turn
 Bridge/fallback representation. Shipped native-tool model profiles do not need to learn that syntax
 as their ordinary model-facing tool grammar.
 
+Provider/model wire differences terminate before that canonical request meaning. A wire adapter may
+recognize one source-proven provider/model representation and normalize it into the canonical
+`VEXLIFE_CAPABILITY_REQUEST/v1` control, but that representation is not taught as another Vex
+request reflex and does not survive into semantic continuation history.
+
+For the exact Qwen 4B text-control relationship, lived A020 evidence observed one sibling-version
+JSON wire form. `HereticTextControlCapabilityWire` recognizes only that exact Qwen 4B shape and
+normalizes it to the same canonical header-line control before `VexLifeCapabilityRequest` and the
+Bridge. Unknown versions, extra keys, other model profiles and unmarked bare JSON are not normalized.
+
+~~~text
+PROVIDER / MODEL WIRE DIALECT
+-> REPRESENTATION ADAPTER
+-> ONE CANONICAL VEX REQUEST ENVELOPE
+-> BRIDGE / RIGHTFUL OWNER
+-> ONE CANONICAL VEX RESULT
+-> PROVIDER / MODEL RESULT CARRIAGE
+
+WIRE DIALECT != VEX REQUEST MEANING
+WIRE NORMALIZATION != ADMISSION
+WIRE NORMALIZATION != EFFECT AUTHORITY
+~~~
+
 Text-control reach is intentionally **recoverable within the bounded request budget**. A reply that
 contains the request header but has unreadable request form is not treated as if no reach was
 attempted and is not silently normalized into a different request:
@@ -276,9 +299,9 @@ Ordinary text-control prompt projection and exact-runtime qualification consume 
 synthetic goal; it does not own a second request grammar. This keeps the request marker, inert bare-JSON
 boundary and result-return relationship source-owned by the request contract.
 
-The parser is forgiving about **representation**, not meaning. Besides the canonical header-line
-form, it accepts one exact structured protocol/version wrapper when the model emits the same request
-meaning as nested JSON:
+The canonical parser remains forgiving about one **provider-neutral compatibility representation**,
+not provider-specific dialects. Besides the canonical header-line form, it accepts one exact
+structured protocol/version wrapper when the model emits the same request meaning as nested JSON:
 
 ~~~json
 {
@@ -295,8 +318,10 @@ meaning as nested JSON:
 That wrapper is not a new capability alias or alternate authority path. The outer key must be exactly
 `VEXLIFE_CAPABILITY_REQUEST`, the only version key must be exactly `v1`, and the inner request is
 validated by the same capability/action/arguments parser as the canonical header form. The model's
-original control bytes remain the assistant-side exchange evidence; only the internal request meaning
-is normalized before ordinary Atlas/Bridge admission. Unrelated JSON remains ordinary model content.
+generic structured-wrapper control bytes remain valid compatibility input to the canonical parser.
+Provider-specific wire bytes are instead retained in provider/runtime evidence while semantic
+continuation receives the canonical control produced by the representation adapter. Unrelated JSON
+remains ordinary model content.
 
 ~~~text
 DECLARED TOOL != AVAILABLE THIS TURN
