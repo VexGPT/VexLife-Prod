@@ -330,9 +330,12 @@ class MacHereticNativeToolQualificationTest {
                 1
             ]
         assertTrue(
-            firstStage.contains(
-                VexLifeCapabilityRequest.RequestHeader,
-            ),
+            firstStage.any {
+                it.contains(
+                    VexLifeCapabilityRequest.RequestHeader,
+                )
+            },
+            "provider stage must carry the canonical request header in its system relationship",
         )
         assertTrue(
             firstStage.any {
