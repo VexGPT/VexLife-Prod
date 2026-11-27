@@ -53,7 +53,7 @@ data class HereticRuntimeQualification private constructor(
             "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
 
         const val VexReachQualificationRef =
-            "qualification.vexlife-prod.vex-reach.text-control-shared-grammar-recoverable-derived-continuation.v1"
+            "qualification.vexlife-prod.vex-reach.text-control-canonical-envelope-qwen-wire-normalized-recoverable-derived-continuation.v1"
 
         fun qualified(
             loadResultRef: String? = null,
