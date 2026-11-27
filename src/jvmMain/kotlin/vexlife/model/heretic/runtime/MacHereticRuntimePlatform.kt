@@ -1048,7 +1048,7 @@ class MacHereticRuntimePlatform(
                         " with arguments containing only capability set to the handle you discovered. " +
                         "Do not add human-facing prose to a capability-request stage."
                 val qualificationUserMessage =
-                    "Inspect the current capability registry before answering."
+                    "Use the current capability registry to find the one registered capability whose action list is exactly test, then ask Atlas to describe that discovered capability before answering. Discover the handle from the returned registry; do not guess it from this request."
 
                 val providerStageScript =
                     """
@@ -1223,13 +1223,7 @@ class MacHereticRuntimePlatform(
                     val content =
                         invokeQualificationStage(
                             maxTokens =
-                                if (
-                                    atlasListed
-                                ) {
-                                    512
-                                } else {
-                                    2048
-                                },
+                                2048,
                         )
                             ?: break
                     val parsed =
