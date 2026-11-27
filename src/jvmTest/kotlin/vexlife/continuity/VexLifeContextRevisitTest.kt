@@ -1051,6 +1051,157 @@ class VexLifeContextRevisitTest {
     }
 
     @Test
+    fun semanticRankDoesNotOutrankOtherwiseEqualExactSeedRoute() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "Older semantic candidate.",
+                        "Older candidate.",
+                        minutesAgo(120),
+                    ),
+                    Line(
+                        "Newer exact seed source.",
+                        "Newer seeded.",
+                        minutesAgo(60),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val request =
+                VexLifeContextRevisit.Request(
+                    queries =
+                        listOf(
+                            VexLifeContextRevisit.Query(
+                                ref = "semantic",
+                                terms =
+                                    listOf(
+                                        "nonliteral-clue",
+                                    ),
+                                seedRefs =
+                                    emptyList(),
+                                speaker =
+                                    VexLifeContextRevisit.Speaker.HUMAN,
+                                window =
+                                    null,
+                                corrections =
+                                    false,
+                                from =
+                                    null,
+                            ),
+                            VexLifeContextRevisit.Query(
+                                ref = "seed",
+                                terms =
+                                    emptyList(),
+                                seedRefs =
+                                    listOf(
+                                        committed[1].first.eventRef,
+                                    ),
+                                speaker =
+                                    VexLifeContextRevisit.Speaker.ANY,
+                                window =
+                                    null,
+                                corrections =
+                                    false,
+                                from =
+                                    null,
+                            ),
+                        ),
+                    scopes =
+                        setOf(
+                            VexLifeContextRevisit.Scope.CONVERSATION,
+                        ),
+                    order =
+                        VexLifeContextRevisit.Order.CURRENT_FIRST,
+                    maxTurns =
+                        VexLifeContextRevisit.DefaultMaximumTurns,
+                    maxTokens =
+                        VexLifeContextRevisit.DefaultMaximumTokens,
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs =
+                                emptySet(),
+                            historicalCurrentizedEventRefs =
+                                emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns =
+                                projected,
+                            totalCompletedTurnCount =
+                                projected.size,
+                            conversationEventsRead =
+                                4,
+                            exactHeadFileReadCount =
+                                2,
+                            wholeHistoryHeadTraversalPerformed =
+                                false,
+                            derivedEntryScanCount =
+                                0,
+                            derivedPostingLookupCount =
+                                2,
+                            derivedRefLookupCount =
+                                1,
+                            derivedTypedEdgeLookupCount =
+                                0,
+                            derivedSemanticLookupCount =
+                                1,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[0].first.turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request = request,
+                    sources = sources,
+                    estimateTokens = ::estimate,
+                )
+
+            val seedIndex =
+                result.text.indexOf(
+                    "Newer exact seed source.",
+                )
+            val semanticIndex =
+                result.text.indexOf(
+                    "Older semantic candidate.",
+                )
+            assertTrue(
+                seedIndex >=
+                    0 &&
+                    semanticIndex >
+                        seedIndex,
+                "semantic rank must not outrank an otherwise-equal non-semantic direct route",
+            )
+        }
+    }
+
+    @Test
     fun windowRequestFallsBackToFullConversationSnapshot() {
         ContinuityTurnFixture().use {
             fixture ->
