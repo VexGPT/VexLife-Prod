@@ -282,16 +282,15 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
             "working focus formationRef was already consumed; form fresh current truth with a fresh formationRef"
         }
 
-        val prior = normalized.priorWorkingFocusRefOrNull?.let { priorRef ->
+        val prior = normalized.priorRevisionRefOrNull?.let { priorRevisionRef ->
             requireNotNull(before) { "working focus update requires current focus" }
             require(before.state.state == FocusState.ACTIVE) {
                 "working focus update requires exact current ACTIVE focus"
             }
-            requireNotNull(before.revisionOrNull).also {
-                require(it.workingFocusRef == priorRef) {
-                    "working focus update prior ref does not match current focus"
-                }
+            require(before.revisionRefOrNull == priorRevisionRef) {
+                "working focus update prior revision is stale or mismatched"
             }
+            requireNotNull(before.revisionOrNull)
         }
         val focusRef = prior?.workingFocusRef ?: focusRef(normalized)
         val revision = formRevision(normalized, focusRef, prior)
@@ -549,9 +548,13 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
             value.effectOwnerRef == EffectOwnerRef
         ) { "working focus revision identity is invalid" }
         VexLifeWorkingFocus.Draft(
-            value.lineageRef, value.threadRef, value.formationRef,
-            if (value.priorRevisionFingerprintOrNull == null) null else value.workingFocusRef,
-            value.subjectScopeRefs, value.objective, value.currentQuestionOrNull,
+            value.lineageRef,
+            value.threadRef,
+            value.formationRef,
+            value.priorRevisionFingerprintOrNull?.let(::revisionRef),
+            value.subjectScopeRefs,
+            value.objective,
+            value.currentQuestionOrNull,
             value.retainedRelationships, value.openEdges, value.nextProbeOrNull,
             value.sourceBindingRefs, value.sourceRefs,
         )
@@ -638,9 +641,8 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
             revision.retainedRelationships == draft.retainedRelationships && revision.openEdges == draft.openEdges &&
             revision.nextProbeOrNull == draft.nextProbeOrNull &&
             revision.sourceBindingRefs == draft.sourceBindingRefs && revision.sourceRefs == draft.sourceRefs &&
-            ((revision.priorRevisionFingerprintOrNull == null && draft.priorWorkingFocusRefOrNull == null) ||
-                (revision.priorRevisionFingerprintOrNull != null &&
-                    draft.priorWorkingFocusRefOrNull == revision.workingFocusRef))
+            revision.priorRevisionFingerprintOrNull?.let(::revisionRef) ==
+                draft.priorRevisionRefOrNull
 
     private fun focusRef(draft: VexLifeWorkingFocus.Draft): String =
         "focus.vexlife-prod." + sha256(draft.lineageRef + "|" + draft.threadRef + "|" + draft.formationRef).take(32)
