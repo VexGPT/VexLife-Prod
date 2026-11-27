@@ -358,6 +358,18 @@ class MacHereticNativeToolQualificationTest {
                 )
             },
         )
+        assertTrue(
+            firstStage.contains(
+                "Use the current capability registry to find the one registered capability whose action list is exactly test, then ask Atlas to describe that discovered capability before answering. Discover the handle from the returned registry; do not guess it from this request.",
+            ),
+            "the synthetic human-visible request must ask for the derived continuation being graded",
+        )
+        assertTrue(
+            firstStage.contains(
+                "2048",
+            ),
+            "the thinking-model qualification stage must retain bounded room for control output",
+        )
 
         val correctionStage =
             qualified.calls[
@@ -401,6 +413,12 @@ class MacHereticNativeToolQualificationTest {
             qualified.calls[
                 3
             ]
+        assertTrue(
+            derivedStage.contains(
+                "2048",
+            ),
+            "derived continuation must not shrink below the live reasoning/control requirement",
+        )
         assertTrue(
             derivedStage.contains(
                 listControl,
