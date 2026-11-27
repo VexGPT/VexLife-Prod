@@ -1676,6 +1676,8 @@ object DirectCompanionTurn {
                                                         VexLifeContextRevisit.Speaker.VEX ->
                                                             VexLifeContinuitySourceLocator.SpeakerScope.VEX
                                                     },
+                                                queryRef =
+                                                    query.ref,
                                                 seedRefs =
                                                     query.seedRefs
                                                         .toSet(),
@@ -1719,6 +1721,9 @@ object DirectCompanionTurn {
                                             VexLifeContinuitySourceLocator.FallbackReason.CORRUPT,
                                             VexLifeContinuitySourceLocator.FallbackReason.FINGERPRINT_BINDING_MISMATCH,
                                             VexLifeContinuitySourceLocator.FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+                                            VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_INDEX_STALE,
+                                            VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_REPRESENTATION_BINDING_MISMATCH,
+                                            VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_INDEX_CORRUPT,
                                         )
                                     ) {
                                         val rebuilt =
@@ -1780,6 +1785,18 @@ object DirectCompanionTurn {
                                                     ready.derivedRefLookupCount,
                                                 derivedTypedEdgeLookupCount =
                                                     ready.derivedTypedEdgeLookupCount,
+                                                derivedSemanticLookupCount =
+                                                    ready.derivedSemanticLookupCount,
+                                                semanticCandidateMatches =
+                                                    ready.semanticMatches.map {
+                                                        semanticMatch ->
+                                                        VexLifeContextRevisit.SemanticCandidateMatch(
+                                                            queryRef =
+                                                                semanticMatch.queryRef,
+                                                            turnRef =
+                                                                semanticMatch.turnRef,
+                                                        )
+                                                    },
                                             )
 
                                         else ->
