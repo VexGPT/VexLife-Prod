@@ -299,6 +299,17 @@ class MacHereticNativeToolQualificationTest {
                 "list",
             ),
         )
+        assertTrue(
+            reachCall.contains(
+                "describe",
+            ),
+        )
+        assertTrue(
+            reachCall.contains(
+                "workspace-test",
+            ),
+            "derived continuation target must come from the registered capability whose only action is test",
+        )
         val productResult =
             reachCall
                 .singleOrNull {
@@ -345,7 +356,9 @@ class MacHereticNativeToolQualificationTest {
                 "VEX_REACH_HELD:",
                 "request_header",
                 "result_header",
-                "exact no-effect Atlas call",
+                "exact no-effect Atlas list call",
+                "derived_capability",
+                "exact derived Atlas describe call",
             )
         ) {
             assertTrue(

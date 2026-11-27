@@ -986,6 +986,29 @@ class MacHereticRuntimePlatform(
                     ) {
                         "Vex Reach qualification requires the current Atlas list action"
                     }
+                val atlasDescribe =
+                    requireNotNull(
+                        atlas.actions.singleOrNull {
+                            it.action ==
+                                "describe"
+                        },
+                    ) {
+                        "Vex Reach qualification requires the current Atlas describe action"
+                    }
+                val derivedContinuationCapability =
+                    requireNotNull(
+                        VexLifeCapabilityAtlas
+                            .definitions()
+                            .singleOrNull {
+                                definition ->
+                                definition.actions
+                                    .singleOrNull()
+                                    ?.action ==
+                                    "test"
+                            },
+                    ) {
+                        "Vex Reach qualification requires one uniquely discoverable registered test capability"
+                    }
                 val qualificationControl =
                     VexLifeCapabilityRequest.RequestHeader +
                         "\n" +
@@ -1053,7 +1076,7 @@ class MacHereticRuntimePlatform(
                     """
                     import json, sys, urllib.request
 
-                    origin, request_model, request_header, result_header, capability, action, result_message = sys.argv[1:8]
+                    origin, request_model, request_header, result_header, capability, list_action, describe_action, derived_capability, result_message = sys.argv[1:10]
 
                     def read_json(request, timeout):
                         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -1102,10 +1125,14 @@ class MacHereticRuntimePlatform(
                             "When asked to inspect the capability registry, your whole reply for that stage "
                             "must be the exact header " + request_header +
                             " followed by one JSON object with capability, action, and arguments. "
-                            "Use capability " + capability + ", action " + action +
+                            "Use capability " + capability + ", action " + list_action +
                             ", and an empty arguments object. Do not add human-facing prose. "
                             "After a later host-result message beginning with " + result_header +
-                            ", reply exactly QUALIFIED.",
+                            ", inspect that returned registry. Find the registered capability whose action list "
+                            "is exactly test. Your whole reply for that stage must be another " + request_header +
+                            " request using capability " + capability + ", action " + describe_action +
+                            ", and arguments containing only capability set to the handle you discovered. "
+                            "Do not add human-facing prose.",
                     }
                     user_message = {
                         "role": "user",
@@ -1138,11 +1165,11 @@ class MacHereticRuntimePlatform(
                         call, _ = decoder.raw_decode(body)
                         expected = {
                             "capability": capability,
-                            "action": action,
+                            "action": list_action,
                             "arguments": {},
                         }
                         if call != expected:
-                            raise RuntimeError("Vex Reach qualification request does not match the exact no-effect Atlas call")
+                            raise RuntimeError("Vex Reach qualification request does not match the exact no-effect Atlas list call")
                         second = post_completion({
                             "model": request_model,
                             "messages": [
@@ -1156,8 +1183,30 @@ class MacHereticRuntimePlatform(
                             "stream": False,
                             "chat_template_kwargs": {"enable_thinking": True},
                         })
-                        if message_content(second).strip() != "QUALIFIED":
-                            raise RuntimeError("Vex Reach qualification continuation did not return QUALIFIED")
+                        second_content = message_content(second).strip()
+                        second_header_index = second_content.find(request_header)
+                        if second_header_index < 0 or second_header_index > 512:
+                            raise RuntimeError("Vex Reach qualification derived request header is absent or too late")
+                        if second_header_index > 0 and second_content[second_header_index - 1] != "\n":
+                            raise RuntimeError("Vex Reach qualification derived request header does not start a line")
+                        second_control = second_content[second_header_index:].strip()
+                        second_body = second_control[len(request_header):].strip()
+                        if second_body.startswith(fence + "json"):
+                            second_body = second_body[len(fence + "json"):].strip()
+                        elif second_body.startswith(fence):
+                            second_body = second_body[len(fence):].strip()
+                        second_call, _ = decoder.raw_decode(second_body)
+                        expected_second = {
+                            "capability": capability,
+                            "action": describe_action,
+                            "arguments": {
+                                "capability": derived_capability,
+                            },
+                        }
+                        if second_call != expected_second:
+                            raise RuntimeError(
+                                "Vex Reach qualification continuation does not match the exact derived Atlas describe call"
+                            )
 
                         print("QUALIFIED_VEX_REACH")
                     except Exception as error:
@@ -1182,6 +1231,8 @@ class MacHereticRuntimePlatform(
                                 VexLifeCapabilityRequest.ResultHeader,
                                 atlas.handle,
                                 atlasList.action,
+                                atlasDescribe.action,
+                                derivedContinuationCapability.handle,
                                 qualificationResultMessage,
                             ),
                         timeoutMs =
