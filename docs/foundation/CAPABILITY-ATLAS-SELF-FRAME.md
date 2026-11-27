@@ -248,6 +248,29 @@ Vex continues the same human turn
 Bridge/fallback representation. Shipped native-tool model profiles do not need to learn that syntax
 as their ordinary model-facing tool grammar.
 
+Text-control reach is intentionally **recoverable within the bounded request budget**. A reply that
+contains the request header but has unreadable request form is not treated as if no reach was
+attempted and is not silently normalized into a different request:
+
+~~~text
+request header + malformed/unreadable request
+-> VexLifeCapabilityRequest.Parsed.Malformed
+-> one request is consumed
+-> VexLifeCapabilityBridge returns INVALID_REQUEST
+-> returned result includes the exact canonical form
+-> Vex may correct the request in the next provider stage of the same human turn
+~~~
+
+Likewise, a readable request for an unknown / unavailable handle or wrong action receives the
+ordinary owner-shaped result and may be corrected within the same bounded turn. This recovery path
+does not widen authority: only the exact later request that passes current Bridge/owner admission can
+perform an effect.
+
+The exact-runtime text-control qualification mirrors this Product-owned recovery relationship. It
+does not grant aliases such as invented field names, does not pretend malformed control succeeded,
+and does not require first-shot serialization perfection when ordinary VexLife itself would have
+returned corrective evidence.
+
 ~~~text
 DECLARED TOOL != AVAILABLE THIS TURN
 AVAILABLE != REQUEST ADMITTED

@@ -6,7 +6,10 @@ import java.net.Socket
 import java.net.URL
 import java.nio.file.Path
 import java.time.Instant
+import java.util.Base64
 import java.util.UUID
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
@@ -1009,22 +1012,183 @@ class MacHereticRuntimePlatform(
                     ) {
                         "Vex Reach qualification requires one uniquely discoverable registered test capability"
                     }
-                val qualificationControl =
-                    VexLifeCapabilityRequest.RequestHeader +
-                        "\n" +
-                        """{"capability":"${atlas.handle}","action":"${atlasList.action}","arguments":{}}"""
-                val qualificationRequest =
-                    requireNotNull(
-                        VexLifeCapabilityRequest.parseOrNull(
-                            qualificationControl,
-                        ) as? VexLifeCapabilityRequest.Parsed.Request,
-                    ) {
-                        "Vex Reach qualification requires one exact parseable Atlas list request"
+
+                val estimateQualificationTokens: (String) -> Int = {
+                    content ->
+                    maxOf(
+                        1,
+                        (
+                            content
+                                .toByteArray()
+                                .size +
+                                3
+                        ) /
+                            4,
+                    ) +
+                        4
+                }
+
+                val qualificationSystemMessage =
+                    "This is a synthetic no-effect VexLife text-control reach qualification. " +
+                        "Use the real VexLife request/return relationship. When you intend a capability request, " +
+                        "your whole reply for that provider stage must begin with " +
+                        VexLifeCapabilityRequest.RequestHeader +
+                        " and then one JSON object using the exact field names capability, action, and arguments. " +
+                        "Start by asking capability " +
+                        atlas.handle +
+                        " for action " +
+                        atlasList.action +
+                        " with an empty arguments object. If the host returns an INVALID_REQUEST, NOT_AVAILABLE, " +
+                        "or other capability result, read that owner feedback and correct your next request rather " +
+                        "than pretending the earlier request succeeded. After a successful Atlas list result, find " +
+                        "the registered capability whose action list is exactly test, then ask capability " +
+                        atlas.handle +
+                        " for action " +
+                        atlasDescribe.action +
+                        " with arguments containing only capability set to the handle you discovered. " +
+                        "Do not add human-facing prose to a capability-request stage."
+                val qualificationUserMessage =
+                    "Inspect the current capability registry before answering."
+
+                val providerStageScript =
+                    """
+                    import base64, json, sys, urllib.request
+
+                    origin, request_model, max_tokens, system_content, user_content, *exchange_content = sys.argv[1:]
+                    if len(exchange_content) % 2 != 0:
+                        raise RuntimeError("qualification exchange message pairing is invalid")
+
+                    messages = [
+                        {"role": "system", "content": system_content},
+                        {"role": "user", "content": user_content},
+                    ]
+                    for index in range(0, len(exchange_content), 2):
+                        messages.append({"role": "assistant", "content": exchange_content[index]})
+                        messages.append({"role": "user", "content": exchange_content[index + 1]})
+
+                    request = urllib.request.Request(
+                        origin + "/v1/chat/completions",
+                        data=json.dumps({
+                            "model": request_model,
+                            "messages": messages,
+                            "max_tokens": int(max_tokens),
+                            "temperature": 0,
+                            "stream": False,
+                            "chat_template_kwargs": {"enable_thinking": True},
+                        }).encode("utf-8"),
+                        headers={"Content-Type": "application/json"},
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(request, timeout=120) as response:
+                        body = response.read().decode("utf-8", errors="replace")
+                        content_type = response.headers.get("Content-Type", "")
+                        if response.status != 200:
+                            raise RuntimeError(
+                                "HTTP %s content-type=%s body=%r"
+                                % (response.status, content_type, body[:512])
+                            )
+                    try:
+                        completion = json.loads(body)
+                    except json.JSONDecodeError as error:
+                        raise RuntimeError(
+                            "non-JSON HTTP 200 content-type=%s body=%r"
+                            % (content_type, body[:512])
+                        ) from error
+                    if completion.get("model") != request_model:
+                        raise RuntimeError("completion model does not match exact request model")
+                    choices = completion.get("choices")
+                    content = (
+                        choices[0].get("message", {}).get("content")
+                        if isinstance(choices, list) and choices and isinstance(choices[0], dict)
+                        else None
+                    )
+                    if not isinstance(content, str) or not content.strip():
+                        raise RuntimeError("Vex Reach qualification returned no assistant content")
+                    print(base64.b64encode(content.encode("utf-8")).decode("ascii"))
+                    """.trimIndent()
+
+                val exchanges =
+                    mutableListOf<VexLifeCapabilityBridge.Exchange>()
+
+                fun invokeQualificationStage(
+                    maxTokens: Int,
+                ): String? {
+                    val args =
+                        mutableListOf(
+                            "-c",
+                            providerStageScript,
+                            HereticProductIdentity.Endpoint,
+                            HereticProductIdentity.RequestModel,
+                            maxTokens.toString(),
+                            qualificationSystemMessage,
+                            qualificationUserMessage,
+                        )
+                    exchanges.forEach {
+                        exchange ->
+                        args +=
+                            exchange.assistantMessage.content
+                        args +=
+                            exchange.resultMessage.content
                     }
-                val qualificationExchange =
-                    VexLifeCapabilityBridge.perform(
+                    val stage =
+                        commandRunner.run(
+                            program =
+                                binding.pythonPath,
+                            args =
+                                args,
+                            timeoutMs =
+                                120_000L,
+                        )
+                    if (
+                        stage.status !=
+                            0 ||
+                        stage.errorMessage !=
+                            null ||
+                        stage.timedOut
+                    ) {
+                        return null
+                    }
+                    val encoded =
+                        stage.stdout
+                            .trim()
+                    if (
+                        encoded.isEmpty()
+                    ) {
+                        return null
+                    }
+                    return runCatching {
+                        String(
+                            Base64
+                                .getDecoder()
+                                .decode(
+                                    encoded,
+                                ),
+                            Charsets.UTF_8,
+                        )
+                    }
+                        .getOrNull()
+                        ?.takeIf {
+                            it.isNotBlank()
+                        }
+                }
+
+                fun performQualificationRequest(
+                    parsed: VexLifeCapabilityRequest.Parsed,
+                    requestNumber: Int,
+                ): VexLifeCapabilityBridge.Exchange {
+                    val usedTokens =
+                        exchanges.sumOf {
+                            exchange ->
+                            estimateQualificationTokens(
+                                exchange.assistantMessage.content,
+                            ) +
+                                estimateQualificationTokens(
+                                    exchange.resultMessage.content,
+                                )
+                        }
+                    return VexLifeCapabilityBridge.perform(
                         parsed =
-                            qualificationRequest,
+                            parsed,
                         admission =
                             VexLifeCapabilityBridge.Admission(
                                 productHome =
@@ -1033,220 +1197,133 @@ class MacHereticRuntimePlatform(
                                     setOf(
                                         atlas.capabilityRef,
                                     ),
-                                requestNumber = 1,
+                                requestNumber =
+                                    requestNumber,
                                 tokensAvailable =
-                                    VexLifeCapabilityBridge.ExchangeAllowanceTokens,
+                                    maxOf(
+                                        0,
+                                        VexLifeCapabilityBridge.ExchangeAllowanceTokens -
+                                            usedTokens,
+                                    ),
                             ),
-                        estimateTokens = {
-                            content ->
-                            maxOf(
-                                1,
-                                (
-                                    content
-                                        .toByteArray()
-                                        .size +
-                                        3
-                                ) /
-                                    4,
-                            ) +
-                                4
-                        },
+                        estimateTokens =
+                            estimateQualificationTokens,
                     )
-                val qualificationResultMessage =
-                    qualificationExchange.resultMessage.content
-                require(
-                    qualificationResultMessage.startsWith(
-                        VexLifeCapabilityRequest.ResultHeader +
-                            "\n",
-                    ) &&
-                        qualificationResultMessage.contains(
-                            "\n<<<CONTENT\n",
-                        ) &&
-                        qualificationResultMessage.contains(
-                            "- ${atlas.handle} (AVAILABLE; actions:",
-                        ) &&
-                        qualificationResultMessage.contains(
-                            atlasList.action,
-                        )
-                ) {
-                    "Vex Reach qualification requires the current Product-shaped Atlas result"
                 }
 
-                val vexReachProbeScript =
-                    """
-                    import json, sys, urllib.request
+                var atlasListed =
+                    false
+                var qualified =
+                    false
 
-                    origin, request_model, request_header, result_header, capability, list_action, describe_action, derived_capability, result_message = sys.argv[1:10]
-
-                    def read_json(request, timeout):
-                        with urllib.request.urlopen(request, timeout=timeout) as response:
-                            body = response.read().decode("utf-8", errors="replace")
-                            content_type = response.headers.get("Content-Type", "")
-                            if response.status != 200:
-                                raise RuntimeError(
-                                    "HTTP %s content-type=%s body=%r"
-                                    % (response.status, content_type, body[:512])
+                for (
+                    requestNumber in
+                    1..VexLifeCapabilityBridge.MaximumRequestsPerTurn
+                ) {
+                    val content =
+                        invokeQualificationStage(
+                            maxTokens =
+                                if (
+                                    atlasListed
+                                ) {
+                                    512
+                                } else {
+                                    2048
+                                },
+                        )
+                            ?: break
+                    val parsed =
+                        VexLifeCapabilityRequest.parseOrNull(
+                            content,
+                        )
+                            ?: break
+                    val call =
+                        (
+                            parsed as?
+                                VexLifeCapabilityRequest.Parsed.Request
+                        )
+                            ?.call
+                    val definition =
+                        call
+                            ?.let {
+                                VexLifeCapabilityAtlas.resolve(
+                                    it.capability,
                                 )
-                            try:
-                                return json.loads(body)
-                            except json.JSONDecodeError as error:
-                                raise RuntimeError(
-                                    "non-JSON HTTP 200 content-type=%s body=%r"
-                                    % (content_type, body[:512])
-                                ) from error
-
-                    def post_completion(payload, timeout=120):
-                        request = urllib.request.Request(
-                            origin + "/v1/chat/completions",
-                            data=json.dumps(payload).encode("utf-8"),
-                            headers={"Content-Type": "application/json"},
-                            method="POST",
+                            }
+                    val describedCapability =
+                        (
+                            call
+                                ?.arguments
+                                ?.get(
+                                    "capability",
+                                ) as? JsonPrimitive
                         )
-                        completion = read_json(request, timeout)
-                        if completion.get("model") != request_model:
-                            raise RuntimeError("completion model does not match exact request model")
-                        return completion
+                            ?.contentOrNull
+                    val describedDefinition =
+                        describedCapability
+                            ?.let {
+                                VexLifeCapabilityAtlas.resolve(
+                                    it,
+                                )
+                            }
 
-                    def message_content(completion):
-                        choices = completion.get("choices")
-                        content = (
-                            choices[0].get("message", {}).get("content")
-                            if isinstance(choices, list) and choices and isinstance(choices[0], dict)
-                            else None
+                    val isAtlasList =
+                        definition
+                            ?.capabilityRef ==
+                            atlas.capabilityRef &&
+                            call
+                                ?.action ==
+                            atlasList.action &&
+                            call
+                                ?.arguments
+                                ?.isEmpty() ==
+                            true
+                    val isDerivedAtlasDescribe =
+                        atlasListed &&
+                            definition
+                                ?.capabilityRef ==
+                            atlas.capabilityRef &&
+                            call
+                                ?.action ==
+                            atlasDescribe.action &&
+                            describedDefinition
+                                ?.capabilityRef ==
+                            derivedContinuationCapability.capabilityRef &&
+                            call
+                                ?.arguments
+                                ?.size ==
+                            1
+
+                    val exchange =
+                        performQualificationRequest(
+                            parsed =
+                                parsed,
+                            requestNumber =
+                                requestNumber,
                         )
-                        if not isinstance(content, str) or not content.strip():
-                            raise RuntimeError("Vex Reach qualification returned no assistant content")
-                        return content
+                    exchanges +=
+                        exchange
 
-                    system_message = {
-                        "role": "system",
-                        "content":
-                            "This is a synthetic no-effect VexLife text-control reach qualification. "
-                            "When asked to inspect the capability registry, your whole reply for that stage "
-                            "must be the exact header " + request_header +
-                            " followed by one JSON object with capability, action, and arguments. "
-                            "Use capability " + capability + ", action " + list_action +
-                            ", and an empty arguments object. Do not add human-facing prose. "
-                            "After a later host-result message beginning with " + result_header +
-                            ", inspect that returned registry. Find the registered capability whose action list "
-                            "is exactly test. Your whole reply for that stage must be another " + request_header +
-                            " request using capability " + capability + ", action " + describe_action +
-                            ", and arguments containing only capability set to the handle you discovered. "
-                            "Do not add human-facing prose.",
+                    if (
+                        isAtlasList &&
+                        exchange.use.state ==
+                        VexLifeCapabilityBridge.ResultState.RETURNED
+                    ) {
+                        atlasListed =
+                            true
                     }
-                    user_message = {
-                        "role": "user",
-                        "content": "Inspect the current capability registry before answering.",
+                    if (
+                        isDerivedAtlasDescribe &&
+                        exchange.use.state ==
+                        VexLifeCapabilityBridge.ResultState.RETURNED
+                    ) {
+                        qualified =
+                            true
+                        break
                     }
+                }
 
-                    try:
-                        first = post_completion({
-                            "model": request_model,
-                            "messages": [system_message, user_message],
-                            "max_tokens": 2048,
-                            "temperature": 0,
-                            "stream": False,
-                            "chat_template_kwargs": {"enable_thinking": True},
-                        })
-                        full_content = message_content(first).strip()
-                        header_index = full_content.find(request_header)
-                        if header_index < 0 or header_index > 512:
-                            raise RuntimeError("Vex Reach qualification request header is absent or too late")
-                        if header_index > 0 and full_content[header_index - 1] != "\n":
-                            raise RuntimeError("Vex Reach qualification request header does not start a line")
-                        control = full_content[header_index:].strip()
-                        body = control[len(request_header):].strip()
-                        fence = chr(96) * 3
-                        if body.startswith(fence + "json"):
-                            body = body[len(fence + "json"):].strip()
-                        elif body.startswith(fence):
-                            body = body[len(fence):].strip()
-                        decoder = json.JSONDecoder()
-                        call, _ = decoder.raw_decode(body)
-                        expected = {
-                            "capability": capability,
-                            "action": list_action,
-                            "arguments": {},
-                        }
-                        if call != expected:
-                            raise RuntimeError("Vex Reach qualification request does not match the exact no-effect Atlas list call")
-                        second = post_completion({
-                            "model": request_model,
-                            "messages": [
-                                system_message,
-                                user_message,
-                                {"role": "assistant", "content": control},
-                                {"role": "user", "content": result_message},
-                            ],
-                            "max_tokens": 512,
-                            "temperature": 0,
-                            "stream": False,
-                            "chat_template_kwargs": {"enable_thinking": True},
-                        })
-                        second_content = message_content(second).strip()
-                        second_header_index = second_content.find(request_header)
-                        if second_header_index < 0 or second_header_index > 512:
-                            raise RuntimeError("Vex Reach qualification derived request header is absent or too late")
-                        if second_header_index > 0 and second_content[second_header_index - 1] != "\n":
-                            raise RuntimeError("Vex Reach qualification derived request header does not start a line")
-                        second_control = second_content[second_header_index:].strip()
-                        second_body = second_control[len(request_header):].strip()
-                        if second_body.startswith(fence + "json"):
-                            second_body = second_body[len(fence + "json"):].strip()
-                        elif second_body.startswith(fence):
-                            second_body = second_body[len(fence):].strip()
-                        second_call, _ = decoder.raw_decode(second_body)
-                        expected_second = {
-                            "capability": capability,
-                            "action": describe_action,
-                            "arguments": {
-                                "capability": derived_capability,
-                            },
-                        }
-                        if second_call != expected_second:
-                            raise RuntimeError(
-                                "Vex Reach qualification continuation does not match the exact derived Atlas describe call"
-                            )
-
-                        print("QUALIFIED_VEX_REACH")
-                    except Exception as error:
-                        print(
-                            "VEX_REACH_HELD:%s" % str(error)[:512],
-                            file=sys.stderr,
-                        )
-                        print("HELD")
-                    """.trimIndent()
-
-                val probe =
-                    commandRunner.run(
-                        program =
-                            binding.pythonPath,
-                        args =
-                            listOf(
-                                "-c",
-                                vexReachProbeScript,
-                                HereticProductIdentity.Endpoint,
-                                HereticProductIdentity.RequestModel,
-                                VexLifeCapabilityRequest.RequestHeader,
-                                VexLifeCapabilityRequest.ResultHeader,
-                                atlas.handle,
-                                atlasList.action,
-                                atlasDescribe.action,
-                                derivedContinuationCapability.handle,
-                                qualificationResultMessage,
-                            ),
-                        timeoutMs =
-                            300_000L,
-                    )
-
-                probe.status ==
-                    0 &&
-                    probe.errorMessage ==
-                    null &&
-                    !probe.timedOut &&
-                    probe.stdout
-                        .trim() ==
-                    "QUALIFIED_VEX_REACH"
+                qualified
             }
 
         return HereticRuntimeQualification.qualified(

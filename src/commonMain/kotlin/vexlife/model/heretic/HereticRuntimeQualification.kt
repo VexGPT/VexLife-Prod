@@ -37,9 +37,10 @@ data class HereticRuntimeQualification private constructor(
      * Optional qualification of this exact model/runtime's Vex text-control reach relationship.
      *
      * This is deliberately independent of provider-native tool qualification. It proves only that
-     * the model can form one canonical no-effect Vex reach request, consume the Product-owned host
-     * result, and derive a second canonical no-effect Atlas request from what that result actually
-     * says. Capability admission/effects remain Atlas/Bridge truth.
+     * the model can participate in the Product-owned bounded text-control request/feedback loop,
+     * recover from malformed or otherwise rejected request form through the same Bridge result a
+     * real turn would receive, complete one Atlas list, and derive one Atlas describe request from
+     * the returned registry. Capability admission/effects remain Atlas/Bridge truth.
      */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val vexReachQualificationRef: String? = null,
@@ -49,7 +50,7 @@ data class HereticRuntimeQualification private constructor(
             "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
 
         const val VexReachQualificationRef =
-            "qualification.vexlife-prod.vex-reach.text-control-atlas-derived-continuation.v1"
+            "qualification.vexlife-prod.vex-reach.text-control-atlas-recoverable-derived-continuation.v1"
 
         fun qualified(
             loadResultRef: String? = null,

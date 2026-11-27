@@ -1,6 +1,7 @@
 package vexlife.model.heretic.runtime
 
 import java.nio.file.Files
+import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -178,8 +179,23 @@ class MacHereticNativeToolQualificationTest {
         }
     }
 
+    private fun encodedReachStage(
+        content: String,
+    ) =
+        HereticPythonEnvironment.CommandResult(
+            status = 0,
+            stdout =
+                Base64
+                    .getEncoder()
+                    .encodeToString(
+                        content.toByteArray(),
+                    ) +
+                    "\n",
+            stderr = "",
+        )
+
     private fun qualify4BReach(
-        reachProbeResult: HereticPythonEnvironment.CommandResult,
+        vararg reachStageResults: HereticPythonEnvironment.CommandResult,
     ): ProbeRun {
         val root =
             Files.createTempDirectory(
@@ -195,8 +211,8 @@ class MacHereticNativeToolQualificationTest {
                             stdout = "QUALIFIED\n",
                             stderr = "",
                         ),
-                        reachProbeResult,
-                    ),
+                    ) +
+                        reachStageResults,
             )
         val platform =
             MacHereticRuntimePlatform(
@@ -224,7 +240,7 @@ class MacHereticNativeToolQualificationTest {
     }
 
     @Test
-    fun held4BTextControlReachProbeIsOptionalExactAndSeparateFromNativeTools() {
+    fun held4BTextControlReachProbeUsesProductRecoveryAndRemainsSeparateFromNativeTools() {
         val held =
             qualify4BReach(
                 HereticPythonEnvironment.CommandResult(
@@ -245,7 +261,7 @@ class MacHereticNativeToolQualificationTest {
         assertEquals(
             listOf(
                 180_000L,
-                300_000L,
+                120_000L,
             ),
             held.timeouts,
         )
@@ -254,14 +270,38 @@ class MacHereticNativeToolQualificationTest {
             held.calls.size,
         )
 
+        val malformedControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """
+                {
+                  "capability_atlas": "all",
+                  "action": "list",
+                  "arguments": {}
+                }
+                """.trimIndent()
+        val listControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"list","arguments":{}}"""
+        val derivedControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"describe","arguments":{"capability":"workspace-test"}}"""
+
         val qualified =
             qualify4BReach(
-                HereticPythonEnvironment.CommandResult(
-                    status = 0,
-                    stdout = "QUALIFIED_VEX_REACH\n",
-                    stderr = "",
+                encodedReachStage(
+                    malformedControl,
+                ),
+                encodedReachStage(
+                    listControl,
+                ),
+                encodedReachStage(
+                    derivedControl,
                 ),
             )
+
         assertEquals(
             HereticRuntimeQualification.VexReachQualificationRef,
             qualified.qualification.vexReachQualificationRef,
@@ -272,46 +312,47 @@ class MacHereticNativeToolQualificationTest {
             "4B text-control reach qualification must not resurrect provider-native tools",
         )
         assertEquals(
-            2,
+            listOf(
+                180_000L,
+                120_000L,
+                120_000L,
+                120_000L,
+            ),
+            qualified.timeouts,
+        )
+        assertEquals(
+            4,
             qualified.calls.size,
         )
-        val reachCall =
+
+        val firstStage =
             qualified.calls[
                 1
             ]
         assertTrue(
-            reachCall.contains(
+            firstStage.contains(
                 VexLifeCapabilityRequest.RequestHeader,
             ),
         )
         assertTrue(
-            reachCall.contains(
-                VexLifeCapabilityRequest.ResultHeader,
-            ),
+            firstStage.any {
+                it.contains(
+                    "exact field names capability, action, and arguments",
+                )
+            },
         )
+
+        val correctionStage =
+            qualified.calls[
+                2
+            ]
         assertTrue(
-            reachCall.contains(
-                "atlas",
+            correctionStage.contains(
+                malformedControl,
             ),
         )
-        assertTrue(
-            reachCall.contains(
-                "list",
-            ),
-        )
-        assertTrue(
-            reachCall.contains(
-                "describe",
-            ),
-        )
-        assertTrue(
-            reachCall.contains(
-                "workspace-test",
-            ),
-            "derived continuation target must come from the registered capability whose only action is test",
-        )
-        val productResult =
-            reachCall
+        val malformedResult =
+            correctionStage
                 .singleOrNull {
                     it.startsWith(
                         VexLifeCapabilityRequest.ResultHeader +
@@ -319,50 +360,77 @@ class MacHereticNativeToolQualificationTest {
                     )
                 }
         assertNotNull(
-            productResult,
-            "Vex Reach qualification must carry the Product-shaped capability result as one exact provider argument",
+            malformedResult,
+            "Product parser/Bridge must return malformed-control feedback before qualification retries",
         )
         assertTrue(
-            productResult.contains(
-                "The host performed your request; this is what came back. It is not a message from the person.",
+            malformedResult.contains(
+                "\"state\":\"INVALID_REQUEST\"",
             ),
         )
         assertTrue(
-            productResult.contains(
-                "- atlas (AVAILABLE; actions: list, describe)",
+            malformedResult.contains(
+                "missing \"capability\"",
             ),
-            "synthetic qualification admits only the effect-free Atlas while returning the real registered world",
         )
         assertTrue(
-            productResult.contains(
+            malformedResult.contains(
+                "The exact form is the header line " +
+                    VexLifeCapabilityRequest.RequestHeader,
+            ),
+        )
+
+        val derivedStage =
+            qualified.calls[
+                3
+            ]
+        assertTrue(
+            derivedStage.contains(
+                listControl,
+            ),
+        )
+        val atlasResult =
+            derivedStage
+                .lastOrNull {
+                    it.startsWith(
+                        VexLifeCapabilityRequest.ResultHeader +
+                            "\n",
+                    ) &&
+                        it.contains(
+                            "- atlas (AVAILABLE; actions: list, describe)",
+                        )
+                }
+        assertNotNull(
+            atlasResult,
+            "successful Atlas list must return the Product-owned registry before derived continuation",
+        )
+        assertTrue(
+            atlasResult.contains(
+                "- workspace-test (not available this turn; actions: test)",
+            ),
+        )
+        assertTrue(
+            atlasResult.contains(
                 "not available this turn",
             ),
-            "registered capabilities outside the synthetic Atlas admission must remain truthfully unavailable",
+            "only Atlas is admitted by the synthetic qualification",
         )
-        assertFalse(
-            productResult.contains(
-                "Qualification registry result: exact no-effect Atlas list carriage succeeded.",
-            ),
-            "qualification must return the Product-owned Atlas result, not a transport success assertion",
-        )
-        val script =
-            reachCall[
+
+        val providerStageScript =
+            firstStage[
                 1
             ]
         for (
             required in
             listOf(
-                "QUALIFIED_VEX_REACH",
-                "VEX_REACH_HELD:",
-                "request_header",
-                "result_header",
-                "exact no-effect Atlas list call",
-                "derived_capability",
-                "exact derived Atlas describe call",
+                "base64",
+                "/v1/chat/completions",
+                "enable_thinking",
+                "exchange_content",
             )
         ) {
             assertTrue(
-                script.contains(
+                providerStageScript.contains(
                     required,
                 ),
                 required,
