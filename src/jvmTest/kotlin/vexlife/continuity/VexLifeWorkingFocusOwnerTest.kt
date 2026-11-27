@@ -9,7 +9,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class VexLifeWorkingFocusOwnerTest {
     private val lineageRef = "lineage.vexlife.working-focus.test"
@@ -256,6 +255,73 @@ class VexLifeWorkingFocusOwnerTest {
                     paths.filter { it.parent?.fileName?.toString() == "revisions" }.count()
                 }
             assertEquals(2L, revisionCount)
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun consumedFormationCannotResurrectDisplacedOrClearedFocus() {
+        val home = Files.createTempDirectory("vexlife-working-focus-formation-replay-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val originalDraft = draft()
+            owner.setCurrent(originalDraft)
+            val displaced =
+                owner.displace(
+                    lineageRef = lineageRef,
+                    threadRef = threadRef,
+                    causeOwnerRef = "owner.vexlife-prod.attention",
+                    causeRef = "attention.claim.current",
+                    causeBindingRefs = listOf("binding.attention.claim.current"),
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.setCurrent(originalDraft)
+            }
+            assertEquals(displaced.current, owner.readCurrent(lineageRef, threadRef))
+
+            owner.clear(
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+                causeOwnerRef = "owner.vexlife-prod.working-focus.client",
+                causeRef = "receipt.focus.clear.current",
+                causeBindingRefs = listOf("binding.focus.clear.current"),
+            )
+            val cleared = assertNotNull(owner.readCurrent(lineageRef, threadRef))
+            assertEquals(VexLifeWorkingFocusOwner.FocusState.CLEARED, cleared.state.state)
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.setCurrent(originalDraft)
+            }
+            assertEquals(cleared, owner.readCurrent(lineageRef, threadRef))
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun consumedFormationCannotBeReboundToDifferentTruth() {
+        val home = Files.createTempDirectory("vexlife-working-focus-formation-rebind-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val originalDraft = draft()
+            owner.setCurrent(originalDraft)
+            owner.displace(
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+                causeOwnerRef = "owner.vexlife-prod.attention",
+                causeRef = "attention.claim.current",
+                causeBindingRefs = listOf("binding.attention.claim.current"),
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.setCurrent(
+                    originalDraft.copy(
+                        objective = "Attempt to reuse one consumed formation identity for different truth.",
+                    ),
+                )
+            }
         } finally {
             home.toFile().deleteRecursively()
         }
