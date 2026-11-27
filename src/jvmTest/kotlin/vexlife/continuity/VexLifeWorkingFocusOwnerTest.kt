@@ -1,6 +1,9 @@
 package vexlife.continuity
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
+import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,6 +16,17 @@ import kotlin.test.assertNull
 class VexLifeWorkingFocusOwnerTest {
     private val lineageRef = "lineage.vexlife.working-focus.test"
     private val threadRef = "thread.vexlife.working-focus.test"
+
+    private fun ownerRoot(home: Path): Path {
+        val key =
+            MessageDigest.getInstance("SHA-256")
+                .digest(
+                    (lineageRef + "|" + threadRef).toByteArray(StandardCharsets.UTF_8),
+                )
+                .joinToString("") { "%02x".format(it) }
+                .take(32)
+        return home.resolve("working-focus").resolve(key)
+    }
 
     private fun draft(
         formationRef: String = "receipt.focus.proposal.001",
@@ -314,6 +328,68 @@ class VexLifeWorkingFocusOwnerTest {
                     paths.filter { it.parent?.fileName?.toString() == "revisions" }.count()
                 }
             assertEquals(2L, revisionCount)
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun orphanedInitialFormationCanRecoverWhenHeadNeverBecameCurrent() {
+        val home = Files.createTempDirectory("vexlife-working-focus-orphan-initial-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val proposal = draft()
+            val first = owner.setCurrent(proposal)
+            val originalRevision = assertNotNull(first.current.revisionOrNull)
+
+            // Model the durable filesystem left by a crash after immutable evidence was written but
+            // before head.json became the commit point.
+            Files.delete(ownerRoot(home).resolve("head.json"))
+            assertNull(owner.readCurrent(lineageRef, threadRef))
+
+            val recovered = owner.setCurrent(proposal)
+            assertEquals("ACTIVE_COMMITTED", recovered.state)
+            assertEquals(originalRevision, recovered.current.revisionOrNull)
+            assertEquals(recovered.current, owner.readCurrent(lineageRef, threadRef))
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun orphanedUpdateFormationCanRecoverOnlyWhileItsExactPriorStateIsStillCurrent() {
+        val home = Files.createTempDirectory("vexlife-working-focus-orphan-update-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val first = owner.setCurrent(draft())
+            val priorHeadBytes = Files.readAllBytes(ownerRoot(home).resolve("head.json"))
+            val proposal =
+                draft(
+                    formationRef = "receipt.focus.proposal.crash-update",
+                    priorRevisionRefOrNull = assertNotNull(first.current.revisionRefOrNull),
+                    objective = "Advance focus through one crash-recoverable exact update.",
+                )
+            val second = owner.setCurrent(proposal)
+            val secondRevision = assertNotNull(second.current.revisionOrNull)
+
+            // Restore the exact prior head to model failure before the new head commit point.
+            Files.write(ownerRoot(home).resolve("head.json"), priorHeadBytes)
+            assertEquals(first.current, owner.readCurrent(lineageRef, threadRef))
+
+            val recovered = owner.setCurrent(proposal)
+            assertEquals(secondRevision, recovered.current.revisionOrNull)
+            assertEquals(recovered.current, owner.readCurrent(lineageRef, threadRef))
+
+            owner.displace(
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+                causeOwnerRef = "owner.vexlife-prod.attention",
+                causeRef = "attention.claim.after-recovery",
+                causeBindingRefs = listOf("binding.attention.after-recovery"),
+            )
+            assertFailsWith<IllegalArgumentException> {
+                owner.setCurrent(proposal)
+            }
         } finally {
             home.toFile().deleteRecursively()
         }
