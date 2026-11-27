@@ -6,7 +6,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
 class VexLifeAttentionClaimTest {
-    private fun candidate(
+    private fun candidateFixture(
         ref: String = "candidate.resource.storage",
         ownerRef: String = "owner.resource",
         sourceRef: String = "source.resource.storage",
@@ -29,7 +29,7 @@ class VexLifeAttentionClaimTest {
         )
 
     private fun requirement(
-        candidate: VexLifeAttentionPerceptibility.Candidate = candidate(),
+        candidate: VexLifeAttentionPerceptibility.Candidate = candidateFixture(),
         requirementRef: String = "requirement.resource.storage.present-attention.7",
         requirementBindingRef: String = "receipt.resource.storage.attention.7",
     ) =
@@ -48,7 +48,7 @@ class VexLifeAttentionClaimTest {
 
     @Test
     fun sourceOwnedRequirementFormsClaimWithoutInventingPriorityOrEffects() {
-        val candidate = candidate()
+        val candidate = candidateFixture()
 
         val claim =
             VexLifeAttentionClaim.form(
@@ -75,7 +75,7 @@ class VexLifeAttentionClaimTest {
 
     @Test
     fun requirementFailsClosedWhenCandidateSourceOrSubjectBindingIsStale() {
-        val candidate = candidate()
+        val candidate = candidateFixture()
 
         assertFailsWith<IllegalArgumentException> {
             VexLifeAttentionClaim.form(
@@ -102,7 +102,7 @@ class VexLifeAttentionClaimTest {
 
     @Test
     fun acknowledgementBindsExactCurrentClaimButDoesNotResolveSourceCondition() {
-        val candidate = candidate()
+        val candidate = candidateFixture()
         val claim =
             VexLifeAttentionClaim.form(
                 candidate = candidate,
@@ -118,6 +118,8 @@ class VexLifeAttentionClaimTest {
                         actorRef = "actor.human.current",
                         requirementRef = claim.requirementRef,
                         requirementBindingRefs = claim.requirementBindingRefs,
+                        acknowledgementRequirementRefOrNull =
+                            claim.acknowledgementRequirementRefOrNull,
                         candidateSourceBindingRefs = claim.candidateSourceBindingRefs,
                         subjectScopeRefs = claim.subjectScopeRefs,
                     ),
@@ -132,7 +134,7 @@ class VexLifeAttentionClaimTest {
 
     @Test
     fun staleAcknowledgementCannotApplyToNewRequirementOrCandidateGeneration() {
-        val candidate = candidate()
+        val candidate = candidateFixture()
         val claim =
             VexLifeAttentionClaim.form(
                 candidate = candidate,
@@ -149,6 +151,8 @@ class VexLifeAttentionClaimTest {
                         requirementRef = claim.requirementRef,
                         requirementBindingRefs =
                             listOf("receipt.resource.storage.attention.old"),
+                        acknowledgementRequirementRefOrNull =
+                            claim.acknowledgementRequirementRefOrNull,
                         candidateSourceBindingRefs = claim.candidateSourceBindingRefs,
                         subjectScopeRefs = claim.subjectScopeRefs,
                     ),
@@ -164,8 +168,27 @@ class VexLifeAttentionClaimTest {
                         actorRef = "actor.human.current",
                         requirementRef = claim.requirementRef,
                         requirementBindingRefs = claim.requirementBindingRefs,
+                        acknowledgementRequirementRefOrNull =
+                            claim.acknowledgementRequirementRefOrNull,
                         candidateSourceBindingRefs =
                             listOf("receipt.resource.storage.current.old"),
+                        subjectScopeRefs = claim.subjectScopeRefs,
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeAttentionClaim.acknowledge(
+                claim = claim,
+                observation =
+                    VexLifeAttentionClaim.AcknowledgementObservation(
+                        acknowledgementRef = "ack.resource.storage.stale-ack-requirement",
+                        actorRef = "actor.human.current",
+                        requirementRef = claim.requirementRef,
+                        requirementBindingRefs = claim.requirementBindingRefs,
+                        acknowledgementRequirementRefOrNull =
+                            "requirement.resource.storage.acknowledgement.v2",
+                        candidateSourceBindingRefs = claim.candidateSourceBindingRefs,
                         subjectScopeRefs = claim.subjectScopeRefs,
                     ),
             )
@@ -175,7 +198,7 @@ class VexLifeAttentionClaimTest {
     @Test
     fun heldCandidateMayStillCarrySourceRequirementWithoutPretendingPresentationOrRead() {
         val candidate =
-            candidate(
+            candidateFixture(
                 reachability = VexLifeAttentionPerceptibility.Reachability.HELD,
             )
 
@@ -202,7 +225,7 @@ class VexLifeAttentionClaimTest {
     @Test
     fun claimSurfaceUsesIdentityOrderOnlyAndCannotBecomeHiddenPriorityQueue() {
         val firstCandidate =
-            candidate(
+            candidateFixture(
                 ref = "candidate.zeta",
                 ownerRef = "owner.zeta",
                 sourceRef = "source.zeta",
@@ -210,7 +233,7 @@ class VexLifeAttentionClaimTest {
                 subjectScopeRefs = listOf("subject.zeta"),
             )
         val secondCandidate =
-            candidate(
+            candidateFixture(
                 ref = "candidate.alpha",
                 ownerRef = "owner.alpha",
                 sourceRef = "source.alpha",
@@ -253,9 +276,9 @@ class VexLifeAttentionClaimTest {
 
     @Test
     fun duplicateRequirementIdentityCannotSilentlyRepresentTwoClaims() {
-        val first = candidate(ref = "candidate.first")
+        val first = candidateFixture(ref = "candidate.first")
         val second =
-            candidate(
+            candidateFixture(
                 ref = "candidate.second",
                 ownerRef = "owner.second",
                 sourceRef = "source.second",
