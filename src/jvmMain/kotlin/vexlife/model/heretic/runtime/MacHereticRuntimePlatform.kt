@@ -1045,10 +1045,10 @@ class MacHereticRuntimePlatform(
                         atlas.handle +
                         " for action " +
                         atlasDescribe.action +
-                        " with arguments containing only capability set to the handle you discovered. " +
+                        " with arguments containing only handle set to the capability handle you discovered. " +
                         "Do not add human-facing prose to a capability-request stage."
                 val qualificationUserMessage =
-                    "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered capability before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request."
+                    "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered handle before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request."
 
                 val providerStageScript =
                     """
@@ -1249,17 +1249,17 @@ class MacHereticRuntimePlatform(
                                     it.capability,
                                 )
                             }
-                    val describedCapability =
+                    val describedHandle =
                         (
                             call
                                 ?.arguments
                                 ?.get(
-                                    "capability",
+                                    "handle",
                                 ) as? JsonPrimitive
                         )
                             ?.contentOrNull
                     val describedDefinition =
-                        describedCapability
+                        describedHandle
                             ?.let {
                                 VexLifeCapabilityAtlas.resolve(
                                     it,

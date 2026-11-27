@@ -1052,6 +1052,8 @@ class VexLifeCapabilityReachTest {
                 estimateTokens = tokens,
             )
         assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, malformed.entry.state)
+        assertTrue(malformed.resultMessage.content.contains("top-level \"capability\""))
+        assertTrue(malformed.resultMessage.content.contains("action-specific targets stay inside \"arguments\""))
         assertTrue(malformed.resultMessage.content.contains("The exact form"))
     }
 
@@ -1060,7 +1062,7 @@ class VexLifeCapabilityReachTest {
         val described =
             VexLifeCapabilityBridge.perform(
                 request(
-                    """{"capability":"atlas","action":"describe","arguments":{"capability":"github"}}"""
+                    """{"capability":"atlas","action":"describe","arguments":{"handle":"github"}}"""
                 ),
                 admission(home),
                 estimateTokens = tokens,

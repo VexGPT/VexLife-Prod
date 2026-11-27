@@ -41,7 +41,7 @@ data class HereticRuntimeQualification private constructor(
      * including the narrowly admitted structured protocol/version representation of the same
      * request meaning, recover from malformed or otherwise rejected request form through the same
      * Bridge result a real turn would receive, complete one Atlas list, and derive one Atlas
-     * describe request from the returned registry. The synthetic human-visible request itself names
+     * describe request using the discovered capability handle from the returned registry. The synthetic human-visible request itself names
      * that two-hop goal, and the provider receives the same request-owned text-control instruction
      * as an ordinary Product turn. Capability admission/effects remain Atlas/Bridge truth.
      */
@@ -53,7 +53,7 @@ data class HereticRuntimeQualification private constructor(
             "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
 
         const val VexReachQualificationRef =
-            "qualification.vexlife-prod.vex-reach.text-control-canonical-envelope-qwen-wire-normalized-recoverable-derived-continuation.v1"
+            "qualification.vexlife-prod.vex-reach.text-control-canonical-envelope-qwen-wire-normalized-atlas-handle-recoverable-derived-continuation.v1"
 
         fun qualified(
             loadResultRef: String? = null,

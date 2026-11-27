@@ -352,7 +352,7 @@ class MacHereticNativeToolQualificationTest {
         val derivedControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
-                """{"capability":"atlas","action":"describe","arguments":{"capability":"workspace-test"}}"""
+                """{"capability":"atlas","action":"describe","arguments":{"handle":"workspace-test"}}"""
 
         val qualified =
             qualify4BReach(
@@ -412,7 +412,7 @@ class MacHereticNativeToolQualificationTest {
         )
         assertTrue(
             firstStage.contains(
-                "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered capability before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request.",
+                "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered handle before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request.",
             ),
             "the synthetic human-visible request must ask for the derived continuation being graded",
         )
@@ -451,7 +451,7 @@ class MacHereticNativeToolQualificationTest {
         )
         assertTrue(
             malformedResult.contains(
-                "missing \"capability\"",
+                "missing top-level \"capability\"",
             ),
         )
         assertTrue(

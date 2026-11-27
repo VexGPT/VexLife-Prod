@@ -253,6 +253,18 @@ recognize one source-proven provider/model representation and normalize it into 
 `VEXLIFE_CAPABILITY_REQUEST/v1` control, but that representation is not taught as another Vex
 request reflex and does not survive into semantic continuation history.
 
+Canonical request fields are **named relationships, not positional slots**. JSON member order therefore
+does not change request meaning. The top-level `capability` always names the capability being invoked;
+action-specific target identity stays inside `arguments` under the action owner's own argument name.
+For Atlas `describe`, that target is `arguments.handle`:
+
+~~~json
+{"capability":"atlas","action":"describe","arguments":{"handle":"workspace-test"}}
+~~~
+
+This avoids using `capability` simultaneously for the invoked owner and the capability being described.
+Canonical JSON key sorting remains only a deterministic byte representation for hashing/evidence.
+
 For the exact Qwen 4B text-control relationship, lived A020 evidence observed one sibling-version
 JSON wire form. `HereticTextControlCapabilityWire` recognizes only that exact Qwen 4B shape and
 normalizes it to the same canonical header-line control before `VexLifeCapabilityRequest` and the

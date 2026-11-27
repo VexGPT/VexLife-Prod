@@ -39,7 +39,8 @@ object VexLifeCapabilityRequest {
         "For a text-control capability request, the whole reply for that provider stage must begin " +
             "with the exact header " +
             RequestHeader +
-            " followed by one JSON object with capability, action, and arguments. " +
+            " followed by one JSON object with capability, action, and arguments. The top-level capability " +
+            "is the capability being invoked; action-specific target values belong inside arguments. " +
             "The canonical header is mandatory unless the exact structured protocol/version wrapper " +
             "is used; bare JSON or code-fenced JSON without either admitted request marker is " +
             "ordinary assistant text and performs nothing. Stop composing the human-facing answer " +
@@ -257,7 +258,7 @@ object VexLifeCapabilityRequest {
             )
                 .stringOrNull()
                 ?: return malformed(
-                    "missing \"capability\" (a handle such as web, github, home, memory, atlas)",
+                    "missing top-level \"capability\" (the capability being invoked; a handle such as web, github, home, memory, atlas)",
                 )
         val action =
             json[

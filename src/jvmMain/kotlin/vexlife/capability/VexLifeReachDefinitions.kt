@@ -143,13 +143,13 @@ internal object VexLifeReachDefinitions {
                             arguments =
                                 listOf(
                                     arg(
-                                        "capability",
+                                        "handle",
                                         "string",
                                         true,
-                                        "A handle such as web, or a capabilityRef.",
+                                        "A capability handle such as web, or a full capabilityRef.",
                                     )
                                 ),
-                            exampleArguments = """{"capability":"github"}""",
+                            exampleArguments = """{"handle":"github"}""",
                             returns =
                                 "The capability's actions with argument names, types and an example request.",
                         ),
