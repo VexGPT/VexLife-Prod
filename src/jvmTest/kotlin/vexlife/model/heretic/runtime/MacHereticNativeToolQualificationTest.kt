@@ -284,7 +284,7 @@ class MacHereticNativeToolQualificationTest {
         val listControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
-                """{"capability":"atlas","action":"list","arguments":{}}"""
+                """{"action":"list","arguments":{},"capability":"atlas"}"""
         val structuredListControl =
             """
             ```json
