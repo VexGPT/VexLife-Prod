@@ -849,6 +849,86 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
+    fun semanticPreparationFailureHoldsAccelerationAndStillQualifiesTextRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-semantic-held-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val base =
+                hooks(
+                    trace,
+                )
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome =
+                        home,
+                    allowAcquisition =
+                        true,
+                    hooks =
+                        base.copy(
+                            ensureSemanticArtifacts = {
+                                _,
+                                _,
+                                ->
+                                trace +=
+                                    "SEMANTIC_ARTIFACTS_FAILED"
+                                error(
+                                    "simulated semantic artifact preparation failure",
+                                )
+                            },
+                            ensureSemanticEnvironment = {
+                                _,
+                                _,
+                                _,
+                                ->
+                                error(
+                                    "semantic environment must not run after artifact preparation failure",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "LOCAL_HERETIC_FOUNDATION_READY",
+                result.state,
+            )
+            assertEquals(
+                "HELD_PREPARATION_FAILED",
+                result.semanticArtifactDisposition,
+            )
+            assertEquals(
+                "HELD_PREPARATION_FAILED",
+                result.semanticEnvironmentDisposition,
+            )
+            assertTrue(
+                "SEMANTIC_ARTIFACTS_FAILED" in
+                    trace,
+            )
+            assertTrue(
+                "RUNTIME" in
+                    trace,
+                "semantic acceleration failure must not prevent the selected conversational runtime from qualifying",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun visualPreparationFailureHoldsVisualAndStillQualifiesTextRuntime() {
         val parent =
             Files.createTempDirectory(
