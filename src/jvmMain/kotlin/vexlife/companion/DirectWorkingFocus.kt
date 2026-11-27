@@ -43,6 +43,7 @@ internal object DirectWorkingFocus {
         NOT_ACTIVE,
     }
 
+    @ConsistentCopyVisibility
     data class Observation internal constructor(
         val standing: CurrentStanding,
         internal val current: VexLifeWorkingFocusOwner.Current?,
@@ -57,6 +58,7 @@ internal object DirectWorkingFocus {
             get() = current?.revisionOrNull?.workingFocusRef
     }
 
+    @ConsistentCopyVisibility
     data class Projection internal constructor(
         val state: ProjectionState,
         val observedStanding: CurrentStanding,
@@ -100,6 +102,7 @@ internal object DirectWorkingFocus {
         val ownerRef: String,
         val standing: VexLifeWorkingFocus.Standing,
         val compactMeaning: String,
+        val sourceRefs: List<String>,
     )
 
     @Serializable
@@ -107,6 +110,7 @@ internal object DirectWorkingFocus {
         val edgeRef: String,
         val ownerRef: String,
         val compactMeaning: String,
+        val sourceRefs: List<String>,
     )
 
     @Serializable
@@ -120,6 +124,7 @@ internal object DirectWorkingFocus {
         val objective: String,
         val currentQuestionOrNull: String?,
         val nextProbeOrNull: String?,
+        val sourceRefs: List<String>,
         val retainedRelationshipRefs: List<String>,
         val openEdgeRefs: List<String>,
         val detailStanding: String,
@@ -193,9 +198,10 @@ internal object DirectWorkingFocus {
     /**
      * Project ACTIVE Working Focus beneath one explicit caller-supplied token ceiling.
      *
-     * FULL contains every retained relationship/open-edge compact meaning.
-     * CORE_ONLY keeps objective/question/next-probe plus every relationship/edge identity, while
-     * holding all collection detail bodies together. If even CORE_ONLY does not fit, no Working
+     * FULL contains every retained relationship/open-edge compact meaning and its exact source
+     * coordinates. CORE_ONLY keeps objective/question/next-probe, the focus-level exact source
+     * coordinates and every relationship/edge identity, while holding all per-item detail/source
+     * bodies together. If even CORE_ONLY does not fit, no Working
      * Focus bytes are returned and durable currentness is unchanged.
      */
     fun project(
@@ -291,6 +297,7 @@ internal object DirectWorkingFocus {
                                 ownerRef = it.ownerRef,
                                 standing = it.standing,
                                 compactMeaning = it.compactMeaning,
+                                sourceRefs = it.sourceRefs.sorted(),
                             )
                         },
                 openEdges =
@@ -303,6 +310,7 @@ internal object DirectWorkingFocus {
                                 edgeRef = it.edgeRef,
                                 ownerRef = it.ownerRef,
                                 compactMeaning = it.compactMeaning,
+                                sourceRefs = it.sourceRefs.sorted(),
                             )
                         },
             )
@@ -416,6 +424,7 @@ internal object DirectWorkingFocus {
             objective = revision.objective,
             currentQuestionOrNull = revision.currentQuestionOrNull,
             nextProbeOrNull = revision.nextProbeOrNull,
+            sourceRefs = revision.sourceRefs.sorted(),
             retainedRelationshipRefs =
                 revision.retainedRelationships
                     .map(VexLifeWorkingFocus.Relationship::relationshipRef)
