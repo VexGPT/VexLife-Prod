@@ -970,14 +970,34 @@ class DirectPromptContextTest {
                         materialized.messages.first(),
                         "the 4B text-control warmup must begin with the exact provider-leading system message used by the real first turn",
                     )
-                    assertTrue(
+                    assertFalse(
                         materialized.messages
                             .first()
                             .content
                             .contains(
                                 VexLifeCapabilityRequest.TextControlProviderInstruction,
                             ),
-                        "ordinary Qwen text-control prompt must consume the request-owned instruction",
+                        "Qwen warmup with capability requests held must not advertise an executable request channel",
+                    )
+                    val admittedBoot =
+                        DirectPromptContext.projectProviderPreparationPrefix(
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            memoryContext =
+                                memory,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                false,
+                        )
+                    assertTrue(
+                        admittedBoot.messages
+                            .single()
+                            .content
+                            .contains(
+                                VexLifeCapabilityRequest.TextControlProviderInstruction,
+                            ),
+                        "an admitted ordinary Qwen text-control prompt must consume the request-owned instruction",
                     )
                     assertFalse(
                         materialized.messages
