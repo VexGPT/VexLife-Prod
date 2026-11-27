@@ -1513,6 +1513,155 @@ class VexLifeContinuitySourceLocatorTest {
     }
 
     @Test
+    fun rankedSemanticNominationOrderSurvivesExactCanonicalReopen() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human = "Oldest exact source.",
+                        vex = "oldest",
+                        at = Instant.parse("2026-11-20T08:00:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Middle exact source.",
+                        vex = "middle",
+                        at = Instant.parse("2026-11-20T08:05:00Z"),
+                    ),
+                    ContinuityTurnFixture.Line(
+                        human = "Newest exact source.",
+                        vex = "newest",
+                        at = Instant.parse("2026-11-20T08:10:00Z"),
+                    ),
+                )
+            val backend =
+                DeterministicSemanticBackend(
+                    fingerprintBindingRef =
+                        "fingerprint.test.semantic-ranked-order",
+                    semanticRepresentationBindingRef =
+                        "semantic.test.ranked-order-v1",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                backend.forcedRankedIndexes =
+                    listOf(
+                        0,
+                        2,
+                        1,
+                    )
+
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryRef =
+                                            "semantic",
+                                        queryTerms =
+                                            listOf(
+                                                "semantic-only-clue",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[2].first.turnRef,
+                        turns[1].first.turnRef,
+                    ),
+                    outcome.semanticMatches.map(
+                        VexLifeContinuitySourceLocator.SemanticNeighborhoodMatch::turnRef,
+                    ),
+                    "semantic nomination order must survive exact canonical reopen as provenance",
+                )
+                assertTrue(
+                    outcome.exactEventFileReadCount >=
+                        6,
+                )
+                assertFalse(
+                    outcome.canonicalSourceMutationPerformed,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun duplicateSemanticNominationRankFailsClosed() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                ContinuityTurnFixture.Line(
+                    human = "One exact source.",
+                    vex = "one",
+                    at = Instant.parse("2026-11-20T08:00:00Z"),
+                ),
+                ContinuityTurnFixture.Line(
+                    human = "Two exact source.",
+                    vex = "two",
+                    at = Instant.parse("2026-11-20T08:05:00Z"),
+                ),
+            )
+            val backend =
+                DeterministicSemanticBackend(
+                    fingerprintBindingRef =
+                        "fingerprint.test.semantic-ranked-duplicate",
+                    semanticRepresentationBindingRef =
+                        "semantic.test.ranked-duplicate-v1",
+                )
+
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = backend,
+                )
+                backend.forcedRankedIndexes =
+                    listOf(
+                        0,
+                        0,
+                    )
+
+                val outcome =
+                    assertIs<VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired>(
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner = this,
+                            queries =
+                                listOf(
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryRef =
+                                            "semantic",
+                                        queryTerms =
+                                            listOf(
+                                                "semantic-only-clue",
+                                            ),
+                                        speakerScope =
+                                            VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                    ),
+                                ),
+                            backend = backend,
+                        ),
+                    )
+
+                assertEquals(
+                    VexLifeContinuitySourceLocator.FallbackReason.SEMANTIC_INDEX_CORRUPT,
+                    outcome.reason,
+                )
+            }
+        }
+    }
+
+    @Test
     fun lexicalNeighborhoodHitDoesNotInvokeSemanticNomination() {
         ContinuityTurnFixture().use {
             fixture ->
@@ -1803,6 +1952,9 @@ class VexLifeContinuitySourceLocatorTest {
         var forceCorruptIndex: Boolean =
             false
 
+        var forcedRankedIndexes: List<Int>? =
+            null
+
         override val fingerprintBindingRef: String
             get() =
                 lexical.fingerprintBindingRef
@@ -1950,23 +2102,24 @@ class VexLifeContinuitySourceLocatorTest {
                     }
                     ?.entryIndex
             val indexes =
-                when {
-                    forceCorruptIndex ->
-                        setOf(
-                            generation.entries.size +
-                                7,
-                        )
+                forcedRankedIndexes
+                    ?: when {
+                        forceCorruptIndex ->
+                            listOf(
+                                generation.entries.size +
+                                    7,
+                            )
 
-                    meridianRequested &&
-                        meridianIndex !=
-                        null ->
-                        setOf(
-                            meridianIndex,
-                        )
+                        meridianRequested &&
+                            meridianIndex !=
+                            null ->
+                            listOf(
+                                meridianIndex,
+                            )
 
-                    else ->
-                        emptySet()
-                }
+                        else ->
+                            emptyList()
+                    }
 
             return VexLifeContinuitySourceLocator.SemanticCandidateLookup(
                 entryIndexes =
