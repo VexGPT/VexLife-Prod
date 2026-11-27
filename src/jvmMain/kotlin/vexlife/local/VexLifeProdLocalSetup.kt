@@ -6,6 +6,8 @@ import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.logging.VexLogger
 import vexlife.conversation.DirectConversationStore
+import vexlife.continuity.VexLifeBgeM3ArtifactMaterialization
+import vexlife.continuity.VexLifeBgeM3MacPythonEnvironment
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
@@ -55,6 +57,8 @@ object VexLifeProdLocalSetup {
         val requestModel: String,
         val promptCacheEntryLimit: Int? = null,
         val visualEnvironmentDisposition: String = "NOT_REQUESTED",
+        val semanticArtifactDisposition: String = "NOT_REQUESTED",
+        val semanticEnvironmentDisposition: String = "NOT_REQUESTED",
     )
 
     /**
@@ -307,6 +311,35 @@ object VexLifeProdLocalSetup {
                     managedPython = managedPython,
                     productHome = productHome,
                     allowCreation = true,
+                )
+            },
+        /**
+         * Long-horizon semantic retrieval prerequisites are setup effects, never ordinary Send
+         * effects. Missing BGE bytes/environment may be formed only while setup already holds
+         * acquisition authority.
+         */
+        val ensureSemanticArtifacts:
+            (
+                productHome: Path,
+                allowAcquisition: Boolean,
+            ) -> VexLifeBgeM3ArtifactMaterialization.Result =
+            { productHome, allowAcquisition ->
+                VexLifeBgeM3ArtifactMaterialization.ensure(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                )
+            },
+        val ensureSemanticEnvironment:
+            (
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+                allowCreation: Boolean,
+            ) -> VexLifeBgeM3MacPythonEnvironment.Result? =
+            { managedPython, productHome, allowCreation ->
+                VexLifeBgeM3MacPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = allowCreation,
                 )
             },
         val observeStableRuntime:
@@ -614,6 +647,50 @@ object VexLifeProdLocalSetup {
                 "NOT_REQUESTED"
             }
 
+        var semanticArtifactDisposition =
+            "NOT_REQUESTED"
+        var semanticEnvironmentDisposition =
+            "NOT_REQUESTED"
+
+        if (
+            allowAcquisition
+        ) {
+            try {
+                val semanticArtifacts =
+                    hooks.ensureSemanticArtifacts(
+                        Path.of(
+                            home.productHome,
+                        ),
+                        true,
+                    )
+                semanticArtifactDisposition =
+                    semanticArtifacts.observation.state.name
+
+                semanticEnvironmentDisposition =
+                    hooks.ensureSemanticEnvironment(
+                        managedPython,
+                        Path.of(
+                            home.productHome,
+                        ),
+                        true,
+                    )
+                        ?.state
+                        ?: "HELD_NOT_AVAILABLE"
+            } catch (
+                _: Throwable,
+            ) {
+                if (
+                    semanticArtifactDisposition ==
+                    "NOT_REQUESTED"
+                ) {
+                    semanticArtifactDisposition =
+                        "HELD_PREPARATION_FAILED"
+                }
+                semanticEnvironmentDisposition =
+                    "HELD_PREPARATION_FAILED"
+            }
+        }
+
         val realization =
             requireNotNull(
                 HereticRuntimeRealization.resolve(
@@ -895,6 +972,10 @@ object VexLifeProdLocalSetup {
                     promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
                     visualEnvironmentDisposition =
                         visualEnvironmentDisposition,
+                    semanticArtifactDisposition =
+                        semanticArtifactDisposition,
+                    semanticEnvironmentDisposition =
+                        semanticEnvironmentDisposition,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
             generationReadiness = generationReadiness,
