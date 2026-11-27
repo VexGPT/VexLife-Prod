@@ -1051,19 +1051,24 @@ class VexLifeContextRevisitTest {
     }
 
     @Test
-    fun semanticRankDoesNotOutrankOtherwiseEqualExactSeedRoute() {
+    fun semanticRankDoesNotCrossAnExactSeedBoundary() {
         ContinuityTurnFixture().use {
             fixture ->
             val committed =
                 fixture.commit(
                     Line(
-                        "Older semantic candidate.",
-                        "Older candidate.",
+                        "Oldest semantic rank one candidate.",
+                        "Oldest candidate.",
                         minutesAgo(120),
                     ),
                     Line(
-                        "Newer exact seed source.",
-                        "Newer seeded.",
+                        "Middle exact seed source.",
+                        "Middle seeded.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "Newest semantic rank two candidate.",
+                        "Newest candidate.",
                         minutesAgo(60),
                     ),
                 )
@@ -1149,7 +1154,7 @@ class VexLifeContextRevisitTest {
                             totalCompletedTurnCount =
                                 projected.size,
                             conversationEventsRead =
-                                4,
+                                6,
                             exactHeadFileReadCount =
                                 2,
                             wholeHistoryHeadTraversalPerformed =
@@ -1172,6 +1177,12 @@ class VexLifeContextRevisitTest {
                                         turnRef =
                                             committed[0].first.turnRef,
                                     ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[2].first.turnRef,
+                                    ),
                                 ),
                         ),
                 )
@@ -1183,20 +1194,26 @@ class VexLifeContextRevisitTest {
                     estimateTokens = ::estimate,
                 )
 
+            val newestSemanticIndex =
+                result.text.indexOf(
+                    "Newest semantic rank two candidate.",
+                )
             val seedIndex =
                 result.text.indexOf(
-                    "Newer exact seed source.",
+                    "Middle exact seed source.",
                 )
-            val semanticIndex =
+            val oldestRankOneIndex =
                 result.text.indexOf(
-                    "Older semantic candidate.",
+                    "Oldest semantic rank one candidate.",
                 )
             assertTrue(
-                seedIndex >=
+                newestSemanticIndex >=
                     0 &&
-                    semanticIndex >
+                    seedIndex >
+                        newestSemanticIndex &&
+                    oldestRankOneIndex >
                         seedIndex,
-                "semantic rank must not outrank an otherwise-equal non-semantic direct route",
+                "semantic rank may reorder a semantic-only run but must not cross a non-semantic direct-route boundary",
             )
         }
     }
