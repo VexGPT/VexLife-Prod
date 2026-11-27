@@ -45,6 +45,9 @@ object VexLifeAttentionClaim {
             requireRef(ownerRef, "ownerRef")
             requireRef(sourceRef, "sourceRef")
             requireRef(candidateRef, "candidateRef")
+            acknowledgementRequirementRefOrNull?.let {
+                requireRef(it, "acknowledgementRequirementRefOrNull")
+            }
             requireRefs(
                 candidateSourceBindingRefs,
                 "candidateSourceBindingRefs",
@@ -103,6 +106,7 @@ object VexLifeAttentionClaim {
         val actorRef: String,
         val requirementRef: String,
         val requirementBindingRefs: List<String>,
+        val acknowledgementRequirementRefOrNull: String?,
         val candidateSourceBindingRefs: List<String>,
         val subjectScopeRefs: List<String>,
     ) {
@@ -237,6 +241,12 @@ object VexLifeAttentionClaim {
             actual = observation.requirementBindingRefs,
             label = "attention acknowledgement requirement binding",
         )
+        require(
+            observation.acknowledgementRequirementRefOrNull ==
+                claim.acknowledgementRequirementRefOrNull,
+        ) {
+            "attention acknowledgement requirement identity is stale or mismatched"
+        }
         requireSameRefs(
             expected = claim.candidateSourceBindingRefs,
             actual = observation.candidateSourceBindingRefs,
