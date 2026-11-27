@@ -970,6 +970,13 @@ class DirectPromptContextTest {
                         materialized.messages.first(),
                         "the 4B text-control warmup must begin with the exact provider-leading system message used by the real first turn",
                     )
+                    assertContains(
+                        materialized.messages
+                            .first()
+                            .content,
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
+                        "ordinary Qwen text-control prompt must consume the request-owned instruction",
+                    )
                     assertFalse(
                         materialized.messages
                             .first()
