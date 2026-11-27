@@ -29,6 +29,24 @@ object VexLifeCapabilityRequest {
     const val RequestHeader = "VEXLIFE_CAPABILITY_REQUEST/v1"
     const val ResultHeader = "VEXLIFE_CAPABILITY_RESULT/v1"
 
+    /**
+     * One source-owned instruction for the text-control request channel.
+     *
+     * Ordinary prompt projection and exact-runtime qualification both consume this relationship so
+     * provider guidance cannot drift away from the parser/Bridge contract.
+     */
+    val TextControlProviderInstruction =
+        "For a text-control capability request, the whole reply for that provider stage must begin " +
+            "with the exact header " +
+            RequestHeader +
+            " followed by one JSON object with capability, action, and arguments. " +
+            "The canonical header is mandatory unless the exact structured protocol/version wrapper " +
+            "is used; bare JSON or code-fenced JSON without either admitted request marker is " +
+            "ordinary assistant text and performs nothing. Stop composing the human-facing answer " +
+            "until the host returns a real " +
+            ResultHeader +
+            " result."
+
     /** The header must start a line within this many characters of the start of the reply. */
     const val MaximumControlPreambleCharacters = 512
 
