@@ -20,8 +20,7 @@ import vexlife.contract.VexContractJson
  * ```
  *
  * Parsing is deliberately forgiving about form (code fences, `capabilityRef` vs `capability`,
- * trailing whitespace, one exact nested protocol/version wrapper, and the exact sibling-version
- * representation observed from the qualified Qwen 4B runtime) and strict about meaning.
+ * trailing whitespace, and one exact structured protocol/version wrapper) and strict about meaning.
  * The canonical header-line form remains preferred. A clearly intended request that cannot be read
  * becomes [Parsed.Malformed], which the bridge answers with the exact form instead of failing the
  * human's turn.
@@ -193,51 +192,6 @@ object VexLifeCapabilityRequest {
                 controlContent = control,
                 controlSha256 = sha,
             )
-
-        val siblingVersion =
-            wrapper[
-                "VEXLIFE_CAPABILITY_REQUEST"
-            ]
-                .stringOrNull()
-        if (
-            siblingVersion !=
-                null
-        ) {
-            if (
-                siblingVersion !=
-                    "v1"
-            ) {
-                return malformed(
-                    "structured capability request sibling version must be exactly \"v1\"",
-                )
-            }
-            val expectedKeys =
-                setOf(
-                    "VEXLIFE_CAPABILITY_REQUEST",
-                    "capability",
-                    "action",
-                    "arguments",
-                )
-            if (
-                wrapper.keys !=
-                    expectedKeys
-            ) {
-                return malformed(
-                    "structured capability request sibling form must contain only the exact v1 marker, capability, action, and arguments",
-                )
-            }
-            return parseRequestObject(
-                json =
-                    JsonObject(
-                        wrapper.filterKeys {
-                            it !=
-                                "VEXLIFE_CAPABILITY_REQUEST"
-                        },
-                    ),
-                control = control,
-                sha = sha,
-            )
-        }
 
         if (
             wrapper.keys !=
