@@ -352,9 +352,11 @@ class MacHereticNativeToolQualificationTest {
             "provider stage must carry the canonical request header in its system relationship",
         )
         assertTrue(
-            firstStage.contains(
-                VexLifeCapabilityRequest.TextControlProviderInstruction,
-            ),
+            firstStage.any {
+                it.contains(
+                    VexLifeCapabilityRequest.TextControlProviderInstruction,
+                )
+            },
             "qualification must consume the same request-owned instruction as an ordinary Product turn",
         )
         assertTrue(
