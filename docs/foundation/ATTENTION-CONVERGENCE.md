@@ -1,4 +1,4 @@
-# VexLife Attention Convergence — perceptibility + activity-scoped nomination
+# VexLife Attention Convergence — perceptibility + activity nomination + source claims
 
 `[VXG RealForever]`
 
@@ -374,13 +374,155 @@ A2 does **not** yet:
 - mutate Memory or Conversation;
 - grant effects.
 
+
+## A3 source-owned claim core
+
+A3 begins with the part that does **not** require Working Focus ownership:
+
+> A rightful source already says one exact current condition requires present attention. How can
+> Attention carry that requirement and an acknowledgement without inventing severity, priority,
+> source resolution, displacement or effect authority?
+
+Current source:
+
+```text
+src/commonMain/kotlin/vexlife/attention/VexLifeAttentionClaim.kt
+src/commonTest/kotlin/vexlife/attention/VexLifeAttentionClaimTest.kt
+```
+
+### Requirement comes from the source owner
+
+Attention does not decide that a condition is important enough to interrupt anything.
+
+A source/domain owner supplies one `SourceRequirement`:
+
+```text
+requirementRef
+ownerRef
+sourceRef
+
+candidateRef
+candidateSourceBindingRefs[]
+candidateSubjectScopeRefs[]
+
+requirementBindingRefs[]
+requirementStandingRef
+acknowledgementRequirementRefOrNull
+```
+
+The type itself means:
+
+```text
+THE SOURCE OWNER SAYS THIS CURRENT CONDITION REQUIRES PRESENT ATTENTION
+```
+
+Attention validates that the requirement still binds the exact current A1 candidate.
+
+It does **not** interpret `requirementStandingRef` as severity, urgency or a global score.
+
+```text
+SOURCE-OWNED REQUIREMENT
+!= ATTENTION-INVENTED IMPORTANCE
+!= GLOBAL PRIORITY
+!= PRESENTATION ORDER
+```
+
+### Claim is a bounded projection, not a notification
+
+`form(candidate, requirement)` preserves:
+
+```text
+owner / source
+candidate identity
+source/currentness bindings
+subject scope
+source standing
+requirement bindings + standing
+acknowledgement requirement
+deeper-source coordinate
+reachability
+```
+
+It does not present anything to a person/model and does not displace Working Focus.
+
+```text
+ATTENTION CLAIM
+!= NOTIFICATION
+!= PROMPT INSERTION
+!= INTERRUPTION EFFECT
+!= SOURCE READ
+```
+
+A deterministic `Surface` may carry multiple claims for inspection. Lexical requirement identity
+order exists only for stable serialization.
+
+```text
+LEXICAL CLAIM ORDER
+!= SEVERITY
+!= URGENCY
+!= PRIORITY
+!= PRESENTATION ORDER
+```
+
+### Acknowledgement is not source resolution
+
+The rightful interaction/human-control owner may supply one exact
+`AcknowledgementObservation`.
+
+Attention binds it to:
+
+```text
+requirementRef
+requirementBindingRefs[]
+candidateSourceBindingRefs[]
+subjectScopeRefs[]
+```
+
+before returning an `AcknowledgedClaim`.
+
+Permanent:
+
+```text
+ACKNOWLEDGED
+!= SOURCE CONDITION RESOLVED
+!= REQUIREMENT RETIRED
+!= EFFECT AUTHORITY
+```
+
+Acknowledgement does not mutate the source condition and cannot mark its requirement resolved.
+The source/domain owner must separately re-observe and change/retire the requirement.
+
+### Working Focus-dependent A3 remains held
+
+The parked Self-Inspection / Working Focus design currently treats Working Continuity ownership as a
+hypothesis to be pressure-tested, not landed Product truth.
+
+Therefore this A3 core deliberately stops before:
+
+```text
+claim becomes present interruption
+-> current Working Focus displaced
+-> displaced focus custody preserved
+-> source condition later resolves
+-> prior focus lawfully resumed
+```
+
+Those relationships will consume the rightful then-current Working Focus owner rather than make
+Attention invent one.
+
+```text
+CLAIM CORE CAN LAND WITHOUT WORKING FOCUS
+DISPLACEMENT / RESUME CANNOT
+```
+
+
 ## Next edge
 
-A3 must answer:
+The next A3 extension must answer only the part that now genuinely depends on another owner:
 
-> How can an already source-qualified current condition require present awareness, preserve any
-> displaced Working Focus, keep acknowledgement distinct from source resolution, and later return
-> to the prior work without Attention inventing domain severity or a global priority truth?
+> When a source-owned current claim must actually take present attention, how does Attention
+> preserve the exact displaced Working Focus and later return to it without becoming the Working
+> Focus owner?
 
 That work must preserve:
 
@@ -390,6 +532,7 @@ ATTENTION CLAIM != SOURCE TRUTH
 ACKNOWLEDGED != SOURCE RESOLVED
 DISPLACED != DELETED
 RETURN != RECONSTRUCT FROM CHAT
+ATTENTION != WORKING FOCUS OWNER
 ```
 
-<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][A2][PERCEPTIBILITY][ACTIVITY] -->
+<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][A2][A3-CLAIM-CORE] -->
