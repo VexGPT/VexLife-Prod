@@ -2825,7 +2825,7 @@ object VexLifeCapabilityBridge {
         val result =
             VexLifeContextRevisit.revisit(
                 request = request,
-                sources = bound.sources(request.scopes),
+                sources = bound.sources(request),
                 estimateTokens = estimateTokens,
             )
         require(!result.effectsPerformed) { "revisit performed an effect" }

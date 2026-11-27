@@ -27,7 +27,7 @@ import vexlife.conversation.DirectConversationStore
  */
 object VexLifeContinuitySourceLocator {
     const val GenerationSchema =
-        "vexlife-prod.continuity-source-locator-generation/v1"
+        "vexlife-prod.continuity-source-locator-generation/v4"
 
     const val UnboundSourceLifecycleBindingRef =
         "lifecycle.unbound"
@@ -36,11 +36,18 @@ object VexLifeContinuitySourceLocator {
     const val MaximumQueryTermCharacters = 160
     const val MaximumExactCandidateReopens = 48
     const val MaximumReturnedTurns = 3
+    const val MaximumNeighborhoodDirectTurns = 24
+    const val MaximumNeighborhoodTurns = 48
 
     enum class SpeakerScope {
         ANY,
         HUMAN,
         VEX,
+    }
+
+    enum class TypedEdgeKind {
+        CORRECTS_PREVIOUS,
+        POINTS_BACK_PREVIOUS,
     }
 
     enum class FallbackReason {
@@ -53,6 +60,7 @@ object VexLifeContinuitySourceLocator {
         SOURCE_LIFECYCLE_BINDING_MISMATCH,
         EXACT_VERIFICATION_MISS,
         SOURCE_COORDINATE_MISMATCH,
+        INDEXED_NEIGHBORHOOD_UNAVAILABLE,
     }
 
     data class SourceCoordinates(
@@ -65,9 +73,12 @@ object VexLifeContinuitySourceLocator {
      * content. Fingerprints belong only to this backend realization.
      */
     data class Entry(
+        val turnRef: String,
+        val canonicalOrdinal: Int,
         val coordinates: SourceCoordinates,
         val requestFingerprints: Set<String>,
         val responseFingerprints: Set<String>,
+        val typedEdges: Set<TypedEdgeKind>,
     )
 
     /**
@@ -84,6 +95,7 @@ object VexLifeContinuitySourceLocator {
         val fingerprintBindingRef: String,
         val sourceEventCount: Int,
         val completedTurnCount: Int,
+        val canonicalCompletedTurnCount: Int,
         val entries: List<Entry>,
         val sourceLifecycleBindingRef: String =
             UnboundSourceLifecycleBindingRef,
@@ -124,6 +136,49 @@ object VexLifeContinuitySourceLocator {
         fun clear()
     }
 
+    data class IndexedCandidateLookup(
+        val entryIndexes: Set<Int>,
+        val postingLookupCount: Int,
+    )
+
+    data class IndexedRefLookup(
+        val entryIndexesByRef: Map<String, Int>,
+        val refLookupCount: Int,
+    )
+
+    data class IndexedTypedEdgeLookup(
+        val entryIndexes: Set<Int>,
+        val typedEdgeLookupCount: Int,
+    )
+
+    /**
+     * Optional realization capability for inverted lexical/ref/typed-edge lookup.
+     *
+     * Product semantics do not require this exact data structure. A backend that does not implement
+     * it preserves the prior linear derived-entry scan; a qualified backend may instead answer
+     * postings and append one new entry without rebuilding lifetime derived state.
+     */
+    interface IndexedBackend : Backend {
+        fun candidateEntryIndexes(
+            queryFingerprints: List<Set<String>>,
+            speakerScope: SpeakerScope,
+        ): IndexedCandidateLookup
+
+        fun entryIndexesForRefs(
+            refs: Set<String>,
+        ): IndexedRefLookup
+
+        fun entryIndexesForTypedEdges(
+            typedEdges: Set<TypedEdgeKind>,
+        ): IndexedTypedEdgeLookup
+
+        fun replaceAfterAppend(
+            priorGeneration: Generation,
+            generation: Generation,
+            appendedEntry: Entry,
+        )
+    }
+
     /**
      * Volatile reference realization. It deliberately persists nothing to Home, which keeps the
      * first substrate proof out of the unresolved durable-index leakage/encryption decision.
@@ -138,7 +193,7 @@ object VexLifeContinuitySourceLocator {
                         "-",
                         "",
                     ),
-    ) : Backend {
+    ) : IndexedBackend {
         private val secret: ByteArray =
             secret.copyOf().also {
                 require(it.size >= 32) {
@@ -151,6 +206,18 @@ object VexLifeContinuitySourceLocator {
             }
 
         private var generation: Generation? = null
+
+        private val requestPostings =
+            linkedMapOf<String, MutableSet<Int>>()
+
+        private val responsePostings =
+            linkedMapOf<String, MutableSet<Int>>()
+
+        private val entryIndexByRef =
+            linkedMapOf<String, Int>()
+
+        private val entryIndexesByTypedEdge =
+            linkedMapOf<TypedEdgeKind, MutableSet<Int>>()
 
         override fun fingerprint(value: String): String {
             val mac =
@@ -187,11 +254,272 @@ object VexLifeContinuitySourceLocator {
         override fun replace(generation: Generation) {
             this.generation =
                 generation
+            requestPostings.clear()
+            responsePostings.clear()
+            entryIndexByRef.clear()
+            entryIndexesByTypedEdge.clear()
+            generation.entries.forEachIndexed(
+                ::indexEntry,
+            )
+        }
+
+        override fun replaceAfterAppend(
+            priorGeneration: Generation,
+            generation: Generation,
+            appendedEntry: Entry,
+        ) {
+            val observedPrior =
+                this.generation
+            if (
+                observedPrior ==
+                null
+            ) {
+                require(
+                    priorGeneration.entries.isEmpty() &&
+                        priorGeneration.sourceConversationHeadSha256 ==
+                            null &&
+                        priorGeneration.sourceConversationSequence ==
+                            null &&
+                        requestPostings.isEmpty() &&
+                        responsePostings.isEmpty() &&
+                        entryIndexByRef.isEmpty() &&
+                        entryIndexesByTypedEdge.isEmpty()
+                ) {
+                    "indexed locator append cannot bootstrap from a non-empty missing generation"
+                }
+            } else {
+                require(
+                    observedPrior ==
+                        priorGeneration
+                ) {
+                    "indexed locator append prior generation changed"
+                }
+            }
+            require(
+                generation.entries.size ==
+                    priorGeneration.entries.size +
+                        1 &&
+                    generation.entries.dropLast(
+                        1,
+                    ) ==
+                    priorGeneration.entries &&
+                    generation.entries.last() ==
+                    appendedEntry
+            ) {
+                "indexed locator append does not extend the exact prior generation"
+            }
+
+            this.generation =
+                generation
+            indexEntry(
+                generation.entries.lastIndex,
+                appendedEntry,
+            )
+        }
+
+        override fun candidateEntryIndexes(
+            queryFingerprints: List<Set<String>>,
+            speakerScope: SpeakerScope,
+        ): IndexedCandidateLookup {
+            var postingLookups =
+                0
+
+            fun posting(
+                fingerprint: String,
+            ): Set<Int> {
+                postingLookups +=
+                    1
+                return when (
+                    speakerScope
+                ) {
+                    SpeakerScope.HUMAN ->
+                        requestPostings[
+                            fingerprint
+                        ]
+                            .orEmpty()
+
+                    SpeakerScope.VEX ->
+                        responsePostings[
+                            fingerprint
+                        ]
+                            .orEmpty()
+
+                    SpeakerScope.ANY ->
+                        requestPostings[
+                            fingerprint
+                        ]
+                            .orEmpty() +
+                            responsePostings[
+                                fingerprint
+                            ]
+                                .orEmpty()
+                }
+            }
+
+            val candidates =
+                linkedSetOf<Int>()
+            queryFingerprints.forEach {
+                fingerprints ->
+                if (
+                    fingerprints.isEmpty()
+                ) {
+                    return@forEach
+                }
+                var intersection: Set<Int>? =
+                    null
+                for (
+                    fingerprint in
+                    fingerprints
+                ) {
+                    val next =
+                        posting(
+                            fingerprint,
+                        )
+                    if (
+                        next.isEmpty()
+                    ) {
+                        intersection =
+                            emptySet()
+                        break
+                    }
+                    intersection =
+                        intersection
+                            ?.intersect(
+                                next,
+                            )
+                            ?: next.toSet()
+                    if (
+                        intersection.isEmpty()
+                    ) {
+                        break
+                    }
+                }
+                candidates +=
+                    intersection.orEmpty()
+            }
+
+            return IndexedCandidateLookup(
+                entryIndexes =
+                    candidates,
+                postingLookupCount =
+                    postingLookups,
+            )
+        }
+
+        override fun entryIndexesForRefs(
+            refs: Set<String>,
+        ): IndexedRefLookup {
+            val found =
+                linkedMapOf<String, Int>()
+            refs.forEach {
+                ref ->
+                entryIndexByRef[
+                    ref
+                ]
+                    ?.let {
+                        index ->
+                        found[
+                            ref
+                        ] =
+                            index
+                    }
+            }
+            return IndexedRefLookup(
+                entryIndexesByRef =
+                    found,
+                refLookupCount =
+                    refs.size,
+            )
+        }
+
+        override fun entryIndexesForTypedEdges(
+            typedEdges: Set<TypedEdgeKind>,
+        ): IndexedTypedEdgeLookup {
+            val indexes =
+                linkedSetOf<Int>()
+            typedEdges.forEach {
+                edge ->
+                indexes +=
+                    entryIndexesByTypedEdge[
+                        edge
+                    ]
+                        .orEmpty()
+            }
+            return IndexedTypedEdgeLookup(
+                entryIndexes =
+                    indexes,
+                typedEdgeLookupCount =
+                    typedEdges.size,
+            )
         }
 
         override fun clear() {
             generation =
                 null
+            requestPostings.clear()
+            responsePostings.clear()
+            entryIndexByRef.clear()
+            entryIndexesByTypedEdge.clear()
+        }
+
+        private fun indexEntry(
+            index: Int,
+            entry: Entry,
+        ) {
+            entry.requestFingerprints.forEach {
+                fingerprint ->
+                requestPostings
+                    .getOrPut(
+                        fingerprint,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
+            entry.responseFingerprints.forEach {
+                fingerprint ->
+                responsePostings
+                    .getOrPut(
+                        fingerprint,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
+            for (
+                ref in
+                listOf(
+                    entry.turnRef,
+                    entry.coordinates.request.eventRef,
+                    entry.coordinates.response.eventRef,
+                )
+            ) {
+                require(
+                    entryIndexByRef.put(
+                        ref,
+                        index,
+                    ) ==
+                        null
+                ) {
+                    "indexed locator contains duplicate turn/event ref"
+                }
+            }
+            entry.typedEdges.forEach {
+                edge ->
+                entryIndexesByTypedEdge
+                    .getOrPut(
+                        edge,
+                    ) {
+                        linkedSetOf()
+                    }
+                    .add(
+                        index,
+                    )
+            }
         }
     }
 
@@ -225,6 +553,39 @@ object VexLifeContinuitySourceLocator {
         val responseEvent: DirectConversationStore.Event,
     )
 
+    data class NeighborhoodQuery(
+        val queryTerms: List<String>,
+        val speakerScope: SpeakerScope,
+        val seedRefs: Set<String> = emptySet(),
+        val typedEdges: Set<TypedEdgeKind> = emptySet(),
+    )
+
+    sealed interface NeighborhoodOutcome {
+        data class Ready(
+            val currentConversationHeadSha256: String?,
+            val generationConversationHeadSha256: String?,
+            val turns: List<VexLifeTurnNavigation.Turn>,
+            val directTurnRefs: Set<String>,
+            val unresolvedSeedRefs: Set<String>,
+            val totalCompletedTurnCount: Int,
+            val exactEventFileReadCount: Int,
+            val exactHeadFileReadCount: Int,
+            val wholeHistoryHeadTraversalPerformed: Boolean,
+            val derivedEntryScanCount: Int,
+            val derivedPostingLookupCount: Int,
+            val derivedRefLookupCount: Int,
+            val derivedTypedEdgeLookupCount: Int,
+            val wholeHistoryEventEnumerationPerformed: Boolean = false,
+            val canonicalSourceMutationPerformed: Boolean = false,
+        ) : NeighborhoodOutcome
+
+        data class FallbackRequired(
+            val reason: FallbackReason,
+            val currentConversationHeadSha256: String?,
+            val generationConversationHeadSha256: String?,
+        ) : NeighborhoodOutcome
+    }
+
     sealed interface LocateOutcome {
         val currentConversationHeadSha256: String?
         val wholeHistoryEventEnumerationPerformed: Boolean
@@ -237,6 +598,8 @@ object VexLifeContinuitySourceLocator {
             val exactEventFileReadCount: Int,
             val exactHeadFileReadCount: Int,
             val wholeHistoryHeadTraversalPerformed: Boolean,
+            val derivedEntryScanCount: Int = 0,
+            val derivedPostingLookupCount: Int = 0,
             override val wholeHistoryEventEnumerationPerformed: Boolean = false,
             override val canonicalSourceMutationPerformed: Boolean = false,
         ) : LocateOutcome
@@ -244,6 +607,8 @@ object VexLifeContinuitySourceLocator {
         data class CurrentMiss(
             override val currentConversationHeadSha256: String?,
             val generationConversationHeadSha256: String?,
+            val derivedEntryScanCount: Int = 0,
+            val derivedPostingLookupCount: Int = 0,
             override val wholeHistoryEventEnumerationPerformed: Boolean = false,
             override val canonicalSourceMutationPerformed: Boolean = false,
         ) : LocateOutcome
@@ -311,6 +676,11 @@ object VexLifeContinuitySourceLocator {
                     ) {
                         add(
                             Entry(
+                                turnRef =
+                                    request.turnRef,
+                                canonicalOrdinal =
+                                    index /
+                                        2,
                                 coordinates =
                                     SourceCoordinates(
                                         request =
@@ -331,6 +701,10 @@ object VexLifeContinuitySourceLocator {
                                     fingerprints(
                                         response.content,
                                         backend,
+                                    ),
+                                typedEdges =
+                                    typedEdges(
+                                        request.content,
                                     ),
                             ),
                         )
@@ -358,6 +732,9 @@ object VexLifeContinuitySourceLocator {
                         2,
                 completedTurnCount =
                     entries.size,
+                canonicalCompletedTurnCount =
+                    snapshot.canonicalEvents.size /
+                        2,
                 entries = entries,
             )
         requireGeneration(
@@ -435,6 +812,7 @@ object VexLifeContinuitySourceLocator {
                                 UnboundSourceLifecycleBindingRef,
                             sourceEventCount = 0,
                             completedTurnCount = 0,
+                            canonicalCompletedTurnCount = 0,
                             entries = emptyList(),
                         )
                     } else {
@@ -479,6 +857,38 @@ object VexLifeContinuitySourceLocator {
             return catchUpRebuildRequired()
         }
 
+        val appendedEntry =
+            Entry(
+                turnRef =
+                    request.turnRef,
+                canonicalOrdinal =
+                    priorGeneration.canonicalCompletedTurnCount,
+                coordinates =
+                    SourceCoordinates(
+                        request =
+                            address(
+                                request,
+                            ),
+                        response =
+                            address(
+                                response,
+                            ),
+                    ),
+                requestFingerprints =
+                    fingerprints(
+                        request.content,
+                        backend,
+                    ),
+                responseFingerprints =
+                    fingerprints(
+                        response.content,
+                        backend,
+                    ),
+                typedEdges =
+                    typedEdges(
+                        request.content,
+                    ),
+            )
         val updated =
             Generation(
                 schemaVersion = GenerationSchema,
@@ -496,38 +906,33 @@ object VexLifeContinuitySourceLocator {
                 completedTurnCount =
                     priorGeneration.completedTurnCount +
                         1,
+                canonicalCompletedTurnCount =
+                    priorGeneration.canonicalCompletedTurnCount +
+                        1,
                 entries =
                     priorGeneration.entries +
-                        Entry(
-                            coordinates =
-                                SourceCoordinates(
-                                    request =
-                                        address(
-                                            request,
-                                        ),
-                                    response =
-                                        address(
-                                            response,
-                                        ),
-                                ),
-                            requestFingerprints =
-                                fingerprints(
-                                    request.content,
-                                    backend,
-                                ),
-                            responseFingerprints =
-                                fingerprints(
-                                    response.content,
-                                    backend,
-                                ),
-                        ),
+                        appendedEntry,
             )
         requireGeneration(
             updated,
         )
-        backend.replace(
-            updated,
-        )
+        if (
+            backend is
+            IndexedBackend
+        ) {
+            backend.replaceAfterAppend(
+                priorGeneration =
+                    priorGeneration,
+                generation =
+                    updated,
+                appendedEntry =
+                    appendedEntry,
+            )
+        } else {
+            backend.replace(
+                updated,
+            )
+        }
         return CatchUpReceipt(
             state = CatchUpState.UPDATED,
             sourceConversationHeadSha256 =
@@ -689,9 +1094,55 @@ object VexLifeContinuitySourceLocator {
                     backend = backend,
                 )
             }
+        val indexedLookup =
+            (backend as? IndexedBackend)
+                ?.candidateEntryIndexes(
+                    queryFingerprints =
+                        normalizedTerms.map(
+                            queryFingerprints::getValue,
+                        ),
+                    speakerScope =
+                        speakerScope,
+                )
+        val candidateEntries =
+            if (
+                indexedLookup !=
+                null
+            ) {
+                indexedLookup.entryIndexes
+                    .asSequence()
+                    .sorted()
+                    .map {
+                        index ->
+                        require(
+                            index in
+                                generation.entries.indices
+                        ) {
+                            "indexed locator posting points outside the current generation"
+                        }
+                        generation.entries[
+                            index
+                        ]
+                    }
+            } else {
+                generation.entries
+                    .asSequence()
+            }
+        val derivedEntryScanCount =
+            if (
+                indexedLookup ==
+                null
+            ) {
+                generation.entries.size
+            } else {
+                0
+            }
+        val derivedPostingLookupCount =
+            indexedLookup
+                ?.postingLookupCount
+                ?: 0
         val approximate =
-            generation.entries
-                .asSequence()
+            candidateEntries
                 .filter {
                     entry ->
                     entry.coordinates.request.eventRef !in
@@ -744,6 +1195,10 @@ object VexLifeContinuitySourceLocator {
                 currentConversationHeadSha256 = currentHeadSha,
                 generationConversationHeadSha256 =
                     generation.sourceConversationHeadSha256,
+                derivedEntryScanCount =
+                    derivedEntryScanCount,
+                derivedPostingLookupCount =
+                    derivedPostingLookupCount,
             )
         }
 
@@ -898,8 +1353,529 @@ object VexLifeContinuitySourceLocator {
                 exact.exactHeadFileReadCount,
             wholeHistoryHeadTraversalPerformed =
                 exact.wholeHistoryHeadTraversalPerformed,
+            derivedEntryScanCount =
+                derivedEntryScanCount,
+            derivedPostingLookupCount =
+                derivedPostingLookupCount,
         )
     }
+
+    /**
+     * Resolve one bounded Conversation neighborhood for ContextRevisit without projecting the whole
+     * thread. Direct lexical/seed rows are nominated by the current indexed backend; only exact
+     * immediate canonical neighbors are added for one typed expansion step.
+     */
+    fun locateNeighborhood(
+        conversationOwner: DirectConversationStore.Locked,
+        queries: List<NeighborhoodQuery>,
+        backend: Backend,
+        sourceLifecycleBindingRef: String =
+            UnboundSourceLifecycleBindingRef,
+    ): NeighborhoodOutcome {
+        requirePortableRef(
+            sourceLifecycleBindingRef,
+            "sourceLifecycleBindingRef",
+        )
+        if (
+            queries.isEmpty() ||
+            queries.size >
+                6
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.UNSUPPORTED_QUERY,
+                currentConversationHeadSha256 =
+                    conversationOwner
+                        .immediatePriorCompletedTurn()
+                        ?.head
+                        ?.conversationHeadSha256,
+                generationConversationHeadSha256 =
+                    null,
+            )
+        }
+        val indexedBackend =
+            backend as? IndexedBackend
+                ?: return NeighborhoodOutcome.FallbackRequired(
+                    reason =
+                        FallbackReason.INDEXED_NEIGHBORHOOD_UNAVAILABLE,
+                    currentConversationHeadSha256 =
+                        conversationOwner
+                            .immediatePriorCompletedTurn()
+                            ?.head
+                            ?.conversationHeadSha256,
+                    generationConversationHeadSha256 =
+                        null,
+                )
+        val normalizedQueries =
+            queries.map {
+                query ->
+                query.copy(
+                    queryTerms =
+                        query.queryTerms
+                            .map(
+                                ::normalize,
+                            )
+                            .filter(
+                                String::isNotEmpty,
+                            )
+                            .distinct(),
+                    seedRefs =
+                        query.seedRefs
+                            .map(
+                                String::trim,
+                            )
+                            .filter(
+                                String::isNotEmpty,
+                            )
+                            .toSet(),
+                )
+            }
+        if (
+            normalizedQueries.any {
+                query ->
+                query.queryTerms.size >
+                    MaximumQueryTerms ||
+                    query.queryTerms.any {
+                        term ->
+                        term.length !in
+                            3..MaximumQueryTermCharacters
+                    } ||
+                    (
+                        query.queryTerms.isEmpty() &&
+                            query.seedRefs.isEmpty() &&
+                            query.typedEdges.isEmpty()
+                    )
+            }
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.UNSUPPORTED_QUERY,
+                currentConversationHeadSha256 =
+                    conversationOwner
+                        .immediatePriorCompletedTurn()
+                        ?.head
+                        ?.conversationHeadSha256,
+                generationConversationHeadSha256 =
+                    null,
+            )
+        }
+
+        val currentHead =
+            conversationOwner
+                .immediatePriorCompletedTurn()
+                ?.head
+        val currentHeadSha =
+            currentHead
+                ?.conversationHeadSha256
+        val generation =
+            when (
+                val load =
+                    backend.load()
+            ) {
+                BackendLoad.Absent ->
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.ABSENT,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            null,
+                    )
+
+                is BackendLoad.Corrupt ->
+                    return NeighborhoodOutcome.FallbackRequired(
+                        reason =
+                            FallbackReason.CORRUPT,
+                        currentConversationHeadSha256 =
+                            currentHeadSha,
+                        generationConversationHeadSha256 =
+                            null,
+                    )
+
+                is BackendLoad.Ready ->
+                    try {
+                        requireGeneration(
+                            load.generation,
+                        )
+                        load.generation
+                    } catch (
+                        _: RuntimeException,
+                    ) {
+                        return NeighborhoodOutcome.FallbackRequired(
+                            reason =
+                                FallbackReason.CORRUPT,
+                            currentConversationHeadSha256 =
+                                currentHeadSha,
+                            generationConversationHeadSha256 =
+                                load.generation
+                                    .sourceConversationHeadSha256,
+                        )
+                    }
+            }
+        if (
+            generation.fingerprintBindingRef !=
+                backend.fingerprintBindingRef
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+        if (
+            generation.sourceLifecycleBindingRef !=
+                sourceLifecycleBindingRef
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHeadSha ||
+            generation.sourceConversationSequence !=
+                currentHead
+                    ?.sequence
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.STALE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val directIndexes =
+            linkedSetOf<Int>()
+        var postingLookupCount =
+            0
+        normalizedQueries.forEach {
+            query ->
+            if (
+                query.queryTerms.isNotEmpty()
+            ) {
+                var conjunctiveCandidates: Set<Int>? =
+                    null
+                query.queryTerms.forEach {
+                    term ->
+                    val lookup =
+                        indexedBackend.candidateEntryIndexes(
+                            queryFingerprints =
+                                listOf(
+                                    trigramFingerprints(
+                                        normalized =
+                                            term,
+                                        backend =
+                                            backend,
+                                    ),
+                                ),
+                            speakerScope =
+                                query.speakerScope,
+                        )
+                    postingLookupCount +=
+                        lookup.postingLookupCount
+                    conjunctiveCandidates =
+                        conjunctiveCandidates
+                            ?.intersect(
+                                lookup.entryIndexes,
+                            )
+                            ?: lookup.entryIndexes
+                }
+                directIndexes +=
+                    conjunctiveCandidates.orEmpty()
+            }
+        }
+        val allSeedRefs =
+            normalizedQueries
+                .flatMap {
+                    query ->
+                    query.seedRefs
+                }
+                .toSet()
+        val refLookup =
+            indexedBackend.entryIndexesForRefs(
+                allSeedRefs,
+            )
+        directIndexes +=
+            refLookup.entryIndexesByRef.values
+        val unresolvedSeedRefs =
+            allSeedRefs -
+                refLookup.entryIndexesByRef.keys
+        val allTypedEdges =
+            normalizedQueries
+                .flatMap {
+                    query ->
+                    query.typedEdges
+                }
+                .toSet()
+        val typedEdgeLookup =
+            indexedBackend.entryIndexesForTypedEdges(
+                allTypedEdges,
+            )
+        directIndexes +=
+            typedEdgeLookup.entryIndexes
+
+        if (
+            directIndexes.size >
+                MaximumNeighborhoodDirectTurns
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.CANDIDATE_SET_TOO_LARGE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val neighborhoodIndexes =
+            linkedSetOf<Int>()
+        fun addIfCanonicalNeighbor(
+            leftIndex: Int,
+            rightIndex: Int,
+        ) {
+            if (
+                leftIndex !in
+                    generation.entries.indices ||
+                rightIndex !in
+                    generation.entries.indices
+            ) {
+                return
+            }
+            val left =
+                generation.entries[
+                    leftIndex
+                ]
+            val right =
+                generation.entries[
+                    rightIndex
+                ]
+            if (
+                right.canonicalOrdinal ==
+                    left.canonicalOrdinal +
+                        1
+            ) {
+                neighborhoodIndexes +=
+                    leftIndex
+                neighborhoodIndexes +=
+                    rightIndex
+            }
+        }
+        directIndexes.forEach {
+            index ->
+            require(
+                index in
+                    generation.entries.indices
+            ) {
+                "indexed locator neighborhood points outside the current generation"
+            }
+            neighborhoodIndexes +=
+                index
+            addIfCanonicalNeighbor(
+                index -
+                    1,
+                index,
+            )
+            addIfCanonicalNeighbor(
+                index,
+                index +
+                    1,
+            )
+        }
+        if (
+            neighborhoodIndexes.size >
+                MaximumNeighborhoodTurns
+        ) {
+            return NeighborhoodOutcome.FallbackRequired(
+                reason =
+                    FallbackReason.CANDIDATE_SET_TOO_LARGE,
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+            )
+        }
+
+        val selectedEntries =
+            neighborhoodIndexes
+                .sorted()
+                .map {
+                    index ->
+                    generation.entries[
+                        index
+                    ]
+                }
+        if (
+            selectedEntries.isEmpty()
+        ) {
+            return NeighborhoodOutcome.Ready(
+                currentConversationHeadSha256 =
+                    currentHeadSha,
+                generationConversationHeadSha256 =
+                    generation.sourceConversationHeadSha256,
+                turns =
+                    emptyList(),
+                directTurnRefs =
+                    emptySet(),
+                unresolvedSeedRefs =
+                    unresolvedSeedRefs,
+                totalCompletedTurnCount =
+                    generation.canonicalCompletedTurnCount,
+                exactEventFileReadCount = 0,
+                exactHeadFileReadCount = 0,
+                wholeHistoryHeadTraversalPerformed = false,
+                derivedEntryScanCount = 0,
+                derivedPostingLookupCount =
+                    postingLookupCount,
+                derivedRefLookupCount =
+                    refLookup.refLookupCount,
+                derivedTypedEdgeLookupCount =
+                    typedEdgeLookup.typedEdgeLookupCount,
+            )
+        }
+
+        val addresses =
+            selectedEntries
+                .flatMap {
+                    entry ->
+                    listOf(
+                        entry.coordinates.request,
+                        entry.coordinates.response,
+                    )
+                }
+                .sortedBy(
+                    DirectConversationStore.EventAddress::sequence,
+                )
+        val exact =
+            try {
+                conversationOwner
+                    .exactCommittedConversationEvents(
+                        addresses,
+                    )
+            } catch (
+                _: RuntimeException,
+            ) {
+                return NeighborhoodOutcome.FallbackRequired(
+                    reason =
+                        FallbackReason.SOURCE_COORDINATE_MISMATCH,
+                    currentConversationHeadSha256 =
+                        currentHeadSha,
+                    generationConversationHeadSha256 =
+                        generation.sourceConversationHeadSha256,
+                )
+            }
+        val byRef =
+            exact.events.associateBy(
+                DirectConversationStore.Event::eventRef,
+            )
+        val turns =
+            selectedEntries.map {
+                entry ->
+                val request =
+                    requireNotNull(
+                        byRef[
+                            entry.coordinates.request.eventRef
+                        ],
+                    )
+                val response =
+                    requireNotNull(
+                        byRef[
+                            entry.coordinates.response.eventRef
+                        ],
+                    )
+                requireCompletedPair(
+                    request = request,
+                    response = response,
+                )
+                require(
+                    request.turnRef ==
+                        entry.turnRef
+                ) {
+                    "indexed locator neighborhood turn ref differs from canonical source"
+                }
+                VexLifeTurnNavigation.projectPair(
+                    request = request,
+                    response = response,
+                    ordinal =
+                        entry.canonicalOrdinal,
+                )
+            }
+                .sortedBy(
+                    VexLifeTurnNavigation.Turn::ordinal,
+                )
+
+        return NeighborhoodOutcome.Ready(
+            currentConversationHeadSha256 =
+                currentHeadSha,
+            generationConversationHeadSha256 =
+                generation.sourceConversationHeadSha256,
+            turns =
+                turns,
+            directTurnRefs =
+                directIndexes
+                    .map {
+                        index ->
+                        generation.entries[
+                            index
+                        ]
+                            .turnRef
+                    }
+                    .toSet(),
+            unresolvedSeedRefs =
+                unresolvedSeedRefs,
+            totalCompletedTurnCount =
+                generation.canonicalCompletedTurnCount,
+            exactEventFileReadCount =
+                exact.exactEventFileReadCount,
+            exactHeadFileReadCount =
+                exact.exactHeadFileReadCount,
+            wholeHistoryHeadTraversalPerformed =
+                exact.wholeHistoryHeadTraversalPerformed,
+            derivedEntryScanCount = 0,
+            derivedPostingLookupCount =
+                postingLookupCount,
+            derivedRefLookupCount =
+                refLookup.refLookupCount,
+            derivedTypedEdgeLookupCount =
+                typedEdgeLookup.typedEdgeLookupCount,
+        )
+    }
+
+    private fun typedEdges(
+        requestContent: String,
+    ): Set<TypedEdgeKind> =
+        buildSet {
+            if (
+                VexLifeTurnNavigation.correctionCueOrNull(
+                    requestContent,
+                ) !=
+                null
+            ) {
+                add(
+                    TypedEdgeKind.CORRECTS_PREVIOUS,
+                )
+            }
+            if (
+                VexLifeTurnNavigation.pointsBack(
+                    requestContent,
+                )
+            ) {
+                add(
+                    TypedEdgeKind.POINTS_BACK_PREVIOUS,
+                )
+            }
+        }
 
     private data class ApproximateCandidate(
         val entry: Entry,
@@ -930,10 +1906,12 @@ object VexLifeContinuitySourceLocator {
                 2 ==
                 0 &&
                 generation.completedTurnCount ==
-                generation.sourceEventCount /
-                    2 &&
+                    generation.sourceEventCount /
+                        2 &&
                 generation.entries.size ==
-                generation.completedTurnCount,
+                    generation.completedTurnCount &&
+                generation.canonicalCompletedTurnCount >=
+                    generation.completedTurnCount,
         ) {
             "continuity source locator generation cardinality is invalid"
         }
@@ -945,6 +1923,8 @@ object VexLifeContinuitySourceLocator {
                 generation.sourceConversationSequence ==
                     null &&
                     generation.sourceEventCount ==
+                    0 &&
+                    generation.canonicalCompletedTurnCount ==
                     0
             ) {
                 "continuity source locator empty generation has source coordinates"
@@ -959,7 +1939,9 @@ object VexLifeContinuitySourceLocator {
                     generation.sourceConversationSequence !=
                     null &&
                     generation.sourceConversationSequence >=
-                    1
+                        1 &&
+                    generation.canonicalCompletedTurnCount >=
+                        1
             ) {
                 "continuity source locator generation head coordinates are invalid"
             }
@@ -977,6 +1959,38 @@ object VexLifeContinuitySourceLocator {
                 refs.size
         ) {
             "continuity source locator generation contains duplicate source coordinates"
+        }
+        require(
+            generation.entries
+                .map(
+                    Entry::turnRef,
+                )
+                .distinct()
+                .size ==
+                generation.entries.size
+        ) {
+            "continuity source locator generation contains duplicate turn refs"
+        }
+        require(
+            generation.entries
+                .map(
+                    Entry::canonicalOrdinal,
+                )
+                .let {
+                    ordinals ->
+                    ordinals.distinct().size ==
+                        ordinals.size &&
+                        ordinals ==
+                            ordinals.sorted() &&
+                        ordinals.all {
+                            ordinal ->
+                            ordinal in
+                                0 until
+                                generation.canonicalCompletedTurnCount
+                        }
+                }
+        ) {
+            "continuity source locator generation canonical ordinals are invalid"
         }
         generation.entries.forEach {
             entry ->
@@ -1000,12 +2014,17 @@ object VexLifeContinuitySourceLocator {
                             "[0-9a-f]{64}",
                         ),
                     ) &&
+                    entry.turnRef.isNotBlank() &&
                     entry.requestFingerprints.all(
                         ::isFingerprint,
                     ) &&
                     entry.responseFingerprints.all(
                         ::isFingerprint,
-                    )
+                    ) &&
+                    entry.typedEdges.all {
+                        it in
+                            TypedEdgeKind.entries
+                    }
             ) {
                 "continuity source locator entry is invalid"
             }
