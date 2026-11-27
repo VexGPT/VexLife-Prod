@@ -352,15 +352,14 @@ class MacHereticNativeToolQualificationTest {
             "provider stage must carry the canonical request header in its system relationship",
         )
         assertTrue(
-            firstStage.any {
-                it.contains(
-                    "exact field names capability, action, and arguments",
-                )
-            },
+            firstStage.contains(
+                VexLifeCapabilityRequest.TextControlProviderInstruction,
+            ),
+            "qualification must consume the same request-owned instruction as an ordinary Product turn",
         )
         assertTrue(
             firstStage.contains(
-                "Use the current capability registry to find the one registered capability whose action list is exactly test, then ask Atlas to describe that discovered capability before answering. Discover the handle from the returned registry; do not guess it from this request.",
+                "Use capability atlas to list the current capability registry, discover the one registered capability whose action list is exactly test, then use capability atlas to describe that discovered capability before answering. Discover the test-capability handle from the returned Atlas list; do not guess it from this request.",
             ),
             "the synthetic human-visible request must ask for the derived continuation being graded",
         )
