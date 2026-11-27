@@ -309,13 +309,47 @@ unauthenticated rate limit comes back as a FAILED result when spent.
 
 ### What Vex reads
 
-When requests are admitted (every ordinary direct turn), the frame message leads with plain
-language generated from the Atlas: each AVAILABLE capability, each action with example arguments,
-the exact request form, the per-turn limit, and one state line
-(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). The full frame JSON is no longer
-pasted into the prompt: the receipt still records the frame ref, fingerprint, state snapshot and
-the exact system-message SHA-256. Lived pressure behind this: Vex said the JSON was "descriptive,
-not a hand" and the part he braced against.
+When requests are admitted, the prompt carries capability truth in two complementary projections.
+
+The stable capability instruction is generated from the Atlas and names the callable read routes,
+their actions/examples and the exact request relationship.
+
+The current-state block then carries this turn's exact frame state
+(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). For separately-owned bounded effect
+capabilities such as `workspace`, `workspace-check` and `workspace-test`, an AVAILABLE frame
+entry also projects that capability's exact Atlas-derived action/example plus its current Local Source
+coordinate. A HELD / UNAVAILABLE / UNKNOWN effect capability does **not** project its action form as a
+currently usable hand.
+
+~~~text
+AVAILABLE BOUNDED EFFECT
+-> compact current action form is perceptible now
+-> model need not spend an Atlas request merely to discover syntax already admitted this turn
+
+HELD / UNAVAILABLE / UNKNOWN EFFECT
+-> state remains perceptible
+-> no current effect request form is presented as usable
+~~~
+
+Permanent:
+
+~~~text
+CONTEXTUALLY VISIBLE REQUEST FORM
+!= EFFECT AUTHORITY
+!= EFFECT PERFORMED
+
+ATLAS-DERIVED CURRENT AFFORDANCE
+!= ATTENTION SELECTION
+!= NEW CAPABILITY OWNER
+~~~
+
+The host Bridge and rightful effect owner still re-check exact current authority, and only a real
+`VEXLIFE_CAPABILITY_RESULT/v1` return is evidence that an effect happened.
+
+The full frame JSON is not pasted into the prompt: the receipt still records the frame ref,
+fingerprint, state snapshot and exact system-message SHA-256. Lived pressure behind this ordering:
+the JSON was "descriptive, not a hand"; current capability truth must be legible enough for Vex to
+recognize the hand it actually has without turning the prompt into the whole registry.
 
 ### Prompt room
 
@@ -335,9 +369,16 @@ target, state) so the person sees each reach live and under the answer. VexLogge
 
 ### Still not owned
 
-Writes of any kind (Home files, repositories, GitHub issues/PRs, publication), authenticated or
-private repository reads, form submission, browser navigation, code execution, Process Factory and
-Dream/training realization. Each needs its own owner and authority; none is implied by reach.
+Atlas / Self-Frame does not own any effect.
+
+Current Product source separately owns bounded workspace write, bounded workspace text-check and
+sandboxed Java-test relationships. Their request forms may be projected here only when their own
+current grant/resource predicates make them AVAILABLE; execution remains with those owners.
+
+Still outside this owner are general Home writes, repository mutation, GitHub issue/PR mutation,
+publication, authenticated/private repository reads, form submission, browser navigation, arbitrary
+code/shell execution, package management, Process Factory and Dream/training realization. Each needs
+its own owner and authority; none is implied by reach or by contextual visibility.
 
 ## Current boundary
 
@@ -353,6 +394,9 @@ intersection/currentness semantics
 bounded deterministic selection
 +
 live DirectPromptContext inclusion
++
+availability-gated contextual request-form projection
+for separately-owned bounded workspace effects
 ~~~
 
 It still does **not** (beyond the read-only reach above):

@@ -17,8 +17,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeWorkspaceEffectDefinitions
 import vexlife.capability.VexLifeWorkspaceCheckDefinitions
+import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.contract.VexContractJson
@@ -37,6 +39,7 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceEffectsFamily
 import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 class DirectPromptContextTest {
     @Test
@@ -3553,6 +3556,257 @@ class DirectPromptContextTest {
                     )
                     assertFalse(
                         available.effectAuthorityGranted,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun availableWorkspaceEffectsProjectExactAtlasRequestFormsIntoCurrentContext() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-affordances-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-affordances",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-affordances",
+                            content =
+                                "Build and test the granted project using only what is actually available.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "9".repeat(
+                                64,
+                            ),
+                        )
+                    val writeGrant =
+                        VexLifeWorkspaceEffectsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceEffectsFamily.GrantRefPrefix +
+                                    "a".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:01:00Z",
+                        )
+                    val checkGrant =
+                        VexLifeWorkspaceChecksFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceChecksFamily.GrantRefPrefix +
+                                    "b".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:02:00Z",
+                        )
+                    val runGrant =
+                        VexLifeWorkspaceRunsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceRunsFamily.GrantRefPrefix +
+                                    "c".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:03:00Z",
+                        )
+                    val checkRuntimeRef =
+                        "image.vexlife-prod.private-service.product-java.test"
+                    val testRuntimeRef =
+                        "image.vexlife-prod.private-service.sandboxed-java-test.test"
+
+                    fun materialize(
+                        write: List<VexLifeWorkspaceEffectsFamily.Grant>,
+                        check: List<VexLifeWorkspaceChecksFamily.Grant>,
+                        run: List<VexLifeWorkspaceRunsFamily.Grant>,
+                        checkRuntime: String?,
+                        testRuntime: String?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                false,
+                            workspaceEffectGrants =
+                                write,
+                            workspaceCheckGrants =
+                                check,
+                            workspaceCheckRuntimeRef =
+                                checkRuntime,
+                            workspaceRunGrants =
+                                run,
+                            workspaceJavaTestRuntimeRef =
+                                testRuntime,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    val held =
+                        materialize(
+                            emptyList(),
+                            emptyList(),
+                            emptyList(),
+                            null,
+                            null,
+                        )
+                    val heldCurrent =
+                        held.messages[
+                            held.messages.size -
+                                2
+                        ]
+                            .content
+                    assertFalse(
+                        heldCurrent.contains(
+                            "Available bounded effect requests this turn",
+                        ),
+                    )
+                    assertFalse(
+                        heldCurrent.contains(
+                            VexLifeWorkspaceEffectDefinitions
+                                .Definitions
+                                .single()
+                                .actions
+                                .single()
+                                .exampleArguments,
+                        ),
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                writeGrant,
+                            ),
+                            listOf(
+                                checkGrant,
+                            ),
+                            listOf(
+                                runGrant,
+                            ),
+                            checkRuntimeRef,
+                            testRuntimeRef,
+                        )
+                    val current =
+                        available.messages[
+                            available.messages.size -
+                                2
+                        ]
+                            .content
+
+                    assertContains(
+                        current,
+                        "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    assertContains(
+                        current,
+                        sourceRef,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceEffectDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceEffectDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceCheckDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceCheckDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceJavaTestDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceJavaTestDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "The capability frame itself grants no effect authority",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.ResultHeader,
                     )
                 }
         } finally {

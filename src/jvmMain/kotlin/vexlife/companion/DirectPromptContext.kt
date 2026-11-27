@@ -3883,6 +3883,26 @@ object DirectPromptContext {
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
             byState[state].orEmpty().sortedBy { it.handle }.joinToString(", ") { it.handle }
+        val entriesByRef =
+            frame.capabilityEntries.associateBy {
+                it.capabilityRef
+            }
+        val availableEffectDefinitions =
+            DirectTurnEffectRefs
+                .mapNotNull(
+                    VexLifeCapabilityAtlas::resolve,
+                )
+                .filter {
+                    definition ->
+                    entriesByRef[
+                        definition.capabilityRef
+                    ]
+                        ?.state ==
+                        VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                }
+                .sortedBy {
+                    it.priority
+                }
         val now =
             buildString {
                 append("Now: AVAILABLE — ")
@@ -3923,6 +3943,64 @@ object DirectPromptContext {
                             )
                             .append('.')
                     }
+                if (
+                    availableEffectDefinitions.isNotEmpty()
+                ) {
+                    appendLine()
+                    appendLine(
+                        "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    availableEffectDefinitions.forEach {
+                        definition ->
+                        append("- ")
+                            .append(
+                                definition.handle,
+                            )
+                            .append(": ")
+                            .appendLine(
+                                definition.purpose,
+                            )
+                        entriesByRef[
+                            definition.capabilityRef
+                        ]
+                            ?.sourceRefs
+                            ?.filter(
+                                VexLifeLocalSourcesFamily::isSourceRef,
+                            )
+                            ?.takeIf(
+                                List<String>::isNotEmpty,
+                            )
+                            ?.let {
+                                sourceRefs ->
+                                append("    current Local Sources: ")
+                                    .appendLine(
+                                        sourceRefs.joinToString(
+                                            ", ",
+                                        ),
+                                    )
+                            }
+                        definition.actions.forEach {
+                            action ->
+                            append("    ")
+                                .append(
+                                    action.action,
+                                )
+                                .append(' ')
+                                .append(
+                                    action.exampleArguments,
+                                )
+                                .append(" — ")
+                                .appendLine(
+                                    action.purpose,
+                                )
+                        }
+                    }
+                    append(
+                        "These are current request forms, not proof that an effect occurred. " +
+                            "The capability frame itself grants no effect authority; the host owner re-checks current authority, " +
+                            "and only a real ${VexLifeCapabilityRequest.ResultHeader} result is evidence of what happened.",
+                    )
+                }
             }
         return reachInstructionSystemContent(providerNativeTools) to now
     }
