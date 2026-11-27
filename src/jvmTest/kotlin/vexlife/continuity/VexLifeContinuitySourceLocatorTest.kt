@@ -1759,6 +1759,8 @@ class VexLifeContinuitySourceLocatorTest {
                 )
             }
         }
+    }
+
     private class DeterministicSemanticBackend(
         fingerprintBindingRef: String,
         override val semanticRepresentationBindingRef: String,
@@ -1991,8 +1993,6 @@ class VexLifeContinuitySourceLocatorTest {
                         .sourceLifecycleBindingRef,
             )
         }
-    }
-
     }
 }
 
