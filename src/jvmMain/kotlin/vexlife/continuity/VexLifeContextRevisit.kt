@@ -34,10 +34,11 @@ import vexlife.memory.VexLifeMemoryContract
  * - A match is relevance to this request, not meaning: nothing here is accepted, corrected, written
  *   or promoted, and the result is not a new working state.
  * - Turns already in the prompt are named, not repeated.
- * - Words are matched exactly (case- and space-insensitive). The terms of one query are clues that
- *   must all appear (conjunctive); separate queries are alternate vantages. There is no meaning
- *   index yet, so a different wording needs another query in the same request, and the packet says
- *   so.
+ * - Exact lexical words are matched case- and space-insensitively. The terms of one query are clues
+ *   that must all appear (conjunctive); separate queries are alternate vantages.
+ * - An optional semantic locator may nominate an exact-reopened Conversation turn when lexical
+ *   wording differs. That nomination is carried as a distinct route: it is a reason to inspect the
+ *   source, not proof that the query words occurred there or that the source has accepted meaning.
  * - Custody is the turn's: [TurnSources] is bound by the human turn that holds the Conversation
  *   lease, the Memory projection its prompt used and its own working position, and each owner is
  *   read at most once per turn however many queries or calls fan over it.
@@ -83,6 +84,7 @@ object VexLifeContextRevisit {
     /** Why a node arrived in the result. Direct routes locate; the last three are typed steps. */
     enum class Route {
         TERMS,
+        SEMANTIC_CANDIDATE,
         SEED,
         WINDOW,
         CORRECTIONS,
@@ -135,6 +137,11 @@ object VexLifeContextRevisit {
         val historicalCurrentizedEventRefs: Set<String>,
     )
 
+    data class SemanticCandidateMatch(
+        val queryRef: String,
+        val turnRef: String,
+    )
+
     /** What the owners said when asked; a null value carries its reason in the matching gap. */
     data class ConversationView(
         val turns: List<VexLifeTurnNavigation.Turn>,
@@ -146,6 +153,8 @@ object VexLifeContextRevisit {
         val derivedPostingLookupCount: Int,
         val derivedRefLookupCount: Int,
         val derivedTypedEdgeLookupCount: Int,
+        val derivedSemanticLookupCount: Int = 0,
+        val semanticCandidateMatches: List<SemanticCandidateMatch> = emptyList(),
     )
 
     data class Sources(
@@ -640,6 +649,14 @@ object VexLifeContextRevisit {
             turnMatches.getOrPut(turn.turnRef) { mutableListOf() } += match
         }
 
+        val semanticCandidatesByQueryRef =
+            sources.conversationView
+                ?.semanticCandidateMatches
+                .orEmpty()
+                .groupBy(
+                    SemanticCandidateMatch::queryRef,
+                )
+
         for (query in request.queries) {
             val before = turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size }
             val inWindow =
@@ -690,6 +707,28 @@ object VexLifeContextRevisit {
                     }
                 }
             }
+
+            semanticCandidatesByQueryRef[
+                query.ref
+            ]
+                .orEmpty()
+                .forEach {
+                    semanticCandidate ->
+                    turnByRef[
+                        semanticCandidate.turnRef
+                    ]
+                        ?.let {
+                            turn ->
+                            hitTurn(
+                                turn,
+                                Match(
+                                    query.ref,
+                                    Route.SEMANTIC_CANDIDATE,
+                                    "semantic candidate; exact canonical source reopened",
+                                ),
+                            )
+                        }
+                }
 
             query.seedRefs.forEach { seed ->
                 val turn = turnByRef[seed] ?: turnByEventRef[seed]
@@ -795,7 +834,14 @@ object VexLifeContextRevisit {
             }
         }
 
-        val directRoutes = setOf(Route.TERMS, Route.SEED, Route.WINDOW, Route.CORRECTIONS)
+        val directRoutes =
+            setOf(
+                Route.TERMS,
+                Route.SEMANTIC_CANDIDATE,
+                Route.SEED,
+                Route.WINDOW,
+                Route.CORRECTIONS,
+            )
         val nodes = turnMatches.keys.map { turnByRef.getValue(it) }
         fun branches(turn: VexLifeTurnNavigation.Turn) =
             turnMatches
@@ -997,8 +1043,9 @@ object VexLifeContextRevisit {
             }
             if (!anyFound || emptyQueries.isNotEmpty() || unresolvedSeeds.isNotEmpty()) {
                 appendLine(
-                    "Not found here is not the same as never happened. Words are matched exactly, so " +
-                        "another wording can find what this one missed; and the person may remember " +
+                    "Not found here is not the same as never happened. Exact lexical words are matched " +
+                        "as written; a qualified semantic candidate index may also nominate related old " +
+                        "source without making that relationship true by itself. The person may remember " +
                         "what is not reachable here and can share it."
                 )
             }
@@ -1163,7 +1210,16 @@ object VexLifeContextRevisit {
                     ) {
                         "searched $turnCount exact indexed-neighborhood turns against " +
                             "$totalCompletedTurnCount completed turns of this thread " +
-                            "(exact words; lexical candidate index, no meaning index yet)"
+                            if (
+                                sources.conversationView
+                                    .derivedSemanticLookupCount >
+                                    0
+                            ) {
+                                " (exact canonical source; lexical + semantic candidate nomination; " +
+                                    "similarity is not acceptance)"
+                            } else {
+                                " (exact words; lexical candidate index)"
+                            }
                     } else {
                         "searched $turnCount " +
                             (
