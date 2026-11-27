@@ -1,4 +1,4 @@
-# VexLife Attention Convergence — source-addressed perceptibility
+# VexLife Attention Convergence — perceptibility + activity-scoped nomination
 
 `[VXG RealForever]`
 
@@ -187,24 +187,209 @@ This source does **not** yet:
 
 Those belong to later stages only when their exact relationship is earned.
 
+## A2 activity-scoped convergence
+
+A2 consumes A1 candidates without making the Activity or the candidate source into Attention-owned
+truth.
+
+```text
+source-owned current activity
++ A1 perceptibility surface
++ bounded Vex/model candidate nomination
+        ↓
+validate exact activity binding
+validate exact candidate source bindings
+        ↓
+nominated candidate refs + deeper-source addresses
+quiet candidate refs remain reachable
+        ↓
+no source read yet
+no effect authority
+```
+
+Current source:
+
+```text
+src/commonMain/kotlin/vexlife/attention/VexLifeAttentionActivityConvergence.kt
+src/commonTest/kotlin/vexlife/attention/VexLifeAttentionActivityConvergenceTest.kt
+```
+
+### Activity is source-bound, not Attention-authored
+
+A2 does not define the complete Product activity ontology. It accepts one bounded Activity coordinate
+with exact `sourceBindingRefs[]`, optional subject scopes and an optional
+`workingFocusRefOrNull`.
+
+The optional Working Focus reference is important while Self-Inspection / Working Focus remains a
+separate trajectory:
+
+```text
+WORKING FOCUS PRESENT
+  -> preserve exact rightful-owner ref
+
+WORKING FOCUS ABSENT / NOT LANDED
+  -> null
+  -> do not fabricate an Attention-owned substitute
+```
+
+### Model nomination is candidate cognition, not source truth
+
+A2 does not implement a hard-coded semantic relevance scorer.
+
+The selected model/Vex may form a bounded `Judgment` containing only candidate refs and the exact
+activity/candidate source bindings it judged. No rationale or private reasoning is retained by this
+contract.
+
+```text
+MODEL NOMINATION
+!= SOURCE TRUTH
+!= MEMORY ACCEPTANCE
+!= PRIORITY
+!= EFFECT AUTHORITY
+```
+
+The judgment must bind the current Activity and each selected candidate's current
+`sourceBindingRefs[]`. A stale activity or stale candidate generation fails closed rather than
+silently applying an old nomination to new source truth.
+
+### Selection budget is supplied, not invented as global policy
+
+A2 receives one caller/source-owned `SelectionBudget` with a positive-or-zero maximum selected
+candidate count. It enforces that bound but does not claim the number is the universal Attention
+operating envelope.
+
+A6 still owns the lived many-connection/context-budget measurement.
+
+### Quiet means quiet now
+
+Candidates not selected by this activity judgment are returned as `quietCandidateRefs[]`.
+
+```text
+QUIET NOW
+!= IRRELEVANT FOREVER
+!= SOURCE ABSENT
+!= SOURCE DELETED
+!= UNREACHABLE
+```
+
+A later activity may judge the same source differently after exact currentness is re-bound.
+
+### Reachability remains truthful
+
+A relevant candidate may still be `HELD`, `UNAVAILABLE` or `UNKNOWN`. A2 may preserve that
+nomination, but it cannot turn it into a successful read.
+
+```text
+NOMINATED + HELD
+= relevant relationship recognized
+!= source read
+!= source returned
+```
+
+The rightful source/capability owner remains responsible for any later exact reopen.
+
+### Cross-lane convergence laws
+
+A2 is intentionally checked against current parallel architecture rather than treated as an isolated
+Attention subsystem.
+
+#### Long-Term Memory / LH-5
+
+Memory Depth owns **historical source location and exact source reopening**. Its semantic nomination
+work establishes an important law for Attention too:
+
+```text
+semantic resemblance / compact candidate signal
+-> reason to inspect exact source
+!= accepted meaning
+!= final current relevance
+```
+
+A2 therefore owns **candidate nomination for deeper inspection**, not final semantic relevance.
+The rightful source/capability owner must still reopen exact source before a later cognition stage
+treats the source content as understood.
+
+```text
+ATTENTION NOMINATION != MEMORY RETRIEVAL
+MEMORY SEMANTIC NOMINATION != ATTENTION
+BOTH MAY SHARE:
+  candidate -> exact source -> current judgment
+```
+
+Attention must consume that shape rather than build a second semantic index or source-retrieval
+owner.
+
+#### Multi-Vex / participant relationships
+
+Current Product prompt law already says current context is current only for the owner/subject it
+names. A2 therefore preserves and exact-binds both:
+
+```text
+Activity.subjectScopeRefs[]
+Candidate.subjectScopeRefs[]
+```
+
+A nomination formed against one owner/subject binding cannot silently apply after those scopes
+change.
+
+Attention does **not** decide whether two subjects are equivalent, whether a counterpart may see
+another subject's source, or whether one participant outranks another. Those remain with the
+rightful relationship/privacy/source owners.
+
+```text
+SUBJECT SCOPE != PRIORITY
+SUBJECT SCOPE != ACCESS GRANT
+CURRENT FOR SUBJECT A != GLOBALLY CURRENT
+```
+
+#### Family-B / whole-body canary
+
+Family-B is a downstream composition pressure, not an Attention semantic owner. Its lived builder
+canary pressures Conversation, Memory, source re-entry, capability effects, context pressure,
+restart and completion together.
+
+Attention should eventually be included in a similarly whole-body lived proof once A3/A4 are stable,
+but should not import the Family-B harness or model-reach ownership into Attention source.
+
+```text
+FAMILY-B CANARY = CONSUMER / PRESSURE SURFACE
+!= ATTENTION OWNER
+!= MEMORY OWNER
+!= CAPABILITY OWNER
+```
+
+### A2 nonclaims
+
+A2 does **not** yet:
+
+- perform the deeper source read;
+- insert the nomination into DirectPromptContext;
+- define source-required attention claims;
+- rank nominated candidates;
+- define interruption/presentation order;
+- acknowledge anything;
+- displace or resume Working Focus;
+- create notifications;
+- persist model reasoning;
+- mutate Memory or Conversation;
+- grant effects.
+
 ## Next edge
 
-A2 must answer:
+A3 must answer:
 
-> Given current source-owned human-activity coordinates and this bounded candidate vocabulary, how
-> can Vex identify a small relevant candidate set and request deeper exact source while unrelated
-> connections remain quiet?
+> How can an already source-qualified current condition require present awareness, preserve any
+> displaced Working Focus, keep acknowledgement distinct from source resolution, and later return
+> to the prior work without Attention inventing domain severity or a global priority truth?
 
 That work must preserve:
 
 ```text
-MODEL RELEVANCE JUDGMENT != SOURCE TRUTH
-CANDIDATE SELECTION != SOURCE DELETION
-NOT SELECTED NOW != UNREACHABLE
-SOURCE REOPEN != ATTENTION EFFECT
+SOURCE-OWNED SIGNIFICANCE != GLOBAL PRIORITY
+ATTENTION CLAIM != SOURCE TRUTH
+ACKNOWLEDGED != SOURCE RESOLVED
+DISPLACED != DELETED
+RETURN != RECONSTRUCT FROM CHAT
 ```
 
-Working Focus is consumed only from its rightful then-current owner; A2 must not invent a substitute
-if the Self-Inspection/Working Focus trajectory has not landed.
-
-<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][PERCEPTIBILITY] -->
+<!-- [VXG RealForever][VEXLIFE-PROD][ATTENTION-CONVERGENCE][A1][A2][PERCEPTIBILITY][ACTIVITY] -->
