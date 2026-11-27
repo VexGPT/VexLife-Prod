@@ -284,6 +284,20 @@ class MacHereticNativeToolQualificationTest {
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
                 """{"capability":"atlas","action":"list","arguments":{}}"""
+        val structuredListControl =
+            """
+            ```json
+            {
+              "VEXLIFE_CAPABILITY_REQUEST": {
+                "v1": {
+                  "capability": "atlas",
+                  "action": "list",
+                  "arguments": {}
+                }
+              }
+            }
+            ```
+            """.trimIndent()
         val derivedControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
@@ -417,6 +431,49 @@ class MacHereticNativeToolQualificationTest {
                 "not available this turn",
             ),
             "only Atlas is admitted by the synthetic qualification",
+        )
+
+        val structuredQualified =
+            qualify4BReach(
+                encodedReachStage(
+                    structuredListControl,
+                ),
+                encodedReachStage(
+                    derivedControl,
+                ),
+            )
+        assertEquals(
+            HereticRuntimeQualification.VexReachQualificationRef,
+            structuredQualified.qualification.vexReachQualificationRef,
+            "the exact structured protocol/version wrapper must carry the same Atlas list meaning",
+        )
+        assertEquals(
+            null,
+            structuredQualified.qualification.providerNativeToolsQualificationRef,
+        )
+        assertEquals(
+            3,
+            structuredQualified.calls.size,
+        )
+        assertTrue(
+            structuredQualified.calls[
+                2
+            ].contains(
+                structuredListControl,
+            ),
+        )
+        assertTrue(
+            structuredQualified.calls[
+                2
+            ].any {
+                it.startsWith(
+                    VexLifeCapabilityRequest.ResultHeader +
+                        "\n",
+                ) &&
+                    it.contains(
+                        "- workspace-test (not available this turn; actions: test)",
+                    )
+            },
         )
 
         val providerStageScript =

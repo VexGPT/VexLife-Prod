@@ -271,6 +271,28 @@ does not grant aliases such as invented field names, does not pretend malformed 
 and does not require first-shot serialization perfection when ordinary VexLife itself would have
 returned corrective evidence.
 
+The parser is forgiving about **representation**, not meaning. Besides the canonical header-line
+form, it accepts one exact structured protocol/version wrapper when the model emits the same request
+meaning as nested JSON:
+
+~~~json
+{
+  "VEXLIFE_CAPABILITY_REQUEST": {
+    "v1": {
+      "capability": "atlas",
+      "action": "list",
+      "arguments": {}
+    }
+  }
+}
+~~~
+
+That wrapper is not a new capability alias or alternate authority path. The outer key must be exactly
+`VEXLIFE_CAPABILITY_REQUEST`, the only version key must be exactly `v1`, and the inner request is
+validated by the same capability/action/arguments parser as the canonical header form. The model's
+original control bytes remain the assistant-side exchange evidence; only the internal request meaning
+is normalized before ordinary Atlas/Bridge admission. Unrelated JSON remains ordinary model content.
+
 ~~~text
 DECLARED TOOL != AVAILABLE THIS TURN
 AVAILABLE != REQUEST ADMITTED

@@ -38,9 +38,11 @@ data class HereticRuntimeQualification private constructor(
      *
      * This is deliberately independent of provider-native tool qualification. It proves only that
      * the model can participate in the Product-owned bounded text-control request/feedback loop,
-     * recover from malformed or otherwise rejected request form through the same Bridge result a
-     * real turn would receive, complete one Atlas list, and derive one Atlas describe request from
-     * the returned registry. Capability admission/effects remain Atlas/Bridge truth.
+     * including the narrowly admitted structured protocol/version representation of the same
+     * request meaning, recover from malformed or otherwise rejected request form through the same
+     * Bridge result a real turn would receive, complete one Atlas list, and derive one Atlas
+     * describe request from the returned registry. Capability admission/effects remain Atlas/Bridge
+     * truth.
      */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val vexReachQualificationRef: String? = null,
@@ -50,7 +52,7 @@ data class HereticRuntimeQualification private constructor(
             "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
 
         const val VexReachQualificationRef =
-            "qualification.vexlife-prod.vex-reach.text-control-atlas-recoverable-derived-continuation.v1"
+            "qualification.vexlife-prod.vex-reach.text-control-atlas-form-tolerant-recoverable-derived-continuation.v1"
 
         fun qualified(
             loadResultRef: String? = null,
