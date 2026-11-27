@@ -34,6 +34,7 @@ import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
+import vexlife.model.heretic.HereticTextControlCapabilityWire
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.VexLifeInferenceSessionAdmission
@@ -2833,7 +2834,15 @@ object DirectCompanionTurn {
             progressGate.finish(
                 inference.content,
             )
-        val capabilityRequest = VexLifeCapabilityRequest.parseOrNull(inference.content)
+        val normalizedCapabilityControl =
+            HereticTextControlCapabilityWire.normalize(
+                profile = model.companionProfile,
+                content = inference.content,
+            )
+        val capabilityRequest =
+            VexLifeCapabilityRequest.parseOrNull(
+                normalizedCapabilityControl.canonicalControl,
+            )
         val sourceReturnRequest =
             if (capabilityRequest != null) {
                 null
