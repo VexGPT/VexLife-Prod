@@ -63,8 +63,9 @@ object VexLifeWorkingFocus {
      * One bounded proposal for current Working Focus.
      *
      * [formationRef] is the source-addressed proposal identity used by the durable owner when a new
-     * focus identity is formed. [priorWorkingFocusRefOrNull] means this proposal is an update of the
-     * exact current active focus; null deliberately forms/replaces with a new focus identity.
+     * focus identity is formed. [priorRevisionRefOrNull] means this proposal updates the exact
+     * current ACTIVE revision the caller observed; null deliberately forms/replaces with a new focus
+     * identity.
      *
      * [sourceBindingRefs] are the exact owner-supplied currentness/version coordinates that must be
      * revalidated unchanged before a displaced focus may resume. Their internal meaning remains with
@@ -75,7 +76,7 @@ object VexLifeWorkingFocus {
         val lineageRef: String,
         val threadRef: String,
         val formationRef: String,
-        val priorWorkingFocusRefOrNull: String?,
+        val priorRevisionRefOrNull: String?,
         val subjectScopeRefs: List<String>,
         val objective: String,
         val currentQuestionOrNull: String?,
@@ -89,7 +90,7 @@ object VexLifeWorkingFocus {
             requireRef(lineageRef, "lineageRef")
             requireRef(threadRef, "threadRef")
             requireRef(formationRef, "formationRef")
-            priorWorkingFocusRefOrNull?.let { requireRef(it, "priorWorkingFocusRefOrNull") }
+            priorRevisionRefOrNull?.let { requireRef(it, "priorRevisionRefOrNull") }
             requireRefs(subjectScopeRefs, "subjectScopeRefs", allowEmpty = false)
             requireCompactText(objective, "objective")
             currentQuestionOrNull?.let { requireCompactText(it, "currentQuestionOrNull") }
