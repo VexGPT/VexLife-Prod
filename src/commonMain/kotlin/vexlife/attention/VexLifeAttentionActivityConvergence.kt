@@ -3,15 +3,15 @@ package vexlife.attention
 import kotlinx.serialization.Serializable
 
 /**
- * Activity-scoped convergence over the already-owned A1 perceptibility surface.
+ * Activity-scoped nomination over the already-owned A1 perceptibility surface.
  *
  * This owner does not decide source truth or discover connections. It validates one bounded,
- * externally-formed relevance judgment against the exact current activity binding and the exact
- * current candidate bindings, then projects which source addresses are nominated for possible
- * deeper pull.
+ * externally-formed nomination against the exact current activity binding and the exact current
+ * candidate bindings, then projects which source addresses are worth exact deeper inspection.
  *
- * The judgment may come from Vex/model cognition. That makes it candidate reasoning, not source
- * truth and not effect authority. This owner never performs the source read.
+ * The nomination may come from Vex/model cognition. That makes it candidate reasoning, not source
+ * truth, not final semantic relevance, and not effect authority. This owner never performs the
+ * source read.
  */
 object VexLifeAttentionActivityConvergence {
     @Serializable
@@ -34,26 +34,27 @@ object VexLifeAttentionActivityConvergence {
     @Serializable
     data class SelectionBudget(
         val budgetRef: String,
-        val maximumSelectedCandidates: Int,
+        val maximumNominatedCandidates: Int,
     ) {
         init {
             requireRef(budgetRef, "budgetRef")
-            require(maximumSelectedCandidates >= 0) {
-                "attention activity selection budget must be nonnegative"
+            require(maximumNominatedCandidates >= 0) {
+                "attention activity nomination budget must be nonnegative"
             }
         }
     }
 
     /**
-     * One selected candidate as Vex/model cognition saw it.
+     * One A1 candidate as Vex/model cognition nominated it for exact deeper inspection.
      *
-     * [candidateSourceBindingRefs] prevents a stale judgment over an older candidate generation from
-     * silently applying to a newer source condition with the same candidate identity.
+     * Exact source and subject bindings prevent an older nomination from silently applying after the
+     * source or its owner/subject scope changes.
      */
     @Serializable
-    data class CandidateJudgment(
+    data class CandidateNomination(
         val candidateRef: String,
         val candidateSourceBindingRefs: List<String>,
+        val candidateSubjectScopeRefs: List<String> = emptyList(),
     ) {
         init {
             requireRef(candidateRef, "candidateRef")
@@ -62,48 +63,60 @@ object VexLifeAttentionActivityConvergence {
                 "candidateSourceBindingRefs",
                 allowEmpty = false,
             )
+            requireRefs(
+                candidateSubjectScopeRefs,
+                "candidateSubjectScopeRefs",
+                allowEmpty = true,
+            )
         }
     }
 
     /**
-     * Ephemeral cognitive judgment bound to exact current activity.
+     * Ephemeral cognitive nomination bound to exact current activity.
      *
      * No rationale/private reasoning is retained here. The only durable-safe shape is which exact
-     * current candidates were nominated from which exact current activity binding.
+     * current candidates were nominated from which exact current activity/subject binding.
      */
     @Serializable
-    data class Judgment(
-        val judgmentRef: String,
+    data class Nomination(
+        val nominationRef: String,
         val activityRef: String,
         val activitySourceBindingRefs: List<String>,
-        val selected: List<CandidateJudgment>,
+        val activitySubjectScopeRefs: List<String> = emptyList(),
+        val candidates: List<CandidateNomination>,
     ) {
         init {
-            requireRef(judgmentRef, "judgmentRef")
+            requireRef(nominationRef, "nominationRef")
             requireRef(activityRef, "activityRef")
             requireRefs(
                 activitySourceBindingRefs,
                 "activitySourceBindingRefs",
                 allowEmpty = false,
             )
+            requireRefs(
+                activitySubjectScopeRefs,
+                "activitySubjectScopeRefs",
+                allowEmpty = true,
+            )
             require(
-                selected
-                    .map(CandidateJudgment::candidateRef)
+                candidates
+                    .map(CandidateNomination::candidateRef)
                     .distinct()
                     .size ==
-                    selected.size,
+                    candidates.size,
             ) {
-                "attention activity judgment candidateRef must be unique"
+                "attention activity nomination candidateRef must be unique"
             }
         }
     }
 
     @Serializable
-    data class SelectedCandidate(
+    data class NominatedCandidate(
         val candidateRef: String,
         val ownerRef: String,
         val sourceRef: String,
         val relationshipRef: String,
+        val subjectScopeRefs: List<String>,
         val sourceBindingRefs: List<String>,
         val sourceStandingRef: String,
         val deeperSourceRef: String,
@@ -114,16 +127,17 @@ object VexLifeAttentionActivityConvergence {
      * A2 result is a no-effect relationship projection.
      *
      * [quietCandidateRefs] means "not nominated for this activity now", not deleted, stale, absent,
-     * or globally irrelevant.
+     * globally irrelevant, or outside another lawful subject relationship.
      */
     @Serializable
     data class Result(
         val activityRef: String,
         val activitySourceBindingRefs: List<String>,
+        val activitySubjectScopeRefs: List<String>,
         val workingFocusRefOrNull: String?,
-        val judgmentRef: String,
+        val nominationRef: String,
         val budgetRef: String,
-        val selected: List<SelectedCandidate>,
+        val nominated: List<NominatedCandidate>,
         val quietCandidateRefs: List<String>,
         val sourceReadPerformed: Boolean = false,
         val effectAuthorityGranted: Boolean = false,
@@ -141,19 +155,24 @@ object VexLifeAttentionActivityConvergence {
     fun converge(
         activity: Activity,
         surface: VexLifeAttentionPerceptibility.Surface,
-        judgment: Judgment,
+        nomination: Nomination,
         budget: SelectionBudget,
     ): Result {
-        require(judgment.activityRef == activity.activityRef) {
-            "attention activity judgment does not bind the current activityRef"
+        require(nomination.activityRef == activity.activityRef) {
+            "attention activity nomination does not bind the current activityRef"
         }
         requireSameRefs(
             expected = activity.sourceBindingRefs,
-            actual = judgment.activitySourceBindingRefs,
+            actual = nomination.activitySourceBindingRefs,
             label = "attention activity source binding",
         )
-        require(judgment.selected.size <= budget.maximumSelectedCandidates) {
-            "attention activity judgment exceeds the supplied selection budget"
+        requireSameRefs(
+            expected = activity.subjectScopeRefs,
+            actual = nomination.activitySubjectScopeRefs,
+            label = "attention activity subject scope",
+        )
+        require(nomination.candidates.size <= budget.maximumNominatedCandidates) {
+            "attention activity nomination exceeds the supplied selection budget"
         }
 
         val candidatesByRef =
@@ -161,14 +180,14 @@ object VexLifeAttentionActivityConvergence {
                 it.candidateRef
             }
 
-        val selected =
-            judgment.selected
+        val nominated =
+            nomination.candidates
                 .map { selected ->
                     val candidate =
                         requireNotNull(
                             candidatesByRef[selected.candidateRef],
                         ) {
-                            "attention activity judgment names a candidate absent from the current perceptibility surface: " +
+                            "attention activity nomination names a candidate absent from the current perceptibility surface: " +
                                 selected.candidateRef
                         }
                     requireSameRefs(
@@ -176,11 +195,17 @@ object VexLifeAttentionActivityConvergence {
                         actual = selected.candidateSourceBindingRefs,
                         label = "attention candidate source binding " + candidate.candidateRef,
                     )
-                    SelectedCandidate(
+                    requireSameRefs(
+                        expected = candidate.subjectScopeRefs,
+                        actual = selected.candidateSubjectScopeRefs,
+                        label = "attention candidate subject scope " + candidate.candidateRef,
+                    )
+                    NominatedCandidate(
                         candidateRef = candidate.candidateRef,
                         ownerRef = candidate.ownerRef,
                         sourceRef = candidate.sourceRef,
                         relationshipRef = candidate.relationshipRef,
+                        subjectScopeRefs = candidate.subjectScopeRefs,
                         sourceBindingRefs = candidate.sourceBindingRefs,
                         sourceStandingRef = candidate.sourceStandingRef,
                         deeperSourceRef = candidate.deeperSourceRef,
@@ -191,23 +216,24 @@ object VexLifeAttentionActivityConvergence {
                     it.candidateRef
                 }
 
-        val selectedRefs =
-            selected
-                .map(SelectedCandidate::candidateRef)
+        val nominatedRefs =
+            nominated
+                .map(NominatedCandidate::candidateRef)
                 .toSet()
         val quiet =
             surface.candidates
                 .map(VexLifeAttentionPerceptibility.Candidate::candidateRef)
-                .filterNot(selectedRefs::contains)
+                .filterNot(nominatedRefs::contains)
                 .sorted()
 
         return Result(
             activityRef = activity.activityRef,
             activitySourceBindingRefs = activity.sourceBindingRefs,
+            activitySubjectScopeRefs = activity.subjectScopeRefs,
             workingFocusRefOrNull = activity.workingFocusRefOrNull,
-            judgmentRef = judgment.judgmentRef,
+            nominationRef = nomination.nominationRef,
             budgetRef = budget.budgetRef,
-            selected = selected,
+            nominated = nominated,
             quietCandidateRefs = quiet,
         )
     }
