@@ -3,6 +3,7 @@ package vexlife.attention
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Instant
+import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.continuity.VexLifeWorkingFocusOwner
 
@@ -21,6 +22,23 @@ import vexlife.continuity.VexLifeWorkingFocusOwner
 internal object VexLifeAttentionWorkingFocusConvergence {
     const val EffectOwnerRef =
         "owner.vexlife-prod.attention-working-focus-convergence.001"
+
+    /**
+     * Exact Attention claim generation coordinates shared by claim formation and source retirement.
+     *
+     * Deliberately excludes presentation/reachability fields that a source retirement observation
+     * does not need to reproduce after restart.
+     */
+    @Serializable
+    private data class ClaimGenerationBinding(
+        val ownerRef: String,
+        val sourceRef: String,
+        val requirementRef: String,
+        val candidateRef: String,
+        val requirementBindingRefs: List<String>,
+        val candidateSourceBindingRefs: List<String>,
+        val subjectScopeRefs: List<String>,
+    )
 
     enum class DisplacementStanding {
         NO_ACTIVE_WORKING_FOCUS,
@@ -95,14 +113,16 @@ internal object VexLifeAttentionWorkingFocusConvergence {
      * Attention claim that caused that displacement.
      *
      * Acknowledgement is intentionally not accepted by this API. Source retirement and Working
-     * Focus source revalidation are both required.
+     * Focus source revalidation are both required. The retirement observation carries the same
+     * exact prior claim-generation coordinates used at displacement, so the old in-memory Claim
+     * object is not required after restart.
      */
     fun resumeAfterSourceRetirement(
         owner: VexLifeWorkingFocusOwner,
         lineageRef: String,
         threadRef: String,
         displacedStateRef: String,
-        retiredClaim: VexLifeAttentionClaim.RetiredClaim,
+        retirementObservation: VexLifeAttentionClaim.SourceRetirementObservation,
         revalidatedWorkingFocusSourceBindingRefs: List<String>,
         formedAt: Instant = Instant.now(),
     ): ResumeResult {
@@ -124,16 +144,16 @@ internal object VexLifeAttentionWorkingFocusConvergence {
 
         val expectedClaimBindingRef =
             claimBindingRef(
-                retiredClaim.claim,
+                retirementObservation,
             )
         require(current.state.causeOwnerRef == EffectOwnerRef) {
             "attention/working-focus displacement belongs to another owner"
         }
-        require(current.state.causeRef == retiredClaim.claim.requirementRef) {
+        require(current.state.causeRef == retirementObservation.requirementRef) {
             "attention/working-focus retirement does not bind the displaced requirement"
         }
         require(current.state.causeBindingRefs == listOf(expectedClaimBindingRef)) {
-            "attention/working-focus retirement does not bind the exact displaced claim"
+            "attention/working-focus retirement does not bind the exact displaced claim generation"
         }
 
         val resumed =
@@ -141,9 +161,9 @@ internal object VexLifeAttentionWorkingFocusConvergence {
                 lineageRef = lineageRef,
                 threadRef = threadRef,
                 displacedStateRef = displacedStateRef,
-                releaseOwnerRef = retiredClaim.claim.ownerRef,
-                releaseRef = retiredClaim.retirementRef,
-                releaseBindingRefs = retiredClaim.retirementBindingRefs,
+                releaseOwnerRef = retirementObservation.ownerRef,
+                releaseRef = retirementObservation.retirementRef,
+                releaseBindingRefs = retirementObservation.retirementBindingRefs,
                 revalidatedSourceBindingRefs =
                     revalidatedWorkingFocusSourceBindingRefs,
                 formedAt = formedAt,
@@ -165,10 +185,41 @@ internal object VexLifeAttentionWorkingFocusConvergence {
     private fun claimBindingRef(
         claim: VexLifeAttentionClaim.Claim,
     ): String =
-        "binding.vexlife-prod.attention-claim." +
+        claimBindingRef(
+            ClaimGenerationBinding(
+                ownerRef = claim.ownerRef,
+                sourceRef = claim.sourceRef,
+                requirementRef = claim.requirementRef,
+                candidateRef = claim.candidateRef,
+                requirementBindingRefs = claim.requirementBindingRefs.sorted(),
+                candidateSourceBindingRefs = claim.candidateSourceBindingRefs.sorted(),
+                subjectScopeRefs = claim.subjectScopeRefs.sorted(),
+            ),
+        )
+
+    private fun claimBindingRef(
+        observation: VexLifeAttentionClaim.SourceRetirementObservation,
+    ): String =
+        claimBindingRef(
+            ClaimGenerationBinding(
+                ownerRef = observation.ownerRef,
+                sourceRef = observation.sourceRef,
+                requirementRef = observation.requirementRef,
+                candidateRef = observation.candidateRef,
+                requirementBindingRefs = observation.priorRequirementBindingRefs.sorted(),
+                candidateSourceBindingRefs =
+                    observation.priorCandidateSourceBindingRefs.sorted(),
+                subjectScopeRefs = observation.priorSubjectScopeRefs.sorted(),
+            ),
+        )
+
+    private fun claimBindingRef(
+        binding: ClaimGenerationBinding,
+    ): String =
+        "binding.vexlife-prod.attention-claim-generation." +
             sha256(
                 VexContractJson.canonicalEncode(
-                    claim,
+                    binding,
                 ),
             )
 
