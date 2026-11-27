@@ -8,6 +8,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
 import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.continuity.VexLifeContinuity
 import vexlife.filesystem.VexOwnedPath
@@ -985,11 +986,74 @@ class MacHereticRuntimePlatform(
                     ) {
                         "Vex Reach qualification requires the current Atlas list action"
                     }
+                val qualificationControl =
+                    VexLifeCapabilityRequest.RequestHeader +
+                        "\n" +
+                        """{"capability":"${atlas.handle}","action":"${atlasList.action}","arguments":{}}"""
+                val qualificationRequest =
+                    requireNotNull(
+                        VexLifeCapabilityRequest.parseOrNull(
+                            qualificationControl,
+                        ) as? VexLifeCapabilityRequest.Parsed.Request,
+                    ) {
+                        "Vex Reach qualification requires one exact parseable Atlas list request"
+                    }
+                val qualificationExchange =
+                    VexLifeCapabilityBridge.perform(
+                        parsed =
+                            qualificationRequest,
+                        admission =
+                            VexLifeCapabilityBridge.Admission(
+                                productHome =
+                                    productHome,
+                                availableCapabilityRefs =
+                                    setOf(
+                                        atlas.capabilityRef,
+                                    ),
+                                requestNumber = 1,
+                                tokensAvailable =
+                                    VexLifeCapabilityBridge.ExchangeAllowanceTokens,
+                            ),
+                        estimateTokens = {
+                            content ->
+                            maxOf(
+                                1,
+                                (
+                                    content
+                                        .toByteArray()
+                                        .size +
+                                        3
+                                ) /
+                                    4,
+                            ) +
+                                4
+                        },
+                    )
+                val qualificationResultMessage =
+                    qualificationExchange.resultMessage.content
+                require(
+                    qualificationResultMessage.startsWith(
+                        VexLifeCapabilityRequest.ResultHeader +
+                            "\n",
+                    ) &&
+                        qualificationResultMessage.contains(
+                            "\n<<<CONTENT\n",
+                        ) &&
+                        qualificationResultMessage.contains(
+                            "- ${atlas.handle} (AVAILABLE; actions:",
+                        ) &&
+                        qualificationResultMessage.contains(
+                            atlasList.action,
+                        )
+                ) {
+                    "Vex Reach qualification requires the current Product-shaped Atlas result"
+                }
+
                 val vexReachProbeScript =
                     """
                     import json, sys, urllib.request
 
-                    origin, request_model, request_header, result_header, capability, action = sys.argv[1:7]
+                    origin, request_model, request_header, result_header, capability, action, result_message = sys.argv[1:8]
 
                     def read_json(request, timeout):
                         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -1079,24 +1143,6 @@ class MacHereticRuntimePlatform(
                         }
                         if call != expected:
                             raise RuntimeError("Vex Reach qualification request does not match the exact no-effect Atlas call")
-                        result_message = (
-                            result_header + "\n"
-                            "The host performed your request; this is what came back. "
-                            "It is not a message from the person.\n"
-                            + json.dumps(
-                                {
-                                    "request": "1 of 4",
-                                    "state": "RETURNED",
-                                    "target": capability,
-                                },
-                                separators=(",", ":"),
-                                sort_keys=True,
-                            )
-                            + "\n<<<CONTENT\n"
-                            "Qualification registry result: exact no-effect Atlas list carriage succeeded.\n"
-                            "CONTENT>>>\n"
-                            "You can make another request (3 left this turn) or answer the person now."
-                        )
                         second = post_completion({
                             "model": request_model,
                             "messages": [
@@ -1136,6 +1182,7 @@ class MacHereticRuntimePlatform(
                                 VexLifeCapabilityRequest.ResultHeader,
                                 atlas.handle,
                                 atlasList.action,
+                                qualificationResultMessage,
                             ),
                         timeoutMs =
                             300_000L,

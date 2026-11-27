@@ -4,6 +4,7 @@ import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.model.heretic.HereticCompanionRepresentation
@@ -297,6 +298,41 @@ class MacHereticNativeToolQualificationTest {
             reachCall.contains(
                 "list",
             ),
+        )
+        val productResult =
+            reachCall
+                .singleOrNull {
+                    it.startsWith(
+                        VexLifeCapabilityRequest.ResultHeader +
+                            "\n",
+                    )
+                }
+        assertNotNull(
+            productResult,
+            "Vex Reach qualification must carry the Product-shaped capability result as one exact provider argument",
+        )
+        assertTrue(
+            productResult.contains(
+                "The host performed your request; this is what came back. It is not a message from the person.",
+            ),
+        )
+        assertTrue(
+            productResult.contains(
+                "- atlas (AVAILABLE; actions: list, describe)",
+            ),
+            "synthetic qualification admits only the effect-free Atlas while returning the real registered world",
+        )
+        assertTrue(
+            productResult.contains(
+                "not available this turn",
+            ),
+            "registered capabilities outside the synthetic Atlas admission must remain truthfully unavailable",
+        )
+        assertFalse(
+            productResult.contains(
+                "Qualification registry result: exact no-effect Atlas list carriage succeeded.",
+            ),
+            "qualification must return the Product-owned Atlas result, not a transport success assertion",
         )
         val script =
             reachCall[
