@@ -572,9 +572,17 @@ class MacHereticNativeToolQualificationTest {
             siblingVersionQualified.calls[
                 2
             ].contains(
+                listControl,
+            ),
+            "after wire normalization, continuation history must carry the canonical Vex request envelope",
+        )
+        assertFalse(
+            siblingVersionQualified.calls[
+                2
+            ].contains(
                 siblingVersionListControl,
             ),
-            "provider history preserves the exact model-emitted wire bytes",
+            "provider-specific request dialect must not survive into semantic continuation history",
         )
         assertTrue(
             siblingVersionQualified.calls[
