@@ -680,6 +680,9 @@ class VexLifeWorkingFocusOwner(productHome: Path) {
 
     private fun requireRefs(values: List<String>, label: String, allowEmpty: Boolean) {
         require(allowEmpty || values.isNotEmpty()) { "$label must not be empty" }
+        require(values.size <= VexLifeWorkingFocus.MaximumRefs) {
+            "$label exceeds ${VexLifeWorkingFocus.MaximumRefs} refs"
+        }
         require(values.distinct().size == values.size) { "$label must be unique" }
         values.forEachIndexed { index, value -> requireRef(value, "$label[$index]") }
     }
