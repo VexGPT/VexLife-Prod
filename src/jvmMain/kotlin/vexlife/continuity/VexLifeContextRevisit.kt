@@ -891,11 +891,30 @@ object VexLifeContextRevisit {
             nodes.sortedWith(
                 compareByDescending<VexLifeTurnNavigation.Turn> { branches(it) }
                     .thenByDescending { matchedTerms[it.turnRef]?.size ?: 0 }
-                    .thenBy {
-                        semanticCandidateRankByTurnRef[
-                            it.turnRef
-                        ]
-                            ?: Int.MAX_VALUE
+                    .thenComparator {
+                        left,
+                        right,
+                        ->
+                        val leftRank =
+                            semanticCandidateRankByTurnRef[
+                                left.turnRef
+                            ]
+                        val rightRank =
+                            semanticCandidateRankByTurnRef[
+                                right.turnRef
+                            ]
+                        if (
+                            leftRank !=
+                                null &&
+                            rightRank !=
+                                null
+                        ) {
+                            leftRank.compareTo(
+                                rightRank,
+                            )
+                        } else {
+                            0
+                        }
                     }
                     .thenByDescending { it.request.sequence }
             )
