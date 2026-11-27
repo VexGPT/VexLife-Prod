@@ -1051,6 +1051,150 @@ class VexLifeContextRevisitTest {
     }
 
     @Test
+    fun strongerQueryBranchCountPrecedesSemanticRank() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "Rank one candidate for first semantic vantage.",
+                        "First.",
+                        minutesAgo(60),
+                    ),
+                    Line(
+                        "Older candidate supported by both semantic vantages.",
+                        "Both.",
+                        minutesAgo(120),
+                    ),
+                    Line(
+                        "Rank one candidate for second semantic vantage.",
+                        "Second.",
+                        minutesAgo(30),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val request =
+                VexLifeContextRevisit.Request(
+                    queries =
+                        listOf(
+                            VexLifeContextRevisit.Query(
+                                ref = "q1",
+                                terms = listOf("nonliteral-one"),
+                                seedRefs = emptyList(),
+                                speaker = VexLifeContextRevisit.Speaker.HUMAN,
+                                window = null,
+                                corrections = false,
+                                from = null,
+                            ),
+                            VexLifeContextRevisit.Query(
+                                ref = "q2",
+                                terms = listOf("nonliteral-two"),
+                                seedRefs = emptyList(),
+                                speaker = VexLifeContextRevisit.Speaker.HUMAN,
+                                window = null,
+                                corrections = false,
+                                from = null,
+                            ),
+                        ),
+                    scopes =
+                        setOf(
+                            VexLifeContextRevisit.Scope.CONVERSATION,
+                        ),
+                    order =
+                        VexLifeContextRevisit.Order.CURRENT_FIRST,
+                    maxTurns =
+                        VexLifeContextRevisit.DefaultMaximumTurns,
+                    maxTokens =
+                        VexLifeContextRevisit.DefaultMaximumTokens,
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs = emptySet(),
+                            historicalCurrentizedEventRefs = emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns = projected,
+                            totalCompletedTurnCount = projected.size,
+                            conversationEventsRead = 6,
+                            exactHeadFileReadCount = 2,
+                            wholeHistoryHeadTraversalPerformed = false,
+                            derivedEntryScanCount = 0,
+                            derivedPostingLookupCount = 4,
+                            derivedRefLookupCount = 0,
+                            derivedTypedEdgeLookupCount = 0,
+                            derivedSemanticLookupCount = 2,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q1",
+                                        turnRef = committed[0].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q1",
+                                        turnRef = committed[1].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q2",
+                                        turnRef = committed[2].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q2",
+                                        turnRef = committed[1].first.turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request = request,
+                    sources = sources,
+                    estimateTokens = ::estimate,
+                )
+
+            val twoBranchIndex =
+                result.text.indexOf(
+                    "Older candidate supported by both semantic vantages.",
+                )
+            val q1RankOneIndex =
+                result.text.indexOf(
+                    "Rank one candidate for first semantic vantage.",
+                )
+            val q2RankOneIndex =
+                result.text.indexOf(
+                    "Rank one candidate for second semantic vantage.",
+                )
+            assertTrue(
+                twoBranchIndex >=
+                    0 &&
+                    q1RankOneIndex >
+                        twoBranchIndex &&
+                    q2RankOneIndex >
+                        twoBranchIndex,
+                "existing multi-branch support must remain stronger than semantic candidate rank",
+            )
+        }
+    }
+
+    @Test
     fun semanticRankDoesNotCrossAnExactSeedBoundary() {
         ContinuityTurnFixture().use {
             fixture ->
