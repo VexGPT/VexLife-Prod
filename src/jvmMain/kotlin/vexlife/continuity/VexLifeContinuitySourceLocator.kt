@@ -165,7 +165,11 @@ object VexLifeContinuitySourceLocator {
     )
 
     data class SemanticCandidateLookup(
-        val entryIndexes: Set<Int>,
+        /**
+         * Best candidate first. Ordering is nomination provenance only: it is not semantic
+         * acceptance, source truth, or permission to skip exact canonical reopen.
+         */
+        val entryIndexes: List<Int>,
         val semanticLookupCount: Int,
         val representationBindingRef: String,
         val sourceConversationHeadSha256: String?,
@@ -621,6 +625,10 @@ object VexLifeContinuitySourceLocator {
      *
      * This is nomination provenance only. It does not claim that the query words occur in the
      * source or that the source is semantically accepted as the same thing.
+     *
+     * [NeighborhoodOutcome.Ready.semanticMatches] preserves backend nomination order within each
+     * query. Downstream ranking may use that order only as candidate-order evidence; it must not
+     * reinterpret the order as truth or accepted meaning.
      */
     data class SemanticNeighborhoodMatch(
         val queryRef: String,
@@ -1810,6 +1818,10 @@ object VexLifeContinuitySourceLocator {
                 if (
                     semanticLookup.semanticLookupCount <
                         0 ||
+                    semanticLookup.entryIndexes
+                        .distinct()
+                        .size !=
+                        semanticLookup.entryIndexes.size ||
                     semanticLookup.entryIndexes.any {
                         it !in
                             generation.entries.indices
