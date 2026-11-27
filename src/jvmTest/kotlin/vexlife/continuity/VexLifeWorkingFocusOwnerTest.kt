@@ -16,7 +16,7 @@ class VexLifeWorkingFocusOwnerTest {
 
     private fun draft(
         formationRef: String = "receipt.focus.proposal.001",
-        priorWorkingFocusRefOrNull: String? = null,
+        priorRevisionRefOrNull: String? = null,
         objective: String = "Keep the Self-Inspection relationship on the working whiteboard.",
         binding: String = "binding.self-inspection.current.001",
     ) =
@@ -24,7 +24,7 @@ class VexLifeWorkingFocusOwnerTest {
             lineageRef = lineageRef,
             threadRef = threadRef,
             formationRef = formationRef,
-            priorWorkingFocusRefOrNull = priorWorkingFocusRefOrNull,
+            priorRevisionRefOrNull = priorRevisionRefOrNull,
             subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
             objective = objective,
             currentQuestionOrNull = "What is the smallest rightful Working Focus owner?",
@@ -69,7 +69,7 @@ class VexLifeWorkingFocusOwnerTest {
                 owner.setCurrent(
                     draft(
                         formationRef = "receipt.focus.proposal.002",
-                        priorWorkingFocusRefOrNull = firstRevision.workingFocusRef,
+                        priorRevisionRefOrNull = assertNotNull(first.current.revisionRefOrNull),
                         objective = "Keep the refined Self-Inspection relationship current.",
                     ),
                     Instant.parse("2026-11-27T20:01:00Z"),
@@ -89,6 +89,39 @@ class VexLifeWorkingFocusOwnerTest {
                     paths.filter { it.parent?.fileName?.toString() == "revisions" }.count()
                 }
             assertEquals(2L, revisionCount)
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun staleUpdateCannotOverwriteANewerActiveRevision() {
+        val home = Files.createTempDirectory("vexlife-working-focus-stale-update-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingFocusOwner(home)
+            val first = owner.setCurrent(draft())
+            val firstRevisionRef = assertNotNull(first.current.revisionRefOrNull)
+
+            val second =
+                owner.setCurrent(
+                    draft(
+                        formationRef = "receipt.focus.proposal.current-update",
+                        priorRevisionRefOrNull = firstRevisionRef,
+                        objective = "Advance the exact current Working Focus revision.",
+                    ),
+                )
+
+            val staleProposal =
+                draft(
+                    formationRef = "receipt.focus.proposal.stale-update",
+                    priorRevisionRefOrNull = firstRevisionRef,
+                    objective = "This proposal was formed against the superseded first revision.",
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.setCurrent(staleProposal)
+            }
+            assertEquals(second.current, owner.readCurrent(lineageRef, threadRef))
         } finally {
             home.toFile().deleteRecursively()
         }
