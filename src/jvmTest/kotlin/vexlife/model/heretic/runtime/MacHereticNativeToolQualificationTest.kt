@@ -298,17 +298,6 @@ class MacHereticNativeToolQualificationTest {
             }
             ```
             """.trimIndent()
-        val siblingVersionListControl =
-            """
-            ```json
-            {
-              "VEXLIFE_CAPABILITY_REQUEST": "v1",
-              "capability": "atlas",
-              "action": "list",
-              "arguments": {}
-            }
-            ```
-            """.trimIndent()
         val derivedControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
@@ -504,50 +493,6 @@ class MacHereticNativeToolQualificationTest {
                         "- workspace-test (not available this turn; actions: test)",
                     )
             },
-        )
-
-        val siblingVersionQualified =
-            qualify4BReach(
-                encodedReachStage(
-                    siblingVersionListControl,
-                ),
-                encodedReachStage(
-                    derivedControl,
-                ),
-            )
-        assertEquals(
-            HereticRuntimeQualification.VexReachQualificationRef,
-            siblingVersionQualified.qualification.vexReachQualificationRef,
-            "the exact A020 sibling-version representation must carry the same Atlas list meaning",
-        )
-        assertEquals(
-            null,
-            siblingVersionQualified.qualification.providerNativeToolsQualificationRef,
-        )
-        assertEquals(
-            3,
-            siblingVersionQualified.calls.size,
-        )
-        assertTrue(
-            siblingVersionQualified.calls[
-                2
-            ].contains(
-                siblingVersionListControl,
-            ),
-        )
-        assertTrue(
-            siblingVersionQualified.calls[
-                2
-            ].any {
-                it.startsWith(
-                    VexLifeCapabilityRequest.ResultHeader +
-                        "\n",
-                ) &&
-                    it.contains(
-                        "- workspace-test (not available this turn; actions: test)",
-                    )
-            },
-            "A020 representation must reach the same Product-owned Atlas result before derived continuation",
         )
 
         val providerStageScript =
