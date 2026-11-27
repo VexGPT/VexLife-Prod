@@ -490,8 +490,66 @@ ACKNOWLEDGED
 ```
 
 Acknowledgement does not mutate the source condition and cannot mark its requirement resolved.
-The source/domain owner must separately re-observe and change/retire the requirement.
+The source/domain owner must separately re-observe and explicitly change/retire the requirement.
 
+### Source-owned retirement is separate from acknowledgement
+
+Attention must not infer that a requirement disappeared because:
+- a person acknowledged it;
+- the candidate is currently HELD;
+- a later prompt omits it;
+- the source advanced;
+- the condition seems resolved.
+
+The rightful source/domain owner must explicitly retire the old Attention requirement.
+
+SourceRetirementObservation binds:
+
+~~~text
+ownerRef
+sourceRef
+requirementRef
+priorRequirementBindingRefs[]
+candidateRef
+priorCandidateSourceBindingRefs[]
+priorSubjectScopeRefs[]
+retirementBindingRefs[]
+retirementStandingRef
+~~~
+
+The prior coordinates bind the **exact claim being retired**. retirementBindingRefs[] bind the
+source owner's new retirement evidence.
+
+This is intentionally asymmetric:
+
+~~~text
+OLD CLAIM GENERATION
+  must match exactly
+
+SOURCE AFTER RETIREMENT
+  may have advanced
+  is represented by retirement evidence
+  need not pretend the old candidate generation is still current
+~~~
+
+retirementStandingRef remains opaque. Attention does not decide whether the domain condition:
+- resolved;
+- changed;
+- became irrelevant;
+- was superseded;
+- was withdrawn for another source-owned reason.
+
+Permanent:
+
+~~~text
+ACKNOWLEDGED != REQUIREMENT RETIRED
+REQUIREMENT RETIRED != ACKNOWLEDGED
+REQUIREMENT RETIRED BY SOURCE != ATTENTION RESOLVED DOMAIN CONDITION
+SOURCE ADVANCED != SILENT RETIREMENT
+~~~
+
+A new or changed source requirement forms a new current claim through form(...); Attention does
+not mutate an old claim into new source meaning.
 ### Working Focus-dependent A3 remains held
 
 The parked Self-Inspection / Working Focus design currently treats Working Continuity ownership as a

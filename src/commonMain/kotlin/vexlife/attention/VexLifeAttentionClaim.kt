@@ -151,6 +151,87 @@ object VexLifeAttentionClaim {
     }
 
     /**
+     * Explicit source-owned evidence that one exact attention requirement is no longer current.
+     *
+     * Attention does not infer retirement from acknowledgement, silence, reachability, or absence
+     * from a later prompt. The rightful source/domain owner must supply this observation.
+     *
+     * [retirementStandingRef] stays opaque. It may mean the domain condition resolved, changed,
+     * became irrelevant, or another source-specific reason. Attention does not interpret why.
+     */
+    @Serializable
+    data class SourceRetirementObservation(
+        val retirementRef: String,
+        val ownerRef: String,
+        val sourceRef: String,
+        val requirementRef: String,
+        val priorRequirementBindingRefs: List<String>,
+        val candidateRef: String,
+        val priorCandidateSourceBindingRefs: List<String>,
+        val priorSubjectScopeRefs: List<String>,
+        val retirementBindingRefs: List<String>,
+        val retirementStandingRef: String,
+    ) {
+        init {
+            requireRef(retirementRef, "retirementRef")
+            requireRef(ownerRef, "ownerRef")
+            requireRef(sourceRef, "sourceRef")
+            requireRef(requirementRef, "requirementRef")
+            requireRef(candidateRef, "candidateRef")
+            requireRefs(
+                priorRequirementBindingRefs,
+                "priorRequirementBindingRefs",
+                allowEmpty = false,
+            )
+            requireRefs(
+                priorCandidateSourceBindingRefs,
+                "priorCandidateSourceBindingRefs",
+                allowEmpty = false,
+            )
+            requireRefs(
+                priorSubjectScopeRefs,
+                "priorSubjectScopeRefs",
+                allowEmpty = true,
+            )
+            requireRefs(
+                retirementBindingRefs,
+                "retirementBindingRefs",
+                allowEmpty = false,
+            )
+            requireRef(retirementStandingRef, "retirementStandingRef")
+        }
+    }
+
+    /**
+     * Relationship evidence that the source owner retired the requirement carried by [claim].
+     *
+     * This retires the Attention requirement relationship only. It does not let Attention claim
+     * why the domain condition changed and does not grant any effect.
+     */
+    @Serializable
+    data class RetiredClaim(
+        val claim: Claim,
+        val retirementRef: String,
+        val retirementBindingRefs: List<String>,
+        val retirementStandingRef: String,
+        val requirementRetiredBySource: Boolean = true,
+        val sourceConditionResolvedByAttention: Boolean = false,
+        val effectAuthorityGranted: Boolean = false,
+    ) {
+        init {
+            require(requirementRetiredBySource) {
+                "retired attention claim must be source-retired"
+            }
+            require(!sourceConditionResolvedByAttention) {
+                "Attention cannot claim the source condition resolved"
+            }
+            require(!effectAuthorityGranted) {
+                "retired attention claim cannot grant effect authority"
+            }
+        }
+    }
+
+    /**
      * A deterministic inspectable surface only.
      *
      * Lexical requirement identity order is not urgency, severity, priority, or presentation order.
@@ -262,6 +343,46 @@ object VexLifeAttentionClaim {
             claim = claim,
             acknowledgementRef = observation.acknowledgementRef,
             actorRef = observation.actorRef,
+        )
+    }
+
+    fun retire(
+        claim: Claim,
+        observation: SourceRetirementObservation,
+    ): RetiredClaim {
+        require(observation.ownerRef == claim.ownerRef) {
+            "attention retirement owner does not match the claim owner"
+        }
+        require(observation.sourceRef == claim.sourceRef) {
+            "attention retirement source does not match the claim source"
+        }
+        require(observation.requirementRef == claim.requirementRef) {
+            "attention retirement does not bind the current requirementRef"
+        }
+        require(observation.candidateRef == claim.candidateRef) {
+            "attention retirement does not bind the current candidateRef"
+        }
+        requireSameRefs(
+            expected = claim.requirementBindingRefs,
+            actual = observation.priorRequirementBindingRefs,
+            label = "attention retirement prior requirement binding",
+        )
+        requireSameRefs(
+            expected = claim.candidateSourceBindingRefs,
+            actual = observation.priorCandidateSourceBindingRefs,
+            label = "attention retirement prior candidate source binding",
+        )
+        requireSameRefs(
+            expected = claim.subjectScopeRefs,
+            actual = observation.priorSubjectScopeRefs,
+            label = "attention retirement prior subject scope",
+        )
+
+        return RetiredClaim(
+            claim = claim,
+            retirementRef = observation.retirementRef,
+            retirementBindingRefs = observation.retirementBindingRefs,
+            retirementStandingRef = observation.retirementStandingRef,
         )
     }
 
