@@ -137,6 +137,13 @@ object VexLifeContextRevisit {
         val historicalCurrentizedEventRefs: Set<String>,
     )
 
+    /**
+     * One exact-reopened turn nominated semantically for [queryRef].
+     *
+     * List order inside [ConversationView.semanticCandidateMatches] is best-candidate first within
+     * each query. That order is candidate evidence only; it is never accepted meaning or source
+     * authority.
+     */
     data class SemanticCandidateMatch(
         val queryRef: String,
         val turnRef: String,
@@ -656,6 +663,8 @@ object VexLifeContextRevisit {
                 .groupBy(
                     SemanticCandidateMatch::queryRef,
                 )
+        val semanticCandidateRankByTurnRef =
+            mutableMapOf<String, Int>()
 
         for (query in request.queries) {
             val before = turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size }
@@ -712,19 +721,41 @@ object VexLifeContextRevisit {
                 query.ref
             ]
                 .orEmpty()
-                .forEach {
-                    semanticCandidate ->
+                .forEachIndexed {
+                    zeroBasedRank,
+                    semanticCandidate,
+                    ->
+                    val rank =
+                        zeroBasedRank +
+                            1
                     turnByRef[
                         semanticCandidate.turnRef
                     ]
                         ?.let {
                             turn ->
+                            val priorRank =
+                                semanticCandidateRankByTurnRef[
+                                    turn.turnRef
+                                ]
+                            if (
+                                priorRank ==
+                                    null ||
+                                rank <
+                                    priorRank
+                            ) {
+                                semanticCandidateRankByTurnRef[
+                                    turn.turnRef
+                                ] =
+                                    rank
+                            }
                             hitTurn(
                                 turn,
                                 Match(
                                     query.ref,
                                     Route.SEMANTIC_CANDIDATE,
-                                    "semantic candidate; exact canonical source reopened",
+                                    "semantic candidate rank " +
+                                        rank +
+                                        "; exact canonical source reopened",
                                 ),
                             )
                         }
@@ -860,6 +891,12 @@ object VexLifeContextRevisit {
             nodes.sortedWith(
                 compareByDescending<VexLifeTurnNavigation.Turn> { branches(it) }
                     .thenByDescending { matchedTerms[it.turnRef]?.size ?: 0 }
+                    .thenBy {
+                        semanticCandidateRankByTurnRef[
+                            it.turnRef
+                        ]
+                            ?: Int.MAX_VALUE
+                    }
                     .thenByDescending { it.request.sequence }
             )
 
