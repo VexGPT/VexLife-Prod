@@ -83,6 +83,7 @@ class VexLifeProdVersioningTest {
     fun everyMainCommitAutomaticallyPublishesItsOwnSourceIdentifiedPreview() {
         assertContains(releaseWorkflow, "push:")
         assertContains(releaseWorkflow, "- main")
+        assertContains(releaseWorkflow, "fetch-depth: 0")
         assertContains(
             releaseWorkflow,
             "publish-mac-release.sh preview \"\" \"\$GITHUB_SHA\"",
@@ -93,6 +94,7 @@ class VexLifeProdVersioningTest {
         assertContains(releaseDocs, "Preview  = automatic source version for every main commit")
         assertContains(releaseDocs, "Stable   = explicit SemVer after lived acceptance")
     }
+
     @Test
     fun productReceiptRecordsDistributionIdentityWithoutForkingProductIdentity() {
         assertContains(
