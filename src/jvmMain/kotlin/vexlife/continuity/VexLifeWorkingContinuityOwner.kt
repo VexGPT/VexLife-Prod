@@ -387,7 +387,16 @@ class VexLifeWorkingContinuityOwner(
      */
     fun writeCurrentCycle(
         checkpoint: VexLifeWorkingContinuity.CycleCheckpoint,
+        recoveredPriorFingerprintOrNull: String? =
+            null,
     ): CycleMutationResult {
+        recoveredPriorFingerprintOrNull
+            ?.let {
+                requireSha256(
+                    it,
+                    "recoveredPriorFingerprintOrNull",
+                )
+            }
         val validated =
             VexLifeWorkingContinuity.validateCycleCheckpoint(
                 checkpoint,
@@ -422,6 +431,20 @@ class VexLifeWorkingContinuityOwner(
                     )
                 }
 
+                val recoveredCrossTurn =
+                    existing !=
+                        null &&
+                        recoveredPriorFingerprintOrNull !=
+                        null &&
+                        existing.semanticFingerprint ==
+                        recoveredPriorFingerprintOrNull &&
+                        existing.turnRef !=
+                        validated.turnRef &&
+                        validated.cycleIndex ==
+                        1 &&
+                        validated.phase ==
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION
+
                 if (
                     existing ==
                         null
@@ -434,12 +457,13 @@ class VexLifeWorkingContinuityOwner(
                     }
                 } else {
                     require(
-                        cycleUpdateAllowed(
-                            existing = existing,
-                            next = validated,
-                        ),
+                        recoveredCrossTurn ||
+                            cycleUpdateAllowed(
+                                existing = existing,
+                                next = validated,
+                            ),
                     ) {
-                        "working continuity current cycle update is stale, skips a cycle, or crosses turns"
+                        "working continuity current cycle update is stale, skips a cycle, or crosses turns without exact recovery"
                     }
                 }
 
@@ -466,13 +490,16 @@ class VexLifeWorkingContinuityOwner(
 
                 CycleMutationResult(
                     state =
-                        if (
+                        when {
                             existing ==
-                                null
-                        ) {
-                            "CURRENT_CYCLE_STARTED"
-                        } else {
-                            "CURRENT_CYCLE_ADVANCED"
+                                null ->
+                                "CURRENT_CYCLE_STARTED"
+
+                            recoveredCrossTurn ->
+                                "RECOVERED_CYCLE_REPLACED"
+
+                            else ->
+                                "CURRENT_CYCLE_ADVANCED"
                         },
                     effectPerformedNow = true,
                     checkpoint = readback,

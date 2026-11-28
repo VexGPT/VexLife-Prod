@@ -8,6 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 
 class VexLifeWorkingContinuityTest {
     private fun input(
@@ -596,6 +597,146 @@ class VexLifeWorkingContinuityTest {
         )
     }
 
+
+    @Test
+    fun c1CycleBytesRemainReadableWhenC2MovementIdentityIsAbsent() {
+        val c1Shape =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef =
+                    "companion-lineage.vexlife.c1-compat",
+                threadRef =
+                    "thread.self-development.open-conversation",
+                turnRef =
+                    "turn.vexlife.c1-compat.001",
+                requestEventRef =
+                    "event.vexlife.c1-compat.request.001",
+                requestEventSha256 =
+                    "6".repeat(64),
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull = null,
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.c1-compat.001",
+                capabilityResultSha256 =
+                    "7".repeat(64),
+                capabilityState =
+                    "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T18:10:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchemaV1,
+            c1Shape.schemaVersion,
+        )
+
+        val bytes =
+            VexContractJson.canonicalEncode(
+                c1Shape,
+            )
+
+        assertFalse(
+            bytes.contains(
+                "requestMessageRefOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityHandleOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityActionOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityTargetOrNull",
+            ),
+        )
+
+        assertEquals(
+            c1Shape,
+            VexContractJson.decode<VexLifeWorkingContinuity.CycleCheckpoint>(
+                bytes,
+            ),
+        )
+        val c2Shape =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef =
+                    "companion-lineage.vexlife.c2-current",
+                threadRef =
+                    "thread.self-development.open-conversation",
+                turnRef =
+                    "turn.vexlife.c2-current.001",
+                requestEventRef =
+                    "event.vexlife.c2-current.request.001",
+                requestEventSha256 =
+                    "8".repeat(64),
+                requestMessageRefOrNull =
+                    "message.vexlife.c2-current.request.001",
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull = null,
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.c2-current.001",
+                capabilityHandleOrNull =
+                    "atlas",
+                capabilityActionOrNull =
+                    "list",
+                capabilityTargetOrNull = null,
+                capabilityResultSha256 =
+                    "9".repeat(64),
+                capabilityState =
+                    "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T18:11:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchema,
+            c2Shape.schemaVersion,
+        )
+        assertEquals(
+            "message.vexlife.c2-current.request.001",
+            c2Shape.requestMessageRefOrNull,
+        )
+        assertEquals(
+            "atlas",
+            c2Shape.capabilityHandleOrNull,
+        )
+        assertEquals(
+            "list",
+            c2Shape.capabilityActionOrNull,
+        )
+    }
 
 }
 

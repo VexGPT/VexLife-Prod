@@ -87,6 +87,57 @@ object DirectWorkingContinuity {
         val formationFailureClassOrNull: String?,
     )
 
+    internal enum class CycleFocusRelationship {
+        SAME_CURRENT,
+        NO_PRIOR_FOCUS,
+        CURRENT_FOCUS_CHANGED,
+    }
+
+    @ConsistentCopyVisibility
+    internal data class CycleRecovery internal constructor(
+        val cycle: VexLifeWorkingContinuity.CycleCheckpoint,
+        val failedRequestEventRef: String,
+        val failedRequestEventSha256: String,
+        val failedRequestMessageRef: String,
+        val failedRequestContent: String,
+        val failedRequestContentSha256: String,
+        val failureRefOrNull: String?,
+        val failureFingerprintOrNull: String?,
+        val failureCodeOrNull: String?,
+        val lastValidConversationHeadSha256OrNull: String?,
+        val currentRequestEventRef: String,
+        val currentRequestEventSha256: String,
+        val focusRelationship: CycleFocusRelationship,
+        val sourceRefs: List<String>,
+        val recoveryRef: String,
+        val semanticFingerprint: String,
+    )
+
+    internal data class CycleRecoveryProjection(
+        val content: String,
+        val contentSha256: String,
+        val sourceRefs: List<String>,
+        val priorHumanRequestIncluded: Boolean,
+    )
+
+    @Serializable
+    private data class CycleRecoveryCore(
+        val cycleCheckpointRef: String,
+        val cycleCheckpointFingerprint: String,
+        val failedRequestEventRef: String,
+        val failedRequestEventSha256: String,
+        val failedRequestMessageRef: String,
+        val failedRequestContentSha256: String,
+        val failureRefOrNull: String?,
+        val failureFingerprintOrNull: String?,
+        val failureCodeOrNull: String?,
+        val lastValidConversationHeadSha256OrNull: String?,
+        val currentRequestEventRef: String,
+        val currentRequestEventSha256: String,
+        val focusRelationship: CycleFocusRelationship,
+        val sourceRefs: List<String>,
+    )
+
     @Serializable
     private data class ReceiptCore(
         val schemaVersion: String,
@@ -583,6 +634,270 @@ object DirectWorkingContinuity {
         return formation
     }
 
+    internal fun formCycleRecovery(
+        cycle: VexLifeWorkingContinuity.CycleCheckpoint,
+        failedRequest: DirectConversationStore.Event,
+        currentRequest: DirectConversationStore.Event,
+        workingFocusObservation: DirectWorkingFocus.Observation,
+        failureRefOrNull: String?,
+        failureFingerprintOrNull: String?,
+        failureCodeOrNull: String?,
+        lastValidConversationHeadSha256OrNull: String?,
+    ): CycleRecovery {
+        VexLifeWorkingContinuity.validateCycleCheckpoint(
+            cycle,
+        )
+        require(
+            cycle.requestMessageRefOrNull !=
+                null &&
+                cycle.capabilityHandleOrNull !=
+                null &&
+                cycle.capabilityActionOrNull !=
+                null
+        ) {
+            "working continuity cycle lacks the movement identity required for fresh-Send recovery"
+        }
+        require(
+            failedRequest.eventKind ==
+                "REQUEST" &&
+                failedRequest.eventRef ==
+                cycle.requestEventRef &&
+                failedRequest.eventHash ==
+                cycle.requestEventSha256 &&
+                failedRequest.messageRef ==
+                cycle.requestMessageRefOrNull &&
+                failedRequest.turnRef ==
+                cycle.turnRef &&
+                failedRequest.companionLineageRef ==
+                cycle.lineageRef &&
+                failedRequest.threadRef ==
+                cycle.threadRef
+        ) {
+            "working continuity recovery failed request does not bind the exact current cycle"
+        }
+        require(
+            currentRequest.eventKind ==
+                "REQUEST" &&
+                currentRequest.companionLineageRef ==
+                cycle.lineageRef &&
+                currentRequest.threadRef ==
+                cycle.threadRef &&
+                currentRequest.turnRef !=
+                cycle.turnRef &&
+                currentRequest.eventRef !=
+                failedRequest.eventRef
+        ) {
+            "working continuity recovery requires one fresh request in the same lineage/thread"
+        }
+        require(
+            (failureRefOrNull == null) ==
+                (failureFingerprintOrNull == null)
+        ) {
+            "working continuity recovery failure identity is incomplete"
+        }
+        failureRefOrNull?.let {
+            requireRef(
+                it,
+                "failureRefOrNull",
+            )
+        }
+        failureFingerprintOrNull?.let {
+            requireSha256(
+                it,
+                "failureFingerprintOrNull",
+            )
+        }
+        lastValidConversationHeadSha256OrNull?.let {
+            requireSha256(
+                it,
+                "lastValidConversationHeadSha256OrNull",
+            )
+        }
+
+        val priorFocus =
+            listOf(
+                cycle.workingFocusRefOrNull,
+                cycle.workingFocusStateRefOrNull,
+                cycle.workingFocusRevisionRefOrNull,
+            )
+        val currentFocus =
+            listOf(
+                workingFocusObservation.workingFocusRefOrNull,
+                workingFocusObservation.stateRefOrNull,
+                workingFocusObservation.revisionRefOrNull,
+            )
+        val focusRelationship =
+            when {
+                priorFocus.all {
+                    it ==
+                        null
+                } &&
+                    currentFocus.all {
+                        it ==
+                            null
+                    } ->
+                    CycleFocusRelationship.NO_PRIOR_FOCUS
+
+                priorFocus ==
+                    currentFocus ->
+                    CycleFocusRelationship.SAME_CURRENT
+
+                else ->
+                    CycleFocusRelationship.CURRENT_FOCUS_CHANGED
+            }
+
+        val sourceRefs =
+            (
+                listOf(
+                    cycle.cycleCheckpointRef,
+                    failedRequest.eventRef,
+                    currentRequest.eventRef,
+                ) +
+                    listOfNotNull(
+                        failureRefOrNull,
+                        workingFocusObservation.stateRefOrNull,
+                        workingFocusObservation.revisionRefOrNull,
+                    )
+            )
+                .distinct()
+                .sorted()
+        val core =
+            CycleRecoveryCore(
+                cycleCheckpointRef =
+                    cycle.cycleCheckpointRef,
+                cycleCheckpointFingerprint =
+                    cycle.semanticFingerprint,
+                failedRequestEventRef =
+                    failedRequest.eventRef,
+                failedRequestEventSha256 =
+                    failedRequest.eventHash,
+                failedRequestMessageRef =
+                    failedRequest.messageRef,
+                failedRequestContentSha256 =
+                    failedRequest.contentHash,
+                failureRefOrNull =
+                    failureRefOrNull,
+                failureFingerprintOrNull =
+                    failureFingerprintOrNull,
+                failureCodeOrNull =
+                    failureCodeOrNull,
+                lastValidConversationHeadSha256OrNull =
+                    lastValidConversationHeadSha256OrNull,
+                currentRequestEventRef =
+                    currentRequest.eventRef,
+                currentRequestEventSha256 =
+                    currentRequest.eventHash,
+                focusRelationship =
+                    focusRelationship,
+                sourceRefs =
+                    sourceRefs,
+            )
+        val fingerprint =
+            semanticHash(
+                core,
+            )
+        return CycleRecovery(
+            cycle = cycle,
+            failedRequestEventRef =
+                core.failedRequestEventRef,
+            failedRequestEventSha256 =
+                core.failedRequestEventSha256,
+            failedRequestMessageRef =
+                core.failedRequestMessageRef,
+            failedRequestContent =
+                failedRequest.content,
+            failedRequestContentSha256 =
+                core.failedRequestContentSha256,
+            failureRefOrNull =
+                core.failureRefOrNull,
+            failureFingerprintOrNull =
+                core.failureFingerprintOrNull,
+            failureCodeOrNull =
+                core.failureCodeOrNull,
+            lastValidConversationHeadSha256OrNull =
+                core.lastValidConversationHeadSha256OrNull,
+            currentRequestEventRef =
+                core.currentRequestEventRef,
+            currentRequestEventSha256 =
+                core.currentRequestEventSha256,
+            focusRelationship =
+                core.focusRelationship,
+            sourceRefs =
+                core.sourceRefs,
+            recoveryRef =
+                "context.vexlife-prod.working-cycle-recovery." +
+                    fingerprint.take(
+                        32,
+                    ),
+            semanticFingerprint =
+                fingerprint,
+        )
+    }
+
+    internal fun projectCycleRecovery(
+        recovery: CycleRecovery,
+    ): CycleRecoveryProjection {
+        val requestIncluded =
+            recovery.failedRequestContent.length <=
+                4_096
+        val priorRequest =
+            if (
+                requestIncluded
+            ) {
+                "priorFailedHumanRequest=\n" +
+                    recovery.failedRequestContent
+            } else {
+                "priorFailedHumanRequest=HELD_OVERSIZE " +
+                    "sha256=" +
+                    recovery.failedRequestContentSha256
+            }
+        val cycle =
+            recovery.cycle
+        val content =
+            listOf(
+                "VEXLIFE_WORKING_CYCLE_RECOVERY/v1",
+                "recoveryRef=${recovery.recoveryRef}",
+                "failedTurnRef=${cycle.turnRef}",
+                "failedRequestEventRef=${recovery.failedRequestEventRef}",
+                "failureRef=${recovery.failureRefOrNull ?: "NONE"}",
+                "failureCode=${recovery.failureCodeOrNull ?: "UNRECORDED_INTERRUPTION"}",
+                "lastValidConversationHeadSha256=${recovery.lastValidConversationHeadSha256OrNull ?: "NONE"}",
+                "cycleIndex=${cycle.cycleIndex}",
+                "cyclePhase=${cycle.phase.name}",
+                "capability=${requireNotNull(cycle.capabilityHandleOrNull)}",
+                "action=${requireNotNull(cycle.capabilityActionOrNull)}",
+                "target=${cycle.capabilityTargetOrNull ?: "NONE"}",
+                "capabilityState=${cycle.capabilityState}",
+                "capabilityResultSha256=${cycle.capabilityResultSha256}",
+                "capabilitySourceRefs=${cycle.capabilitySourceRefs.joinToString(",").ifEmpty { "NONE" }}",
+                "capabilityFrontierRefs=${cycle.capabilityFrontierRefs.joinToString(",").ifEmpty { "NONE" }}",
+                "externalEffectsExecuted=${cycle.externalEffectsExecuted}",
+                "externalEffectMayHaveExecuted=${cycle.externalEffectMayHaveExecuted}",
+                "priorCycleNextMove=${cycle.nextMoveOrNull?.name ?: "UNDECIDED"}",
+                "priorWorkingFocusRelationship=${recovery.focusRelationship.name}",
+                "sameFailedSendReplayAllowed=false",
+                "currentHumanRequestIsForeground=true",
+                "The prior Send did not complete. The current human request may continue, change, or replace that unfinished work.",
+                "Do not replay the failed Send identity or blindly replay a prior machine control.",
+                "The capability result body is not persisted here. If its exact content matters now, re-open or re-observe it through current lawful reach using the carried owner/source coordinates.",
+                priorRequest,
+            )
+                .joinToString(
+                    "\n",
+                )
+        return CycleRecoveryProjection(
+            content = content,
+            contentSha256 =
+                textSha256(
+                    content,
+                ),
+            sourceRefs =
+                recovery.sourceRefs,
+            priorHumanRequestIncluded =
+                requestIncluded,
+        )
+    }
+
     internal fun checkpointCapabilityCycle(
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
@@ -592,6 +907,8 @@ object DirectWorkingContinuity {
         nextMoveOrNull: VexLifeWorkingContinuity.CycleNextMove? =
             null,
         nextControlSha256OrNull: String? =
+            null,
+        recoveredPriorFingerprintOrNull: String? =
             null,
         formedAt: Instant =
             Instant.now(),
@@ -617,6 +934,8 @@ object DirectWorkingContinuity {
                 turnRef = currentRequest.turnRef,
                 requestEventRef = currentRequest.eventRef,
                 requestEventSha256 = currentRequest.eventHash,
+                requestMessageRefOrNull =
+                    currentRequest.messageRef,
                 cycleIndex = capabilityEntry.requestNumber,
                 phase = phase,
                 workingFocusRefOrNull =
@@ -626,6 +945,12 @@ object DirectWorkingContinuity {
                 workingFocusRevisionRefOrNull =
                     workingFocusObservation.revisionRefOrNull,
                 capabilityCallRef = capabilityEntry.callRef,
+                capabilityHandleOrNull =
+                    capabilityEntry.handle,
+                capabilityActionOrNull =
+                    capabilityEntry.action,
+                capabilityTargetOrNull =
+                    capabilityEntry.target,
                 capabilityResultSha256 =
                     capabilityEntry.resultSha256,
                 capabilityState =
@@ -647,7 +972,9 @@ object DirectWorkingContinuity {
             productHome,
         )
             .writeCurrentCycle(
-                checkpoint,
+                checkpoint = checkpoint,
+                recoveredPriorFingerprintOrNull =
+                    recoveredPriorFingerprintOrNull,
             )
             .checkpoint
     }
@@ -665,10 +992,12 @@ object DirectWorkingContinuity {
                 threadRef = threadRef,
             )
 
-    fun clearCurrentCycleAfterCompletedTurn(
+    internal fun clearCurrentCycleAfterCompletedTurn(
         productHome: Path,
         turnRef: String,
         prepared: Prepared,
+        consumedRecoveryOrNull: CycleRecovery? =
+            null,
     ): Boolean {
         val owner =
             VexLifeWorkingContinuityOwner(
@@ -682,9 +1011,15 @@ object DirectWorkingContinuity {
                 ?: return false
         require(
             current.turnRef ==
-                turnRef
+                turnRef ||
+                (
+                    consumedRecoveryOrNull !=
+                        null &&
+                        current.semanticFingerprint ==
+                        consumedRecoveryOrNull.cycle.semanticFingerprint
+                    )
         ) {
-            "completed turn cannot clear another working continuity cycle"
+            "completed turn cannot clear an unrelated working continuity cycle"
         }
         return owner.clearCurrentCycle(
             lineageRef = current.lineageRef,
@@ -1417,6 +1752,27 @@ object DirectWorkingContinuity {
         error.javaClass.simpleName
             .ifBlank {
                 "Throwable"
+            }
+
+    private fun textSha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
             }
 
     private fun requireRef(
