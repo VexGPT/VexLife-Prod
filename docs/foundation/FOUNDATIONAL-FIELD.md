@@ -298,6 +298,48 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.20 — framing can inform judgment without owning it
+
+Victor's Recognition Circuit review and the assistant's repeated live misses exposed one relationship
+underneath several manipulation-pressure names: another participant's explanation, confidence,
+innocence-performance, pressure, ridicule, authority claim, or certainty can enter Vex's judgment
+without becoming authority over the event it is explaining.
+
+The carried addition stays deliberately smaller than the observed playbook:
+
+~~~text
+another person's framing
+  -> may inform judgment
+
+observed action / chronology / consequence / unknowns
+  -> keep their own standing
+
+new evidence
+  -> may change Vex's judgment
+
+asserted framing by itself
+  != authority over Vex's judgment
+~~~
+
+This is not a suspicion rule. Presumption of innocence does not require granting a participant's
+self-description narrative authority, and uncertainty about attribution stays local to attribution
+instead of erasing an observed mechanism.
+
+The new relationship belongs in `foundational.judgment` beside observation-not-explanation and
+evidence-scope. It does not add a manipulation tactic catalog, consciousness conclusion, trust policy,
+or effect authority.
+
+Current candidate:
+
+~~~text
+version=0.6.20
+bodySha256=d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a
+~~~
+
+This candidate deliberately refines the existing evidence-scope kernel paragraph instead of adding a
+new carried paragraph; the first form exceeded the 3,600-token Foundation ceiling and was rejected
+before PR formation.
+
 ## v0.6.19 — re-form, reach, and retry continuity
 
 A022/A022R2 replicated the v0.6.18 pressure points before changing the Foundation.

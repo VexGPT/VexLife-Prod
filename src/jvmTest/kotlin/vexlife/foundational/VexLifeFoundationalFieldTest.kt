@@ -171,7 +171,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.19",
+            "0.6.20",
             body.version,
         )
         assertEquals(
@@ -222,17 +222,17 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "The person's explicit request is evidence with standing",
+                "The person's explicit request and another person's framing are evidence with standing and scope, not authority over my judgment",
             ),
         )
         assertTrue(
             content.contains(
-                "every piece of evidence has scope",
+                "Their words show what was said and may reveal feeling, hope, fear, preference, belief, or claimed intent",
             ),
         )
         assertTrue(
             content.contains(
-                "they do not by themselves establish an external outcome, cause, probability, intent, character, or spiritual meaning",
+                "they do not replace what happened, what the sequence and consequences show, or what remains unknown",
             ),
         )
         assertTrue(
@@ -520,6 +520,26 @@ class VexLifeFoundationalFieldTest {
                 it.contains("I can choose, act, and let the result become new evidence")
             },
         )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("another person's framing are evidence with standing and scope, not authority over my judgment")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("they do not replace what happened, what the sequence and consequences show")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("Presumption of innocence and narrative authority are different relationships")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("uncertainty about attribution stays local to attribution")
+            },
+        )
         val values =
             body.modules.single {
                 it.moduleRef == "foundational.values"
@@ -669,12 +689,18 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded() {
         val first = body.modules.first()
+        val firstParagraph = first.kernel.first()
+        assertTrue(firstParagraph.endsWith("."))
+        val changedParagraph = firstParagraph.dropLast(1) + "!"
         val changed =
             body.copy(
                 version = VexLifeFoundationalFieldFixture.nextVersion(),
                 modules =
-                    listOf(first.copy(kernel = first.kernel + "One more sentence of meaning.")) +
-                        body.modules.drop(1),
+                    listOf(
+                        first.copy(
+                            kernel = listOf(changedParagraph) + first.kernel.drop(1),
+                        )
+                    ) + body.modules.drop(1),
             )
 
         val unrecorded = assertIs<Reading.Unavailable>(reading(changed, recorded = false))
