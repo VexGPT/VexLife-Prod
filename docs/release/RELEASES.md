@@ -76,6 +76,16 @@ Launching a second copy directly from a mounted DMG is not the update mechanism.
 versioning exists so several downloaded/mounted release artifacts remain intelligible while the
 installed Product remains singular.
 
+Migration is forward-only. Releases published before this contract remain immutable with their
+historical asset/volume names; they are not renamed or rebuilt. The Pages catalog accepts both legacy
+and release-identified DMG names because it discovers the Mac artifact by platform/file type rather
+than one fixed basename. The first release formed after this v2 contract begins the versioned
+distribution line.
+
+The realized app also embeds `VexLifeProdDistributionChannel` and
+`VexLifeProdDistributionIdentity` beside its exact source SHA. Those fields are diagnostic/currentness
+projection only; they do not create another Product identity.
+
 The historical preview tag name remains `private-service-image-<sha>` for compatibility with the current
 release/page catalog, but a published preview or stable release carries the Product artifacts below:
 
