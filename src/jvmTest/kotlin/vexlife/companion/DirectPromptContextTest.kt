@@ -3866,7 +3866,7 @@ class DirectPromptContextTest {
                     )
                     assertContains(
                         stable,
-                        "Stop when evidence is sufficient or materially similar reads stop changing the decision.",
+                        "I stop when evidence is sufficient or materially similar reads stop changing the decision.",
                     )
                     assertFalse(
                         stable.contains(
