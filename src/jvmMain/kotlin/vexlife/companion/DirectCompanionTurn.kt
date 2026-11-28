@@ -1469,6 +1469,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -1582,6 +1584,8 @@ object DirectCompanionTurn {
                 hooks.memoryProviderSelectionAtCap,
             workingContinuityContext =
                 workingContinuityContext,
+            workingCycleRecovery =
+                workingCycleRecovery,
             workingFocusObservation =
                 workingFocusObservation,
             browserContext = browserContext,
@@ -2082,6 +2086,7 @@ object DirectCompanionTurn {
                     memoryContextAtCap = hooks.memoryContextAtCap,
                     memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext = workingContinuityContext,
+                    workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                     browserContext = browserContext,
                     personContext = personContext,
@@ -2190,6 +2195,8 @@ object DirectCompanionTurn {
                         hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
+                    workingCycleRecovery =
+                        workingCycleRecovery,
                     workingFocusObservation =
                         workingFocusObservation,
                     browserContext = browserContext,
@@ -2258,6 +2265,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2370,6 +2379,7 @@ object DirectCompanionTurn {
                 memoryContextAtCap = hooks.memoryContextAtCap,
                 memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext = workingContinuityContext,
+                workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -2414,6 +2424,7 @@ object DirectCompanionTurn {
             memoryContextAtCap = hooks.memoryContextAtCap,
             memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
             workingContinuityContext = workingContinuityContext,
+            workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
