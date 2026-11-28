@@ -112,6 +112,7 @@ class HereticExecutionTopologyTest {
             assertEquals(24_000, capabilityExchangeReserveTokens.value)
             assertEquals(168_000, directTurnInputWithReachTokens.value)
             assertEquals(100_000, maximumMemoryTokens.value)
+            assertNull(maximumRequestsPerTurn.value)
             assertEquals(16_000, reservedOutputTokens.value)
             assertEquals(208_000, hardInputOutputTokenLimit.value)
             assertEquals("NOT_CONFIGURED", adaptiveContextPolicyState)
@@ -232,7 +233,7 @@ class HereticExecutionTopologyTest {
             catalog.effectsPerformed,
         )
         assertEquals(
-            36,
+            37,
             catalog.fields.size,
         )
         assertEquals(
