@@ -292,6 +292,10 @@ class VexLabsNativeTestTest {
                         before.conversationPreset,
                     )
                     assertEquals(
+                        "NONE",
+                        before.memoryMode,
+                    )
+                    assertEquals(
                         null,
                         before.seedConversationHeadSha256,
                     )
@@ -445,6 +449,10 @@ class VexLabsNativeTestTest {
                     assertEquals(
                         "EMPTY",
                         restored.projection.conversationPreset,
+                    )
+                    assertEquals(
+                        "NONE",
+                        restored.projection.memoryMode,
                     )
                     assertEquals(
                         0,
