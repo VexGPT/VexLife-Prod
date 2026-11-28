@@ -2094,6 +2094,8 @@ object DirectCompanionTurn {
                         hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
+                    workingFocusObservation =
+                        workingFocusObservation,
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = finalRuntimeEvidence,
