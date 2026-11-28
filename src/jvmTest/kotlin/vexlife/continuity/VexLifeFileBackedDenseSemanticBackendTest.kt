@@ -370,7 +370,7 @@ class VexLifeFileBackedDenseSemanticBackendTest {
             val fingerprintMatch =
                 requireNotNull(
                     Regex(
-                        """\"requestFingerprints\"\\s*:\\s*\\[\\s*\"([0-9a-f]{16})\"""",
+                        "\"requestFingerprints\"\\s*:\\s*\\[\\s*\"([0-9a-f]{16})\"",
                     )
                         .find(
                             validSnapshot,
