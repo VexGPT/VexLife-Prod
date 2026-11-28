@@ -3873,6 +3873,166 @@ tasks.register<JavaExec>("compileVexLifeStrings") {
     args("compile", layout.projectDirectory.asFile.absolutePath)
 }
 
+
+/**
+ * Proof-only real-Windows Qwen 4B coherence gate.
+ *
+ * The caller supplies the exact Product source identity and one result directory. The task uses the
+ * JVM test classpath so the canary never ships in Product.
+ */
+tasks.register<JavaExec>(
+    "vexBodyWindowsCoherenceCanary",
+) {
+    group =
+        "verification"
+    description =
+        "Run the proof-only real-Windows selected-Qwen coherence canary."
+
+    val testCompilation =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            testCompilation.output.allOutputs,
+            testCompilation.runtimeDependencyFiles,
+        )
+
+    mainClass.set(
+        "vexlife.harness.VexBodyWindowsCoherenceCanaryKt",
+    )
+    maxHeapSize =
+        "1536m"
+    jvmArgs(
+        "-XX:+ExitOnOutOfMemoryError",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val sourceSha =
+            requireNotNull(
+                project.findProperty(
+                    "vexlifeSourceSha",
+                ) as String?,
+            ) {
+                "Windows coherence canary requires -PvexlifeSourceSha=<exact commit>"
+            }
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "Windows coherence canary source SHA is invalid"
+        }
+
+        val resultDir =
+            requireNotNull(
+                project.findProperty(
+                    "vexbodyWindowsCoherenceResultDir",
+                ) as String?,
+            ) {
+                "Windows coherence canary requires -PvexbodyWindowsCoherenceResultDir=<absolute path>"
+            }
+                .let(
+                    ::file,
+                )
+                .absoluteFile
+        require(
+            resultDir.isAbsolute,
+        ) {
+            "Windows coherence canary result directory must be absolute"
+        }
+
+        setArgs(
+            listOf(
+                sourceSha,
+                resultDir.absolutePath,
+            ),
+        )
+    }
+}
+
+tasks.register<JavaExec>(
+    "vexBodyWindowsControlCarriageProbe",
+) {
+    group =
+        "verification"
+    description =
+        "Run proof-only Windows Qwen control-carriage thinking/no-thinking probe."
+
+    val testCompilation =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "jvmTestClasses",
+    )
+    classpath =
+        files(
+            testCompilation.output.allOutputs,
+            testCompilation.runtimeDependencyFiles,
+        )
+    mainClass.set(
+        "vexlife.harness.VexBodyWindowsControlCarriageProbe",
+    )
+    maxHeapSize =
+        "1024m"
+    jvmArgs(
+        "-XX:+ExitOnOutOfMemoryError",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val sourceSha =
+            requireNotNull(
+                project.findProperty(
+                    "vexlifeSourceSha",
+                ) as String?,
+            ) {
+                "Windows control-carriage probe requires -PvexlifeSourceSha=<exact commit>"
+            }
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        )
+        val resultDir =
+            requireNotNull(
+                project.findProperty(
+                    "vexbodyWindowsControlProbeResultDir",
+                ) as String?,
+            ) {
+                "Windows control-carriage probe requires -PvexbodyWindowsControlProbeResultDir=<absolute path>"
+            }
+                .let(
+                    ::file,
+                )
+                .absoluteFile
+        setArgs(
+            listOf(
+                sourceSha,
+                resultDir.absolutePath,
+            ),
+        )
+    }
+}
+
 // [VXG RealForever]
 
 // Experiment-only: the shared VexWork continuity-pressure harness adapter (#310). It runs from the
