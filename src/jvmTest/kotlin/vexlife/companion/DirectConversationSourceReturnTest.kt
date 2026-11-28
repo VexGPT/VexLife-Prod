@@ -167,6 +167,33 @@ class DirectConversationSourceReturnTest {
     }
 
     @Test
+    fun exactV1HeaderSuppliesDefaultAnySpeakerWhenProviderOmitsOptionalScope() {
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n" +
+                        """{"schemaVersion":"${DirectConversationSourceReturn.RequestSchema}","queryTerms":["original requirements"]}""",
+                ),
+            )
+
+        assertEquals(
+            DirectConversationSourceReturn.RequestSchema,
+            request.schemaVersion,
+        )
+        assertEquals(
+            listOf(
+                "original requirements",
+            ),
+            request.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            request.speakerScope,
+        )
+    }
+
+    @Test
     fun exactRequestHeaderParsesOneBoundedSourceIntent() {
         val request =
             DirectConversationSourceReturn.parseRequestOrNull(
