@@ -295,6 +295,20 @@ class VexLifeWindowsHereticRuntimeTest {
     }
 
     @Test
+    fun windowsReachQualificationUsesTheOrdinaryRuntimeOutputBudget() {
+        val realization =
+            HereticRuntimeRealization.WindowsQwen4B
+
+        assertEquals(
+            4_096,
+            VexLifeWindowsHereticRuntime
+                .reachQualificationMaxOutputTokens(
+                    realization,
+                ),
+        )
+    }
+
+    @Test
     fun windowsVexReachQualificationEarnsAtlasListThenDerivedDescribe() {
         val home =
             Files.createTempDirectory(
@@ -330,6 +344,8 @@ class VexLifeWindowsHereticRuntimeTest {
         val qualified =
             VexLifeWindowsHereticRuntime.qualifyVexReach(
                 productHome = home,
+                maxOutputTokens =
+                    4_096,
                 invokeStage = {
                     systemMessage,
                     userMessage,
@@ -347,7 +363,7 @@ class VexLifeWindowsHereticRuntimeTest {
                         ),
                     )
                     assertEquals(
-                        2048,
+                        4_096,
                         maxTokens,
                     )
                     assertEquals(
@@ -398,6 +414,8 @@ class VexLifeWindowsHereticRuntimeTest {
         val qualified =
             VexLifeWindowsHereticRuntime.qualifyVexReach(
                 productHome = home,
+                maxOutputTokens =
+                    4_096,
                 invokeStage = {
                     _,
                     _,
