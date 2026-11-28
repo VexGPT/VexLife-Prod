@@ -313,7 +313,6 @@
         steps.append(text('li', 'This is a script while the signed VexLife app is prepared; macOS may not open it with a double-click because it is not yet notarized.'));
         next.append(steps);
       }
-      }
     };
     select.addEventListener('change', show);
     show();
