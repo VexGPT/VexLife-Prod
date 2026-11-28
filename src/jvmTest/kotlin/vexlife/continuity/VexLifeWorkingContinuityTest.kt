@@ -551,6 +551,49 @@ class VexLifeWorkingContinuityTest {
             integrated.cycleCheckpointRef ==
                 awaiting.cycleCheckpointRef,
         )
+
+        val clearedFocus =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = awaiting.lineageRef,
+                threadRef = awaiting.threadRef,
+                turnRef = awaiting.turnRef,
+                requestEventRef = awaiting.requestEventRef,
+                requestEventSha256 = awaiting.requestEventSha256,
+                cycleIndex = 2,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull =
+                    "state.vexlife.focus.cleared",
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.capability.cycle.002",
+                capabilityResultSha256 =
+                    "4".repeat(64),
+                capabilityState = "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:02Z",
+                    ),
+            )
+        assertEquals(
+            "state.vexlife.focus.cleared",
+            clearedFocus.workingFocusStateRefOrNull,
+        )
+        assertNull(
+            clearedFocus.workingFocusRefOrNull,
+        )
+        assertNull(
+            clearedFocus.workingFocusRevisionRefOrNull,
+        )
     }
 
 
