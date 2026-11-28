@@ -18,6 +18,8 @@ import vexlife.companion.DirectWorkingFocus
  */
 internal object VexLifeSelfContext {
     data class TurnContext(
+        val companionLineageRef: String,
+        val threadRef: String,
         val promptReceipt: DirectPromptContext.Receipt,
         val workingFocusObservation: DirectWorkingFocus.Observation,
         val providerMeasurement: DirectCompanionConnection.StageMeasurement?,
@@ -38,16 +40,14 @@ internal object VexLifeSelfContext {
 
     fun inspect(
         productHome: Path,
-        lineageRef: String,
-        threadRef: String,
         context: TurnContext,
     ): Result {
         val receipt = context.promptReceipt
         val currentFocus =
             DirectWorkingFocus.observeCurrent(
                 productHome = productHome,
-                lineageRef = lineageRef,
-                threadRef = threadRef,
+                lineageRef = context.companionLineageRef,
+                threadRef = context.threadRef,
             )
         val focusCurrentness =
             if (currentFocus == context.workingFocusObservation) {
