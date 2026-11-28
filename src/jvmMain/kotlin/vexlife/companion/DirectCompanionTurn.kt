@@ -296,9 +296,9 @@ object DirectCompanionTurn {
             "Partner text-turn stage does not admit source-return or capability control yet",
         )
 
-    private class CapabilityRequestLimitException :
+    private class CapabilityRequestHeldByResourceHeadroomException :
         IllegalStateException(
-            "Vex requested a capability again after this turn's requests were used up",
+            "capability reach is held after this turn exhausted its real exchange headroom",
         )
 
     private class CapabilityProviderBridgeHeldException :
@@ -311,7 +311,7 @@ object DirectCompanionTurn {
     ) {
         ADMITTED("admitted"),
         HELD_BY_TURN_POLICY("held_by_turn_policy"),
-        REQUEST_BUDGET_EXHAUSTED("exhausted"),
+        HELD_RESOURCE_HEADROOM("held_resource_headroom"),
         HELD_PROVIDER_BRIDGE("held_provider_bridge"),
     }
 
@@ -1877,12 +1877,15 @@ object DirectCompanionTurn {
                     !capabilityProviderBridgeQualified ->
                         CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
 
-                    exchanges.size <=
-                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
-                        CapabilityRequestAdmission.ADMITTED
+                    exchanges
+                        .lastOrNull()
+                        ?.entry
+                        ?.state ==
+                        VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET ->
+                        CapabilityRequestAdmission.HELD_RESOURCE_HEADROOM
 
                     else ->
-                        CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
+                        CapabilityRequestAdmission.ADMITTED
                 }
             DirectWorkingFocus.requireCurrent(
                 productHome = productHome,
@@ -2926,8 +2929,8 @@ object DirectCompanionTurn {
                 CapabilityRequestAdmission.HELD_BY_TURN_POLICY ->
                     throw CapabilityRequestHeldByTurnPolicyException()
 
-                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED ->
-                    throw CapabilityRequestLimitException()
+                CapabilityRequestAdmission.HELD_RESOURCE_HEADROOM ->
+                    throw CapabilityRequestHeldByResourceHeadroomException()
 
                 CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE ->
                     throw CapabilityProviderBridgeHeldException()
@@ -3614,8 +3617,8 @@ object DirectCompanionTurn {
             is CapabilityRequestHeldByTurnPolicyException ->
                 "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY"
 
-            is CapabilityRequestLimitException ->
-                "CAPABILITY_REQUEST_BUDGET_EXHAUSTED"
+            is CapabilityRequestHeldByResourceHeadroomException ->
+                "CAPABILITY_REACH_RESOURCE_HEADROOM_HELD"
 
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"
