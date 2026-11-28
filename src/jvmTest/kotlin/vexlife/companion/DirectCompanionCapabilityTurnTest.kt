@@ -1038,7 +1038,9 @@ class DirectCompanionCapabilityTurnTest {
             ),
             result.capabilityUses,
         )
-    }    @Test
+    }
+
+    @Test
     fun failedContinuationLeavesTheReturnedCapabilityCycleAwaitingIntegration() {
         val home =
             productHome()
