@@ -34,13 +34,21 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Configure current-scale Kotlin compiler heap
+        shell: pwsh
+        run: |
+          $GradleUserHome = Join-Path $env:RUNNER_TEMP 'vexlife-gradle'
+          New-Item -ItemType Directory -Path $GradleUserHome -Force | Out-Null
+          @'
+          org.gradle.jvmargs=-Xmx4g
+          kotlin.compiler.execution.strategy=in-process
+          '@ | Set-Content -LiteralPath (Join-Path $GradleUserHome 'gradle.properties') -Encoding utf8
+          "GRADLE_USER_HOME=$GradleUserHome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Replay last successful Windows readiness proof
         shell: pwsh
         run: |
-          .\gradlew.bat --no-daemon --max-workers=1 `
-            -Dorg.gradle.jvmargs=-Xmx4g `
-            -Pkotlin.daemon.jvmargs=-Xmx4g `
-            jvmTest `
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest `
             --tests "vexlife.platform.VexLifePlatformRealizationTest" `
             --tests "vexlife.platform.windows.VexLifeWindowsHostObservationTest" `
             --tests "vexlife.platform.windows.VexLifeWindowsReadinessTest"
