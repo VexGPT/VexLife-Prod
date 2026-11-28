@@ -120,7 +120,7 @@ class VexLabsNativeTest(
         "EMPTY"
 
     private var memoryMode =
-        "CURRENT"
+        "NONE"
 
     private var lastAdmission: VexLifeProdServiceContract.VexLabsAdmission? =
         null
@@ -171,7 +171,7 @@ class VexLabsNativeTest(
                     conversationPreset =
                         "EMPTY"
                     memoryMode =
-                        "CURRENT"
+                        "NONE"
                     lastAdmission =
                         null
                     replaceScratch(
