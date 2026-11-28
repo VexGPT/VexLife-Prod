@@ -115,6 +115,8 @@ else
     echo
     echo "This stable version records a feature threshold that was lived and accepted."
     echo
+    echo "Preferred download: $DMG_NAME."
+    echo
     echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized. macOS may require explicit approval before first launch and may separately ask to open the bundled Java runtime."
     echo
     echo "source-sha: $SOURCE_SHA"
