@@ -30,6 +30,7 @@ import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -658,6 +659,11 @@ object DirectCompanionTurn {
                 turnRef = turnRef,
                 prepared = prepared,
                 formedAt = formedAt,
+            )
+            DirectWorkingContinuity.clearCurrentCycleAfterCompletedTurn(
+                productHome = productHome,
+                turnRef = turnRef,
+                prepared = prepared,
             )
             Unit
         },
@@ -1920,6 +1926,46 @@ object DirectCompanionTurn {
                             emptyList()
                         },
                 )
+            if (
+                exchanges.isNotEmpty()
+            ) {
+                val nextMove =
+                    when {
+                        stage.capabilityRequest !=
+                            null ->
+                            VexLifeWorkingContinuity.CycleNextMove.REACH
+
+                        stage.sourceReturnRequest !=
+                            null ->
+                            VexLifeWorkingContinuity.CycleNextMove.SOURCE_RETURN
+
+                        else ->
+                            VexLifeWorkingContinuity.CycleNextMove.FINAL_ANSWER
+                    }
+                DirectWorkingContinuity.checkpointCapabilityCycle(
+                    productHome = productHome,
+                    currentRequest = currentRequest,
+                    workingFocusObservation =
+                        workingFocusObservation,
+                    capabilityEntry =
+                        exchanges.last().entry,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.INTEGRATED,
+                    nextMoveOrNull = nextMove,
+                    nextControlSha256OrNull =
+                        if (
+                            nextMove ==
+                                VexLifeWorkingContinuity.CycleNextMove.FINAL_ANSWER
+                        ) {
+                            null
+                        } else {
+                            sha256(
+                                stage.inference.content,
+                            )
+                        },
+                    formedAt = hooks.now(),
+                )
+            }
             hooks.cancellation?.checkpoint()
 
             providerRequests +=
@@ -1969,7 +2015,6 @@ object DirectCompanionTurn {
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
-                hooks.cancellation?.checkpoint()
                 turnSources
                     .conversationLifecycleBindingRefOrNull()
                     ?.let {
@@ -1988,6 +2033,17 @@ object DirectCompanionTurn {
                         }
                     }
                 exchanges += exchange
+                DirectWorkingContinuity.checkpointCapabilityCycle(
+                    productHome = productHome,
+                    currentRequest = currentRequest,
+                    workingFocusObservation =
+                        workingFocusObservation,
+                    capabilityEntry = exchange.entry,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                    formedAt = hooks.now(),
+                )
+                hooks.cancellation?.checkpoint()
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
                 stageRuntimeEvidence = sameRuntime()
