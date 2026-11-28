@@ -3993,3 +3993,106 @@ tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
         )
     }
 }
+
+/**
+ * A5-R3 Family-B lived builder observer. Test scope only: it does not ship in Product and does not
+ * become a builder owner. It borrows the selected live model, uses a synthetic scratch Home and the
+ * exact private-service-image Java-test runtime, and writes one result JSON for RETURN consumption.
+ */
+tasks.register<JavaExec>("familyBBuilderCanary") {
+    group = "verification"
+    description = "Run the A5-R3 lived Family-B builder canary (test-only, synthetic scratch Home)."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.harness.FamilyBBuilderCanaryKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "Family-B canary requires one exact Product source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "Family-B canary private service image is missing: " + imageRoot
+        }
+
+        val resultDir =
+            (project.findProperty("vexlifeFamilyBResultDir") as String?)
+                ?.let(
+                    ::file,
+                )
+                ?: layout
+                    .buildDirectory
+                    .dir(
+                        "family-b/a5-r3",
+                    )
+                    .get()
+                    .asFile
+        val effectiveBudget =
+            (project.findProperty("vexlifeFamilyBEffectiveInputTokenBudget") as String?)
+                ?: "52000"
+
+        setArgs(
+            listOf(
+                imageRoot.toString(),
+                sourceSha,
+                resultDir.absolutePath,
+                effectiveBudget,
+            ),
+        )
+    }
+}
+
