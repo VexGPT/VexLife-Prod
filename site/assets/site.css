@@ -553,3 +553,7 @@ select.select { font: var(--text-body-sm); color: var(--text-primary); backgroun
     margin-left: 0;
   }
 }
+
+
+/* Preview fixture: respect hidden until release data confirms the selected artifact is a DMG. */
+.mac-trust-path[hidden] { display: none !important; }
