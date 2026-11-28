@@ -197,7 +197,9 @@ internal object VexLifeContinuitySemanticServiceSession {
 
         return try {
             val backend =
-                VexLifeVolatileDenseSemanticBackend(
+                VexLifeFileBackedDenseSemanticBackend(
+                    productHome =
+                        productHome,
                     encoder =
                         runtime,
                 )
