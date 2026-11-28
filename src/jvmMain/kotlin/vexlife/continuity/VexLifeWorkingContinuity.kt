@@ -3,6 +3,8 @@ package vexlife.continuity
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 
@@ -316,6 +318,7 @@ object VexLifeWorkingContinuity {
      * human interruption or recoverable turn failure can preserve the unfinished edge without
      * persisting raw reasoning/provider content or duplicating Conversation/capability evidence.
      */
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class CycleCheckpoint(
         val schemaVersion: String,
@@ -325,12 +328,20 @@ object VexLifeWorkingContinuity {
         val turnRef: String,
         val requestEventRef: String,
         val requestEventSha256: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val requestMessageRefOrNull: String? = null,
         val cycleIndex: Int,
         val phase: CyclePhase,
         val workingFocusRefOrNull: String?,
         val workingFocusStateRefOrNull: String?,
         val workingFocusRevisionRefOrNull: String?,
         val capabilityCallRef: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityHandleOrNull: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityActionOrNull: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityTargetOrNull: String? = null,
         val capabilityResultSha256: String,
         val capabilityState: String,
         val capabilitySourceRefs: List<String>,
@@ -353,12 +364,20 @@ object VexLifeWorkingContinuity {
         turnRef: String,
         requestEventRef: String,
         requestEventSha256: String,
+        requestMessageRefOrNull: String? =
+            null,
         cycleIndex: Int,
         phase: CyclePhase,
         workingFocusRefOrNull: String?,
         workingFocusStateRefOrNull: String?,
         workingFocusRevisionRefOrNull: String?,
         capabilityCallRef: String,
+        capabilityHandleOrNull: String? =
+            null,
+        capabilityActionOrNull: String? =
+            null,
+        capabilityTargetOrNull: String? =
+            null,
         capabilityResultSha256: String,
         capabilityState: String,
         capabilitySourceRefs: List<String>,
@@ -378,12 +397,16 @@ object VexLifeWorkingContinuity {
                 turnRef = turnRef,
                 requestEventRef = requestEventRef,
                 requestEventSha256 = requestEventSha256,
+                requestMessageRefOrNull = requestMessageRefOrNull,
                 cycleIndex = cycleIndex,
                 phase = phase,
                 workingFocusRefOrNull = workingFocusRefOrNull,
                 workingFocusStateRefOrNull = workingFocusStateRefOrNull,
                 workingFocusRevisionRefOrNull = workingFocusRevisionRefOrNull,
                 capabilityCallRef = capabilityCallRef,
+                capabilityHandleOrNull = capabilityHandleOrNull,
+                capabilityActionOrNull = capabilityActionOrNull,
+                capabilityTargetOrNull = capabilityTargetOrNull,
                 capabilityResultSha256 = capabilityResultSha256,
                 capabilityState = capabilityState,
                 capabilitySourceRefs = capabilitySourceRefs.distinct().sorted(),
@@ -406,12 +429,16 @@ object VexLifeWorkingContinuity {
             turnRef = core.turnRef,
             requestEventRef = core.requestEventRef,
             requestEventSha256 = core.requestEventSha256,
+            requestMessageRefOrNull = core.requestMessageRefOrNull,
             cycleIndex = core.cycleIndex,
             phase = core.phase,
             workingFocusRefOrNull = core.workingFocusRefOrNull,
             workingFocusStateRefOrNull = core.workingFocusStateRefOrNull,
             workingFocusRevisionRefOrNull = core.workingFocusRevisionRefOrNull,
             capabilityCallRef = core.capabilityCallRef,
+            capabilityHandleOrNull = core.capabilityHandleOrNull,
+            capabilityActionOrNull = core.capabilityActionOrNull,
+            capabilityTargetOrNull = core.capabilityTargetOrNull,
             capabilityResultSha256 = core.capabilityResultSha256,
             capabilityState = core.capabilityState,
             capabilitySourceRefs = core.capabilitySourceRefs,
@@ -451,7 +478,35 @@ object VexLifeWorkingContinuity {
         requireRef(value.turnRef, "cycle turnRef")
         requireRef(value.requestEventRef, "cycle requestEventRef")
         requireSha256Value(value.requestEventSha256, "cycle requestEventSha256")
+        value.requestMessageRefOrNull?.let {
+            requireRef(
+                it,
+                "cycle requestMessageRef",
+            )
+        }
         requireRef(value.capabilityCallRef, "cycle capabilityCallRef")
+        require(
+            (value.capabilityHandleOrNull == null) ==
+                (value.capabilityActionOrNull == null) &&
+                (
+                    value.capabilityTargetOrNull == null ||
+                        value.capabilityHandleOrNull != null
+                    )
+        ) {
+            "working continuity cycle capability meaning fields are inconsistent"
+        }
+        value.capabilityHandleOrNull?.let {
+            requireRef(
+                it,
+                "cycle capabilityHandle",
+            )
+        }
+        value.capabilityActionOrNull?.let {
+            requireRef(
+                it,
+                "cycle capabilityAction",
+            )
+        }
         requireSha256Value(value.capabilityResultSha256, "cycle capabilityResultSha256")
         value.workingFocusRefOrNull?.let { requireRef(it, "cycle workingFocusRef") }
         value.workingFocusStateRefOrNull?.let { requireRef(it, "cycle workingFocusStateRef") }
@@ -525,12 +580,16 @@ object VexLifeWorkingContinuity {
                 turnRef = value.turnRef,
                 requestEventRef = value.requestEventRef,
                 requestEventSha256 = value.requestEventSha256,
+                requestMessageRefOrNull = value.requestMessageRefOrNull,
                 cycleIndex = value.cycleIndex,
                 phase = value.phase,
                 workingFocusRefOrNull = value.workingFocusRefOrNull,
                 workingFocusStateRefOrNull = value.workingFocusStateRefOrNull,
                 workingFocusRevisionRefOrNull = value.workingFocusRevisionRefOrNull,
                 capabilityCallRef = value.capabilityCallRef,
+                capabilityHandleOrNull = value.capabilityHandleOrNull,
+                capabilityActionOrNull = value.capabilityActionOrNull,
+                capabilityTargetOrNull = value.capabilityTargetOrNull,
                 capabilityResultSha256 = value.capabilityResultSha256,
                 capabilityState = value.capabilityState,
                 capabilitySourceRefs = value.capabilitySourceRefs,
@@ -556,6 +615,7 @@ object VexLifeWorkingContinuity {
         return value
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     private data class CycleCheckpointCore(
         val schemaVersion: String,
@@ -565,12 +625,20 @@ object VexLifeWorkingContinuity {
         val turnRef: String,
         val requestEventRef: String,
         val requestEventSha256: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val requestMessageRefOrNull: String? = null,
         val cycleIndex: Int,
         val phase: CyclePhase,
         val workingFocusRefOrNull: String?,
         val workingFocusStateRefOrNull: String?,
         val workingFocusRevisionRefOrNull: String?,
         val capabilityCallRef: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityHandleOrNull: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityActionOrNull: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityTargetOrNull: String? = null,
         val capabilityResultSha256: String,
         val capabilityState: String,
         val capabilitySourceRefs: List<String>,
