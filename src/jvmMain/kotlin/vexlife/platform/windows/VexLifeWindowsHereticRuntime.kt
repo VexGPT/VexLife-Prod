@@ -28,6 +28,7 @@ import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.companion.VexLifeCompanionAttentionBudget
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
@@ -1311,6 +1312,11 @@ object VexLifeWindowsHereticRuntime {
             probeVexReach &&
                 qualifyVexReach(
                     productHome = productHome,
+                    maxOutputTokens =
+                        reachQualificationMaxOutputTokens(
+                            realization = realization,
+                            model = model,
+                        ),
                     invokeStage = {
                         systemMessage,
                         userMessage,
@@ -1333,8 +1339,32 @@ object VexLifeWindowsHereticRuntime {
         )
     }
 
+    internal fun reachQualificationMaxOutputTokens(
+        realization: HereticRuntimeRealization.Value,
+        model: HereticModelCatalog.Entry =
+            HereticModelCatalog.requireEntry(
+                realization.modelRef,
+            ),
+    ): Int =
+        VexLifeCompanionAttentionBudget
+            .forRuntime(
+                runtimeContextWindowTokens =
+                    requireNotNull(
+                        realization.runtime.livedLaunchProfile,
+                    ) {
+                        "Windows Vex Reach qualification requires one lived runtime context window"
+                    }
+                        .contextTokens,
+                productOutputTokenCeiling =
+                    model.companionProfile
+                        .generation
+                        .productMaxOutputTokens,
+            )
+            .reservedOutputTokens
+
     internal fun qualifyVexReach(
         productHome: Path,
+        maxOutputTokens: Int,
         invokeStage: (
             systemMessage: String,
             userMessage: String,
@@ -1342,6 +1372,13 @@ object VexLifeWindowsHereticRuntime {
             exchanges: List<VexLifeCapabilityBridge.Exchange>,
         ) -> String?,
     ): Boolean {
+        require(
+            maxOutputTokens >
+                0,
+        ) {
+            "Windows Vex Reach qualification output room must be positive"
+        }
+
         val atlas =
             requireNotNull(
                 VexLifeCapabilityAtlas.resolve(
@@ -1447,7 +1484,7 @@ object VexLifeWindowsHereticRuntime {
                 invokeStage(
                     qualificationSystemMessage,
                     qualificationUserMessage,
-                    2048,
+                    maxOutputTokens,
                     exchanges.toList(),
                 )
                     ?: return false
