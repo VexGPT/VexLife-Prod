@@ -1,5 +1,6 @@
 package vexlife.continuity
 
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -7,6 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 
 class VexLifeWorkingContinuityTest {
     private fun input(
@@ -431,6 +433,311 @@ class VexLifeWorkingContinuityTest {
                 ?.priorCheckpointFingerprintOrNull,
         )
     }
+
+    @Test
+    fun currentCycleCheckpointCarriesOnlyBoundedRefsHashesAndMovementState() {
+        val awaiting =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = "companion-lineage.vexlife.cycle",
+                threadRef = "thread.self-development.open-conversation",
+                turnRef = "turn.vexlife.cycle.001",
+                requestEventRef = "event.vexlife.cycle.request.001",
+                requestEventSha256 = "1".repeat(64),
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull =
+                    "focus.vexlife.current",
+                workingFocusStateRefOrNull =
+                    "state.vexlife.focus.current",
+                workingFocusRevisionRefOrNull =
+                    "revision.vexlife.focus.current",
+                capabilityCallRef =
+                    "call.vexlife.capability.cycle.001",
+                capabilityResultSha256 =
+                    "2".repeat(64),
+                capabilityState = "RETURNED",
+                capabilitySourceRefs =
+                    listOf(
+                        "source.vexlife.cycle.b",
+                        "source.vexlife.cycle.a",
+                    ),
+                capabilityFrontierRefs =
+                    listOf(
+                        "frontier.vexlife.cycle.001",
+                    ),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+            awaiting.phase,
+        )
+        assertEquals(
+            listOf(
+                "source.vexlife.cycle.a",
+                "source.vexlife.cycle.b",
+            ),
+            awaiting.capabilitySourceRefs,
+        )
+        assertFalse(
+            awaiting.rawProviderContentPersisted,
+        )
+        assertFalse(
+            awaiting.rawPrivateReasoningPersisted,
+        )
+        assertFalse(
+            awaiting.semanticMemoryMutationPerformed,
+        )
+        assertNull(
+            awaiting.nextMoveOrNull,
+        )
+
+        val integrated =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = awaiting.lineageRef,
+                threadRef = awaiting.threadRef,
+                turnRef = awaiting.turnRef,
+                requestEventRef = awaiting.requestEventRef,
+                requestEventSha256 = awaiting.requestEventSha256,
+                cycleIndex = awaiting.cycleIndex,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.INTEGRATED,
+                workingFocusRefOrNull =
+                    awaiting.workingFocusRefOrNull,
+                workingFocusStateRefOrNull =
+                    awaiting.workingFocusStateRefOrNull,
+                workingFocusRevisionRefOrNull =
+                    awaiting.workingFocusRevisionRefOrNull,
+                capabilityCallRef =
+                    awaiting.capabilityCallRef,
+                capabilityResultSha256 =
+                    awaiting.capabilityResultSha256,
+                capabilityState =
+                    awaiting.capabilityState,
+                capabilitySourceRefs =
+                    awaiting.capabilitySourceRefs,
+                capabilityFrontierRefs =
+                    awaiting.capabilityFrontierRefs,
+                externalEffectsExecuted =
+                    awaiting.externalEffectsExecuted,
+                externalEffectMayHaveExecuted =
+                    awaiting.externalEffectMayHaveExecuted,
+                nextMoveOrNull =
+                    VexLifeWorkingContinuity.CycleNextMove.REACH,
+                nextControlSha256OrNull =
+                    "3".repeat(64),
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:01Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleNextMove.REACH,
+            integrated.nextMoveOrNull,
+        )
+        assertEquals(
+            "3".repeat(64),
+            integrated.nextControlSha256OrNull,
+        )
+        assertFalse(
+            integrated.cycleCheckpointRef ==
+                awaiting.cycleCheckpointRef,
+        )
+
+        val clearedFocus =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = awaiting.lineageRef,
+                threadRef = awaiting.threadRef,
+                turnRef = awaiting.turnRef,
+                requestEventRef = awaiting.requestEventRef,
+                requestEventSha256 = awaiting.requestEventSha256,
+                cycleIndex = 2,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull =
+                    "state.vexlife.focus.cleared",
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.capability.cycle.002",
+                capabilityResultSha256 =
+                    "4".repeat(64),
+                capabilityState = "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:02Z",
+                    ),
+            )
+        assertEquals(
+            "state.vexlife.focus.cleared",
+            clearedFocus.workingFocusStateRefOrNull,
+        )
+        assertNull(
+            clearedFocus.workingFocusRefOrNull,
+        )
+        assertNull(
+            clearedFocus.workingFocusRevisionRefOrNull,
+        )
+    }
+
+
+    @Test
+    fun c1CycleBytesRemainReadableWhenC2MovementIdentityIsAbsent() {
+        val c1Shape =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef =
+                    "companion-lineage.vexlife.c1-compat",
+                threadRef =
+                    "thread.self-development.open-conversation",
+                turnRef =
+                    "turn.vexlife.c1-compat.001",
+                requestEventRef =
+                    "event.vexlife.c1-compat.request.001",
+                requestEventSha256 =
+                    "6".repeat(64),
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull = null,
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.c1-compat.001",
+                capabilityResultSha256 =
+                    "7".repeat(64),
+                capabilityState =
+                    "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T18:10:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchemaV1,
+            c1Shape.schemaVersion,
+        )
+
+        val bytes =
+            VexContractJson.canonicalEncode(
+                c1Shape,
+            )
+
+        assertFalse(
+            bytes.contains(
+                "requestMessageRefOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityHandleOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityActionOrNull",
+            ),
+        )
+        assertFalse(
+            bytes.contains(
+                "capabilityTargetOrNull",
+            ),
+        )
+
+        assertEquals(
+            c1Shape,
+            VexContractJson.decode<VexLifeWorkingContinuity.CycleCheckpoint>(
+                bytes,
+            ),
+        )
+        val c2Shape =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef =
+                    "companion-lineage.vexlife.c2-current",
+                threadRef =
+                    "thread.self-development.open-conversation",
+                turnRef =
+                    "turn.vexlife.c2-current.001",
+                requestEventRef =
+                    "event.vexlife.c2-current.request.001",
+                requestEventSha256 =
+                    "8".repeat(64),
+                requestMessageRefOrNull =
+                    "message.vexlife.c2-current.request.001",
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull = null,
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.c2-current.001",
+                capabilityHandleOrNull =
+                    "atlas",
+                capabilityActionOrNull =
+                    "list",
+                capabilityTargetOrNull = null,
+                capabilityResultSha256 =
+                    "9".repeat(64),
+                capabilityState =
+                    "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T18:11:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchema,
+            c2Shape.schemaVersion,
+        )
+        assertEquals(
+            "message.vexlife.c2-current.request.001",
+            c2Shape.requestMessageRefOrNull,
+        )
+        assertEquals(
+            "atlas",
+            c2Shape.capabilityHandleOrNull,
+        )
+        assertEquals(
+            "list",
+            c2Shape.capabilityActionOrNull,
+        )
+    }
+
 }
 
 // [VXG RealForever]

@@ -238,13 +238,31 @@ class VexLifeVolatileDenseSemanticBackend(
         appendedEntry: VexLifeContinuitySourceLocator.Entry,
         appendedSource: VexLifeContinuitySourceLocator.SemanticSourceContent,
     ) {
-        require(
-            semanticGeneration ==
-                priorGeneration &&
-                denseRows.size ==
-                priorGeneration.entries.size,
+        val observedPrior =
+            semanticGeneration
+        if (
+            observedPrior ==
+            null
         ) {
-            "dense semantic append prior generation changed"
+            require(
+                priorGeneration.entries.isEmpty() &&
+                    priorGeneration.sourceConversationHeadSha256 ==
+                        null &&
+                    priorGeneration.sourceConversationSequence ==
+                        null &&
+                    denseRows.isEmpty()
+            ) {
+                "dense semantic append cannot bootstrap from a non-empty missing generation"
+            }
+        } else {
+            require(
+                observedPrior ==
+                    priorGeneration &&
+                    denseRows.size ==
+                    priorGeneration.entries.size
+            ) {
+                "dense semantic append prior generation changed"
+            }
         }
         require(
             generation.entries.size ==

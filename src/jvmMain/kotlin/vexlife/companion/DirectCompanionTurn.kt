@@ -30,6 +30,7 @@ import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -296,9 +297,9 @@ object DirectCompanionTurn {
             "Partner text-turn stage does not admit source-return or capability control yet",
         )
 
-    private class CapabilityRequestLimitException :
+    private class CapabilityRequestHeldByResourceHeadroomException :
         IllegalStateException(
-            "Vex requested a capability again after this turn's requests were used up",
+            "capability reach is held after this turn exhausted its real exchange headroom",
         )
 
     private class CapabilityProviderBridgeHeldException :
@@ -311,7 +312,7 @@ object DirectCompanionTurn {
     ) {
         ADMITTED("admitted"),
         HELD_BY_TURN_POLICY("held_by_turn_policy"),
-        REQUEST_BUDGET_EXHAUSTED("exhausted"),
+        HELD_RESOURCE_HEADROOM("held_resource_headroom"),
         HELD_PROVIDER_BRIDGE("held_provider_bridge"),
     }
 
@@ -667,6 +668,7 @@ object DirectCompanionTurn {
         val result: Result,
         val turnRef: String,
         val workingContinuity: DirectWorkingContinuity.Prepared,
+        val workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
     )
 
     private data class ContinuityPromptSelection(
@@ -1024,6 +1026,15 @@ object DirectCompanionTurn {
                             lineageRef = request.companionLineageRef,
                             threadRef = request.threadRef,
                         )
+                    val workingCycleRecovery =
+                        resolveCycleRecovery(
+                            productHome = productHome,
+                            conversationStore = conversation,
+                            prior = prior,
+                            currentRequest = request,
+                            workingFocusObservation =
+                                workingFocusObservation,
+                        )
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -1042,6 +1053,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingCycleRecovery =
+                                    workingCycleRecovery,
                                 workingFocusObservation =
                                     workingFocusObservation,
                                 browserContext = intent.browserContext,
@@ -1056,6 +1069,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingCycleRecovery =
+                                    workingCycleRecovery,
                                 workingFocusObservation =
                                     workingFocusObservation,
                                 browserContext = intent.browserContext,
@@ -1215,6 +1230,8 @@ object DirectCompanionTurn {
                             ),
                         turnRef = request.turnRef,
                         workingContinuity = workingContinuity,
+                        workingCycleRecovery =
+                            workingCycleRecovery,
                     )
                 } catch (
                     error: Throwable,
@@ -1314,6 +1331,13 @@ object DirectCompanionTurn {
                         completed.workingContinuity,
                         hooks.now(),
                     )
+                    DirectWorkingContinuity.clearCurrentCycleAfterCompletedTurn(
+                        productHome = productHome,
+                        turnRef = completed.turnRef,
+                        prepared = completed.workingContinuity,
+                        consumedRecoveryOrNull =
+                            completed.workingCycleRecovery,
+                    )
                     VexLogger.record(
                         VexLogger.Fact.WorkingContinuityCommitted,
                         mapOf("turnRef" to completed.turnRef, "plan" to plan),
@@ -1351,6 +1375,7 @@ object DirectCompanionTurn {
         setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -1444,6 +1469,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -1557,6 +1584,8 @@ object DirectCompanionTurn {
                 hooks.memoryProviderSelectionAtCap,
             workingContinuityContext =
                 workingContinuityContext,
+            workingCycleRecovery =
+                workingCycleRecovery,
             workingFocusObservation =
                 workingFocusObservation,
             browserContext = browserContext,
@@ -1877,12 +1906,15 @@ object DirectCompanionTurn {
                     !capabilityProviderBridgeQualified ->
                         CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
 
-                    exchanges.size <=
-                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
-                        CapabilityRequestAdmission.ADMITTED
+                    exchanges
+                        .lastOrNull()
+                        ?.entry
+                        ?.state ==
+                        VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET ->
+                        CapabilityRequestAdmission.HELD_RESOURCE_HEADROOM
 
                     else ->
-                        CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
+                        CapabilityRequestAdmission.ADMITTED
                 }
             DirectWorkingFocus.requireCurrent(
                 productHome = productHome,
@@ -1905,7 +1937,11 @@ object DirectCompanionTurn {
                     capabilityRequestAdmission =
                         capabilityRequestAdmission,
                     capabilityOffer =
-                        if (providerNativeTools) {
+                        if (
+                            providerNativeTools &&
+                            capabilityRequestAdmission ==
+                            CapabilityRequestAdmission.ADMITTED
+                        ) {
                             offeredCapabilities(
                                 base.materialization.receipt.capabilityFrameSnapshot,
                             )
@@ -1913,6 +1949,46 @@ object DirectCompanionTurn {
                             emptyList()
                         },
                 )
+            if (
+                exchanges.isNotEmpty()
+            ) {
+                val nextMove =
+                    when {
+                        stage.capabilityRequest !=
+                            null ->
+                            VexLifeWorkingContinuity.CycleNextMove.REACH
+
+                        stage.sourceReturnRequest !=
+                            null ->
+                            VexLifeWorkingContinuity.CycleNextMove.SOURCE_RETURN
+
+                        else ->
+                            VexLifeWorkingContinuity.CycleNextMove.FINAL_ANSWER
+                    }
+                DirectWorkingContinuity.checkpointCapabilityCycle(
+                    productHome = productHome,
+                    currentRequest = currentRequest,
+                    workingFocusObservation =
+                        workingFocusObservation,
+                    capabilityEntry =
+                        exchanges.last().entry,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.INTEGRATED,
+                    nextMoveOrNull = nextMove,
+                    nextControlSha256OrNull =
+                        if (
+                            nextMove ==
+                                VexLifeWorkingContinuity.CycleNextMove.FINAL_ANSWER
+                        ) {
+                            null
+                        } else {
+                            sha256(
+                                stage.inference.content,
+                            )
+                        },
+                    formedAt = hooks.now(),
+                )
+            }
             hooks.cancellation?.checkpoint()
 
             providerRequests +=
@@ -1962,7 +2038,6 @@ object DirectCompanionTurn {
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
-                hooks.cancellation?.checkpoint()
                 turnSources
                     .conversationLifecycleBindingRefOrNull()
                     ?.let {
@@ -1981,6 +2056,28 @@ object DirectCompanionTurn {
                         }
                     }
                 exchanges += exchange
+                DirectWorkingContinuity.checkpointCapabilityCycle(
+                    productHome = productHome,
+                    currentRequest = currentRequest,
+                    workingFocusObservation =
+                        workingFocusObservation,
+                    capabilityEntry = exchange.entry,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                    recoveredPriorFingerprintOrNull =
+                        if (
+                            exchange.entry.requestNumber ==
+                                1
+                        ) {
+                            workingCycleRecovery
+                                ?.cycle
+                                ?.semanticFingerprint
+                        } else {
+                            null
+                        },
+                    formedAt = hooks.now(),
+                )
+                hooks.cancellation?.checkpoint()
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
                 stageRuntimeEvidence = sameRuntime()
@@ -2000,6 +2097,7 @@ object DirectCompanionTurn {
                     memoryContextAtCap = hooks.memoryContextAtCap,
                     memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext = workingContinuityContext,
+                    workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                     browserContext = browserContext,
                     personContext = personContext,
@@ -2108,6 +2206,8 @@ object DirectCompanionTurn {
                         hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
+                    workingCycleRecovery =
+                        workingCycleRecovery,
                     workingFocusObservation =
                         workingFocusObservation,
                     browserContext = browserContext,
@@ -2176,6 +2276,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2244,6 +2346,7 @@ object DirectCompanionTurn {
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2287,6 +2390,7 @@ object DirectCompanionTurn {
                 memoryContextAtCap = hooks.memoryContextAtCap,
                 memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext = workingContinuityContext,
+                workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -2331,6 +2435,7 @@ object DirectCompanionTurn {
             memoryContextAtCap = hooks.memoryContextAtCap,
             memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
             workingContinuityContext = workingContinuityContext,
+            workingCycleRecovery = workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
@@ -2478,6 +2583,8 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? =
+            null,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2558,6 +2665,8 @@ object DirectCompanionTurn {
                             }
                         },
                 workingContinuityContext = workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -2662,6 +2771,8 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? =
+            null,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2754,6 +2865,8 @@ object DirectCompanionTurn {
                         }
                     },
             workingContinuityContext = workingContinuityContext,
+            workingCycleRecovery =
+                workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
@@ -2926,8 +3039,8 @@ object DirectCompanionTurn {
                 CapabilityRequestAdmission.HELD_BY_TURN_POLICY ->
                     throw CapabilityRequestHeldByTurnPolicyException()
 
-                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED ->
-                    throw CapabilityRequestLimitException()
+                CapabilityRequestAdmission.HELD_RESOURCE_HEADROOM ->
+                    throw CapabilityRequestHeldByResourceHeadroomException()
 
                 CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE ->
                     throw CapabilityProviderBridgeHeldException()
@@ -3368,6 +3481,170 @@ object DirectCompanionTurn {
         }
     }
 
+    private fun resolveCycleRecovery(
+        productHome: Path,
+        conversationStore: DirectConversationStore,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        workingFocusObservation: DirectWorkingFocus.Observation,
+    ): DirectWorkingContinuity.CycleRecovery? {
+        val owner =
+            VexLifeWorkingContinuityOwner(
+                productHome,
+            )
+        val cycle =
+            owner.readCurrentCycle(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+            )
+                ?: return null
+
+        // A crash may leave the current-cycle slot behind after the turn actually committed.
+        // That cycle is completed stewardship residue, not an unfinished recovery candidate.
+        if (
+            prior
+                ?.head
+                ?.turnRef ==
+                cycle.turnRef
+        ) {
+            owner.clearCurrentCycle(
+                lineageRef = cycle.lineageRef,
+                threadRef = cycle.threadRef,
+                turnRef = cycle.turnRef,
+                expectedFingerprint =
+                    cycle.semanticFingerprint,
+            )
+            return null
+        }
+
+        val requestMessageRef =
+            cycle.requestMessageRefOrNull
+                ?: run {
+                    // C1 checkpoints remain readable, but pre-C2 bytes do not carry enough
+                    // movement identity for truthful fresh-Send recovery. Retire the current slot
+                    // rather than inventing recovery meaning or pinning every later reach.
+                    owner.clearCurrentCycle(
+                        lineageRef = cycle.lineageRef,
+                        threadRef = cycle.threadRef,
+                        turnRef = cycle.turnRef,
+                        expectedFingerprint =
+                            cycle.semanticFingerprint,
+                    )
+                    return null
+                }
+        val failedRequest =
+            requireNotNull(
+                conversationStore
+                    .requestEventForMessageRef(
+                        requestMessageRef,
+                    )
+                    .requestEvent,
+            ) {
+                "working continuity current cycle failed request is not readable from Conversation"
+            }
+        require(
+            failedRequest.eventRef ==
+                cycle.requestEventRef &&
+                failedRequest.eventHash ==
+                cycle.requestEventSha256 &&
+                failedRequest.messageRef ==
+                requestMessageRef &&
+                failedRequest.turnRef ==
+                cycle.turnRef
+        ) {
+            "working continuity current cycle no longer binds its failed Conversation request"
+        }
+
+        val stillBranchesFromCurrentHead =
+            if (
+                prior ==
+                    null
+            ) {
+                failedRequest.sequence ==
+                    0L &&
+                    failedRequest.priorEventHash ==
+                    null
+            } else {
+                failedRequest.sequence ==
+                    prior.head.sequence +
+                        1 &&
+                    failedRequest.priorEventHash ==
+                    prior.responseEvent.eventHash
+            }
+
+        if (
+            !stillBranchesFromCurrentHead
+        ) {
+            owner.clearCurrentCycle(
+                lineageRef = cycle.lineageRef,
+                threadRef = cycle.threadRef,
+                turnRef = cycle.turnRef,
+                expectedFingerprint =
+                    cycle.semanticFingerprint,
+            )
+            return null
+        }
+
+        val failure =
+            readFailureReceipt(
+                productHome = productHome,
+                turnRef = cycle.turnRef,
+            )
+        if (
+            failure !=
+                null
+        ) {
+            require(
+                failure.requestEventRefOrNull ==
+                    failedRequest.eventRef &&
+                    failure.requestEventSha256OrNull ==
+                    failedRequest.eventHash &&
+                    failure.requestMessageRef ==
+                    failedRequest.messageRef
+            ) {
+                "working continuity recovery FailureReceipt does not bind the exact failed request"
+            }
+
+            if (
+                failure.lastValidConversationHeadSha256OrNull !=
+                    prior
+                        ?.head
+                        ?.conversationHeadSha256
+            ) {
+                owner.clearCurrentCycle(
+                    lineageRef = cycle.lineageRef,
+                    threadRef = cycle.threadRef,
+                    turnRef = cycle.turnRef,
+                    expectedFingerprint =
+                        cycle.semanticFingerprint,
+                )
+                return null
+            }
+        }
+
+        return DirectWorkingContinuity.formCycleRecovery(
+            cycle = cycle,
+            failedRequest = failedRequest,
+            currentRequest = currentRequest,
+            workingFocusObservation =
+                workingFocusObservation,
+            failureRefOrNull =
+                failure?.failureRef,
+            failureFingerprintOrNull =
+                failure?.semanticFingerprint,
+            failureCodeOrNull =
+                failure?.failureCode,
+            lastValidConversationHeadSha256OrNull =
+                failure
+                    ?.lastValidConversationHeadSha256OrNull
+                    ?: prior
+                        ?.head
+                        ?.conversationHeadSha256,
+        )
+    }
+
     private fun readFailureReceipt(
         productHome: Path,
         turnRef: String,
@@ -3614,8 +3891,8 @@ object DirectCompanionTurn {
             is CapabilityRequestHeldByTurnPolicyException ->
                 "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY"
 
-            is CapabilityRequestLimitException ->
-                "CAPABILITY_REQUEST_BUDGET_EXHAUSTED"
+            is CapabilityRequestHeldByResourceHeadroomException ->
+                "CAPABILITY_REACH_RESOURCE_HEADROOM_HELD"
 
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"

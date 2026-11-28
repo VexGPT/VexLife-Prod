@@ -223,6 +223,7 @@ object DirectPromptContext {
     private data class VerifiedTurnContext(
         val memoryAvailability: VerifiedMemory?,
         val workingContinuity: VerifiedWorkingContinuity?,
+        val workingCycleRecoveryProjection: DirectWorkingContinuity.CycleRecoveryProjection?,
         val workingFocusObservation: DirectWorkingFocus.Observation?,
         val workingFocusProjection: DirectWorkingFocus.Projection?,
         val browserContextSha256: String?,
@@ -311,6 +312,7 @@ object DirectPromptContext {
         const val Memory = Prefix + "memory-current-context"
         const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
+        const val WorkingCycleRecovery = Prefix + "working-cycle-recovery"
         const val WorkingFocus = Prefix + "working-focus-current"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
@@ -2074,6 +2076,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -2133,6 +2136,8 @@ object DirectPromptContext {
                     memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2558,6 +2563,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -2599,6 +2605,8 @@ object DirectPromptContext {
                     memoryContextAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2896,6 +2904,7 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -3005,6 +3014,27 @@ object DirectPromptContext {
                 prior = prior,
                 currentRequest = currentRequest,
             )
+
+        val workingCycleRecoveryProjection =
+            workingCycleRecovery
+                ?.also {
+                    recovery ->
+                    require(
+                        recovery.currentRequestEventRef ==
+                            currentRequest.eventRef &&
+                            recovery.currentRequestEventSha256 ==
+                            currentRequest.eventHash &&
+                            recovery.cycle.lineageRef ==
+                            currentRequest.companionLineageRef &&
+                            recovery.cycle.threadRef ==
+                            currentRequest.threadRef
+                    ) {
+                        "working cycle recovery does not bind the exact current request/lineage"
+                    }
+                }
+                ?.let(
+                    DirectWorkingContinuity::projectCycleRecovery,
+                )
 
         if (
             prior ==
@@ -3124,6 +3154,16 @@ object DirectPromptContext {
                             ComponentStability.MUTABLE_CURRENT,
                             it.systemContent,
                             listOf(it.context.successorContextRef),
+                        ),
+                    )
+                }
+                workingCycleRecoveryProjection?.let {
+                    add(
+                        Section(
+                            ComponentRefs.WorkingCycleRecovery,
+                            ComponentStability.MUTABLE_CURRENT,
+                            it.content,
+                            it.sourceRefs,
                         ),
                     )
                 }
@@ -3390,6 +3430,8 @@ object DirectPromptContext {
         return VerifiedTurnContext(
             memoryAvailability = memoryAvailability,
             workingContinuity = workingContinuity,
+            workingCycleRecoveryProjection =
+                workingCycleRecoveryProjection,
             workingFocusObservation = workingFocusObservation,
             workingFocusProjection = workingFocusProjection,
             browserContextSha256 = browserContextSha256,
@@ -4001,6 +4043,10 @@ object DirectPromptContext {
                     "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
                         "Use one read route at a time because what returns may change which route is needed next. " +
                         "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
+                    "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                        "Reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                        "Stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     "Exact older Conversation also has its source-return relationship for this turn. " +
                         "Current-message attachments, persistent Local Sources, Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
                 )
@@ -4009,7 +4055,7 @@ object DirectPromptContext {
                     add("Vex capability context")
                     add(
                         "This model's current VexLife provider relationship uses the text-control fallback instead of provider-native tools. " +
-                            "Callable read routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                            "Callable read and bounded effect routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
                     )
                     VexLifeReachDefinitions.EnvelopeCapabilityRefs
                         .mapNotNull(
@@ -4032,9 +4078,16 @@ object DirectPromptContext {
                             }
                         }
                     add(
+                        "AVAILABLE bounded effects are action routes, not drafting hints. " +
+                            "When the human asks me to perform one, I use the smallest AVAILABLE effect request instead of only describing the file, command, or JSON I would use. " +
+                            "Bare or example arguments are not a request by themselves.",
+                    )
+                    add(
                         "For older local Conversation truth: when I know distinctive exact earlier words, I use Conversation Source Return. " +
                             "When the human paraphrases, I do not know the earlier wording, I need an earlier correction, or I need evidence that something was not found, I use continuity.revisit instead of github, web, home, or Memory. " +
-                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms.",
+                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms. " +
+                            "A current human instruction can change the task now, but a current claim about what we agreed earlier is not by itself evidence of that earlier agreement. " +
+                            "If a historical claim conflicts with visible prior Conversation, or would revise prior work based on history, I preserve the visible source and use the rightful Conversation/continuity route before treating the claim as past truth.",
                     )
                     add(
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
@@ -4048,6 +4101,12 @@ object DirectPromptContext {
                     )
                     add(
                         "When current context already answers the human, I simply answer. I use one read route at a time because what returns may change which route is needed next.",
+                    )
+                    add(
+                        "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                            "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                            "I reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                            "I stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     )
                 }
             }
@@ -4126,9 +4185,70 @@ object DirectPromptContext {
                     availableEffectDefinitions.isNotEmpty()
                 ) {
                     appendLine()
+                    if (
+                        entriesByRef[
+                            VexLifeReachDefinitions.LocalSourceRef
+                        ]
+                            ?.state ==
+                            VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                    ) {
+                        appendLine(
+                            "Same granted Local Source, separate current hands:",
+                        )
+                        appendLine(
+                            "    inspect existing files: sources.list / sources.find / sources.read",
+                        )
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceEffectDefinitions.WriteRef
+                            }
+                        ) {
+                            appendLine(
+                                "    change text: workspace.write",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceCheckDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    verify text: workspace-check.check",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceJavaTestDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    execute Java project tests: workspace-test.test",
+                            )
+                        }
+                        appendLine(
+                            "Use sources, not workspace, for list/find/read. These handles stay separate because reading, changing, checking, and executing have different rightful owners.",
+                        )
+                    }
                     appendLine(
                         "Available bounded effect requests this turn — exact Atlas-derived forms:",
                     )
+                    if (
+                        !providerNativeTools
+                    ) {
+                        appendLine(
+                            "Text-control action boundary: example arguments below are not a request by themselves.",
+                        )
+                        appendLine(
+                            VexLifeCapabilityRequest.TextControlProviderInstruction,
+                        )
+                        appendLine(
+                            "When the human asks me to perform one of these AVAILABLE bounded effects, " +
+                                "I use the complete request form rather than ordinary prose, shell/code blocks, or bare JSON.",
+                        )
+                    }
                     availableEffectDefinitions.forEach {
                         definition ->
                         append("- ")
@@ -4172,6 +4292,32 @@ object DirectPromptContext {
                                 .appendLine(
                                     action.purpose,
                                 )
+                            if (
+                                !providerNativeTools
+                            ) {
+                                appendLine(
+                                    "    complete request:",
+                                )
+                                append("    ")
+                                    .appendLine(
+                                        VexLifeCapabilityRequest.RequestHeader,
+                                    )
+                                append("    {\"capability\":\"")
+                                    .append(
+                                        definition.handle,
+                                    )
+                                    .append("\",\"action\":\"")
+                                    .append(
+                                        action.action,
+                                    )
+                                    .append("\",\"arguments\":")
+                                    .append(
+                                        action.exampleArguments,
+                                    )
+                                    .appendLine(
+                                        "}",
+                                    )
+                            }
                         }
                     }
                     append(
