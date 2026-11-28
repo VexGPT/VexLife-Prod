@@ -158,11 +158,14 @@ When Victor or a continuing instance asks for an exact PR/test DMG, the source-o
 bash tools/release/prove-mac-candidate.sh
 ~~~
 
-Optional semantic-version input is reserved for the release caller:
+Release callers pass both the semantic version and the distribution channel explicitly:
 
 ~~~text
-bash tools/release/prove-mac-candidate.sh 0.1.0
+bash tools/release/prove-mac-candidate.sh 0.1.0 stable
 ~~~
+
+Ordinary PR/candidate proof takes no arguments and therefore forms the exact source-identified
+`candidate` distribution.
 
 The candidate proof requires a clean exact checkout on Apple-silicon macOS and owns the whole
 non-public artifact-proof sequence:
