@@ -4095,3 +4095,168 @@ tasks.register<JavaExec>("familyBBuilderCanary") {
         )
     }
 }
+
+/**
+ * [vexbody 20b test] — isolated GPT-OSS 20B comparison on the current VexBody proof body.
+ *
+ * The test wrapper refuses silent model acquisition, temporarily switches only from exact Qwen 4B,
+ * runs the same Family-B/Memory/Self-Inspection observer with GPT-OSS 20B, and restores/qualifies
+ * Qwen 4B on every terminal path it can observe.
+ */
+tasks.register<JavaExec>("vexBody20BTest") {
+    group = "verification"
+    description = "Run the isolated GPT-OSS 20B VexBody comparison and restore Qwen 4B."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.harness.VexBody20BTestKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "VexBody 20B test requires one exact Product source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "VexBody 20B test private service image is missing: " + imageRoot
+        }
+
+        val resultDir =
+            (project.findProperty("vexlifeVexBody20BResultDir") as String?)
+                ?.let(
+                    ::file,
+                )
+                ?: layout
+                    .buildDirectory
+                    .dir(
+                        "vexbody-20b-test/a001",
+                    )
+                    .get()
+                    .asFile
+        val effectiveBudget =
+            (project.findProperty("vexlifeVexBody20BEffectiveInputTokenBudget") as String?)
+                ?: "52000"
+
+        setArgs(
+            listOf(
+                imageRoot.toString(),
+                sourceSha,
+                resultDir.absolutePath,
+                effectiveBudget,
+            ),
+        )
+    }
+}
+
+/**
+ * [vexbody 20b test] explicit Product-owned GPT-OSS artifact acquisition.
+ *
+ * Test scope only. This invokes the existing Models DOWNLOAD_MODEL Control and proves the durable
+ * selected model remains Qwen 4B. It does not start or switch the inference runtime.
+ */
+tasks.register<JavaExec>("vexBody20BArtifactAcquire") {
+    group = "verification"
+    description = "Acquire the exact GPT-OSS 20B artifact through Product Models while preserving selected Qwen 4B."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.harness.VexBody20BArtifactAcquireKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val resultDir =
+            (project.findProperty("vexlifeVexBody20BArtifactResultDir") as String?)
+                ?.let(
+                    ::file,
+                )
+                ?: layout
+                    .buildDirectory
+                    .dir(
+                        "vexbody-20b-test/acquisition-a003",
+                    )
+                    .get()
+                    .asFile
+
+        setArgs(
+            listOf(
+                resultDir.absolutePath,
+            ),
+        )
+    }
+}
+
+// [VXG RealForever]
+

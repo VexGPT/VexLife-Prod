@@ -28,13 +28,14 @@ import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.capability.VexLifeWorkspaceTextCheck
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectTurnContextStore
 import vexlife.continuity.VexLifeBgeM3ArtifactMaterialization
 import vexlife.continuity.VexLifeBgeM3MacPythonEnvironment
 import vexlife.continuity.VexLifeBgeM3MacRuntime
 import vexlife.continuity.VexLifeContinuitySemanticServiceSession
 import vexlife.continuity.VexLifeFileBackedDenseSemanticBackend
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
-import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -105,6 +106,8 @@ object FamilyBBuilderCanary {
         val sourceSha: String,
         val resultDir: Path,
         val effectiveInputTokenBudget: Int,
+        val expectedModelHandle: String = HereticModelCatalog.Models.Qwen4B.handle,
+        val releaseRuntimeSessionOnExit: Boolean = false,
     )
 
     private data class Inventory(
@@ -117,6 +120,7 @@ object FamilyBBuilderCanary {
         val ordinal: Int,
         val intent: String,
         val result: DirectCompanionTurn.Result,
+        val providerMeasurement: DirectTurnContextStore.ProviderMeasurement,
         val testDispositions: List<String>,
     )
 
@@ -172,6 +176,20 @@ object FamilyBBuilderCanary {
             lineageSuffix = "family-b-lineage",
         )
 
+        val expectedModel =
+            requireNotNull(
+                HereticModelCatalog.byHandle(
+                    config.expectedModelHandle,
+                ),
+            ) {
+                "shared body campaign expected model is not offered: " +
+                    config.expectedModelHandle
+            }
+        val turnContextStore =
+            DirectTurnContextStore(
+                home,
+            )
+
         val runtimeHome =
             VexLifeProdHomeFiles
                 .defaultMacRoot(
@@ -192,9 +210,8 @@ object FamilyBBuilderCanary {
                 "Family-B live runtime Home is absent: " + runtimeHome
             }
 
-        // The campaign requires an already-selected 4B Home. Read that choice before setup, because
-        // setup is an effectful convergence owner and may otherwise replace an absent/stale choice
-        // with the Mac's ordinary recommended model before this observer gets to check it.
+        // The campaign borrows one explicitly selected model from the real Home. Read that choice
+        // before setup because setup is effectful and may otherwise converge an absent/stale choice.
         val selectedRuntimeModel =
             FileHereticModelConfigurationStore(
                 runtimeHome,
@@ -204,9 +221,11 @@ object FamilyBBuilderCanary {
                 )
         require(
             selectedRuntimeModel.modelRef ==
-                HereticModelCatalog.Models.Qwen4B.modelRef
+                expectedModel.modelRef
         ) {
-            "shared body campaign requires exact selected Qwen 4B before runtime establishment"
+            "shared body campaign requires exact selected " +
+                expectedModel.handle +
+                " before runtime establishment"
         }
 
         // Borrow the already-selected model runtime only. All durable canary state remains in the
@@ -221,15 +240,19 @@ object FamilyBBuilderCanary {
             runtimeSession.observeCurrentQualifiedRuntimeEvidence()
         require(
             runtimeEvidence.modelRef ==
-                HereticModelCatalog.Models.Qwen4B.modelRef
+                expectedModel.modelRef
         ) {
-            "shared body campaign runtime moved away from exact selected Qwen 4B"
+            "shared body campaign runtime moved away from exact selected " +
+                expectedModel.handle
         }
         require(
-            runtimeEvidence.qualification.vexReachQualificationRef ==
-                HereticRuntimeQualification.VexReachQualificationRef
+            HereticCompanionRepresentation.vexReachActive(
+                profile = expectedModel.companionProfile,
+                qualification = runtimeEvidence.qualification,
+            ),
         ) {
-            "shared body campaign requires exact selected Qwen 4B Vex Reach qualification"
+            "shared body campaign requires active Vex Reach for exact selected " +
+                expectedModel.handle
         }
         val scratchSetup =
             runtimeSession.result.copy(
@@ -518,12 +541,23 @@ object FamilyBBuilderCanary {
                 ) {
                     "Family-B service response diverged from canonical DirectCompanionTurn result"
                 }
+                val providerMeasurement =
+                    requireNotNull(
+                        turnContextStore
+                            .read(
+                                result.turnRef,
+                            )
+                            ?.providerMeasurement,
+                    ) {
+                        "shared body campaign completed a turn without durable provider timing evidence"
+                    }
                 turns +=
                     TurnRecord(
                         phase = phase,
                         ordinal = turnOrdinal,
                         intent = text,
                         result = result,
+                        providerMeasurement = providerMeasurement,
                         testDispositions =
                             testDispositions(
                                 result,
@@ -698,7 +732,7 @@ object FamilyBBuilderCanary {
                     .currentConversationHeadSha256
 
             // Cycle 4: restart Product while the scratch Home keeps the current file-derived
-            // semantic Locator generation. The selected 4B runtime remains borrowed/current.
+            // semantic Locator generation. The explicitly selected test runtime remains borrowed/current.
             val semanticSnapshotPath =
                 home.resolve(
                     VexLifeFileBackedDenseSemanticBackend.SnapshotRelativePath,
@@ -992,6 +1026,14 @@ object FamilyBBuilderCanary {
                         runtimeEvidence.modelRef,
                     )
                     put(
+                        "expectedModelHandle",
+                        expectedModel.handle,
+                    )
+                    put(
+                        "companionProfileRef",
+                        expectedModel.companionProfile.profileRef,
+                    )
+                    put(
                         "sourceRef",
                         sourceRef,
                     )
@@ -1198,6 +1240,13 @@ object FamilyBBuilderCanary {
             }
             runCatching {
                 closeSemanticSession()
+            }
+            if (
+                config.releaseRuntimeSessionOnExit
+            ) {
+                runCatching {
+                    runtimeSession.close()
+                }
             }
         }
     }
@@ -1655,6 +1704,70 @@ object FamilyBBuilderCanary {
             put(
                 "responseCharacters",
                 record.result.content.length,
+            )
+            put(
+                "providerMeasurement",
+                buildJsonObject {
+                    val measurement =
+                        record.providerMeasurement
+                    put(
+                        "stop",
+                        measurement.stop,
+                    )
+                    measurement.finishReason
+                        ?.let {
+                            put(
+                                "finishReason",
+                                it,
+                            )
+                        }
+                    measurement.promptTokens
+                        ?.let {
+                            put(
+                                "promptTokens",
+                                it,
+                            )
+                        }
+                    measurement.cachedPromptTokens
+                        ?.let {
+                            put(
+                                "cachedPromptTokens",
+                                it,
+                            )
+                        }
+                    measurement.prefillTokens
+                        ?.let {
+                            put(
+                                "prefillTokens",
+                                it,
+                            )
+                        }
+                    measurement.completionTokens
+                        ?.let {
+                            put(
+                                "completionTokens",
+                                it,
+                            )
+                        }
+                    measurement.firstTokenMillis
+                        ?.let {
+                            put(
+                                "firstTokenMs",
+                                it,
+                            )
+                        }
+                    measurement.firstAnswerMillis
+                        ?.let {
+                            put(
+                                "firstAnswerMs",
+                                it,
+                            )
+                        }
+                    put(
+                        "totalMs",
+                        measurement.totalMillis,
+                    )
+                },
             )
             put(
                 "promptReceiptRef",
