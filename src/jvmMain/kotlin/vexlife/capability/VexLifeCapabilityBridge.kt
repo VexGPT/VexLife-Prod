@@ -331,18 +331,19 @@ object VexLifeCapabilityBridge {
 
         val body: Body =
             when {
+                admission.requestNumber > MaximumRequestsPerTurn ->
+                    Body(
+                        ResultState.LIMIT_REACHED,
+                        null,
+                        "This turn already used its $MaximumRequestsPerTurn requests. " +
+                            "Do not correct or retry this capability request in the current turn.",
+                        untrusted = false,
+                    )
                 parsed is VexLifeCapabilityRequest.Parsed.Malformed ->
                     Body(
                         ResultState.INVALID_REQUEST,
                         null,
                         parsed.reason + ". " + FormReminder,
-                        untrusted = false,
-                    )
-                admission.requestNumber > MaximumRequestsPerTurn ->
-                    Body(
-                        ResultState.LIMIT_REACHED,
-                        null,
-                        "This turn already used its $MaximumRequestsPerTurn requests.",
                         untrusted = false,
                     )
                 definition == null ->
