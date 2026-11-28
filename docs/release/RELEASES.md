@@ -12,7 +12,7 @@ stable version records that Victor accepted a lived feature threshold.
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
 | Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
-| Preview | An intentional downloadable snapshot of current `main` for sharing/testing. Ordinary merges do not publish one. | `release` workflow, run by hand with channel = `preview` | `private-service-image-<sha>` prerelease |
+| Preview | A proof-gated immutable downloadable snapshot of an admitted `main` commit. | automatic `release` workflow on every push to `main`; manual Preview remains available | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
 ## [VexLife Prod versioning]
@@ -157,8 +157,10 @@ For stable runs, the workflow supplies the requested semantic version as
 `0.0.0` internally, distribution channel `preview`, and remains release-identified by its exact
 source SHA/release tag. Candidate proof defaults to distribution channel `candidate` and likewise
 uses the exact source SHA. The bundle embeds the exact expected source SHA in every channel.
-Ordinary merges to `main` do not publish anything. Victor or a continuing instance chooses when a
-source threshold is worth publishing.
+Every new commit admitted to `main` now automatically enters the source-identified Preview release
+cycle. Its Preview version is the exact Git source SHA, not an automatically invented semantic
+version. Publication still requires the full release proof to pass. Stable
+`v<major>.<minor>.<patch>` remains an intentional lived/accepted threshold chosen explicitly.
 
 ## One Mac candidate-proof process
 
@@ -226,8 +228,40 @@ EXACT SOURCE CHANGE != PERMISSION TO CHANGE PACKAGING TOPOLOGY
 
 ## One release process; executor chosen by current constraints
 
-There is no required calendar schedule. A release is an intentional cutoff, and the release meaning
-does not change based on who executes it.
+There is no required calendar schedule. Preview publication follows source integration; Stable
+publication remains an intentional accepted threshold. The release meaning does not change based on
+who executes it.
+
+### Automatic Product cycle
+
+Every new `main` commit automatically enters the Preview cycle; its exact SHA is the Preview version:
+
+~~~text
+merge / admitted push to main
+-> exact push SHA
+-> release workflow on macOS
+-> publish-mac-release.sh preview "" <exact-push-sha>
+-> prove exact source / tests / app / DMG
+-> Preview tag private-service-image-<sha>
+-> VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
+-> refresh Pages from newest current main
+
+later main commits do not erase an older queued Preview:
+exact push SHA remains publishable only while it is an ancestor of current main
+~~~
+
+The exact SHA is the automatic Preview version. This avoids fabricating SemVer meaning for every
+merge. A downloadable distribution exists only after the repository-owned release proof succeeds; a
+failed proof leaves that main SHA unreleased rather than blessing broken Product bytes.
+A rewrite that removes the push SHA from current `main` ancestry fails closed rather than publishing
+a detached history.
+
+Stable remains separate:
+
+~~~text
+Preview  = automatic source version for every main commit
+Stable   = explicit SemVer after lived acceptance
+~~~
 
 The source-owned Mac publication process is:
 
@@ -236,11 +270,14 @@ tools/release/publish-mac-release.sh preview
 tools/release/publish-mac-release.sh stable 0.1.0
 ~~~
 
-It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG,
-publishes the GitHub Release, then republishes the source-owned VexLife Pages projection so the
-download/version catalog observes that exact newly published release. For a stable version,
-`gh release create` creates the `vX.Y.Z` tag at that exact source automatically. Victor never
-manually creates/moves a tag, edits a version file, builds a DMG or uploads assets.
+Manual Preview and Stable publication require a clean exact current `origin/main`. Automatic
+Preview publication instead binds the exact GitHub push SHA and admits it only while that SHA remains
+an ancestor of current `origin/main`; this lets queued main commits retain their own immutable
+Preview identity. Every route runs the Product tests and forms/verifies the DMG before publication.
+Automatic Preview defers the Pages projection to the workflow so it can refresh from newest current
+main after an older queued release lands. For a stable version, `gh release create` creates the
+`vX.Y.Z` tag at that exact source automatically. Victor never manually creates/moves a tag, edits a
+version file, builds a DMG or uploads assets.
 
 If the GitHub Release succeeds but the following Pages publication fails, the release already exists.
 Do **not** rebuild, move, or replay the release merely to repair its public catalog projection. Resume
@@ -262,9 +299,9 @@ Two executors may lawfully invoke that same source-owned process:
 - **VexRelay / VexLocalBridge proof — pre-publication evidence when needed.** Relay may prove the
   exact source/build/artifact candidate through its admitted repository/host proof contracts without
   claiming that proof itself published the release.
-- **GitHub Actions — optional hosted route.** **Actions → release → Run workflow** is a thin
-  `workflow_dispatch` wrapper around the same source-owned script. Choose `preview`, or choose
-  `stable` and enter a version such as `0.1.0`.
+- **GitHub Actions — automatic Preview + manual release route.** Every push to `main` invokes the
+  same source-owned script as an exact-SHA Preview. **Actions → release → Run workflow** remains the
+  manual surface for an explicit Preview or Stable `0.x.y` cutoff.
 
 The similar human carriage is deliberate:
 
@@ -282,8 +319,9 @@ observe partial publication, diagnose the initial Pages caller-working-directory
 only that held projection, and continue without making Victor interpret logs or manually reconstruct
 the release state.
 
-Ordinary merges to `main` publish nothing. A shareable preview or stable version exists only when
-one of these executors intentionally runs the release process.
+Every admitted `main` commit automatically schedules its Preview through the hosted release
+executor. The direct VexLocalBridge route remains the bounded recovery/manual publication surface.
+Stable publication still requires an explicit semantic version and is never inferred from a merge.
 
 Versions follow semver while VexLife is before 1.0:
 
