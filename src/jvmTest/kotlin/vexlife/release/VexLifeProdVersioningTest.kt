@@ -103,6 +103,12 @@ class VexLifeProdVersioningTest {
         assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_ALREADY_PUBLISHED")
         assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_PUBLISHED")
         assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_FAILED")
+        assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_PAGES_CURRENT")
+        assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_PAGES_RETRY")
+        assertContains(
+            pendingPreviewPublisher,
+            "worktree add --detach \"\$pages_worktree\" \"\$pages_source\"",
+        )
         assertContains(releaseDocs, "MAIN SHA IDENTITY = DURABLE PREVIEW VERSION")
         assertContains(releaseDocs, "no Local Workspace dependency")
     }
