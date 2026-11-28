@@ -1,5 +1,6 @@
 package vexlife.continuity
 
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -430,7 +431,127 @@ class VexLifeWorkingContinuityTest {
             next.checkpoint
                 ?.priorCheckpointFingerprintOrNull,
         )
+    }    @Test
+    fun currentCycleCheckpointCarriesOnlyBoundedRefsHashesAndMovementState() {
+        val awaiting =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = "companion-lineage.vexlife.cycle",
+                threadRef = "thread.self-development.open-conversation",
+                turnRef = "turn.vexlife.cycle.001",
+                requestEventRef = "event.vexlife.cycle.request.001",
+                requestEventSha256 = "1".repeat(64),
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull =
+                    "focus.vexlife.current",
+                workingFocusStateRefOrNull =
+                    "state.vexlife.focus.current",
+                workingFocusRevisionRefOrNull =
+                    "revision.vexlife.focus.current",
+                capabilityCallRef =
+                    "call.vexlife.capability.cycle.001",
+                capabilityResultSha256 =
+                    "2".repeat(64),
+                capabilityState = "RETURNED",
+                capabilitySourceRefs =
+                    listOf(
+                        "source.vexlife.cycle.b",
+                        "source.vexlife.cycle.a",
+                    ),
+                capabilityFrontierRefs =
+                    listOf(
+                        "frontier.vexlife.cycle.001",
+                    ),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+            awaiting.phase,
+        )
+        assertEquals(
+            listOf(
+                "source.vexlife.cycle.a",
+                "source.vexlife.cycle.b",
+            ),
+            awaiting.capabilitySourceRefs,
+        )
+        assertFalse(
+            awaiting.rawProviderContentPersisted,
+        )
+        assertFalse(
+            awaiting.rawPrivateReasoningPersisted,
+        )
+        assertFalse(
+            awaiting.semanticMemoryMutationPerformed,
+        )
+        assertNull(
+            awaiting.nextMoveOrNull,
+        )
+
+        val integrated =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = awaiting.lineageRef,
+                threadRef = awaiting.threadRef,
+                turnRef = awaiting.turnRef,
+                requestEventRef = awaiting.requestEventRef,
+                requestEventSha256 = awaiting.requestEventSha256,
+                cycleIndex = awaiting.cycleIndex,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.INTEGRATED,
+                workingFocusRefOrNull =
+                    awaiting.workingFocusRefOrNull,
+                workingFocusStateRefOrNull =
+                    awaiting.workingFocusStateRefOrNull,
+                workingFocusRevisionRefOrNull =
+                    awaiting.workingFocusRevisionRefOrNull,
+                capabilityCallRef =
+                    awaiting.capabilityCallRef,
+                capabilityResultSha256 =
+                    awaiting.capabilityResultSha256,
+                capabilityState =
+                    awaiting.capabilityState,
+                capabilitySourceRefs =
+                    awaiting.capabilitySourceRefs,
+                capabilityFrontierRefs =
+                    awaiting.capabilityFrontierRefs,
+                externalEffectsExecuted =
+                    awaiting.externalEffectsExecuted,
+                externalEffectMayHaveExecuted =
+                    awaiting.externalEffectMayHaveExecuted,
+                nextMoveOrNull =
+                    VexLifeWorkingContinuity.CycleNextMove.REACH,
+                nextControlSha256OrNull =
+                    "3".repeat(64),
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T17:00:01Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleNextMove.REACH,
+            integrated.nextMoveOrNull,
+        )
+        assertEquals(
+            "3".repeat(64),
+            integrated.nextControlSha256OrNull,
+        )
+        assertFalse(
+            integrated.cycleCheckpointRef ==
+                awaiting.cycleCheckpointRef,
+        )
     }
+
+
 }
 
 // [VXG RealForever]
