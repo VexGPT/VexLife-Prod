@@ -76,6 +76,15 @@ class VexLifeVolatileDenseSemanticBackend(
     private var denseRows: List<DenseRow> =
         emptyList()
 
+    internal data class Snapshot(
+        val generation: VexLifeContinuitySourceLocator.Generation,
+        /**
+         * Request vector then response vector for each generation entry, in canonical entry order.
+         * These are derived representation bytes only; no source text is retained here.
+         */
+        val vectors: List<FloatArray>,
+    )
+
     override val fingerprintBindingRef: String
         get() =
             lexical.fingerprintBindingRef
@@ -292,6 +301,71 @@ class VexLifeVolatileDenseSemanticBackend(
         denseRows =
             denseRows +
                 row
+    }
+
+    internal fun snapshotOrNull(): Snapshot? =
+        semanticGeneration
+            ?.let {
+                generation ->
+                require(
+                    denseRows.size ==
+                        generation.entries.size,
+                ) {
+                    "dense semantic snapshot row count does not match current generation"
+                }
+                Snapshot(
+                    generation = generation,
+                    vectors =
+                        denseRows.flatMap {
+                            row ->
+                            listOf(
+                                row.request.copyOf(),
+                                row.response.copyOf(),
+                            )
+                        },
+                )
+            }
+
+    /**
+     * Restore one already-validated derived snapshot without re-encoding canonical source content.
+     *
+     * The caller owns persistence/currentness of the snapshot. This backend still validates vector
+     * count, dimension, finiteness and normalization before making the generation visible.
+     */
+    internal fun restore(
+        snapshot: Snapshot,
+    ) {
+        require(
+            snapshot.generation.fingerprintBindingRef ==
+                fingerprintBindingRef
+        ) {
+            "dense semantic restore fingerprint binding changed"
+        }
+        val vectors =
+            normalizedVectors(
+                vectors = snapshot.vectors,
+                expectedCount =
+                    snapshot.generation.entries.size *
+                        2,
+                label = "dense semantic restore",
+            )
+        lexical.replace(
+            snapshot.generation,
+        )
+        semanticGeneration =
+            snapshot.generation
+        denseRows =
+            vectors
+                .chunked(
+                    2,
+                )
+                .map {
+                    pair ->
+                    DenseRow(
+                        request = pair[0],
+                        response = pair[1],
+                    )
+                }
     }
 
     override fun semanticCandidateEntryIndexes(
