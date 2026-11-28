@@ -290,29 +290,45 @@ object DirectConversationSourceReturn {
                     json,
                 )
                 .jsonObject
+        val normalizedObject =
+            objectValue
+                .toMutableMap()
+                .also {
+                    fields ->
+                    if (
+                        "schemaVersion" !in
+                        fields
+                    ) {
+                        // The exact v1 control header already fixes the wire relationship. Some
+                        // local providers omit the redundant body schemaVersion.
+                        fields[
+                            "schemaVersion"
+                        ] =
+                            JsonPrimitive(
+                                RequestSchema,
+                            )
+                    }
+                    if (
+                        "speakerScope" !in
+                        fields
+                    ) {
+                        // The Capability Atlas owns speakerScope as optional with ANY as its
+                        // explicit default. Preserve that semantic contract at the text-control
+                        // carriage boundary; explicit HUMAN/VEX/ANY values remain untouched.
+                        fields[
+                            "speakerScope"
+                        ] =
+                            JsonPrimitive(
+                                AnySpeaker,
+                            )
+                    }
+                }
         val requestJson =
-            if (
-                "schemaVersion" in
-                objectValue
-            ) {
-                json
-            } else {
-                // The exact v1 control header already fixes the wire relationship. Some local
-                // providers omit the redundant body schemaVersion while preserving the bounded
-                // query/speaker meaning. Normalize only that carriage omission here; durable
-                // Request decoding remains strict because Request itself still requires the field.
-                VexContractJson.compactEncode(
-                    JsonObject(
-                        objectValue +
-                            (
-                                "schemaVersion" to
-                                    JsonPrimitive(
-                                        RequestSchema,
-                                    )
-                                ),
-                    ),
-                )
-            }
+            VexContractJson.compactEncode(
+                JsonObject(
+                    normalizedObject,
+                ),
+            )
 
         return requireRequest(
             VexContractJson.decode<Request>(
