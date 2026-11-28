@@ -77,8 +77,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV10 =
         "vexlife-prod.direct-prompt-materialization-receipt/v10"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v11"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
@@ -220,6 +223,8 @@ object DirectPromptContext {
     private data class VerifiedTurnContext(
         val memoryAvailability: VerifiedMemory?,
         val workingContinuity: VerifiedWorkingContinuity?,
+        val workingFocusObservation: DirectWorkingFocus.Observation?,
+        val workingFocusProjection: DirectWorkingFocus.Projection?,
         val browserContextSha256: String?,
         val browserContextRef: String?,
         val capabilityFrame: VerifiedCapabilityFrame?,
@@ -306,6 +311,7 @@ object DirectPromptContext {
         const val Memory = Prefix + "memory-current-context"
         const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
+        const val WorkingFocus = Prefix + "working-focus-current"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
         const val CurrentStateEnvelope = Prefix + "current-state-envelope"
@@ -424,6 +430,23 @@ object DirectPromptContext {
         val effectAuthorityGranted: Boolean,
     )
 
+    @Serializable
+    data class WorkingFocusSnapshot(
+        val projectionState: String,
+        val observedStanding: String,
+        val workingFocusRefOrNull: String?,
+        val stateRefOrNull: String?,
+        val revisionRefOrNull: String?,
+        val contentSha256OrNull: String?,
+        val estimatedTokens: Int,
+        val requiredCoreTokens: Int,
+        val detailsIncluded: Boolean,
+        val heldRelationshipRefs: List<String>,
+        val heldOpenEdgeRefs: List<String>,
+        val sourceRefs: List<String>,
+        val effectsPerformed: Boolean,
+    )
+
     @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     private data class ReceiptCore(
@@ -491,6 +514,7 @@ object DirectPromptContext {
         val workingContinuitySourceRefs: List<String>,
         val workingContinuitySystemMessageSha256: String?,
         val workingContinuityEstimatedSystemMessageTokens: Int,
+        val workingFocusSnapshot: WorkingFocusSnapshot?,
         val capabilityFrameIncluded: Boolean,
         val capabilityFrameRef: String?,
         val capabilityFrameFingerprint: String?,
@@ -708,6 +732,8 @@ object DirectPromptContext {
         )
         val workingContinuityEstimatedSystemMessageTokens: Int =
             0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val workingFocusSnapshot: WorkingFocusSnapshot? = null,
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
         )
@@ -1746,6 +1772,10 @@ object DirectPromptContext {
                     workingContinuity
                         ?.estimatedSystemMessageTokens
                         ?: 0,
+                workingFocusSnapshot =
+                    workingFocusSnapshot(
+                        turnContext.workingFocusProjection,
+                    ),
                 capabilityFrameIncluded =
                     capabilityFrame !=
                     null,
@@ -1923,6 +1953,8 @@ object DirectPromptContext {
                     core.workingContinuitySystemMessageSha256,
                 workingContinuityEstimatedSystemMessageTokens =
                     core.workingContinuityEstimatedSystemMessageTokens,
+                workingFocusSnapshot =
+                    core.workingFocusSnapshot,
                 capabilityFrameIncluded = core.capabilityFrameIncluded,
                 capabilityFrameRef = core.capabilityFrameRef,
                 capabilityFrameFingerprint = core.capabilityFrameFingerprint,
@@ -2042,6 +2074,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2100,6 +2133,8 @@ object DirectPromptContext {
                     memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
@@ -2523,6 +2558,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2563,6 +2599,8 @@ object DirectPromptContext {
                     memoryContextAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
@@ -2858,6 +2896,7 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -3076,7 +3115,7 @@ object DirectPromptContext {
         // live tail -> the person's request. The pinned chat template admits one system message,
         // first only ("System message must be at the beginning."), so current state is a host
         // envelope in the user role, the role browser context and capability results already use.
-        val currentSections =
+        val baseCurrentSections =
             buildList {
                 workingContinuity?.let {
                     add(
@@ -3143,7 +3182,7 @@ object DirectPromptContext {
                     )
                 },
             )
-        val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
+        val baseCurrentParts = listOfNotNull(currentStateEnvelope(baseCurrentSections))
         val historyParts =
             listOfNotNull(
                 successorPriorResponse
@@ -3197,11 +3236,11 @@ object DirectPromptContext {
                 )
             }
         val prefixMessages = systemParts.map { it.message }
-        val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
+        val baseSuffixMessages = (historyParts + baseCurrentParts + liveParts).map { it.message }
         val otherTurnContextEstimate =
             (
                 prefixMessages +
-                    suffixMessages
+                    baseSuffixMessages
             )
                 .sumOf {
                     estimatedMessageTokens(
@@ -3219,7 +3258,7 @@ object DirectPromptContext {
             } else {
                 val measured =
                     currentStateEnvelope(
-                        currentSections +
+                        baseCurrentSections +
                             Section(
                                 ComponentRefs.SourceReturnProtocol,
                                 ComponentStability.MUTABLE_CURRENT,
@@ -3230,15 +3269,17 @@ object DirectPromptContext {
                     estimatedMessageTokens(it.content)
                 }
             }
+        val immediatePriorReservation =
+            if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
+                estimatedMessageTokens(prior.requestEvent.content) +
+                    estimatedMessageTokens(prior.responseEvent.content)
+            } else {
+                0
+            }
         val foundationRoom =
             inputTokenBudget -
                 roomEstimate -
-                (if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
-                    estimatedMessageTokens(prior.requestEvent.content) +
-                        estimatedMessageTokens(prior.responseEvent.content)
-                } else {
-                    0
-                })
+                immediatePriorReservation
         val foundationMode =
             contextProfile
                 ?.definition
@@ -3271,8 +3312,54 @@ object DirectPromptContext {
                         availableTokens = afterProductFoundation,
                     )
                 }
-        val fixedEstimate =
+        val baseFixedEstimate =
             otherTurnContextEstimate +
+                (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
+                (profileFoundation?.estimatedSystemMessageTokens ?: 0)
+        val workingFocusProjection =
+            workingFocusObservation?.let {
+                observation ->
+                projectWorkingFocusForCurrentState(
+                    observation = observation,
+                    baseCurrentSections = baseCurrentSections,
+                    availableTokens =
+                        maxOf(
+                            0,
+                            inputTokenBudget -
+                                baseFixedEstimate -
+                                immediatePriorReservation,
+                        ),
+                )
+            }
+        val currentSections =
+            baseCurrentSections +
+                listOfNotNull(
+                    workingFocusProjection
+                        ?.contentOrNull
+                        ?.let {
+                            content ->
+                            Section(
+                                ComponentRefs.WorkingFocus,
+                                ComponentStability.MUTABLE_CURRENT,
+                                content,
+                                workingFocusProjection.sourceRefs,
+                            )
+                        },
+                )
+        val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
+        val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
+        val finalOtherTurnContextEstimate =
+            (
+                prefixMessages +
+                    suffixMessages
+            )
+                .sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+        val fixedEstimate =
+            finalOtherTurnContextEstimate +
                 (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
                 (profileFoundation?.estimatedSystemMessageTokens ?: 0)
 
@@ -3303,6 +3390,8 @@ object DirectPromptContext {
         return VerifiedTurnContext(
             memoryAvailability = memoryAvailability,
             workingContinuity = workingContinuity,
+            workingFocusObservation = workingFocusObservation,
+            workingFocusProjection = workingFocusProjection,
             browserContextSha256 = browserContextSha256,
             browserContextRef = browserContextRef,
             capabilityFrame = capabilityFrame,
@@ -3340,6 +3429,96 @@ object DirectPromptContext {
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
+
+    private fun projectWorkingFocusForCurrentState(
+        observation: DirectWorkingFocus.Observation,
+        baseCurrentSections: List<Section>,
+        availableTokens: Int,
+    ): DirectWorkingFocus.Projection {
+        val full =
+            DirectWorkingFocus.project(
+                observation = observation,
+                availableTokens = Int.MAX_VALUE,
+                estimateTokens = ::estimatedMessageTokens,
+            )
+        if (full.contentOrNull == null) {
+            return full
+        }
+
+        fun currentStateDelta(content: String): Int {
+            val before =
+                currentStateEnvelope(baseCurrentSections)
+                    ?.content
+                    ?.let(::estimatedMessageTokens)
+                    ?: 0
+            val after =
+                currentStateEnvelope(
+                    baseCurrentSections +
+                        Section(
+                            ComponentRefs.WorkingFocus,
+                            ComponentStability.MUTABLE_CURRENT,
+                            content,
+                            full.sourceRefs,
+                        ),
+                )
+                    ?.content
+                    ?.let(::estimatedMessageTokens)
+                    ?: 0
+            return maxOf(
+                0,
+                after - before,
+            )
+        }
+
+        if (currentStateDelta(requireNotNull(full.contentOrNull)) <= availableTokens) {
+            return full
+        }
+
+        val core =
+            DirectWorkingFocus.project(
+                observation = observation,
+                availableTokens = full.requiredCoreTokens,
+                estimateTokens = ::estimatedMessageTokens,
+            )
+        if (
+            core.contentOrNull != null &&
+            currentStateDelta(requireNotNull(core.contentOrNull)) <= availableTokens
+        ) {
+            return core
+        }
+
+        return DirectWorkingFocus.project(
+            observation = observation,
+            availableTokens =
+                maxOf(
+                    0,
+                    full.requiredCoreTokens - 1,
+                ),
+            estimateTokens = ::estimatedMessageTokens,
+        )
+    }
+
+    private fun workingFocusSnapshot(
+        projection: DirectWorkingFocus.Projection?,
+    ): WorkingFocusSnapshot? =
+        projection?.let {
+            value ->
+            WorkingFocusSnapshot(
+                projectionState = value.state.name,
+                observedStanding = value.observedStanding.name,
+                workingFocusRefOrNull = value.workingFocusRefOrNull,
+                stateRefOrNull = value.stateRefOrNull,
+                revisionRefOrNull = value.revisionRefOrNull,
+                contentSha256OrNull = value.contentSha256OrNull,
+                estimatedTokens = value.estimatedTokens,
+                requiredCoreTokens = value.requiredCoreTokens,
+                detailsIncluded = value.detailsIncluded,
+                heldRelationshipRefs = value.heldRelationshipRefs,
+                heldOpenEdgeRefs = value.heldOpenEdgeRefs,
+                sourceRefs = value.sourceRefs,
+                effectsPerformed = value.effectsPerformed,
+            )
+        }
 
     /** Product foundation first, then the person's optional profile foundation. */
     private fun foundationalFieldMessages(turnContext: VerifiedTurnContext): List<CompanionProviderMessage> =

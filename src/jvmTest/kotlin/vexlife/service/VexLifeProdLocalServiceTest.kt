@@ -3794,7 +3794,7 @@ class VexLifeProdLocalServiceTest {
                   "turnRef": "$turnRef",
                   "evidenceRef": "$evidenceRef",
                   "promptContext": {
-                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v11",
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v12",
                     "contextProfileRef": "profile.vexlife.context.product-default"
                   }
                 }
@@ -3861,7 +3861,7 @@ class VexLifeProdLocalServiceTest {
                         projection.heldReason,
                     )
                     assertEquals(
-                        "vexlife-prod.direct-prompt-materialization-receipt/v11",
+                        "vexlife-prod.direct-prompt-materialization-receipt/v12",
                         projection.durablePromptReceiptSchema,
                     )
                     assertFalse(

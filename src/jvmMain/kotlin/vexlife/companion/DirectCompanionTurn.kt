@@ -1017,6 +1017,12 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             issuedAt = hooks.now(),
                         )
+                    val workingFocusObservation =
+                        DirectWorkingFocus.observeCurrent(
+                            productHome = productHome,
+                            lineageRef = request.companionLineageRef,
+                            threadRef = request.threadRef,
+                        )
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -1035,6 +1041,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingFocusObservation =
+                                    workingFocusObservation,
                                 browserContext = intent.browserContext,
                                 personContext = intent.personContext,
                                 contextProfile = intent.contextProfile,
@@ -1047,6 +1055,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingFocusObservation =
+                                    workingFocusObservation,
                                 browserContext = intent.browserContext,
                                 personContext = intent.personContext,
                                 contextProfile = intent.contextProfile,
@@ -1340,6 +1350,7 @@ object DirectCompanionTurn {
         setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         contextProfile: VexLifeContextProfile.Effective?,
@@ -1432,6 +1443,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
@@ -1543,6 +1556,8 @@ object DirectCompanionTurn {
                 hooks.memoryProviderSelectionAtCap,
             workingContinuityContext =
                 workingContinuityContext,
+            workingFocusObservation =
+                workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
@@ -1868,6 +1883,12 @@ object DirectCompanionTurn {
                     else ->
                         CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
                 }
+            DirectWorkingFocus.requireCurrent(
+                productHome = productHome,
+                lineageRef = currentRequest.companionLineageRef,
+                threadRef = currentRequest.threadRef,
+                expected = workingFocusObservation,
+            )
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
@@ -1965,6 +1986,7 @@ object DirectCompanionTurn {
                     memoryContextAtCap = hooks.memoryContextAtCap,
                     memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext = workingContinuityContext,
+                    workingFocusObservation = workingFocusObservation,
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = stageRuntimeEvidence,
@@ -2072,6 +2094,8 @@ object DirectCompanionTurn {
                         hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
+                    workingFocusObservation =
+                        workingFocusObservation,
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = finalRuntimeEvidence,
@@ -2138,6 +2162,8 @@ object DirectCompanionTurn {
                     hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = finalRuntimeEvidence,
@@ -2204,6 +2230,7 @@ object DirectCompanionTurn {
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         contextProfile: VexLifeContextProfile.Effective?,
@@ -2246,6 +2273,7 @@ object DirectCompanionTurn {
                 memoryContextAtCap = hooks.memoryContextAtCap,
                 memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext = workingContinuityContext,
+                    workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = null,
@@ -2289,6 +2317,7 @@ object DirectCompanionTurn {
             memoryContextAtCap = hooks.memoryContextAtCap,
             memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
             workingContinuityContext = workingContinuityContext,
+                    workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = null,
@@ -2435,6 +2464,7 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2514,6 +2544,7 @@ object DirectCompanionTurn {
                             }
                         },
                 workingContinuityContext = workingContinuityContext,
+                    workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
@@ -2617,6 +2648,7 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2658,6 +2690,13 @@ object DirectCompanionTurn {
                 "Conversation recall lifecycle changed before the provider boundary"
             }
         }
+
+        DirectWorkingFocus.requireCurrent(
+            productHome = productHome,
+            lineageRef = currentRequest.companionLineageRef,
+            threadRef = currentRequest.threadRef,
+            expected = workingFocusObservation,
+        )
 
         val requestArtifactManifest =
             requestArtifactManifest(
@@ -2701,6 +2740,7 @@ object DirectCompanionTurn {
                         }
                     },
             workingContinuityContext = workingContinuityContext,
+                    workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,

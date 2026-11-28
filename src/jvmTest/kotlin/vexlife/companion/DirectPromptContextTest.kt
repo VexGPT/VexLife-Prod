@@ -23,6 +23,8 @@ import vexlife.capability.VexLifeWorkspaceCheckDefinitions
 import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationIdentity
@@ -74,6 +76,44 @@ class DirectPromptContextTest {
             productHome,
         )
     }
+
+    private fun workingFocusDraft(
+        lineageRef: String,
+        formationRef: String = "receipt.self-inspection.focus.001",
+        priorRevisionRefOrNull: String? = null,
+        detail: String = "Working Focus keeps one current source relationship available.",
+    ) =
+        VexLifeWorkingFocus.Draft(
+            lineageRef = lineageRef,
+            threadRef = DirectConversationIdentity.ThreadRef,
+            formationRef = formationRef,
+            priorRevisionRefOrNull = priorRevisionRefOrNull,
+            subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
+            objective = "Keep the current Self-Inspection relationship in Working Focus.",
+            currentQuestionOrNull = "Which source relationship still matters now?",
+            retainedRelationships =
+                listOf(
+                    VexLifeWorkingFocus.Relationship(
+                        relationshipRef = "relationship.self-inspection.current",
+                        ownerRef = "owner.self-inspection.source",
+                        standing = VexLifeWorkingFocus.Standing.OBSERVED,
+                        compactMeaning = detail,
+                        sourceRefs = listOf("source.self-inspection.current"),
+                    ),
+                ),
+            openEdges =
+                listOf(
+                    VexLifeWorkingFocus.OpenEdge(
+                        edgeRef = "edge.self-inspection.next",
+                        ownerRef = "owner.self-inspection.source",
+                        compactMeaning = "Reopen the exact source when verification is needed.",
+                        sourceRefs = listOf("source.self-inspection.next"),
+                    ),
+                ),
+            nextProbeOrNull = "Verify the next exact source edge.",
+            sourceBindingRefs = listOf("binding.self-inspection.current"),
+            sourceRefs = listOf("source.self-inspection.current"),
+        )
 
     private fun runtimeEvidence(
         receiptRef: String =
@@ -4014,6 +4054,460 @@ class DirectPromptContextTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun activeWorkingFocusIsMutableCurrentReceiptEvidenceWithoutChangingStablePrefix() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-active-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-active",
+                )
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+            owner.setCurrent(
+                workingFocusDraft(
+                    formed.installation.companionLineageRef,
+                ),
+            )
+            val observation =
+                DirectWorkingFocus.observeCurrent(
+                    productHome = productHome,
+                    lineageRef = formed.installation.companionLineageRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                )
+            val runtime =
+                runtimeEvidence()
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.active",
+                            requestMessageRef = "message.self-development.human.working-focus.active",
+                            content = "Continue from the current focus.",
+                        )
+                    val withoutFocus =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = null,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+                    val withFocus =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = observation,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+
+                    assertEquals(
+                        withoutFocus.messages.first(),
+                        withFocus.messages.first(),
+                        "mutable Working Focus must not invalidate the stable provider prefix",
+                    )
+                    val snapshot =
+                        assertNotNull(
+                            withFocus.receipt.workingFocusSnapshot,
+                        )
+                    assertEquals("INCLUDED_FULL", snapshot.projectionState)
+                    assertEquals("ACTIVE", snapshot.observedStanding)
+                    assertFalse(snapshot.effectsPerformed)
+                    val component =
+                        withFocus.receipt.contextComponents.single {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.WorkingFocus
+                        }
+                    assertEquals(
+                        DirectPromptContext.ComponentStability.MUTABLE_CURRENT,
+                        component.stabilityClass,
+                    )
+                    assertEquals(
+                        DirectPromptContext.ComponentPlacement.LIVE_TAIL,
+                        component.placementClass,
+                    )
+                    assertEquals(snapshot.contentSha256OrNull, component.sha256)
+                    assertTrue(
+                        withFocus.messages.any {
+                            it.content.contains("VEXLIFE_WORKING_FOCUS/v1")
+                        },
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun workingFocusUsesOnlyLeftoverPromptRoomForCoreAndHeldResidency() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-budget-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-budget",
+                )
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+            owner.setCurrent(
+                workingFocusDraft(
+                    lineageRef = formed.installation.companionLineageRef,
+                    detail = "detail ".repeat(250),
+                ),
+            )
+            val observation =
+                DirectWorkingFocus.observeCurrent(
+                    productHome = productHome,
+                    lineageRef = formed.installation.companionLineageRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                )
+            val runtime =
+                runtimeEvidence()
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.budget",
+                            requestMessageRef = "message.self-development.human.working-focus.budget",
+                            content = "Keep the current relationship without crowding out this request.",
+                        )
+                    fun materialize(
+                        focus: DirectWorkingFocus.Observation?,
+                        effectiveBudget: Int?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = focus,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = null,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = effectiveBudget,
+                        )
+
+                    val base =
+                        materialize(
+                            focus = null,
+                            effectiveBudget = null,
+                        )
+                    val full =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget = null,
+                        )
+                    val fullSnapshot =
+                        assertNotNull(
+                            full.receipt.workingFocusSnapshot,
+                        )
+                    assertEquals("INCLUDED_FULL", fullSnapshot.projectionState)
+                    assertTrue(
+                        fullSnapshot.estimatedTokens >
+                            fullSnapshot.requiredCoreTokens,
+                    )
+
+                    val held =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget =
+                                base.receipt.providerMaterializedInputTokenEstimate,
+                        )
+                    assertEquals(
+                        "HELD_TOKEN_BUDGET",
+                        assertNotNull(
+                            held.receipt.workingFocusSnapshot,
+                        ).projectionState,
+                    )
+                    assertTrue(
+                        held.receipt.contextComponents.none {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.WorkingFocus
+                        },
+                    )
+
+                    val coreBudget =
+                        base.receipt.providerMaterializedInputTokenEstimate +
+                            fullSnapshot.requiredCoreTokens +
+                            16
+                    assertTrue(
+                        coreBudget <
+                            base.receipt.providerMaterializedInputTokenEstimate +
+                            fullSnapshot.estimatedTokens,
+                    )
+                    val core =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget = coreBudget,
+                        )
+                    assertEquals(
+                        "INCLUDED_CORE_ONLY",
+                        assertNotNull(
+                            core.receipt.workingFocusSnapshot,
+                        ).projectionState,
+                    )
+                    assertTrue(
+                        core.receipt.providerMaterializedInputTokenEstimate <=
+                            core.receipt.inputTokenBudget,
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun absentDisplacedAndClearedWorkingFocusStayObservableButNonResident() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-standing-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-standing",
+                )
+            val lineageRef =
+                formed.installation.companionLineageRef
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.standing",
+                            requestMessageRef = "message.self-development.human.working-focus.standing",
+                            content = "Observe whether current focus is resident.",
+                        )
+                    fun assertNonResident(
+                        expectedStanding: String,
+                    ) {
+                        val observation =
+                            DirectWorkingFocus.observeCurrent(
+                                productHome = productHome,
+                                lineageRef = lineageRef,
+                                threadRef = DirectConversationIdentity.ThreadRef,
+                            )
+                        val materialized =
+                            DirectPromptContext.materializeContinuityAt(
+                                conversationOwner = this,
+                                prior = null,
+                                currentRequest = request,
+                                memoryAvailabilityContext = null,
+                                memoryContextAtCap = null,
+                                workingContinuityContext = null,
+                                workingFocusObservation = observation,
+                                browserContext = null,
+                                personContext = null,
+                                runtimeEvidence = null,
+                                sourceReturnProtocolEnabled = false,
+                                sourceReturnDiscovery = null,
+                                foundationalField = null,
+                                contextProfile = null,
+                                conversationExtentIncluded = false,
+                                capabilityRequestsAdmitted = false,
+                                providerNativeTools = false,
+                                experimentEffectiveInputTokenBudget = null,
+                            )
+                        val snapshot =
+                            assertNotNull(
+                                materialized.receipt.workingFocusSnapshot,
+                            )
+                        assertEquals("NOT_ACTIVE", snapshot.projectionState)
+                        assertEquals(expectedStanding, snapshot.observedStanding)
+                        assertTrue(
+                            materialized.receipt.contextComponents.none {
+                                it.componentRef ==
+                                    DirectPromptContext.ComponentRefs.WorkingFocus
+                            },
+                        )
+                    }
+
+                    assertNonResident("ABSENT")
+                    owner.setCurrent(
+                        workingFocusDraft(
+                            lineageRef,
+                        ),
+                    )
+                    owner.displace(
+                        lineageRef = lineageRef,
+                        threadRef = DirectConversationIdentity.ThreadRef,
+                        causeOwnerRef = "owner.vexlife-prod.attention-working-focus-convergence.001",
+                        causeRef = "attention.requirement.current",
+                        causeBindingRefs = listOf("binding.attention.current"),
+                    )
+                    assertNonResident("DISPLACED")
+                    owner.clear(
+                        lineageRef = lineageRef,
+                        threadRef = DirectConversationIdentity.ThreadRef,
+                        causeOwnerRef = VexLifeWorkingFocus.EffectOwnerRef,
+                        causeRef = "receipt.focus.clear.current",
+                        causeBindingRefs = listOf("binding.focus.clear.current"),
+                    )
+                    assertNonResident("CLEARED")
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalV10ReceiptRoundTripsWithoutWorkingFocusEvidence() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v10-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.v10-compat",
+                            requestMessageRef = "message.self-development.human.v10-compat",
+                            content = "Historical v10 receipt compatibility",
+                        )
+                    val receipt =
+                        DirectPromptContext.materialize(
+                            prior = null,
+                            currentRequest = request,
+                            runtimeEvidence = runtimeEvidence(),
+                        )
+                            .receipt
+                    val historical =
+                        JsonObject(
+                            VexContractJson.Strict
+                                .encodeToJsonElement(
+                                    receipt,
+                                )
+                                .jsonObject
+                                .filterKeys {
+                                    it != "workingFocusSnapshot"
+                                }
+                                .toMutableMap()
+                                .also {
+                                    it[
+                                        "schemaVersion"
+                                    ] =
+                                        JsonPrimitive(
+                                            DirectPromptContext.ReceiptSchemaV10,
+                                        )
+                                },
+                        )
+                    val decoded =
+                        VexContractJson.decode<DirectPromptContext.Receipt>(
+                            historical.toString(),
+                        )
+
+                    assertEquals(
+                        DirectPromptContext.ReceiptSchemaV10,
+                        decoded.schemaVersion,
+                    )
+                    assertNull(
+                        decoded.workingFocusSnapshot,
+                    )
+                    assertEquals(
+                        VexContractJson.canonicalEncodeElement(
+                            historical,
+                        ),
+                        VexContractJson.canonicalEncode(
+                            decoded,
+                        ),
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
         }
     }
 

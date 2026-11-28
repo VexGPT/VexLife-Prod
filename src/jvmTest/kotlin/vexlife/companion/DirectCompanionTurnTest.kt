@@ -20,7 +20,10 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -56,6 +59,43 @@ class DirectCompanionTurnTest {
         )
         return home
     }
+
+    private fun workingFocusDraft(
+        formationRef: String = "receipt.direct-turn.working-focus.001",
+        priorRevisionRefOrNull: String? = null,
+        objective: String = "Keep the current direct-turn relationship in Working Focus.",
+    ) =
+        VexLifeWorkingFocus.Draft(
+            lineageRef = "companion-lineage.vexlife.turn-lineage",
+            threadRef = DirectConversationIdentity.ThreadRef,
+            formationRef = formationRef,
+            priorRevisionRefOrNull = priorRevisionRefOrNull,
+            subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
+            objective = objective,
+            currentQuestionOrNull = "Is this exact Working Focus still current at the provider boundary?",
+            retainedRelationships =
+                listOf(
+                    VexLifeWorkingFocus.Relationship(
+                        relationshipRef = "relationship.direct-turn.focus",
+                        ownerRef = "owner.self-inspection.source",
+                        standing = VexLifeWorkingFocus.Standing.OBSERVED,
+                        compactMeaning = "One exact current relationship is being carried.",
+                        sourceRefs = listOf("source.direct-turn.focus"),
+                    ),
+                ),
+            openEdges =
+                listOf(
+                    VexLifeWorkingFocus.OpenEdge(
+                        edgeRef = "edge.direct-turn.focus",
+                        ownerRef = "owner.self-inspection.source",
+                        compactMeaning = "Reopen exact source if the relationship needs verification.",
+                        sourceRefs = listOf("source.direct-turn.focus"),
+                    ),
+                ),
+            nextProbeOrNull = "Require this same focus before provider inference.",
+            sourceBindingRefs = listOf("binding.direct-turn.focus.current"),
+            sourceRefs = listOf("source.direct-turn.focus"),
+        )
 
     private fun setup(
         home: java.nio.file.Path,
@@ -4128,6 +4168,209 @@ class DirectCompanionTurnTest {
             assertEquals(
                 1,
                 providerCalls,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workingFocusChangeBeforeFirstProviderStageRejectsTheStalePromptBeforeInvocation() {
+        val home =
+            productHome()
+        val owner =
+            VexLifeWorkingFocusOwner(
+                home,
+            )
+        val first =
+            owner.setCurrent(
+                workingFocusDraft(),
+            )
+        var foundationalReads =
+            0
+        var providerCalls =
+            0
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                                HereticModelCatalog.Models.Qwen4B,
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified = true,
+                                ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.working-focus-stale-before-stage-one",
+                                content =
+                                    "Continue from the exact current Working Focus.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport =
+                                    DirectCompanionConnection.Transport {
+                                        providerCalls +=
+                                            1
+                                        error(
+                                            "stale Working Focus must fail before provider invocation",
+                                        )
+                                    },
+                                currentFoundationalField = {
+                                    foundationalReads +=
+                                        1
+                                    if (
+                                        foundationalReads ==
+                                            2
+                                    ) {
+                                        owner.setCurrent(
+                                            workingFocusDraft(
+                                                formationRef =
+                                                    "receipt.direct-turn.working-focus.002",
+                                                priorRevisionRefOrNull =
+                                                    assertNotNull(
+                                                        first.current.revisionRefOrNull,
+                                                    ),
+                                                objective =
+                                                    "This newer Working Focus must invalidate the old prompt.",
+                                            ),
+                                        )
+                                    }
+                                    VexLifeFoundationalFieldFixture.shipped
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                0,
+                providerCalls,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "Working Focus changed after observation",
+                    ) ==
+                    true,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun workingFocusChangeBetweenProviderStagesRejectsContinuationBeforeSecondInvocation() {
+        val home =
+            productHome()
+        val owner =
+            VexLifeWorkingFocusOwner(
+                home,
+            )
+        val first =
+            owner.setCurrent(
+                workingFocusDraft(),
+            )
+        var providerCalls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                _ ->
+                providerCalls +=
+                    1
+                if (
+                    providerCalls ==
+                        1
+                ) {
+                    owner.setCurrent(
+                        workingFocusDraft(
+                            formationRef =
+                                "receipt.direct-turn.working-focus.002",
+                            priorRevisionRefOrNull =
+                                assertNotNull(
+                                    first.current.revisionRefOrNull,
+                                ),
+                            objective =
+                                "A provider-stage continuation must not reuse the older focus.",
+                        ),
+                    )
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "{\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\":\"atlas\",\"action\":\"list\",\"arguments\":{}}"
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                } else {
+                    error(
+                        "stale Working Focus must fail before the second provider invocation",
+                    )
+                }
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home = home,
+                                model = HereticModelCatalog.Models.Qwen4B,
+                                qualification =
+                                    HereticRuntimeQualification.qualified(
+                                        vexReachQualified =
+                                            true,
+                                    ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.working-focus-stale-between-stages",
+                                content =
+                                    "Use Atlas if needed, but keep the same Working Focus current.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                now = {
+                                    Instant.parse(
+                                        "2026-11-28T01:45:00Z",
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "Working Focus changed after observation",
+                    ) ==
+                    true,
             )
         } finally {
             home.parent
