@@ -6,7 +6,10 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
-/** The public Mac download surface keeps Gatekeeper guidance visible without owning the protected decision. */
+/**
+ * The public Mac download surface keeps Gatekeeper guidance visible without owning the protected
+ * decision.
+ */
 class VexLifeMacFirstDownloadTest {
     private val root: Path = Path.of("").toAbsolutePath()
     private val page = Files.readString(root.resolve("site/index.html"))
@@ -39,7 +42,11 @@ class VexLifeMacFirstDownloadTest {
             "gatekeeper-open-anyway-confirm.png",
             "gatekeeper-admin-auth.png",
         ).forEach { name ->
-            assertTrue(Files.isRegularFile(root.resolve("site/walkthrough").resolve(name)))
+            assertTrue(
+                Files.isRegularFile(
+                    root.resolve("site/walkthrough").resolve(name),
+                ),
+            )
             assertContains(script, name)
         }
 
