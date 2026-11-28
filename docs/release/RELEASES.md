@@ -12,7 +12,7 @@ stable version records that Victor accepted a lived feature threshold.
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
 | Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
-| Preview | An immutable downloadable snapshot of each admitted `main` commit for sharing/testing. | automatic `release` workflow on every push to `main`; manual Preview remains available | `private-service-image-<sha>` prerelease |
+| Preview | A proof-gated immutable downloadable snapshot of an admitted `main` commit. | automatic `release` workflow on every push to `main`; manual Preview remains available | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
 ## [VexLife Prod versioning]
@@ -157,9 +157,10 @@ For stable runs, the workflow supplies the requested semantic version as
 `0.0.0` internally, distribution channel `preview`, and remains release-identified by its exact
 source SHA/release tag. Candidate proof defaults to distribution channel `candidate` and likewise
 uses the exact source SHA. The bundle embeds the exact expected source SHA in every channel.
-Every new commit admitted to `main` now automatically publishes one source-identified Preview.
-The Preview version is the exact Git source SHA, not an automatically invented semantic version.
-Stable `v<major>.<minor>.<patch>` remains an intentional lived/accepted threshold chosen explicitly.
+Every new commit admitted to `main` now automatically enters the source-identified Preview release
+cycle. Its Preview version is the exact Git source SHA, not an automatically invented semantic
+version. Publication still requires the full release proof to pass. Stable
+`v<major>.<minor>.<patch>` remains an intentional lived/accepted threshold chosen explicitly.
 
 ## One Mac candidate-proof process
 
@@ -233,7 +234,7 @@ who executes it.
 
 ### Automatic Product cycle
 
-Every new `main` commit is an immutable Preview version:
+Every new `main` commit automatically enters the Preview cycle; its exact SHA is the Preview version:
 
 ~~~text
 merge / admitted push to main
@@ -250,7 +251,8 @@ exact push SHA remains publishable only while it is an ancestor of current main
 ~~~
 
 The exact SHA is the automatic Preview version. This avoids fabricating SemVer meaning for every
-merge while still giving every admitted Product state a downloadable, source-bound distribution.
+merge. A downloadable distribution exists only after the repository-owned release proof succeeds; a
+failed proof leaves that main SHA unreleased rather than blessing broken Product bytes.
 A rewrite that removes the push SHA from current `main` ancestry fails closed rather than publishing
 a detached history.
 
