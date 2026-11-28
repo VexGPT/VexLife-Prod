@@ -1216,9 +1216,10 @@ class MacHereticRuntimePlatform(
                 var qualified =
                     false
 
-                for (
-                    requestNumber in
-                    1..VexLifeCapabilityBridge.MaximumRequestsPerTurn
+                var requestNumber =
+                    1
+                while (
+                    true
                 ) {
                     val content =
                         invokeQualificationStage(
@@ -1320,6 +1321,14 @@ class MacHereticRuntimePlatform(
                             true
                         break
                     }
+                    if (
+                        exchange.use.state ==
+                        VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET
+                    ) {
+                        break
+                    }
+                    requestNumber +=
+                        1
                 }
 
                 qualified
