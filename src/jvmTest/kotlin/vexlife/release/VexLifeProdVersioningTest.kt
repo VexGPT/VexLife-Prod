@@ -21,6 +21,8 @@ class VexLifeProdVersioningTest {
         Files.readString(root.resolve(".github/workflows/mac-app-proof.yml"))
     private val releaseWorkflow =
         Files.readString(root.resolve(".github/workflows/release.yml"))
+    private val pendingPreviewPublisher =
+        Files.readString(root.resolve("tools/release/publish-pending-previews.sh"))
 
     @Test
     fun distributionIdentityIsVersionedWhileInstalledProductIdentityRemainsCanonical() {
@@ -80,19 +82,29 @@ class VexLifeProdVersioningTest {
     }
 
     @Test
-    fun everyMainCommitAutomaticallyPublishesItsOwnSourceIdentifiedPreview() {
-        assertContains(releaseWorkflow, "push:")
-        assertContains(releaseWorkflow, "- main")
-        assertContains(releaseWorkflow, "fetch-depth: 0")
+    fun everyFirstParentMainCommitHasACatchUpSafeRelayPreviewVersion() {
+        assertFalse(releaseWorkflow.contains("push:"))
         assertContains(
-            releaseWorkflow,
-            "publish-mac-release.sh preview \"\" \"\$GITHUB_SHA\"",
+            pendingPreviewPublisher,
+            "VEXLIFE_PREVIEW_BASELINE:-13606a471543ce9d9e4fecd5fb471971b581d6db",
         )
-        assertContains(releasePublisher, "SOURCE_CUTOFF=\"\${3:-}\"")
-        assertContains(releasePublisher, "merge-base --is-ancestor")
-        assertContains(releasePublisher, "VEXLIFE_RELEASE_CATALOG_REFRESH_DEFERRED")
-        assertContains(releaseDocs, "Preview  = automatic source version for every main commit")
-        assertContains(releaseDocs, "Stable   = explicit SemVer after lived acceptance")
+        assertContains(
+            pendingPreviewPublisher,
+            "rev-list --first-parent --reverse \"\$BASELINE..\$REMOTE_MAIN\"",
+        )
+        assertContains(
+            pendingPreviewPublisher,
+            "gh release view \"\$tag\"",
+        )
+        assertContains(
+            pendingPreviewPublisher,
+            "publish-mac-release.sh preview \"\" \"\$source_sha\"",
+        )
+        assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_ALREADY_PUBLISHED")
+        assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_PUBLISHED")
+        assertContains(pendingPreviewPublisher, "VEXLIFE_PREVIEW_QUEUE_FAILED")
+        assertContains(releaseDocs, "MAIN SHA IDENTITY = DURABLE PREVIEW VERSION")
+        assertContains(releaseDocs, "no Local Workspace dependency")
     }
 
     @Test
