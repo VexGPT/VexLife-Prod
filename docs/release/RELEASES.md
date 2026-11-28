@@ -12,7 +12,7 @@ stable version records that Victor accepted a lived feature threshold.
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
 | Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
-| Preview | A proof-gated immutable downloadable snapshot of an admitted `main` commit. | automatic `release` workflow on every push to `main`; manual Preview remains available | `private-service-image-<sha>` prerelease |
+| Preview | A proof-gated immutable downloadable snapshot of an admitted first-parent `main` commit. | VexRelay/VexLocalBridge Mac release queue; manual hosted wrapper remains recovery/optional | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
 ## [VexLife Prod versioning]
@@ -157,9 +157,10 @@ For stable runs, the workflow supplies the requested semantic version as
 `0.0.0` internally, distribution channel `preview`, and remains release-identified by its exact
 source SHA/release tag. Candidate proof defaults to distribution channel `candidate` and likewise
 uses the exact source SHA. The bundle embeds the exact expected source SHA in every channel.
-Every new commit admitted to `main` now automatically enters the source-identified Preview release
-cycle. Its Preview version is the exact Git source SHA, not an automatically invented semantic
-version. Publication still requires the full release proof to pass. Stable
+Every new first-parent commit admitted to `main` defines one source-identified Preview version.
+Its Preview version is the exact Git source SHA, not an automatically invented semantic version.
+The VexRelay/VexLocalBridge Mac release cycle drains any missing Preview versions through the same
+Product-owned proof/publish owner. Publication still requires the full release proof to pass. Stable
 `v<major>.<minor>.<patch>` remains an intentional lived/accepted threshold chosen explicitly.
 
 ## One Mac candidate-proof process
@@ -232,34 +233,53 @@ There is no required calendar schedule. Preview publication follows source integ
 publication remains an intentional accepted threshold. The release meaning does not change based on
 who executes it.
 
-### Automatic Product cycle
+### VexRelay-driven Product cycle
 
-Every new `main` commit automatically enters the Preview cycle; its exact SHA is the Preview version:
+The first formalized Preview is the durable baseline:
 
 ~~~text
-merge / admitted push to main
--> exact push SHA
--> release workflow on macOS
--> publish-mac-release.sh preview "" <exact-push-sha>
--> prove exact source / tests / app / DMG
--> Preview tag private-service-image-<sha>
--> VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
--> refresh Pages from newest current main
-
-later main commits do not erase an older queued Preview:
-exact push SHA remains publishable only while it is an ancestor of current main
+baseline
+13606a471543ce9d9e4fecd5fb471971b581d6db
 ~~~
 
-The exact SHA is the automatic Preview version. This avoids fabricating SemVer meaning for every
-merge. A downloadable distribution exists only after the repository-owned release proof succeeds; a
-failed proof leaves that main SHA unreleased rather than blessing broken Product bytes.
-A rewrite that removes the push SHA from current `main` ancestry fails closed rather than publishing
-a detached history.
+Every first-parent `main` commit after that baseline is one expected Preview version. GitHub
+Releases themselves are the consumed-edge record; there is no second release ledger.
+
+~~~text
+main merge
+-> exact main SHA becomes an expected Preview version
+
+VexRelay / VexLocalBridge Mac cycle
+-> acquire exact current main
+-> tools/release/publish-pending-previews.sh
+-> enumerate first-parent main SHAs after baseline, oldest first
+-> private-service-image-<sha> already exists? consumed / skip
+-> otherwise run that SHA's own publish-mac-release.sh preview "" <sha>
+-> full Product tests + Mac app/DMG proof
+-> publish VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
+-> continue to the next missing SHA
+-> publish Pages once from newest current main
+~~~
+
+If Victor's Mac is off for several merges, no version identity is lost. The next admitted Relay
+cycle catches up every missing main SHA. A proof failure leaves only that SHA unreleased; it does not
+rewrite history or manufacture success. A later fixing SHA may still prove and publish.
+
+~~~text
+MAIN SHA IDENTITY = DURABLE PREVIEW VERSION
+PREVIEW RELEASE EXISTS = THAT VERSION'S RELEASE EFFECT COMPLETED
+MISSING RELEASE = PENDING OR FAILED, NOT FORGOTTEN
+~~~
+
+A truly zero-touch cadence requires an admitted always-on Mac/Relay wake surface. That host wake is a
+separate substrate concern; this Product source owns the deterministic queue and release effects, not
+a hidden daemon installation. The ordinary current route remains VexRelay/VexLocalBridge carriage on
+Victor's Mac, with no Local Workspace dependency and no GitHub Actions requirement.
 
 Stable remains separate:
 
 ~~~text
-Preview  = automatic source version for every main commit
+Preview  = exact main SHA, drained by the Relay release queue
 Stable   = explicit SemVer after lived acceptance
 ~~~
 
@@ -299,9 +319,9 @@ Two executors may lawfully invoke that same source-owned process:
 - **VexRelay / VexLocalBridge proof — pre-publication evidence when needed.** Relay may prove the
   exact source/build/artifact candidate through its admitted repository/host proof contracts without
   claiming that proof itself published the release.
-- **GitHub Actions — automatic Preview + manual release route.** Every push to `main` invokes the
-  same source-owned script as an exact-SHA Preview. **Actions → release → Run workflow** remains the
-  manual surface for an explicit Preview or Stable `0.x.y` cutoff.
+- **GitHub Actions — optional manual wrapper only.** It is not the ordinary Preview cadence owner.
+  **Actions → release → Run workflow** remains available only as an explicit hosted fallback/manual
+  surface for Preview or Stable publication when intentionally selected.
 
 The similar human carriage is deliberate:
 
@@ -319,9 +339,10 @@ observe partial publication, diagnose the initial Pages caller-working-directory
 only that held projection, and continue without making Victor interpret logs or manually reconstruct
 the release state.
 
-Every admitted `main` commit automatically schedules its Preview through the hosted release
-executor. The direct VexLocalBridge route remains the bounded recovery/manual publication surface.
-Stable publication still requires an explicit semantic version and is never inferred from a merge.
+Every admitted first-parent `main` commit extends the expected Preview queue. VexRelay/VexLocalBridge
+on the Mac drains that queue through `publish-pending-previews.sh`; the hosted workflow is not
+required. Stable publication still requires an explicit semantic version and is never inferred from
+a merge.
 
 Versions follow semver while VexLife is before 1.0:
 
