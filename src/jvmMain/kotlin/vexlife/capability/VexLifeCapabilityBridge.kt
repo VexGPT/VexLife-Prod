@@ -17,6 +17,7 @@ import vexlife.capability.reach.VexLifeHomeReach
 import vexlife.capability.reach.VexLifeLocalSourceReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
+import vexlife.capability.reach.VexLifeSelfContext
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.CompanionProviderMessage
 import vexlife.continuity.VexLifeContextRevisit
@@ -169,6 +170,11 @@ object VexLifeCapabilityBridge {
          * where no turn binds them: continuity revisit is then NOT_AVAILABLE.
          */
         val turnSources: VexLifeContextRevisit.TurnSources? = null,
+        /**
+         * Exact current-turn prompt/body evidence bound by DirectCompanionTurn after a provider
+         * stage. Null outside a direct turn; the model never supplies these coordinates.
+         */
+        val selfContext: VexLifeSelfContext.TurnContext? = null,
     )
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -508,6 +514,7 @@ object VexLifeCapabilityBridge {
         return try {
             when (definition.capabilityRef) {
                 VexLifeReachDefinitions.AtlasRef -> atlas(action.action, args, admission)
+                VexLifeReachDefinitions.SelfContextRef -> selfContext(admission)
                 VexLifeReachDefinitions.WebRef ->
                     web(
                         action = action.action,
@@ -567,6 +574,39 @@ object VexLifeCapabilityBridge {
                 untrusted = false,
             )
         }
+    }
+
+    private fun selfContext(
+        admission: Admission,
+    ): Body {
+        val bound =
+            admission.selfContext
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "self-context",
+                    "self context is not bound to this provider turn",
+                    untrusted = false,
+                )
+        val result =
+            VexLifeSelfContext.inspect(
+                productHome = admission.productHome,
+                context = bound,
+            )
+        require(!result.effectsPerformed) {
+            "self context performed an effect"
+        }
+        return Body(
+            state = ResultState.RETURNED,
+            target = "self-context",
+            text = result.text,
+            untrusted = false,
+            facts =
+                mapOf(
+                    "workingFocusCurrentness" to
+                        result.workingFocusCurrentness,
+                ),
+            sourceRefs = result.sourceRefs,
+        )
     }
 
     private fun workspaceWrite(
