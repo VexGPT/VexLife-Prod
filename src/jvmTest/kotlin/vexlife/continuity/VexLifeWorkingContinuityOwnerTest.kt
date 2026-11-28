@@ -1371,7 +1371,173 @@ class VexLifeWorkingContinuityOwnerTest {
                 .toFile()
                 .deleteRecursively()
         }
+    }    @Test
+    fun currentCycleAdvancesInPlaceAndClearsWithoutBecomingACycleLedger() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-continuity-cycle-owner-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            fun cycle(
+                index: Int,
+                phase: VexLifeWorkingContinuity.CyclePhase,
+                nextMove: VexLifeWorkingContinuity.CycleNextMove? =
+                    null,
+                nextControl: String? =
+                    null,
+                resultSha: String =
+                    index.toString().repeat(64).take(64),
+            ) =
+                VexLifeWorkingContinuity.formCycleCheckpoint(
+                    lineageRef =
+                        "companion-lineage.vexlife.owner-cycle",
+                    threadRef =
+                        "thread.self-development.open-conversation",
+                    turnRef =
+                        "turn.vexlife.owner-cycle.001",
+                    requestEventRef =
+                        "event.vexlife.owner-cycle.request.001",
+                    requestEventSha256 =
+                        "a".repeat(64),
+                    cycleIndex = index,
+                    phase = phase,
+                    workingFocusRefOrNull =
+                        "focus.vexlife.owner-cycle",
+                    workingFocusStateRefOrNull =
+                        "state.vexlife.owner-cycle",
+                    workingFocusRevisionRefOrNull =
+                        "revision.vexlife.owner-cycle",
+                    capabilityCallRef =
+                        "call.vexlife.owner-cycle.$index",
+                    capabilityResultSha256 =
+                        resultSha,
+                    capabilityState = "RETURNED",
+                    capabilitySourceRefs =
+                        listOf(
+                            "source.vexlife.owner-cycle.$index",
+                        ),
+                    capabilityFrontierRefs =
+                        emptyList(),
+                    externalEffectsExecuted = false,
+                    externalEffectMayHaveExecuted = false,
+                    nextMoveOrNull = nextMove,
+                    nextControlSha256OrNull =
+                        nextControl,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-28T17:0$index:00Z",
+                        ),
+                )
+
+            val awaiting =
+                cycle(
+                    index = 1,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                )
+            val started =
+                owner.writeCurrentCycle(
+                    awaiting,
+                )
+            assertEquals(
+                "CURRENT_CYCLE_STARTED",
+                started.state,
+            )
+            assertEquals(
+                awaiting,
+                owner.readCurrentCycle(
+                    awaiting.lineageRef,
+                    awaiting.threadRef,
+                ),
+            )
+
+            val integrated =
+                cycle(
+                    index = 1,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.INTEGRATED,
+                    nextMove =
+                        VexLifeWorkingContinuity.CycleNextMove.REACH,
+                    nextControl =
+                        "b".repeat(64),
+                )
+            assertEquals(
+                "CURRENT_CYCLE_ADVANCED",
+                owner.writeCurrentCycle(
+                    integrated,
+                )
+                    .state,
+            )
+
+            val second =
+                cycle(
+                    index = 2,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                    resultSha =
+                        "c".repeat(64),
+                )
+            owner.writeCurrentCycle(
+                second,
+            )
+            assertEquals(
+                second,
+                owner.readCurrentCycle(
+                    second.lineageRef,
+                    second.threadRef,
+                ),
+            )
+
+            val currentCycleFileCount =
+                Files.walk(
+                    home.resolve(
+                        "working-continuity",
+                    ),
+                )
+                    .use {
+                        paths ->
+                        paths.filter {
+                            it.fileName
+                                ?.toString() ==
+                                "current-cycle.json"
+                        }
+                            .count()
+                    }
+            assertEquals(
+                1L,
+                currentCycleFileCount,
+                "cycle custody must remain one current slot rather than an accumulating cycle history",
+            )
+
+            assertTrue(
+                owner.clearCurrentCycle(
+                    lineageRef = second.lineageRef,
+                    threadRef = second.threadRef,
+                    turnRef = second.turnRef,
+                    expectedFingerprint =
+                        second.semanticFingerprint,
+                ),
+            )
+            assertNull(
+                owner.readCurrentCycle(
+                    second.lineageRef,
+                    second.threadRef,
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
     }
+
+
 }
 
 // [VXG RealForever]
