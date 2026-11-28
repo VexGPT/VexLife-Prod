@@ -1,6 +1,7 @@
 package vexlife.continuity
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
@@ -183,12 +184,19 @@ class VexLifeWorkingContinuityOwner(
         val context: SuccessorContext,
     )
 
+    data class CycleMutationResult(
+        val state: String,
+        val effectPerformedNow: Boolean,
+        val checkpoint: VexLifeWorkingContinuity.CycleCheckpoint,
+    )
+
     private data class Paths(
         val root: Path,
         val checkpoints: Path,
         val receipts: Path,
         val successorClaims: Path,
         val successorContexts: Path,
+        val currentCycle: Path,
         val head: Path,
         val lock: Path,
     )
@@ -335,6 +343,204 @@ class VexLifeWorkingContinuityOwner(
             commitReceipt = receipt,
             head = head,
         )
+    }
+
+    fun readCurrentCycle(
+        lineageRef: String,
+        threadRef: String,
+    ): VexLifeWorkingContinuity.CycleCheckpoint? {
+        requireRef(lineageRef, "lineageRef")
+        requireRef(threadRef, "threadRef")
+        val paths =
+            paths(
+                lineageRef,
+                threadRef,
+            )
+        if (
+            VexOwnedPath.observeDirectory(
+                home,
+                paths.root,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return null
+        }
+        return VexDurableContractFile.read<VexLifeWorkingContinuity.CycleCheckpoint>(
+            ownedRoot = home,
+            path = paths.currentCycle,
+        )
+            ?.let(
+                VexLifeWorkingContinuity::validateCycleCheckpoint,
+            )
+            ?.also {
+                require(
+                    it.lineageRef == lineageRef &&
+                        it.threadRef == threadRef
+                ) {
+                    "working continuity current cycle belongs to another lineage/thread"
+                }
+            }
+    }
+
+    /**
+     * Keep one CURRENT cycle only. This is resumable custody, not a per-cycle event ledger.
+     */
+    fun writeCurrentCycle(
+        checkpoint: VexLifeWorkingContinuity.CycleCheckpoint,
+    ): CycleMutationResult {
+        val validated =
+            VexLifeWorkingContinuity.validateCycleCheckpoint(
+                checkpoint,
+            )
+        val paths =
+            paths(
+                validated.lineageRef,
+                validated.threadRef,
+            )
+        VexOwnedPath.ensureDirectory(
+            home,
+            paths.root,
+        )
+        return VexExclusiveFileLease
+            .acquire(
+                paths.lock,
+            )
+            .use {
+                val existing =
+                    readCurrentCycle(
+                        lineageRef = validated.lineageRef,
+                        threadRef = validated.threadRef,
+                    )
+                if (
+                    existing ==
+                        validated
+                ) {
+                    return@use CycleMutationResult(
+                        state = "IDEMPOTENT_CURRENT",
+                        effectPerformedNow = false,
+                        checkpoint = existing,
+                    )
+                }
+
+                if (
+                    existing ==
+                        null
+                ) {
+                    require(
+                        validated.phase ==
+                            VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION
+                    ) {
+                        "first working continuity cycle state must await integration"
+                    }
+                } else {
+                    require(
+                        cycleUpdateAllowed(
+                            existing = existing,
+                            next = validated,
+                        ),
+                    ) {
+                        "working continuity current cycle update is stale, skips a cycle, or crosses turns"
+                    }
+                }
+
+                VexDurableContractFile.write(
+                    ownedRoot = home,
+                    path = paths.currentCycle,
+                    value = validated,
+                )
+                val readback =
+                    requireNotNull(
+                        readCurrentCycle(
+                            lineageRef = validated.lineageRef,
+                            threadRef = validated.threadRef,
+                        ),
+                    ) {
+                        "working continuity current cycle did not persist"
+                    }
+                require(
+                    readback ==
+                        validated,
+                ) {
+                    "working continuity current cycle readback mismatch"
+                }
+
+                CycleMutationResult(
+                    state =
+                        if (
+                            existing ==
+                                null
+                        ) {
+                            "CURRENT_CYCLE_STARTED"
+                        } else {
+                            "CURRENT_CYCLE_ADVANCED"
+                        },
+                    effectPerformedNow = true,
+                    checkpoint = readback,
+                )
+            }
+    }
+
+    fun clearCurrentCycle(
+        lineageRef: String,
+        threadRef: String,
+        turnRef: String,
+        expectedFingerprint: String,
+    ): Boolean {
+        requireRef(lineageRef, "lineageRef")
+        requireRef(threadRef, "threadRef")
+        requireRef(turnRef, "turnRef")
+        requireSha256(
+            expectedFingerprint,
+            "cycle expectedFingerprint",
+        )
+        val paths =
+            paths(
+                lineageRef,
+                threadRef,
+            )
+        if (
+            VexOwnedPath.observeDirectory(
+                home,
+                paths.root,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return false
+        }
+
+        return VexExclusiveFileLease
+            .acquire(
+                paths.lock,
+            )
+            .use {
+                val current =
+                    readCurrentCycle(
+                        lineageRef = lineageRef,
+                        threadRef = threadRef,
+                    )
+                        ?: return@use false
+                require(
+                    current.turnRef ==
+                        turnRef &&
+                        current.semanticFingerprint ==
+                        expectedFingerprint
+                ) {
+                    "working continuity current cycle changed before clear"
+                }
+                Files.deleteIfExists(
+                    paths.currentCycle,
+                )
+                require(
+                    readCurrentCycle(
+                        lineageRef = lineageRef,
+                        threadRef = threadRef,
+                    ) ==
+                        null
+                ) {
+                    "working continuity current cycle remained after clear"
+                }
+                true
+            }
     }
 
     fun commitPlan(
@@ -911,6 +1117,7 @@ class VexLifeWorkingContinuityOwner(
             receipts = root.resolve("receipts"),
             successorClaims = root.resolve("successor-context-claims"),
             successorContexts = root.resolve("successor-contexts"),
+            currentCycle = root.resolve("current-cycle.json"),
             head = root.resolve("head.json"),
             lock = root.resolve("owner.lock"),
         )
@@ -960,6 +1167,66 @@ class VexLifeWorkingContinuityOwner(
                 currentRequestEventHash +
                     ".json",
             )
+    }
+
+    private fun cycleUpdateAllowed(
+        existing: VexLifeWorkingContinuity.CycleCheckpoint,
+        next: VexLifeWorkingContinuity.CycleCheckpoint,
+    ): Boolean {
+        if (
+            existing.lineageRef !=
+                next.lineageRef ||
+            existing.threadRef !=
+                next.threadRef ||
+            existing.turnRef !=
+                next.turnRef ||
+            existing.requestEventRef !=
+                next.requestEventRef ||
+            existing.requestEventSha256 !=
+                next.requestEventSha256
+        ) {
+            return false
+        }
+
+        if (
+            existing.cycleIndex ==
+                next.cycleIndex
+        ) {
+            return existing.phase ==
+                VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION &&
+                next.phase ==
+                VexLifeWorkingContinuity.CyclePhase.INTEGRATED &&
+                existing.workingFocusRefOrNull ==
+                next.workingFocusRefOrNull &&
+                existing.workingFocusStateRefOrNull ==
+                next.workingFocusStateRefOrNull &&
+                existing.workingFocusRevisionRefOrNull ==
+                next.workingFocusRevisionRefOrNull &&
+                existing.capabilityCallRef ==
+                next.capabilityCallRef &&
+                existing.capabilityResultSha256 ==
+                next.capabilityResultSha256 &&
+                existing.capabilityState ==
+                next.capabilityState &&
+                existing.capabilitySourceRefs ==
+                next.capabilitySourceRefs &&
+                existing.capabilityFrontierRefs ==
+                next.capabilityFrontierRefs &&
+                existing.externalEffectsExecuted ==
+                next.externalEffectsExecuted &&
+                existing.externalEffectMayHaveExecuted ==
+                next.externalEffectMayHaveExecuted
+        }
+
+        return next.cycleIndex ==
+            existing.cycleIndex +
+                1 &&
+            existing.phase ==
+            VexLifeWorkingContinuity.CyclePhase.INTEGRATED &&
+            existing.nextMoveOrNull ==
+            VexLifeWorkingContinuity.CycleNextMove.REACH &&
+            next.phase ==
+            VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION
     }
 
     private fun sameCurrentPlan(
