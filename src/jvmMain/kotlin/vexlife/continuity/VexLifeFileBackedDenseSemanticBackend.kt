@@ -128,9 +128,23 @@ internal class VexLifeFileBackedDenseSemanticBackend(
 
     init {
         loaded.snapshot
-            ?.let(
-                delegate::restore,
-            )
+            ?.let {
+                snapshot ->
+                runCatching {
+                    delegate.restore(
+                        snapshot,
+                    )
+                }
+                    .onFailure {
+                        error ->
+                        corruptionReason =
+                            "continuity file-derived snapshot restore failed: " +
+                                (
+                                    error.message
+                                        ?: error.javaClass.simpleName
+                                )
+                    }
+            }
     }
 
     override fun fingerprint(
