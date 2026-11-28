@@ -1392,7 +1392,9 @@ class DirectCompanionCapabilityTurnTest {
                 failedCycle.capabilityActionOrNull,
             )
             assertEquals(
-                "send.working-cycle-recovery.failed",
+                DirectCompanionTurn.requestMessageRefFor(
+                    "send.working-cycle-recovery.failed",
+                ),
                 failedCycle.requestMessageRefOrNull,
             )
 
@@ -1725,7 +1727,9 @@ class DirectCompanionCapabilityTurnTest {
                 "first new reach must take current cycle custody from the exact recovered prior cycle",
             )
             assertEquals(
-                "send.working-cycle-handoff.fresh",
+                DirectCompanionTurn.requestMessageRefFor(
+                    "send.working-cycle-handoff.fresh",
+                ),
                 current.requestMessageRefOrNull,
             )
             assertEquals(
