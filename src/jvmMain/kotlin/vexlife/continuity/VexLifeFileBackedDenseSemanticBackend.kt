@@ -22,7 +22,7 @@ import vexlife.filesystem.VexOwnedPath
  */
 internal class VexLifeFileBackedDenseSemanticBackend(
     productHome: Path,
-    encoder: VexLifeVolatileDenseSemanticBackend.Encoder,
+    private val encoder: VexLifeVolatileDenseSemanticBackend.Encoder,
     secretSource: () -> ByteArray = {
         SecureRandom().generateSeed(
             32,
@@ -289,10 +289,7 @@ internal class VexLifeFileBackedDenseSemanticBackend(
                 semanticRepresentationBindingRef =
                     semanticRepresentationBindingRef,
                 denseDimension =
-                    snapshot.vectors
-                        .firstOrNull()
-                        ?.size
-                        ?: 0,
+                    encoder.dimension,
                 vectorPayloadBase64 =
                     Base64
                         .getEncoder()
@@ -529,9 +526,12 @@ internal class VexLifeFileBackedDenseSemanticBackend(
                 )
         vectors.forEach {
             vector ->
-            vector.forEach(
-                bytes::putFloat,
-            )
+            vector.forEach {
+                value ->
+                bytes.putFloat(
+                    value,
+                )
+            }
         }
         return bytes.array()
     }
@@ -567,7 +567,7 @@ internal class VexLifeFileBackedDenseSemanticBackend(
             FloatArray(
                 dimension,
             ) {
-                bytes.float
+                bytes.getFloat()
             }
         }
     }
