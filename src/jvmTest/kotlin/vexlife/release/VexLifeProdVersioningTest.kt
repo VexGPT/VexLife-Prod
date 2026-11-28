@@ -17,6 +17,8 @@ class VexLifeProdVersioningTest {
     private val releasePublisher =
         Files.readString(root.resolve("tools/release/publish-mac-release.sh"))
     private val releaseDocs = Files.readString(root.resolve("docs/release/RELEASES.md"))
+    private val macProofWorkflow =
+        Files.readString(root.resolve(".github/workflows/mac-app-proof.yml"))
 
     @Test
     fun distributionIdentityIsVersionedWhileInstalledProductIdentityRemainsCanonical() {
@@ -69,6 +71,10 @@ class VexLifeProdVersioningTest {
         )
         assertContains(releasePublisher, "VexLife-\$VERSION-macOS-AppleSilicon.dmg")
         assertContains(candidateProof, "-PvexlifeDistributionChannel=\"\$DISTRIBUTION_CHANNEL\"")
+        assertContains(
+            macProofWorkflow,
+            "VexLife-Candidate-*-macOS-AppleSilicon.dmg",
+        )
     }
 
     @Test
