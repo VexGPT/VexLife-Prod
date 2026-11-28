@@ -1,10 +1,7 @@
-# Automatic Preview executor for every main commit plus the manual Preview/Stable release surface.
-# VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly for recovery/manual carriage.
+# Manual hosted wrapper for the source-owned VexLife release process.
+# Ordinary release cadence is carried through VexRelay/VexLocalBridge on Victor's Mac.
 name: release
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       channel:
@@ -30,8 +27,6 @@ jobs:
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -39,27 +34,4 @@ jobs:
       - name: Publish the exact VexLife cutoff
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            bash tools/release/publish-mac-release.sh preview "" "$GITHUB_SHA"
-
-            # The Preview is bound to the push SHA. The catalog, however, should always project
-            # the newest current main after queued releases finish. Retry only this read/current-main
-            # projection when main advances between fetch and the source-owned Pages admission check.
-            pages_published=false
-            for attempt in 1 2 3; do
-              git fetch --quiet origin main
-              git checkout --quiet --detach refs/remotes/origin/main
-              if VEXLIFE_REPOSITORY="VexGPT/VexLife-Prod" bash tools/site/publish-gh-pages.sh; then
-                pages_published=true
-                break
-              fi
-            done
-            [ "$pages_published" = true ] || {
-              echo "Automatic Preview published, but current-main Pages projection did not converge." >&2
-              exit 1
-            }
-          else
-            bash tools/release/publish-mac-release.sh "${{ inputs.channel }}" "${{ inputs.version }}"
-          fi
+        run: bash tools/release/publish-mac-release.sh "${{ inputs.channel }}" "${{ inputs.version }}"
