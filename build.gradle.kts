@@ -461,6 +461,11 @@ val macApplicationVersionProperty =
         "vexlifeAppVersion",
     )
 
+val macApplicationDistributionChannelProperty =
+    providers.gradleProperty(
+        "vexlifeDistributionChannel",
+    )
+
 val visionRuntimeContractSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/vision-runtime-contract.json",
@@ -603,10 +608,35 @@ val macApplicationName =
         macApplicationReleaseContractText,
         "applicationName",
     )
-val macApplicationDiskImageName =
+val macApplicationCandidateDiskImageNamePattern =
     requiredJsonString(
         macApplicationReleaseContractText,
-        "diskImageName",
+        "candidateDiskImageNamePattern",
+    )
+val macApplicationCandidateDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "candidateDiskImageVolumeNamePattern",
+    )
+val macApplicationPreviewDiskImageNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "previewDiskImageNamePattern",
+    )
+val macApplicationPreviewDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "previewDiskImageVolumeNamePattern",
+    )
+val macApplicationStableDiskImageNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "stableDiskImageNamePattern",
+    )
+val macApplicationStableDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "stableDiskImageVolumeNamePattern",
     )
 val macApplicationDiskImageVolumeIconName =
     requiredJsonString(
@@ -636,7 +666,7 @@ val macApplicationMinimumMacOSVersion =
 
 require(
     macApplicationReleaseSchemaVersion ==
-        "vexlife-prod.macos-application-release/v1" &&
+        "vexlife-prod.macos-application-release/v2" &&
         macApplicationHumanName ==
         "VexLife" &&
         macApplicationBundleIdentifier ==
@@ -645,8 +675,18 @@ require(
         "darwin-arm64" &&
         macApplicationName ==
         "VexLife.app" &&
-        macApplicationDiskImageName ==
-        "VexLife-macOS-AppleSilicon.dmg" &&
+        macApplicationCandidateDiskImageNamePattern ==
+        "VexLife-Candidate-{sourceShort}-macOS-AppleSilicon.dmg" &&
+        macApplicationCandidateDiskImageVolumeNamePattern ==
+        "VexLife Candidate {sourceShort}" &&
+        macApplicationPreviewDiskImageNamePattern ==
+        "VexLife-Preview-{sourceShort}-macOS-AppleSilicon.dmg" &&
+        macApplicationPreviewDiskImageVolumeNamePattern ==
+        "VexLife Preview {sourceShort}" &&
+        macApplicationStableDiskImageNamePattern ==
+        "VexLife-{version}-macOS-AppleSilicon.dmg" &&
+        macApplicationStableDiskImageVolumeNamePattern ==
+        "VexLife {version}" &&
         macApplicationEmbeddedImageRelativePath ==
         "private-service-image" &&
         macApplicationEmbeddedSetupLauncherRelativePath ==
@@ -2989,6 +3029,12 @@ tasks.register(
             "0.0.0",
         ),
     )
+    inputs.property(
+        "vexlifeDistributionChannel",
+        macApplicationDistributionChannelProperty.orElse(
+            "candidate",
+        ),
+    )
     outputs.dir(
         macApplicationOutputRoot,
     )
@@ -3033,6 +3079,96 @@ tasks.register(
         ) {
             "VexLife macOS application version must be major.minor.patch"
         }
+
+        val distributionChannel =
+            macApplicationDistributionChannelProperty
+                .orNull
+                ?.trim()
+                ?.takeIf {
+                    it.isNotEmpty()
+                }
+                ?: "candidate"
+        require(
+            distributionChannel in
+                setOf(
+                    "candidate",
+                    "preview",
+                    "stable",
+                ),
+        ) {
+            "VexLife macOS distribution channel must be candidate, preview, or stable"
+        }
+        require(
+            (distributionChannel == "stable" && applicationVersion != "0.0.0") ||
+                (distributionChannel != "stable" && applicationVersion == "0.0.0"),
+        ) {
+            "stable distributions require a semantic app version; candidate/preview remain source-identified 0.0.0 builds"
+        }
+
+        val sourceShort =
+            sourceSha.take(
+                7,
+            )
+        val distributionPattern =
+            when (
+                distributionChannel
+            ) {
+                "candidate" ->
+                    macApplicationCandidateDiskImageNamePattern to
+                        macApplicationCandidateDiskImageVolumeNamePattern
+
+                "preview" ->
+                    macApplicationPreviewDiskImageNamePattern to
+                        macApplicationPreviewDiskImageVolumeNamePattern
+
+                else ->
+                    macApplicationStableDiskImageNamePattern to
+                        macApplicationStableDiskImageVolumeNamePattern
+            }
+        val renderDistributionPattern: (String) -> String =
+            { pattern ->
+                pattern
+                    .replace(
+                        "{sourceShort}",
+                        sourceShort,
+                    )
+                    .replace(
+                        "{version}",
+                        applicationVersion,
+                    )
+                    .also {
+                        rendered ->
+                        require(
+                            '{' !in rendered &&
+                                '}' !in rendered
+                        ) {
+                            "VexLife Mac distribution pattern contains an unresolved token: $rendered"
+                        }
+                    }
+            }
+        val macApplicationDiskImageName =
+            renderDistributionPattern(
+                distributionPattern.first,
+            )
+        val macApplicationDiskImageVolumeName =
+            renderDistributionPattern(
+                distributionPattern.second,
+            )
+        val distributionIdentity =
+            when (
+                distributionChannel
+            ) {
+                "stable" ->
+                    "stable:" +
+                        applicationVersion +
+                        "@" +
+                        sourceSha
+
+                else ->
+                    distributionChannel +
+                        ":" +
+                        sourceSha
+            }
 
         val repositoryRoot =
             rootDir
@@ -3389,6 +3525,26 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdDistributionChannel",
+                "-string",
+                distributionChannel,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdDistributionIdentity",
+                "-string",
+                distributionIdentity,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdEmbeddedSetupLauncherRelativePath",
                 "-string",
                 macApplicationEmbeddedSetupLauncherRelativePath,
@@ -3515,7 +3671,7 @@ tasks.register(
                 "/usr/bin/hdiutil",
                 "create",
                 "-volname",
-                macApplicationHumanName,
+                macApplicationDiskImageVolumeName,
                 "-srcfolder",
                 diskImageStage.toString(),
                 "-ov",
@@ -3716,7 +3872,7 @@ tasks.register(
         val receipt =
             buildString {
                 appendLine("{")
-                appendLine("  \"schemaVersion\": \"vexlife-prod.macos-application-archive-receipt/v1\",")
+                appendLine("  \"schemaVersion\": \"vexlife-prod.macos-application-archive-receipt/v2\",")
                 appendLine("  \"truthClass\": \"SOURCE_BOUND_OPEN_SOURCE_MAC_APPLICATION\",")
                 appendLine("  \"sourceSha\": \"" + sourceSha + "\",")
                 appendLine("  \"platform\": \"" + macApplicationPlatform + "\",")
@@ -3725,7 +3881,10 @@ tasks.register(
                 appendLine("  \"buildVersion\": \"" + buildVersion + "\",")
                 appendLine("  \"applicationName\": \"" + macApplicationName + "\",")
                 appendLine("  \"applicationPayloadSha256\": \"" + applicationPayloadSha256 + "\",")
+                appendLine("  \"distributionChannel\": \"" + distributionChannel + "\",")
+                appendLine("  \"distributionIdentity\": \"" + distributionIdentity + "\",")
                 appendLine("  \"diskImageName\": \"" + macApplicationDiskImageName + "\",")
+                appendLine("  \"diskImageVolumeName\": \"" + macApplicationDiskImageVolumeName + "\",")
                 appendLine("  \"diskImageSha256\": \"" + diskImageSha256 + "\",")
                 appendLine("  \"diskImageBytes\": " + diskImageBytes + ",")
                 appendLine("  \"distributionTrust\": \"" + macApplicationDistributionTrust + "\",")

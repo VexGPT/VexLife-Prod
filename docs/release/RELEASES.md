@@ -15,10 +15,83 @@ stable version records that Victor accepted a lived feature threshold.
 | Preview | An intentional downloadable snapshot of current `main` for sharing/testing. Ordinary merges do not publish one. | `release` workflow, run by hand with channel = `preview` | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
+## [VexLife Prod versioning]
+
+Release identity is projected all the way into the human Mac distribution without creating a second
+installed Product identity.
+
+~~~text
+candidate
+  release identity   = exact source SHA
+  DMG                = VexLife-Candidate-<sha7>-macOS-AppleSilicon.dmg
+  mounted volume     = VexLife Candidate <sha7>
+
+preview
+  release identity   = exact source SHA
+  DMG                = VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
+  mounted volume     = VexLife Preview <sha7>
+
+stable
+  release identity   = semantic version + exact source SHA
+  DMG                = VexLife-<version>-macOS-AppleSilicon.dmg
+  mounted volume     = VexLife <version>
+
+all channels
+  installed app      = VexLife.app
+  bundle identifier  = com.vexlife.prod
+~~~
+
+The distribution name tells the person and macOS which exact delivery artifact is mounted. The
+installed application remains one canonical Product so update/currentness, Home, service lifetime,
+Conversation and Memory do not fork merely because two release artifacts exist.
+
+Permanent:
+
+~~~text
+RELEASE IDENTITY
+-> DISTRIBUTION IDENTITY
+-> VERSIONED DMG + VERSIONED MOUNTED VOLUME
+
+VERSIONED DISTRIBUTION != SECOND PRODUCT
+VERSIONED DISTRIBUTION != SECOND HOME
+VERSIONED DISTRIBUTION != SECOND SERVICE TOPOLOGY
+
+VexLife.app + com.vexlife.prod
+= canonical installed Product identity
+~~~
+
+For an update, the ordinary human route is therefore:
+
+~~~text
+download exact newer distribution
+-> open its distinctly named DMG
+-> drag VexLife.app to Applications
+-> Replace the older VexLife.app when Finder asks
+-> launch the Applications copy
+-> Product Entry observes installed/running currentness
+-> Update & Restart / Repair & Restart only when the observed Product state admits it
+~~~
+
+Launching a second copy directly from a mounted DMG is not the update mechanism. Distribution
+versioning exists so several downloaded/mounted release artifacts remain intelligible while the
+installed Product remains singular.
+
+Migration is forward-only. Releases published before this contract remain immutable with their
+historical asset/volume names; they are not renamed or rebuilt. The Pages catalog accepts both legacy
+and release-identified DMG names because it discovers the Mac artifact by platform/file type rather
+than one fixed basename. The first release formed after this v2 contract begins the versioned
+distribution line.
+
+The realized app also embeds `VexLifeProdDistributionChannel` and
+`VexLifeProdDistributionIdentity` beside its exact source SHA. Those fields are diagnostic/currentness
+projection only; they do not create another Product identity.
+
 The historical preview tag name remains `private-service-image-<sha>` for compatibility with the current
 release/page catalog, but a published preview or stable release carries the Product artifacts below:
 
-- **preferred human download:** `VexLife-macOS-AppleSilicon.dmg`, containing `VexLife.app` plus
+- **preferred human download:** one release-identified DMG
+  (`VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg` or
+  `VexLife-<version>-macOS-AppleSilicon.dmg`), containing the canonical `VexLife.app` plus
   an Applications shortcut;
 - **recovery/predecessor carriage:** the exact private service image archive/receipt and
   source-bound bootstrap `.command`.
@@ -69,7 +142,8 @@ archiveVexLifeProdMacApplication
   -> bind bundle/source/trust metadata
   -> restore an ad-hoc bundle seal
   -> reuse the branded applet.icns as the mounted DMG volume icon
-  -> form + verify VexLife-macOS-AppleSilicon.dmg
+  -> project candidate/preview/stable release identity into the DMG filename + mounted volume name
+  -> form + verify the exact release-identified DMG
   -> SHA-256 + release receipt
 ~~~
 
@@ -79,9 +153,12 @@ to embed that local-only Vision runtime. Vision distribution remains separately 
 laundered into the DMG.
 
 For stable runs, the workflow supplies the requested semantic version as
-`-PvexlifeAppVersion=<major.minor.patch>`. A preview uses `0.0.0` internally and remains identified
-externally by its exact source SHA/release tag. Ordinary merges to `main` do not publish anything.
-Victor or a continuing instance chooses when a source threshold is worth publishing.
+`-PvexlifeAppVersion=<major.minor.patch>` and distribution channel `stable`. A preview uses
+`0.0.0` internally, distribution channel `preview`, and remains release-identified by its exact
+source SHA/release tag. Candidate proof defaults to distribution channel `candidate` and likewise
+uses the exact source SHA. The bundle embeds the exact expected source SHA in every channel.
+Ordinary merges to `main` do not publish anything. Victor or a continuing instance chooses when a
+source threshold is worth publishing.
 
 ## One Mac candidate-proof process
 
@@ -91,27 +168,32 @@ When Victor or a continuing instance asks for an exact PR/test DMG, the source-o
 bash tools/release/prove-mac-candidate.sh
 ~~~
 
-Optional semantic-version input is reserved for the release caller:
+Release callers pass both the semantic version and the distribution channel explicitly:
 
 ~~~text
-bash tools/release/prove-mac-candidate.sh 0.1.0
+bash tools/release/prove-mac-candidate.sh 0.1.0 stable
 ~~~
+
+Ordinary PR/candidate proof takes no arguments and therefore forms the exact source-identified
+`candidate` distribution.
 
 The candidate proof requires a clean exact checkout on Apple-silicon macOS and owns the whole
 non-public artifact-proof sequence:
 
 ~~~text
 exact HEAD
+-> candidate/preview/stable distribution identity
 -> jvmTest + checkVexLifeStrings
 -> archiveVexLifeProdMacApplication
--> exact VexLife.app + source binding
+-> exact canonical VexLife.app + source binding
+-> release-identified DMG filename + volume-name verification
 -> DMG recorded SHA verification
 -> hdiutil verify
 -> strict ad-hoc codesign verification
 -> read-only mount
 -> mounted app/source/icon/private-service-image/provider checks
 -> distribution-trust contract check
--> exact DMG + existing Product receipt
+-> exact DMG + Product receipt
 ~~~
 
 It **does not publish** a GitHub Release, move a tag, update Pages, install the app, reset Home, choose
@@ -259,7 +341,7 @@ The repository can use either final Pages profile, but Pages has one active sour
 Switching executor must not fork site formation logic.
 
 The page prefers a Mac `.dmg` when a release contains one and falls back to the predecessor
-bootstrap otherwise. It labels the unversioned channel as **Preview**, not as an always-current main
+bootstrap otherwise. It labels the source-versioned prerelease channel as **Preview**, not as an always-current main
 build. The selector keeps at most the two newest Preview releases visible so an update can be compared
 against its immediate predecessor before that older Preview is intentionally withdrawn. Windows remains
 visibly in preparation until a Windows realization actually exists and has real-machine proof.
@@ -330,9 +412,9 @@ That is **artifact proof**, not lived product completion. The remaining human/ho
 exact PR DMG exists is the ordinary route:
 
 ~~~text
-download exact PR/release DMG
--> open DMG
--> drag VexLife.app to Applications
+download exact release-identified PR/Preview/Stable DMG
+-> open the distinctly named DMG
+-> drag the canonical VexLife.app to Applications (Replace the older app when updating)
 -> explicitly allow the unsigned app if macOS requires it
 -> macOS may separately confirm the bundled `java` runtime; choose Open only for the trusted exact release
 -> launch
