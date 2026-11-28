@@ -1216,11 +1216,27 @@ class MacHereticRuntimePlatform(
                 var qualified =
                     false
 
-                var requestNumber =
-                    1
-                while (
-                    true
-                ) {
+                val seenControls =
+                    mutableSetOf<String>()
+
+                while (true) {
+                    val usedTokens =
+                        exchanges.sumOf {
+                            exchange ->
+                            estimateQualificationTokens(
+                                exchange.assistantMessage.content,
+                            ) +
+                                estimateQualificationTokens(
+                                    exchange.resultMessage.content,
+                                )
+                        }
+                    if (
+                        usedTokens >=
+                            VexLifeCapabilityBridge.ExchangeAllowanceTokens
+                    ) {
+                        break
+                    }
+
                     val content =
                         invokeQualificationStage(
                             maxTokens =
@@ -1232,9 +1248,18 @@ class MacHereticRuntimePlatform(
                             profile = HereticCompanionRepresentation.Profiles.Qwen4B,
                             content = content,
                         )
+                    val canonicalControl =
+                        normalizedCapabilityControl.canonicalControl
+                    if (
+                        !seenControls.add(
+                            canonicalControl,
+                        )
+                    ) {
+                        break
+                    }
                     val parsed =
                         VexLifeCapabilityRequest.parseOrNull(
-                            normalizedCapabilityControl.canonicalControl,
+                            canonicalControl,
                         )
                             ?: break
                     val call =
@@ -1299,10 +1324,18 @@ class MacHereticRuntimePlatform(
                             parsed =
                                 parsed,
                             requestNumber =
-                                requestNumber,
+                                exchanges.size +
+                                    1,
                         )
                     exchanges +=
                         exchange
+
+                    if (
+                        exchange.use.state ==
+                        VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET
+                    ) {
+                        break
+                    }
 
                     if (
                         isAtlasList &&
@@ -1321,14 +1354,6 @@ class MacHereticRuntimePlatform(
                             true
                         break
                     }
-                    if (
-                        exchange.use.state ==
-                        VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET
-                    ) {
-                        break
-                    }
-                    requestNumber +=
-                        1
                 }
 
                 qualified
