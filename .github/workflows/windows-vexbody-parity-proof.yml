@@ -37,7 +37,10 @@ jobs:
       - name: Replay last successful Windows readiness proof
         shell: pwsh
         run: |
-          .\gradlew.bat --no-daemon --max-workers=1 jvmTest `
+          .\gradlew.bat --no-daemon --max-workers=1 `
+            -Dorg.gradle.jvmargs=-Xmx4g `
+            -Pkotlin.daemon.jvmargs=-Xmx4g `
+            jvmTest `
             --tests "vexlife.platform.VexLifePlatformRealizationTest" `
             --tests "vexlife.platform.windows.VexLifeWindowsHostObservationTest" `
             --tests "vexlife.platform.windows.VexLifeWindowsReadinessTest"
