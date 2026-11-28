@@ -660,11 +660,6 @@ object DirectCompanionTurn {
                 prepared = prepared,
                 formedAt = formedAt,
             )
-            DirectWorkingContinuity.clearCurrentCycleAfterCompletedTurn(
-                productHome = productHome,
-                turnRef = turnRef,
-                prepared = prepared,
-            )
             Unit
         },
     )
@@ -673,6 +668,7 @@ object DirectCompanionTurn {
         val result: Result,
         val turnRef: String,
         val workingContinuity: DirectWorkingContinuity.Prepared,
+        val workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
     )
 
     private data class ContinuityPromptSelection(
@@ -1030,6 +1026,15 @@ object DirectCompanionTurn {
                             lineageRef = request.companionLineageRef,
                             threadRef = request.threadRef,
                         )
+                    val workingCycleRecovery =
+                        resolveCycleRecovery(
+                            productHome = productHome,
+                            conversationOwner = this,
+                            prior = prior,
+                            currentRequest = request,
+                            workingFocusObservation =
+                                workingFocusObservation,
+                        )
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -1048,6 +1053,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingCycleRecovery =
+                                    workingCycleRecovery,
                                 workingFocusObservation =
                                     workingFocusObservation,
                                 browserContext = intent.browserContext,
@@ -1062,6 +1069,8 @@ object DirectCompanionTurn {
                                 currentRequest = request,
                                 workingContinuityContext =
                                     workingSuccessorContext,
+                                workingCycleRecovery =
+                                    workingCycleRecovery,
                                 workingFocusObservation =
                                     workingFocusObservation,
                                 browserContext = intent.browserContext,
@@ -1221,6 +1230,8 @@ object DirectCompanionTurn {
                             ),
                         turnRef = request.turnRef,
                         workingContinuity = workingContinuity,
+                        workingCycleRecovery =
+                            workingCycleRecovery,
                     )
                 } catch (
                     error: Throwable,
@@ -1319,6 +1330,13 @@ object DirectCompanionTurn {
                         completed.turnRef,
                         completed.workingContinuity,
                         hooks.now(),
+                    )
+                    DirectWorkingContinuity.clearCurrentCycleAfterCompletedTurn(
+                        productHome = productHome,
+                        turnRef = completed.turnRef,
+                        prepared = completed.workingContinuity,
+                        consumedRecoveryOrNull =
+                            completed.workingCycleRecovery,
                     )
                     VexLogger.record(
                         VexLogger.Fact.WorkingContinuityCommitted,
