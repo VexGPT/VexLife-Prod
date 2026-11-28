@@ -1375,6 +1375,7 @@ object DirectCompanionTurn {
         setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2325,6 +2326,7 @@ object DirectCompanionTurn {
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery?,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2559,6 +2561,8 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? =
+            null,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2639,6 +2643,8 @@ object DirectCompanionTurn {
                             }
                         },
                 workingContinuityContext = workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -2743,6 +2749,8 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? =
+            null,
         workingFocusObservation: DirectWorkingFocus.Observation,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -2835,6 +2843,8 @@ object DirectCompanionTurn {
                         }
                     },
             workingContinuityContext = workingContinuityContext,
+            workingCycleRecovery =
+                workingCycleRecovery,
                     workingFocusObservation = workingFocusObservation,
             browserContext = browserContext,
             personContext = personContext,
