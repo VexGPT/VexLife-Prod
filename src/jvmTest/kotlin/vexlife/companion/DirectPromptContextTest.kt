@@ -3800,6 +3800,11 @@ class DirectPromptContextTest {
                                 .exampleArguments,
                         ),
                     )
+                    assertFalse(
+                        heldCurrent.contains(
+                            "Text-control action boundary:",
+                        ),
+                    )
 
                     val available =
                         materialize(
@@ -3815,6 +3820,10 @@ class DirectPromptContextTest {
                             checkRuntimeRef,
                             testRuntimeRef,
                         )
+                    val stable =
+                        available.messages
+                            .first()
+                            .content
                     val current =
                         available.messages[
                             available.messages.size -
@@ -3823,8 +3832,32 @@ class DirectPromptContextTest {
                             .content
 
                     assertContains(
+                        stable,
+                        "Callable read and bounded effect routes",
+                    )
+                    assertContains(
+                        stable,
+                        "AVAILABLE bounded effects are action routes, not drafting hints.",
+                    )
+                    assertContains(
+                        stable,
+                        "If a current claim would revise prior work",
+                    )
+                    assertContains(
                         current,
                         "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    assertContains(
+                        current,
+                        "Text-control action boundary: example arguments below are not a request by themselves.",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
+                    )
+                    assertContains(
+                        current,
+                        "When the human asks me to perform one of these AVAILABLE bounded effects",
                     )
                     assertContains(
                         current,
