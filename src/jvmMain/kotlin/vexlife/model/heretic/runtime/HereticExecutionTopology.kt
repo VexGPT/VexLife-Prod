@@ -214,6 +214,7 @@ object HereticExecutionTopology {
         /** Ordinary prompt room left when the capability reserve is active. */
         val directTurnInputWithReachTokens: EffectiveField<Int>,
         val maximumMemoryTokens: EffectiveField<Int>,
+        /** No fixed request quota is current; null is truthful absence, not an unknown value. */
         val maximumRequestsPerTurn: EffectiveField<Int?>,
         val reservedOutputTokens: EffectiveField<Int>,
         val hardInputOutputTokenLimit: EffectiveField<Int>,
