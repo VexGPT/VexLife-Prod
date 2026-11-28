@@ -1193,6 +1193,62 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun selfContextIsRegisteredAsTurnBoundReadAndDoesNotInventMissingTurnEvidence() =
+        withHome {
+            home ->
+            val definition =
+                assertNotNull(
+                    VexLifeCapabilityAtlas.resolve(
+                        "self-context",
+                    ),
+                )
+            assertEquals(
+                VexLifeReachDefinitions.SelfContextRef,
+                definition.capabilityRef,
+            )
+            assertEquals(
+                listOf(
+                    "inspect",
+                ),
+                definition.actions.map {
+                    it.action
+                },
+            )
+            assertEquals(
+                "READ_ONLY_LOCAL",
+                definition.effectClass,
+            )
+
+            val exchange =
+                VexLifeCapabilityBridge.perform(
+                    request(
+                        """{"capability":"self-context","action":"inspect","arguments":{}}""",
+                    ),
+                    admission(
+                        home,
+                    ),
+                    estimateTokens =
+                        tokens,
+                )
+
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.NOT_AVAILABLE,
+                exchange.entry.state,
+            )
+            assertTrue(
+                exchange.resultMessage.content.contains(
+                    "self context is not bound to this provider turn",
+                ),
+            )
+            assertFalse(
+                exchange.entry.externalEffectsExecuted,
+            )
+            assertFalse(
+                exchange.entry.effectAuthorityGranted,
+            )
+        }
+
+    @Test
     fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
         val over =
             VexLifeCapabilityBridge.perform(

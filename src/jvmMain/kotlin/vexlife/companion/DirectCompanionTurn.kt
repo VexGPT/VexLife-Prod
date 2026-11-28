@@ -19,6 +19,7 @@ import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeReachDefinitions
+import vexlife.capability.reach.VexLifeSelfContext
 import vexlife.conversation.DirectConversationStore
 import vexlife.context.VexLifeContextProfile
 import vexlife.filesystem.VexOwnedPath
@@ -1944,6 +1945,19 @@ object DirectCompanionTurn {
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
                                 readSession = capabilityReadSession,
                                 turnSources = turnSources,
+                                selfContext =
+                                    VexLifeSelfContext.TurnContext(
+                                        companionLineageRef =
+                                            currentRequest.companionLineageRef,
+                                        threadRef =
+                                            currentRequest.threadRef,
+                                        promptReceipt =
+                                            base.materialization.receipt,
+                                        workingFocusObservation =
+                                            workingFocusObservation,
+                                        providerMeasurement =
+                                            stage.inference.measurement,
+                                    ),
                             ),
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,

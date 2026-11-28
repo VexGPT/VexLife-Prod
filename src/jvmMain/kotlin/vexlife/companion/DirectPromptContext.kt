@@ -3962,6 +3962,10 @@ object DirectPromptContext {
             VexLifeCapabilityAtlas.ResourceFact(resource, VexLifeCapabilityAtlas.ResourceState.AVAILABLE, listOf(bridge) + refs)
         return listOf(
             available("resource.vexlife-prod.capability.registry"),
+            available(
+                VexLifeReachDefinitions.SelfContextResource,
+                currentRequest.eventRef,
+            ),
             available("resource.vexlife-prod.network.public-web"),
             available("resource.vexlife-prod.network.public-github"),
             available("resource.vexlife-prod.home.files", currentRequest.homeRef),
