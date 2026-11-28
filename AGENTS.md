@@ -143,6 +143,30 @@ descend to the current release owner/process on `main` and use its exact source-
 route. If `docs/release/RELEASES.md` exists on current `main`, it owns the ordinary release and
 Pages process.
 
+### Generic release request fast path
+
+When Victor says something like **"create a release off VexLife-Prod main"** without naming a
+Stable semantic version, interpret that as a **Preview release request**. Do not ask Victor to invent
+or choose a version number.
+
+~~~text
+generic release off main
+-> Preview
+-> exact first-parent main SHA is the Preview version
+-> read docs/release/RELEASES.md
+-> use the current VexRelay/VexLocalBridge Mac release-queue route
+-> run the Product-owned tools/release/publish-pending-previews.sh
+-> return one canonical execution result
+~~~
+
+The queue is catch-up-safe: it skips Preview SHAs whose immutable GitHub Release already exists and
+publishes every missing first-parent main SHA through the existing Product-owned release proof. Do
+not reconstruct Gradle, DMG, tagging, Pages, or version-selection mechanics in chat-authored shell.
+
+Stable is different. Only use the Stable route when Victor explicitly asks for a Stable release or
+explicitly accepts a semantic version threshold. A generic "release main" request is not permission
+to invent `v0.x.y`.
+
 When Victor asks for an exact **test DMG / candidate DMG** from a PR or exact source checkout, use:
 
 ~~~text
