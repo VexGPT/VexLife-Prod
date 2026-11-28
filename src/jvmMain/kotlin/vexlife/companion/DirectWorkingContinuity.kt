@@ -888,7 +888,7 @@ object DirectWorkingContinuity {
         return CycleRecoveryProjection(
             content = content,
             contentSha256 =
-                sha256(
+                textSha256(
                     content,
                 ),
             sourceRefs =
@@ -992,7 +992,7 @@ object DirectWorkingContinuity {
                 threadRef = threadRef,
             )
 
-    fun clearCurrentCycleAfterCompletedTurn(
+    internal fun clearCurrentCycleAfterCompletedTurn(
         productHome: Path,
         turnRef: String,
         prepared: Prepared,
@@ -1752,6 +1752,27 @@ object DirectWorkingContinuity {
         error.javaClass.simpleName
             .ifBlank {
                 "Throwable"
+            }
+
+    private fun textSha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
             }
 
     private fun requireRef(
