@@ -638,6 +638,11 @@ class VexLifeWorkingContinuityTest {
                     ),
             )
 
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchemaV1,
+            c1Shape.schemaVersion,
+        )
+
         val bytes =
             VexContractJson.canonicalEncode(
                 c1Shape,
@@ -669,6 +674,67 @@ class VexLifeWorkingContinuityTest {
             VexContractJson.decode<VexLifeWorkingContinuity.CycleCheckpoint>(
                 bytes,
             ),
+        )
+        val c2Shape =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef =
+                    "companion-lineage.vexlife.c2-current",
+                threadRef =
+                    "thread.self-development.open-conversation",
+                turnRef =
+                    "turn.vexlife.c2-current.001",
+                requestEventRef =
+                    "event.vexlife.c2-current.request.001",
+                requestEventSha256 =
+                    "8".repeat(64),
+                requestMessageRefOrNull =
+                    "message.vexlife.c2-current.request.001",
+                cycleIndex = 1,
+                phase =
+                    VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                workingFocusRefOrNull = null,
+                workingFocusStateRefOrNull = null,
+                workingFocusRevisionRefOrNull = null,
+                capabilityCallRef =
+                    "call.vexlife.c2-current.001",
+                capabilityHandleOrNull =
+                    "atlas",
+                capabilityActionOrNull =
+                    "list",
+                capabilityTargetOrNull = null,
+                capabilityResultSha256 =
+                    "9".repeat(64),
+                capabilityState =
+                    "RETURNED",
+                capabilitySourceRefs =
+                    emptyList(),
+                capabilityFrontierRefs =
+                    emptyList(),
+                externalEffectsExecuted = false,
+                externalEffectMayHaveExecuted = false,
+                nextMoveOrNull = null,
+                nextControlSha256OrNull = null,
+                formedAt =
+                    Instant.parse(
+                        "2026-11-28T18:11:00Z",
+                    ),
+            )
+
+        assertEquals(
+            VexLifeWorkingContinuity.CycleCheckpointSchema,
+            c2Shape.schemaVersion,
+        )
+        assertEquals(
+            "message.vexlife.c2-current.request.001",
+            c2Shape.requestMessageRefOrNull,
+        )
+        assertEquals(
+            "atlas",
+            c2Shape.capabilityHandleOrNull,
+        )
+        assertEquals(
+            "list",
+            c2Shape.capabilityActionOrNull,
         )
     }
 
