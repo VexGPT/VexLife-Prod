@@ -589,9 +589,9 @@ internal class VexLifeFileBackedDenseSemanticBackend(
             canonicalCompletedTurnCount =
                 canonicalCompletedTurnCount,
             entries =
-                entries.map(
-                    EntryRecord::toEntry,
-                ),
+                entries.map {
+                    it.toEntry()
+                },
             sourceLifecycleBindingRef =
                 sourceLifecycleBindingRef,
         )
@@ -650,9 +650,9 @@ internal class VexLifeFileBackedDenseSemanticBackend(
             sourceLifecycleBindingRef =
                 sourceLifecycleBindingRef,
             entries =
-                entries.map(
-                    VexLifeContinuitySourceLocator.Entry::toRecord,
-                ),
+                entries.map {
+                    it.toRecord()
+                },
         )
 
     private fun VexLifeContinuitySourceLocator.Entry.toRecord():
