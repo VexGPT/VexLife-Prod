@@ -1944,40 +1944,8 @@ object VexBodyWindowsCoherenceCanary {
                 initialVexReachQualificationRef !=
                     HereticRuntimeQualification.VexReachQualificationRef
             ) {
-                reachDiagnostic =
-                    runReachDiagnostic(
-                        evidence = initialEvidence,
-                        productHome = scratchHome,
-                    )
                 log.add(
-                    "reach-diagnostic completed goalQualified=" +
-                        (
-                            reachDiagnostic
-                                ?.get(
-                                    "goalDerived",
-                                )
-                                ?.jsonObject
-                                ?.get(
-                                    "qualified",
-                                )
-                                ?.jsonPrimitive
-                                ?.contentOrNull
-                                ?: "false"
-                        ) +
-                        " directQualified=" +
-                        (
-                            reachDiagnostic
-                                ?.get(
-                                    "directAtlasFirst",
-                                )
-                                ?.jsonObject
-                                ?.get(
-                                    "qualified",
-                                )
-                                ?.jsonPrimitive
-                                ?.contentOrNull
-                                ?: "not-run"
-                        ),
+                    "reach-held separately; A017 control-carriage proof consumed; full coherence run does not replay Reach diagnostics",
                 )
             }
 
