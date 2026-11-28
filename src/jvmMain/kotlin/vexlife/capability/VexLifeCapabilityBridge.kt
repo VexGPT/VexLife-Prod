@@ -597,7 +597,7 @@ object VexLifeCapabilityBridge {
         }
         return Body(
             state = ResultState.RETURNED,
-            target = "self-context",
+            target = bound.promptReceipt.receiptRef,
             text = result.text,
             untrusted = false,
             facts =
@@ -605,7 +605,6 @@ object VexLifeCapabilityBridge {
                     "workingFocusCurrentness" to
                         result.workingFocusCurrentness,
                 ),
-            sourceRefs = result.sourceRefs,
         )
     }
 
