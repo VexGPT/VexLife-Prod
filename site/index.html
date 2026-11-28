@@ -84,9 +84,13 @@
           <label for="mac-version">Version</label>
           <select class="select" id="mac-version" disabled><option>Loading versions…</option></select>
         </div>
-        <div class="actions">
-          <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
-          <a class="btn btn-outline" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
+        <div class="mac-download-actions">
+          <div class="mac-action-path" aria-label="Mac first-download path">
+            <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
+            <span class="mac-action-arrow" id="mac-security-arrow" aria-hidden="true" hidden>→</span>
+            <a class="btn btn-outline" id="mac-security" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension" title="Use this after macOS blocks VexLife on the first launch" hidden>Open Privacy &amp; Security</a>
+          </div>
+          <a class="mac-release-notes" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
         </div>
         <dl class="facts" id="mac-facts"></dl>
         <div class="next" id="mac-next" hidden></div>

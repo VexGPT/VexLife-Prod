@@ -19,6 +19,20 @@
     return node;
   };
   var gib = function (bytes) { return (Number(bytes) / 1073741824).toFixed(1) + ' GiB'; };
+  var humanFileSize = function (bytes) {
+    var size = Number(bytes);
+    if (!isFinite(size) || size <= 0) return '';
+    if (size >= 1000000000) {
+      return (size / 1000000000).toFixed(size >= 10000000000 ? 1 : 2).replace(/\.0+$/, '') + ' GB';
+    }
+    if (size >= 1000000) {
+      return (size / 1000000).toFixed(size >= 100000000 ? 0 : 1).replace(/\.0$/, '') + ' MB';
+    }
+    if (size >= 1000) {
+      return (size / 1000).toFixed(size >= 100000 ? 0 : 1).replace(/\.0$/, '') + ' KB';
+    }
+    return Math.round(size) + ' B';
+  };
   var day = function (iso) {
     var date = new Date(iso);
     return isNaN(date.getTime()) ? '' : date.toLocaleDateString(document.documentElement.lang || undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -149,6 +163,11 @@
       var notes = byId('mac-notes');
       notes.href = release.url;
       notes.removeAttribute('aria-disabled');
+      var security = byId('mac-security');
+      var securityArrow = byId('mac-security-arrow');
+      var showSecurityPath = mac.kind === 'dmg';
+      security.hidden = !showSecurityPath;
+      securityArrow.hidden = !showSecurityPath;
       badge.textContent = release.channel === 'stable' ? 'Stable' : 'Preview';
       badge.className = 'badge ' + (release.channel === 'stable' ? 'badge-active' : 'badge-info');
 
@@ -167,7 +186,7 @@
         facts.append(dd);
       };
       fact('File', mac.name);
-      if (mac.size) fact('Size', (Number(mac.size) / 1024).toFixed(0) + ' KB');
+      if (mac.size) fact('Size', humanFileSize(mac.size));
       if (mac.sha256) fact('SHA-256', mac.sha256);
       if (release.sourceSha) fact('Source', release.sourceSha.slice(0, 12), 'https://github.com/' + Repository + '/commit/' + release.sourceSha);
       fact('Published', day(release.publishedAt));
@@ -176,27 +195,99 @@
       var next = byId('mac-next');
       next.textContent = '';
       next.hidden = false;
-      next.append(text('p', 'After downloading', 'eyebrow'));
-      var steps = document.createElement('ol');
+      next.className = 'next';
+
       if (mac.kind === 'dmg') {
-        steps.append(text('li', 'Open the downloaded disk image and drag VexLife to Applications.'));
-        var securityStep = document.createElement('li');
-        securityStep.append(document.createTextNode('Open VexLife. This open-source build is not Apple-notarized, so macOS may show “VexLife Not Opened.” Choose Done, then open Privacy & Security. Scroll to Security and choose Open Anyway only if you trust this exact GitHub release and source commit. If the direct Settings button below does not open from your browser, use Apple menu → System Settings → Privacy & Security.'));
-        var securityActions = document.createElement('div');
-        securityActions.className = 'actions';
-        securityActions.style.marginTop = '12px';
-        var securityLink = text('a', 'Open Privacy & Security', 'btn btn-outline');
-        securityLink.href = 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension';
-        var appleHelp = text('a', 'Apple instructions', 'btn btn-outline');
+        next.classList.add('mac-trust-flow');
+        next.append(text('p', 'First time on this Mac', 'eyebrow'));
+        next.append(text('h4', 'If macOS blocks the first launch, this is the path.', 'mac-trust-title'));
+        next.append(
+          text(
+            'p',
+            'You can scan the pictures now. If “VexLife Not Opened” appears later, you’ll recognize what to do.',
+            'mac-trust-copy'
+          )
+        );
+
+        var guide = document.createElement('ol');
+        guide.className = 'mac-trust-gallery';
+        var trustStep = function (number, imageName, title, body, alt) {
+          var item = document.createElement('li');
+          item.className = 'mac-trust-step';
+
+          var shot = document.createElement('div');
+          shot.className = 'mac-trust-shot';
+          var image = new Image();
+          image.src = 'walkthrough/' + imageName;
+          image.alt = alt;
+          image.loading = 'lazy';
+          shot.append(image);
+
+          var caption = document.createElement('div');
+          caption.className = 'mac-trust-step-caption';
+          caption.append(text('span', number, 'mac-trust-number'));
+          caption.append(text('h5', title, 'mac-trust-step-title'));
+          caption.append(text('p', body, 'mac-trust-step-copy'));
+
+          item.append(shot, caption);
+          return item;
+        };
+
+        guide.append(
+          trustStep(
+            '01',
+            'gatekeeper-not-opened.png',
+            'Open VexLife once',
+            'After dragging VexLife to Applications, open it. If macOS shows “VexLife Not Opened,” choose Done.',
+            'macOS VexLife Not Opened dialog'
+          ),
+          trustStep(
+            '02',
+            'gatekeeper-privacy-security.png',
+            'Open Privacy & Security',
+            'Use the button above, or Apple menu → System Settings → Privacy & Security.',
+            'macOS Privacy & Security showing the VexLife security area'
+          ),
+          trustStep(
+            '03',
+            'gatekeeper-open-anyway-confirm.png',
+            'Choose Open Anyway',
+            'In Security, find the VexLife blocked row and choose Open Anyway only if you trust this release.',
+            'macOS confirmation for opening VexLife anyway'
+          ),
+          trustStep(
+            '04',
+            'gatekeeper-admin-auth.png',
+            'Confirm with macOS',
+            'macOS may ask you to authenticate and confirm Open. VexLife does not bypass this decision.',
+            'macOS authentication prompt confirming the VexLife exception'
+          )
+        );
+        next.append(guide);
+
+        var help = document.createElement('p');
+        help.className = 'mac-trust-help';
+        help.append(
+          document.createTextNode(
+            'If the button above does not open System Settings from your browser, use Apple menu → System Settings → Privacy & Security. '
+          )
+        );
+        var appleHelp = text('a', 'Apple instructions');
         appleHelp.href = 'https://support.apple.com/102445';
         appleHelp.target = '_blank';
         appleHelp.rel = 'noopener noreferrer';
-        securityActions.append(securityLink, appleHelp);
-        securityStep.append(securityActions);
-        steps.append(securityStep);
-        steps.append(text('li', 'macOS asks you to confirm the exception. Choose Open only if you still trust this exact release. macOS may then separately ask whether to open “java”, the bundled runtime VexLife uses; the same trust decision applies.'));
-        steps.append(text('li', 'VexLife Setup then shows what it found before it changes anything.'));
+        help.append(appleHelp, document.createTextNode('.'));
+        next.append(help);
+        next.append(
+          text(
+            'p',
+            'After macOS allows VexLife to open, VexLife Setup takes over and shows what it found before changing anything.',
+            'mac-trust-handoff'
+          )
+        );
       } else {
+        next.append(text('p', 'After downloading', 'eyebrow'));
+        var steps = document.createElement('ol');
         steps.append(text('li', 'Open Terminal (Applications → Utilities).'));
         var run = document.createElement('li');
         run.append(document.createTextNode('Run this. It checks the exact build it downloads, then opens the VexLife setup window:'));
@@ -213,8 +304,8 @@
         run.append(row);
         steps.append(run);
         steps.append(text('li', 'This is a script while the signed VexLife app is prepared; macOS may not open it with a double-click because it is not yet notarized.'));
+        next.append(steps);
       }
-      next.append(steps);
     };
     select.addEventListener('change', show);
     show();
