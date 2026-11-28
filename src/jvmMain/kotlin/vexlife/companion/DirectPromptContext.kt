@@ -4001,6 +4001,10 @@ object DirectPromptContext {
                     "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
                         "Use one read route at a time because what returns may change which route is needed next. " +
                         "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
+                    "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                        "Reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                        "Stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     "Exact older Conversation also has its source-return relationship for this turn. " +
                         "Current-message attachments, persistent Local Sources, Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
                 )
@@ -4055,6 +4059,12 @@ object DirectPromptContext {
                     )
                     add(
                         "When current context already answers the human, I simply answer. I use one read route at a time because what returns may change which route is needed next.",
+                    )
+                    add(
+                        "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                            "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                            "I reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                            "I stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     )
                 }
             }
