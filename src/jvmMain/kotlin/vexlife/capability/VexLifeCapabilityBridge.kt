@@ -460,7 +460,8 @@ object VexLifeCapabilityBridge {
             )
 
     private const val FormReminder =
-        "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
+        "The top-level \"capability\" names the capability being invoked; action-specific targets stay inside \"arguments\". " +
+            "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
             """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}"""
 
     private fun handlesLine(): String =
@@ -1221,7 +1222,7 @@ object VexLifeCapabilityBridge {
                     untrusted = false,
                 )
             else -> {
-                val name = args.string("capability").orEmpty()
+                val name = args.string("handle").orEmpty()
                 val definition = VexLifeCapabilityAtlas.resolve(name)
                 if (definition == null) {
                     Body(
@@ -2986,7 +2987,7 @@ object VexLifeCapabilityBridge {
                     )
             }
             ?: call.arguments.string("path")?.let { "home:$it" }
-            ?: call.arguments.string("capability")
+            ?: call.arguments.string("handle")
 
     private fun JsonObject.string(name: String): String? =
         (this[name] as? JsonPrimitive)

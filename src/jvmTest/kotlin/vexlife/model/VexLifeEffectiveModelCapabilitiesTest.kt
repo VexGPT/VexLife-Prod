@@ -13,6 +13,7 @@ class VexLifeEffectiveModelCapabilitiesTest {
     private fun qualifiedRuntime(
         model: HereticModelCatalog.Entry,
         providerNativeToolsQualified: Boolean = false,
+        vexReachQualified: Boolean = false,
     ): HereticModelConfiguration.QualifiedRuntimeEvidence {
         val realization =
             HereticRuntimeRealization.require(
@@ -35,6 +36,8 @@ class VexLifeEffectiveModelCapabilitiesTest {
                 HereticRuntimeQualification.qualified(
                     providerNativeToolsQualified =
                         providerNativeToolsQualified,
+                    vexReachQualified =
+                        vexReachQualified,
                 ),
         )
     }
@@ -42,6 +45,7 @@ class VexLifeEffectiveModelCapabilitiesTest {
     private fun project(
         profile: HereticCompanionRepresentation.Profile,
         providerNativeToolsQualified: Boolean = false,
+        vexReachQualified: Boolean = false,
         model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
     ): VexLifeEffectiveModelCapabilities.Projection {
         return VexLifeEffectiveModelCapabilities.project(
@@ -57,6 +61,8 @@ class VexLifeEffectiveModelCapabilitiesTest {
                     model = model,
                     providerNativeToolsQualified =
                         providerNativeToolsQualified,
+                    vexReachQualified =
+                        vexReachQualified,
                 ),
         )
     }
@@ -116,6 +122,26 @@ class VexLifeEffectiveModelCapabilitiesTest {
         assertEquals(
             VexLifeEffectiveModelCapabilities.Standing.HELD,
             capabilities.vexReach,
+        )
+    }
+
+    @Test
+    fun exactRuntimeVexReachQualificationPromotesHeld4BReachWithoutNativeTools() {
+        val capabilities =
+            project(
+                profile = HereticCompanionRepresentation.Profiles.Qwen4B,
+                vexReachQualified = true,
+                model = HereticModelCatalog.Models.Qwen4B,
+            )
+
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+            capabilities.vexReach,
+        )
+        assertEquals(
+            VexLifeEffectiveModelCapabilities.Standing.NOT_APPLICABLE,
+            capabilities.providerNativeTools,
+            "4B Vex Reach qualification must not re-enable the superseded native-tool path",
         )
     }
 

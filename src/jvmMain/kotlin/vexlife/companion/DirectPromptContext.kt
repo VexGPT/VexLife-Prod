@@ -3857,11 +3857,7 @@ object DirectPromptContext {
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
                     )
                     add(
-                        "To request one of these reads, my whole reply for this provider stage is the exact header " +
-                            VexLifeCapabilityRequest.RequestHeader +
-                            " followed by one JSON object with capability, action, and arguments. The header is mandatory: bare JSON or code-fenced JSON is ordinary assistant text and performs nothing. I stop composing the human-facing answer until the host returns a real " +
-                            VexLifeCapabilityRequest.ResultHeader +
-                            " result.",
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
                     )
                     add(
                         "Exact older Conversation uses the separate source-return form carried in current state. " +
@@ -3883,6 +3879,26 @@ object DirectPromptContext {
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
             byState[state].orEmpty().sortedBy { it.handle }.joinToString(", ") { it.handle }
+        val entriesByRef =
+            frame.capabilityEntries.associateBy {
+                it.capabilityRef
+            }
+        val availableEffectDefinitions =
+            DirectTurnEffectRefs
+                .mapNotNull(
+                    VexLifeCapabilityAtlas::resolve,
+                )
+                .filter {
+                    definition ->
+                    entriesByRef[
+                        definition.capabilityRef
+                    ]
+                        ?.state ==
+                        VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                }
+                .sortedBy {
+                    it.priority
+                }
         val now =
             buildString {
                 append("Now: AVAILABLE — ")
@@ -3923,6 +3939,64 @@ object DirectPromptContext {
                             )
                             .append('.')
                     }
+                if (
+                    availableEffectDefinitions.isNotEmpty()
+                ) {
+                    appendLine()
+                    appendLine(
+                        "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    availableEffectDefinitions.forEach {
+                        definition ->
+                        append("- ")
+                            .append(
+                                definition.handle,
+                            )
+                            .append(": ")
+                            .appendLine(
+                                definition.purpose,
+                            )
+                        entriesByRef[
+                            definition.capabilityRef
+                        ]
+                            ?.sourceRefs
+                            ?.filter(
+                                VexLifeLocalSourcesFamily::isSourceRef,
+                            )
+                            ?.takeIf(
+                                List<String>::isNotEmpty,
+                            )
+                            ?.let {
+                                sourceRefs ->
+                                append("    current Local Sources: ")
+                                    .appendLine(
+                                        sourceRefs.joinToString(
+                                            ", ",
+                                        ),
+                                    )
+                            }
+                        definition.actions.forEach {
+                            action ->
+                            append("    ")
+                                .append(
+                                    action.action,
+                                )
+                                .append(' ')
+                                .append(
+                                    action.exampleArguments,
+                                )
+                                .append(" — ")
+                                .appendLine(
+                                    action.purpose,
+                                )
+                        }
+                    }
+                    append(
+                        "These are current request forms, not proof that an effect occurred. " +
+                            "The capability frame itself grants no effect authority; the host owner re-checks current authority, " +
+                            "and only a real ${VexLifeCapabilityRequest.ResultHeader} result is evidence of what happened.",
+                    )
+                }
             }
         return reachInstructionSystemContent(providerNativeTools) to now
     }
