@@ -575,6 +575,221 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun selfContextReadsTheExactCurrentTurnWithoutReturningPromptOrWorkingFocusProse() {
+        val home =
+            productHome()
+        val privateFocusProse =
+            "PRIVATE_FOCUS_PROSE_MUST_NOT_BE_RETURNED_BY_SELF_CONTEXT"
+        VexLifeWorkingFocusOwner(
+            home,
+        )
+            .setCurrent(
+                workingFocusDraft(
+                    objective =
+                        privateFocusProse,
+                ),
+            )
+        var calls =
+            0
+        var observedSelfContextResult: String? =
+            null
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                if (
+                    calls ==
+                        1
+                ) {
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "{\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\":\"self-context\",\"action\":\"inspect\",\"arguments\":{}}"
+                                  }
+                                }
+                              ],
+                              "usage": {
+                                "prompt_tokens": 321,
+                                "prompt_tokens_details": {
+                                  "cached_tokens": 120
+                                },
+                                "completion_tokens": 17
+                              }
+                            }
+                            """.trimIndent(),
+                    )
+                } else {
+                    val body =
+                        Json.parseToJsonElement(
+                            call.body,
+                        )
+                            .jsonObject
+                    val resultContent =
+                        assertNotNull(
+                            body[
+                                "messages"
+                            ]
+                                ?.jsonArray
+                                ?.map {
+                                    it.jsonObject
+                                }
+                                ?.mapNotNull {
+                                    it[
+                                        "content"
+                                    ]
+                                        ?.jsonPrimitive
+                                        ?.content
+                                }
+                                ?.lastOrNull {
+                                    it.startsWith(
+                                        VexLifeCapabilityRequest.ResultHeader,
+                                    )
+                                },
+                        )
+                    observedSelfContextResult =
+                        resultContent
+                    assertTrue(
+                        resultContent.contains(
+                            "Self context for this human turn",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "workingFocusCurrentness",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "CURRENT",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "source.direct-turn.focus",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "prompt tokens: 321",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "cached prompt tokens: 120",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "prefill tokens: 201",
+                        ),
+                    )
+                    assertFalse(
+                        resultContent.contains(
+                            privateFocusProse,
+                        ),
+                        "Self-Inspection must return owner/receipt evidence rather than Working Focus prose",
+                    )
+                    assertFalse(
+                        resultContent.contains(
+                            "VEXLIFE_WORKING_FOCUS/v1",
+                        ),
+                        "Self-Inspection must not replay the prompt-resident Working Focus body",
+                    )
+
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "I can see the current receipt and Working Focus standing without treating them as a new self store."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.self-context.current-turn.001",
+                            content =
+                                "What are you holding right now, and what evidence tells you that?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-28T02:05:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertNotNull(
+                observedSelfContextResult,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "I can see the current receipt and Working Focus standing without treating them as a new self store.",
+                result.content,
+            )
+            assertTrue(
+                result.capabilityUses.any {
+                    it.handle ==
+                        "self-context" &&
+                        it.action ==
+                        "inspect" &&
+                        it.state ==
+                        VexLifeCapabilityBridge.ResultState.RETURNED
+                },
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun importedNativeToolQualificationDoesNotBypassHeldVexReach() {
         fun requestBody(
             nativeToolsQualified: Boolean,
