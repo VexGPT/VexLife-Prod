@@ -2,11 +2,13 @@ package vexlife.continuity
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 import kotlinx.serialization.Serializable
+import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
@@ -49,6 +51,7 @@ internal class VexLifeFileBackedDenseSemanticBackend(
         val denseDimension: Int,
         val vectorPayloadBase64: String,
         val vectorPayloadSha256: String,
+        val generationSha256: String,
         val generation: GenerationRecord,
     )
 
@@ -275,6 +278,9 @@ internal class VexLifeFileBackedDenseSemanticBackend(
             encodeVectors(
                 snapshot.vectors,
             )
+        val generationRecord =
+            snapshot.generation
+                .toRecord()
         val record =
             SnapshotRecord(
                 schemaVersion = SnapshotSchema,
@@ -300,9 +306,12 @@ internal class VexLifeFileBackedDenseSemanticBackend(
                     sha256(
                         payload,
                     ),
+                generationSha256 =
+                    generationDigest(
+                        generationRecord,
+                    ),
                 generation =
-                    snapshot.generation
-                        .toRecord(),
+                    generationRecord,
             )
         VexDurableContractFile.write(
             ownedRoot = home,
@@ -393,6 +402,14 @@ internal class VexLifeFileBackedDenseSemanticBackend(
                     0
             ) {
                 "snapshot dense dimension changed"
+            }
+            require(
+                generationDigest(
+                    record.generation,
+                ) ==
+                    record.generationSha256
+            ) {
+                "snapshot generation digest changed"
             }
 
             val payload =
@@ -687,6 +704,19 @@ internal class VexLifeFileBackedDenseSemanticBackend(
             sequence = sequence,
             eventRef = eventRef,
             eventHash = eventHash,
+        )
+
+    private fun generationDigest(
+        generation: GenerationRecord,
+    ): String =
+        sha256(
+            VexContractJson
+                .canonicalEncode(
+                    generation,
+                )
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
         )
 
     private fun sha256(
