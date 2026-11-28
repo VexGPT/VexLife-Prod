@@ -7,6 +7,54 @@ every mechanical step is carried by source-owned build/workflow paths, and every
 builds reads what those workflows actually published. Nothing here decides that a build is good; a
 stable version records that Victor accepted a lived feature threshold.
 
+## Fresh-instance release request
+
+A fresh ChatGPT/worker does not need prior conversation history to service an ordinary release
+request. The repository front door is:
+
+~~~text
+README.md
+-> AGENTS.md
+-> docs/release/RELEASES.md
+~~~
+
+For the ordinary request:
+
+> create a release off VexLife-Prod main
+
+the default meaning is **Preview**, unless Victor explicitly asks for Stable.
+
+~~~text
+ordinary generic request
+-> observe exact current VexLife-Prod main
+-> Preview version = exact first-parent main SHA
+-> do not ask Victor for a version number
+-> use VexRelay/VexLocalBridge Mac carriage
+-> invoke tools/release/publish-pending-previews.sh
+-> the queue skips already-published SHAs
+-> the queue proves/builds/publishes every missing Preview SHA oldest-first
+-> the queue converges Pages from newest exact main
+-> consume the canonical RETURN
+~~~
+
+The worker should use the smallest current accepted carriage that invokes that Product-owned queue.
+It must not substitute Local Workspace, GitHub Actions cadence, hand-authored Gradle/DMG commands, or
+a second release ledger.
+
+If every expected Preview already exists, the correct result is an observed no-op/already-current
+release queue, not a fabricated new version.
+
+Stable is intentionally not inferred:
+
+~~~text
+generic "release main"          -> Preview SHA identity
+explicit "Stable release"       -> Stable route
+Stable semantic version         -> explicit lived/accepted threshold
+~~~
+
+A worker may only ask Victor for a Stable semantic version when the requested effect is actually
+Stable and no exact accepted version has already been supplied by current authority.
+
 ## Channels
 
 | Channel | What it is | Made by | Tag |
