@@ -431,7 +431,9 @@ class VexLifeWorkingContinuityTest {
             next.checkpoint
                 ?.priorCheckpointFingerprintOrNull,
         )
-    }    @Test
+    }
+
+    @Test
     fun currentCycleCheckpointCarriesOnlyBoundedRefsHashesAndMovementState() {
         val awaiting =
             VexLifeWorkingContinuity.formCycleCheckpoint(
