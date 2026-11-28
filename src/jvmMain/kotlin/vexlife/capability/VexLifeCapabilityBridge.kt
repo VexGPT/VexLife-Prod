@@ -62,6 +62,7 @@ object VexLifeCapabilityBridge {
     /** Keep semantic Home line windows comfortably below the generic provider-result hard cap. */
     private const val HomeLineProjectionBytes = 24_000
 
+    const val TraceSchemaV1 = "vexlife-prod.capability-exchange-trace/v1"
     const val TraceSchema = "vexlife-prod.capability-exchange-trace/v2"
 
     const val ReachBoundaryExchangeHeadroom =
@@ -74,6 +75,8 @@ object VexLifeCapabilityBridge {
         FAILED,
         INVALID_REQUEST,
         NOT_AVAILABLE,
+        /** Historical v1 trace state only. Current reach never emits this state. */
+        LIMIT_REACHED,
         HELD_TOKEN_BUDGET,
     }
 
@@ -224,23 +227,51 @@ object VexLifeCapabilityBridge {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Trace(
         val schemaVersion: String,
         val truthClass: String,
         val entries: List<TraceEntry>,
-        val reachBoundary: String,
+        /** Historical v1 fixed-quota evidence. Never emitted by current reach. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val maximumRequestsPerTurn: Int? = null,
+        /** Current v2 resource boundary. Absent from historical v1 evidence. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val reachBoundary: String? = null,
         val exchangeAllowanceTokens: Int,
         val rawResultContentPersisted: Boolean,
         val effectAuthorityGranted: Boolean,
     ) {
         init {
             require(
-                schemaVersion == TraceSchema &&
-                    entries.isNotEmpty() &&
-                    reachBoundary == ReachBoundaryExchangeHeadroom
+                entries.isNotEmpty()
             ) {
-                "capability exchange trace is invalid"
+                "capability exchange trace requires at least one entry"
+            }
+            when (schemaVersion) {
+                TraceSchemaV1 ->
+                    require(
+                        maximumRequestsPerTurn != null &&
+                            maximumRequestsPerTurn > 0 &&
+                            reachBoundary == null &&
+                            entries.size <= maximumRequestsPerTurn + 1
+                    ) {
+                        "historical capability exchange trace is invalid"
+                    }
+
+                TraceSchema ->
+                    require(
+                        maximumRequestsPerTurn == null &&
+                            reachBoundary == ReachBoundaryExchangeHeadroom
+                    ) {
+                        "current capability exchange trace is invalid"
+                    }
+
+                else ->
+                    error(
+                        "unsupported capability exchange trace schema: $schemaVersion"
+                    )
             }
             require(
                 !rawResultContentPersisted &&
