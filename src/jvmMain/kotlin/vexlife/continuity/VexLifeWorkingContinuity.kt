@@ -34,8 +34,11 @@ object VexLifeWorkingContinuity {
     const val PlanSchema =
         "vexlife-prod.continuity-rollover-plan/v1"
 
-    const val CycleCheckpointSchema =
+    const val CycleCheckpointSchemaV1 =
         "vexlife-prod.working-continuity-cycle-checkpoint/v1"
+
+    const val CycleCheckpointSchema =
+        "vexlife-prod.working-continuity-cycle-checkpoint/v2"
 
     const val PolicyRef =
         "policy.vexlife-prod.resource-context-pressure.001"
@@ -390,7 +393,21 @@ object VexLifeWorkingContinuity {
     ): CycleCheckpoint {
         val core =
             CycleCheckpointCore(
-                schemaVersion = CycleCheckpointSchema,
+                schemaVersion =
+                    if (
+                        requestMessageRefOrNull !=
+                            null ||
+                        capabilityHandleOrNull !=
+                            null ||
+                        capabilityActionOrNull !=
+                            null ||
+                        capabilityTargetOrNull !=
+                            null
+                    ) {
+                        CycleCheckpointSchema
+                    } else {
+                        CycleCheckpointSchemaV1
+                    },
                 truthClass = "CURRENT_REFERENCE_ONLY_WORKING_CONTINUITY_CYCLE",
                 lineageRef = lineageRef,
                 threadRef = threadRef,
@@ -462,7 +479,11 @@ object VexLifeWorkingContinuity {
         value: CycleCheckpoint,
     ): CycleCheckpoint {
         require(
-            value.schemaVersion == CycleCheckpointSchema &&
+            value.schemaVersion in
+                setOf(
+                    CycleCheckpointSchemaV1,
+                    CycleCheckpointSchema,
+                ) &&
                 value.truthClass == "CURRENT_REFERENCE_ONLY_WORKING_CONTINUITY_CYCLE" &&
                 value.cycleIndex > 0 &&
                 value.capabilityState.isNotBlank() &&
@@ -485,6 +506,35 @@ object VexLifeWorkingContinuity {
             )
         }
         requireRef(value.capabilityCallRef, "cycle capabilityCallRef")
+        when (
+            value.schemaVersion
+        ) {
+            CycleCheckpointSchemaV1 ->
+                require(
+                    value.requestMessageRefOrNull ==
+                        null &&
+                        value.capabilityHandleOrNull ==
+                        null &&
+                        value.capabilityActionOrNull ==
+                        null &&
+                        value.capabilityTargetOrNull ==
+                        null
+                ) {
+                    "historical working continuity cycle v1 cannot contain C2 recovery identity"
+                }
+
+            CycleCheckpointSchema ->
+                require(
+                    value.requestMessageRefOrNull !=
+                        null &&
+                        value.capabilityHandleOrNull !=
+                        null &&
+                        value.capabilityActionOrNull !=
+                        null
+                ) {
+                    "working continuity cycle v2 requires fresh-Send recovery identity"
+                }
+        }
         require(
             (value.capabilityHandleOrNull == null) ==
                 (value.capabilityActionOrNull == null) &&
