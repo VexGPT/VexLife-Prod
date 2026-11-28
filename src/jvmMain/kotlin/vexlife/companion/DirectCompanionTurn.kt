@@ -3521,7 +3521,19 @@ object DirectCompanionTurn {
 
         val requestMessageRef =
             cycle.requestMessageRefOrNull
-                ?: return null
+                ?: run {
+                    // C1 checkpoints remain readable, but pre-C2 bytes do not carry enough
+                    // movement identity for truthful fresh-Send recovery. Retire the current slot
+                    // rather than inventing recovery meaning or pinning every later reach.
+                    owner.clearCurrentCycle(
+                        lineageRef = cycle.lineageRef,
+                        threadRef = cycle.threadRef,
+                        turnRef = cycle.turnRef,
+                        expectedFingerprint =
+                            cycle.semanticFingerprint,
+                    )
+                    return null
+                }
         val failedRequest =
             requireNotNull(
                 conversationOwner
