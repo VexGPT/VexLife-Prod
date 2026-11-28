@@ -36,6 +36,7 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.local-sources.read",
             "capability.vexlife.memory.recall",
             "capability.vexlife.repository.read",
+            "capability.vexlife.self.context",
             "capability.vexlife.web.read",
         )
 
