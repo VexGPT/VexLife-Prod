@@ -502,6 +502,61 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun serviceCloseCarriesContinuitySemanticRuntimeCloseThroughStartAt() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-continuity-semantic-close-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var semanticCloseCount =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "semantic close plumbing test must not run a turn",
+                            )
+                        },
+                    continuitySemanticRuntimeClose = {
+                        semanticCloseCount +=
+                            1
+                    },
+                )
+                .use { }
+
+            assertEquals(
+                1,
+                semanticCloseCount,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun serviceCloseRelinquishesRuntimeReleaseOnlyWhenRestartHandoffIsAccepted() {
         val parent =
             Files.createTempDirectory(
@@ -513,6 +568,8 @@ class VexLifeProdLocalServiceTest {
                 "VexLife-Prod",
             )
         var runtimeCloseCount =
+            0
+        var semanticCloseCount =
             0
         var relinquishCount =
             0
@@ -541,6 +598,10 @@ class VexLifeProdLocalServiceTest {
                         runtimeCloseCount +=
                             1
                     },
+                    continuitySemanticRuntimeClose = {
+                        semanticCloseCount +=
+                            1
+                    },
                     runtimeSessionRelinquishForRestart = {
                         relinquishCount +=
                             1
@@ -557,6 +618,11 @@ class VexLifeProdLocalServiceTest {
                 0,
                 runtimeCloseCount,
                 "accepted restart handoff transfers only runtime-release duty away from the old service",
+            )
+            assertEquals(
+                1,
+                semanticCloseCount,
+                "supporting semantic runtime remains owned by the old service and is never transferred by Heretic restart handoff",
             )
         } finally {
             parent

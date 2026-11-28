@@ -75,12 +75,14 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
+import vexlife.memory.VexLifeCurrentMemoryHotPath
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.partner.VexLifePartnerConnectionConfiguration
 import vexlife.partner.VexLifePartnerMacHostRealization
 import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifeContinuitySourceLocator
+import vexlife.continuity.VexLifeContinuitySemanticServiceSession
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -139,6 +141,8 @@ class VexLifeProdLocalService private constructor(
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    private val memoryProviderSelectionAtCap:
+        (Int) -> VexLifeCurrentMemoryProviderSelection.Selection,
     private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     private val currentQualifiedVisualInputEvidence:
         () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
@@ -152,6 +156,7 @@ class VexLifeProdLocalService private constructor(
     private val conversationAttemptIndex: DirectConversationAttemptIndex?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val continuitySemanticRuntimeClose: (() -> Unit)? = null,
     private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
     private val promptPreparation: VexLifePromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
@@ -1114,10 +1119,22 @@ class VexLifeProdLocalService private constructor(
 
             val promptPreparation =
                 VexLifePromptPreparation()
+            val continuitySemanticSession =
+                VexLifeContinuitySemanticServiceSession.establish(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
             val continuitySourceLocatorBackend =
-                VexLifeContinuitySourceLocator.InMemoryBackend()
+                continuitySemanticSession.backend
             val conversationAttemptIndex =
                 DirectConversationAttemptIndex()
+            val currentMemoryHotPath =
+                VexLifeCurrentMemoryHotPath(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
 
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
@@ -1434,6 +1451,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1467,6 +1486,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1488,6 +1509,8 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -1513,10 +1536,21 @@ class VexLifeProdLocalService private constructor(
                                     continuitySourceLocatorBackend,
                                 conversationAttemptIndex =
                                     conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
                 dreamExecutor = ProductDreamExecutor,
+                memoryReader = {
+                    currentMemoryHotPath.readContext()
+                },
+                memoryProviderSelectionAtCap = {
+                    memoryTokenCap ->
+                    currentMemoryHotPath.readSelection(
+                        memoryTokenCap,
+                    )
+                },
                 currentStateObserver = {
                     observeCurrentState(
                         Path.of(
@@ -1578,6 +1612,8 @@ class VexLifeProdLocalService private constructor(
                         .get()
                         .close()
                 },
+                continuitySemanticRuntimeClose =
+                    continuitySemanticSession::close,
                 runtimeSessionRelinquishForRestart = {
                     if (
                         vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
@@ -1651,6 +1687,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
             runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
@@ -1723,6 +1760,8 @@ class VexLifeProdLocalService private constructor(
                 promptPreparation = promptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                continuitySemanticRuntimeClose =
+                    continuitySemanticRuntimeClose,
                 runtimeSessionRelinquishForRestart =
                     runtimeSessionRelinquishForRestart,
                 releaseAlertsProjection = releaseAlertsProjection,
@@ -1743,6 +1782,9 @@ class VexLifeProdLocalService private constructor(
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
+            memoryProviderSelectionAtCap:
+                ((Int) -> VexLifeCurrentMemoryProviderSelection.Selection)? =
+                null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: () -> String? = {
                 startupSetup.qualifiedRuntimeEvidence.modelRef
@@ -1769,6 +1811,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
             runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
@@ -1840,6 +1883,17 @@ class VexLifeProdLocalService private constructor(
                     sourceSha = sourceSha,
                     productHome = productHome,
                 )
+            val realizedMemoryProviderSelectionAtCap =
+                memoryProviderSelectionAtCap
+                    ?: {
+                        memoryTokenCap ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome =
+                                productHome,
+                            memoryTokenCap =
+                                memoryTokenCap,
+                        )
+                    }
             val realizedReleaseAlertsProjection =
                 releaseAlertsProjection
                     ?: {
@@ -1894,6 +1948,8 @@ class VexLifeProdLocalService private constructor(
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        memoryProviderSelectionAtCap =
+                            realizedMemoryProviderSelectionAtCap,
                         currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
                         currentQualifiedVisualInputEvidence =
                             currentQualifiedVisualInputEvidence,
@@ -1910,6 +1966,8 @@ class VexLifeProdLocalService private constructor(
                         promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        continuitySemanticRuntimeClose =
+                            continuitySemanticRuntimeClose,
                         runtimeSessionRelinquishForRestart =
                             runtimeSessionRelinquishForRestart,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
@@ -1955,6 +2013,10 @@ class VexLifeProdLocalService private constructor(
                 runCatching {
                     visionRuntime
                         ?.close()
+                }
+                runCatching {
+                    continuitySemanticRuntimeClose
+                        ?.invoke()
                 }
                 executor.shutdownNow()
                 throw error
@@ -2044,6 +2106,8 @@ class VexLifeProdLocalService private constructor(
         runCatching { localAsrRuntime.close() }
         var visionCloseFailure: Throwable? =
             null
+        var semanticRuntimeCloseFailure: Throwable? =
+            null
 
         try {
             visionRuntime
@@ -2052,6 +2116,16 @@ class VexLifeProdLocalService private constructor(
             error: Throwable,
         ) {
             visionCloseFailure =
+                error
+        }
+
+        try {
+            continuitySemanticRuntimeClose
+                ?.invoke()
+        } catch (
+            error: Throwable,
+        ) {
+            semanticRuntimeCloseFailure =
                 error
         }
 
@@ -2096,6 +2170,16 @@ class VexLifeProdLocalService private constructor(
             throw IllegalStateException(
                 "VexLife-Prod runtime Session did not close with the service",
                 runtimeCloseFailure,
+            )
+        }
+
+        if (
+            semanticRuntimeCloseFailure !=
+            null
+        ) {
+            throw IllegalStateException(
+                "VexLife-Prod Continuity semantic runtime did not close with the service",
+                semanticRuntimeCloseFailure,
             )
         }
 
@@ -3457,10 +3541,8 @@ class VexLifeProdLocalService private constructor(
                     productFoundationIdentity(),
                 ),
             memoryProviderSelection =
-                VexLifeCurrentMemoryProviderSelection.read(
-                    productHome = productHome,
-                    memoryTokenCap =
-                        VexLifeMemoryContract.MaximumMemoryTokens,
+                memoryProviderSelectionAtCap(
+                    VexLifeMemoryContract.MaximumMemoryTokens,
                 ),
             capabilityRequestsAdmitted =
                 capabilityRequestsAdmitted,

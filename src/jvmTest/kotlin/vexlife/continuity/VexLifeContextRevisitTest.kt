@@ -81,7 +81,7 @@ class VexLifeContextRevisitTest {
             assertTrue(ship.first.eventRef in result.returnedSourceRefs)
             assertTrue(result.text.contains("We will ship the beta on Friday."))
             assertTrue(result.text.contains("Query \"launch\" found nothing in what was searched."))
-            assertTrue(result.text.contains("Words are matched exactly"))
+            assertTrue(result.text.contains("Exact lexical words are matched"))
         }
     }
 
@@ -432,6 +432,1049 @@ class VexLifeContextRevisitTest {
             assertTrue(correction.first.eventRef in result.returnedSourceRefs)
             assertEquals("HOST_LEXICAL_CUE", VexLifeTurnNavigation.CueClass)
             assertFalse(result.effectsPerformed)
+        }
+    }
+
+    @Test
+    fun indexedConversationViewReturnsLexicalAndSeedNeighborhoodWithoutFullSnapshot() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val turns =
+                fixture.commit(
+                    Line(
+                        "Why does the cache miss here?",
+                        "You seem frustrated, so I will keep this short.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "I'm not frustrated. I want exact causal detail.",
+                        "Understood. Here is the exact chain.",
+                        minutesAgo(85),
+                    ),
+                    Line(
+                        "The sapphire seed is stored here.",
+                        "Seed recorded.",
+                        minutesAgo(80),
+                    ),
+                    Line(
+                        "Unrelated trailing turn.",
+                        "Trailing.",
+                        minutesAgo(75),
+                    ),
+                )
+            val backend =
+                VexLifeContinuitySourceLocator.InMemoryBackend(
+                    secret =
+                        ByteArray(32) {
+                            73
+                        },
+                    fingerprintBindingRef =
+                        "fingerprint.test.revisit-neighborhood",
+                )
+
+            fixture.store.withWriterLease {
+                val owner =
+                    this
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner =
+                        owner,
+                    backend =
+                        backend,
+                )
+                var fullConversationReads =
+                    0
+
+                fun view(
+                    revisitRequest: VexLifeContextRevisit.Request,
+                    lifecycle: VexLifeContextRevisit.ConversationLifecycle?,
+                ): VexLifeContextRevisit.ConversationView? {
+                    if (
+                        !VexLifeContextRevisit.supportsIndexedConversationView(
+                            revisitRequest,
+                        )
+                    ) {
+                        return null
+                    }
+                    val outcome =
+                        VexLifeContinuitySourceLocator.locateNeighborhood(
+                            conversationOwner =
+                                owner,
+                            queries =
+                                revisitRequest.queries.map {
+                                    query ->
+                                    VexLifeContinuitySourceLocator.NeighborhoodQuery(
+                                        queryTerms =
+                                            query.terms,
+                                        speakerScope =
+                                            when (
+                                                query.speaker
+                                            ) {
+                                                VexLifeContextRevisit.Speaker.ANY ->
+                                                    VexLifeContinuitySourceLocator.SpeakerScope.ANY
+
+                                                VexLifeContextRevisit.Speaker.HUMAN ->
+                                                    VexLifeContinuitySourceLocator.SpeakerScope.HUMAN
+
+                                                VexLifeContextRevisit.Speaker.VEX ->
+                                                    VexLifeContinuitySourceLocator.SpeakerScope.VEX
+                                            },
+                                        seedRefs =
+                                            query.seedRefs
+                                                .toSet(),
+                                        typedEdges =
+                                            if (
+                                                query.corrections
+                                            ) {
+                                                setOf(
+                                                    VexLifeContinuitySourceLocator.TypedEdgeKind.CORRECTS_PREVIOUS,
+                                                )
+                                            } else {
+                                                emptySet()
+                                            },
+                                    )
+                                },
+                            backend =
+                                backend,
+                            sourceLifecycleBindingRef =
+                                lifecycle
+                                    ?.bindingRef
+                                    ?: VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                        )
+                    return when (
+                        outcome
+                    ) {
+                        is VexLifeContinuitySourceLocator.NeighborhoodOutcome.Ready ->
+                            VexLifeContextRevisit.ConversationView(
+                                turns =
+                                    outcome.turns,
+                                totalCompletedTurnCount =
+                                    outcome.totalCompletedTurnCount,
+                                conversationEventsRead =
+                                    outcome.exactEventFileReadCount,
+                                exactHeadFileReadCount =
+                                    outcome.exactHeadFileReadCount,
+                                wholeHistoryHeadTraversalPerformed =
+                                    outcome.wholeHistoryHeadTraversalPerformed,
+                                derivedEntryScanCount =
+                                    outcome.derivedEntryScanCount,
+                                derivedPostingLookupCount =
+                                    outcome.derivedPostingLookupCount,
+                                derivedRefLookupCount =
+                                    outcome.derivedRefLookupCount,
+                                derivedTypedEdgeLookupCount =
+                                    outcome.derivedTypedEdgeLookupCount,
+                            )
+
+                        is VexLifeContinuitySourceLocator.NeighborhoodOutcome.FallbackRequired ->
+                            null
+                    }
+                }
+
+                val turnSources =
+                    VexLifeContextRevisit.TurnSources(
+                        readConversation = {
+                            fullConversationReads +=
+                                1
+                            error(
+                                "indexed revisit must not request the full Conversation snapshot",
+                            )
+                        },
+                        memory = {
+                            null
+                        },
+                        readWorking = {
+                            null
+                        },
+                        promptResidentEventRefs = {
+                            emptySet()
+                        },
+                        promptResidentStatementRefs = {
+                            emptySet()
+                        },
+                        now = {
+                            now
+                        },
+                        readConversationLifecycle = {
+                            VexLifeContextRevisit.ConversationLifecycle(
+                                bindingRef =
+                                    VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                                blockedEventRefs =
+                                    emptySet(),
+                                historicalCurrentizedEventRefs =
+                                    emptySet(),
+                            )
+                        },
+                        readConversationView =
+                            ::view,
+                    )
+
+                val lexicalRequest =
+                    request(
+                        """{"queries":[{"terms":["cache miss"]}],"scopes":["CONVERSATION"]}""",
+                    )
+                assertTrue(
+                    VexLifeContextRevisit.supportsIndexedConversationView(
+                        lexicalRequest,
+                    ),
+                )
+                val lexicalSources =
+                    turnSources.sources(
+                        lexicalRequest,
+                    )
+                assertEquals(
+                    0,
+                    fullConversationReads,
+                )
+                val lexicalView =
+                    assertIs<VexLifeContextRevisit.ConversationView>(
+                        lexicalSources.conversationView,
+                    )
+                assertEquals(
+                    listOf(
+                        turns[0].first.turnRef,
+                        turns[1].first.turnRef,
+                    ),
+                    lexicalView.turns.map(
+                        VexLifeTurnNavigation.Turn::turnRef,
+                    ),
+                )
+                assertEquals(
+                    4,
+                    lexicalView.conversationEventsRead,
+                )
+                assertEquals(
+                    0,
+                    lexicalView.derivedEntryScanCount,
+                )
+
+                val lexicalResult =
+                    VexLifeContextRevisit.revisit(
+                        request =
+                            lexicalRequest,
+                        sources =
+                            lexicalSources,
+                        estimateTokens =
+                            ::estimate,
+                    )
+                assertTrue(
+                    lexicalResult.text.contains(
+                        "searched 2 exact indexed-neighborhood turns against 4 completed turns",
+                    ),
+                )
+                assertTrue(
+                    lexicalResult.text.contains(
+                        "You seem frustrated, so I will keep this short.",
+                    ),
+                )
+                assertTrue(
+                    lexicalResult.text.contains(
+                        "I'm not frustrated. I want exact causal detail.",
+                    ),
+                    "immediate correction neighbor must be available for typed one-step expansion",
+                )
+                assertTrue(
+                    lexicalResult.text.contains(
+                        "this message corrects the reply in " +
+                            turns[0].first.turnRef,
+                    ),
+                    "the adjacent correction reached through typed expansion must retain its CORRECTS relationship",
+                )
+                assertEquals(
+                    4,
+                    lexicalResult.conversationEventsRead,
+                )
+
+                val seedRequest =
+                    request(
+                        """{"queries":[{"seedRefs":["${turns[2].second.eventRef}"]}],"scopes":["CONVERSATION"]}""",
+                    )
+                val seedSources =
+                    turnSources.sources(
+                        seedRequest,
+                    )
+                assertEquals(
+                    0,
+                    fullConversationReads,
+                )
+                val seedResult =
+                    VexLifeContextRevisit.revisit(
+                        request =
+                            seedRequest,
+                        sources =
+                            seedSources,
+                        estimateTokens =
+                            ::estimate,
+                    )
+                assertTrue(
+                    turns[2].first.eventRef in
+                        seedResult.returnedSourceRefs,
+                )
+                assertTrue(
+                    seedResult.text.contains(
+                        "The sapphire seed is stored here.",
+                    ),
+                )
+
+                val correctionRequest =
+                    request(
+                        """{"queries":[{"corrections":true}],"scopes":["CONVERSATION"]}""",
+                    )
+                assertTrue(
+                    VexLifeContextRevisit.supportsIndexedConversationView(
+                        correctionRequest,
+                    ),
+                )
+                val correctionSources =
+                    turnSources.sources(
+                        correctionRequest,
+                    )
+                assertEquals(
+                    0,
+                    fullConversationReads,
+                    "global correction typed-edge lookup must not force the full Conversation snapshot",
+                )
+                val correctionView =
+                    assertIs<VexLifeContextRevisit.ConversationView>(
+                        correctionSources.conversationView,
+                    )
+                assertTrue(
+                    correctionView.derivedTypedEdgeLookupCount >
+                        0,
+                )
+                val correctionResult =
+                    VexLifeContextRevisit.revisit(
+                        request =
+                            correctionRequest,
+                        sources =
+                            correctionSources,
+                        estimateTokens =
+                            ::estimate,
+                    )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "I'm not frustrated. I want exact causal detail.",
+                    ),
+                )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "opens like a correction",
+                    ),
+                    "global corrections:true directly locates the correction turn as CORRECTIONS",
+                )
+                assertTrue(
+                    correctionResult.text.contains(
+                        "the person's next message corrects this reply (" +
+                            turns[1].first.turnRef +
+                            ")",
+                    ),
+                    "one typed step from the correction turn must retain CORRECTED_BY on the exact prior turn",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun semanticCandidateRouteReturnsExactSourceWithoutPretendingTheQueryWordsWereLiteralMatches() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "The paper crane is named Meridian-7.",
+                        "Recorded.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "Later unrelated turn.",
+                        "Later.",
+                        minutesAgo(80),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val semanticRequest =
+                request(
+                    """{"queries":[{"ref":"semantic","terms":["bird-shaped","identifier"],"speaker":"HUMAN"}],"scopes":["CONVERSATION"]}""",
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs =
+                                emptySet(),
+                            historicalCurrentizedEventRefs =
+                                emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns =
+                                projected,
+                            totalCompletedTurnCount =
+                                projected.size,
+                            conversationEventsRead =
+                                2,
+                            exactHeadFileReadCount =
+                                2,
+                            wholeHistoryHeadTraversalPerformed =
+                                false,
+                            derivedEntryScanCount =
+                                0,
+                            derivedPostingLookupCount =
+                                6,
+                            derivedRefLookupCount =
+                                0,
+                            derivedTypedEdgeLookupCount =
+                                0,
+                            derivedSemanticLookupCount =
+                                1,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[0]
+                                                .first
+                                                .turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request =
+                        semanticRequest,
+                    sources =
+                        sources,
+                    estimateTokens =
+                        ::estimate,
+                )
+
+            assertEquals(
+                State.RETURNED,
+                result.state,
+            )
+            assertTrue(
+                committed[0].first.eventRef in
+                    result.returnedSourceRefs,
+            )
+            assertTrue(
+                committed[0].second.eventRef in
+                    result.returnedSourceRefs,
+            )
+            assertTrue(
+                result.text.contains(
+                    "The paper crane is named Meridian-7.",
+                ),
+                "semantic nomination must return the exact canonical source words for Vex to inspect",
+            )
+            assertTrue(
+                result.text.contains(
+                    "semantic[semantic_candidate]",
+                ),
+                "semantic nomination must remain visibly distinct from literal TERMS matching",
+            )
+            assertFalse(
+                result.text.contains(
+                    "semantic[terms]",
+                ),
+                "semantic nomination must not rewrite resemblance into an exact lexical match",
+            )
+            assertTrue(
+                result.text.contains(
+                    "similarity is not acceptance",
+                ),
+            )
+            assertFalse(
+                result.text.contains(
+                    "Query \"semantic\" found nothing",
+                ),
+                "a source-nominated semantic candidate must survive the ContextRevisit exact-word layer",
+            )
+        }
+    }
+
+    @Test
+    fun semanticCandidateRankOrdersOtherwiseEqualCandidatesBeforeRecency() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "The paper crane is named Meridian-7.",
+                        "Recorded true source.",
+                        minutesAgo(120),
+                    ),
+                    Line(
+                        "The paper airplane is named Meridian-7.",
+                        "Recorded similar wrong object.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "The bird feeder is beside the cedar gate.",
+                        "Recorded similar wrong object.",
+                        minutesAgo(60),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val semanticRequest =
+                request(
+                    """{"queries":[{"ref":"semantic","terms":["bird-shaped","identifier"],"speaker":"HUMAN"}],"scopes":["CONVERSATION"]}""",
+                )
+            val rankedMatches =
+                listOf(
+                    committed[0],
+                    committed[2],
+                    committed[1],
+                )
+                    .map {
+                        turn ->
+                        VexLifeContextRevisit.SemanticCandidateMatch(
+                            queryRef =
+                                "semantic",
+                            turnRef =
+                                turn.first.turnRef,
+                        )
+                    }
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs =
+                                emptySet(),
+                            historicalCurrentizedEventRefs =
+                                emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns =
+                                projected,
+                            totalCompletedTurnCount =
+                                projected.size,
+                            conversationEventsRead =
+                                6,
+                            exactHeadFileReadCount =
+                                2,
+                            wholeHistoryHeadTraversalPerformed =
+                                false,
+                            derivedEntryScanCount =
+                                0,
+                            derivedPostingLookupCount =
+                                6,
+                            derivedRefLookupCount =
+                                0,
+                            derivedTypedEdgeLookupCount =
+                                0,
+                            derivedSemanticLookupCount =
+                                1,
+                            semanticCandidateMatches =
+                                rankedMatches,
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request =
+                        semanticRequest,
+                    sources =
+                        sources,
+                    estimateTokens =
+                        ::estimate,
+                )
+
+            assertEquals(
+                State.RETURNED,
+                result.state,
+            )
+            val trueIndex =
+                result.text.indexOf(
+                    "The paper crane is named Meridian-7.",
+                )
+            val newerRankTwoIndex =
+                result.text.indexOf(
+                    "The bird feeder is beside the cedar gate.",
+                )
+            val newerRankThreeIndex =
+                result.text.indexOf(
+                    "The paper airplane is named Meridian-7.",
+                )
+            assertTrue(
+                trueIndex >=
+                    0 &&
+                    newerRankTwoIndex >
+                        trueIndex &&
+                    newerRankThreeIndex >
+                        newerRankTwoIndex,
+                "semantic nomination rank must break recency ties without becoming source truth",
+            )
+            assertTrue(
+                result.text.contains(
+                    "semantic[semantic_candidate]",
+                ),
+            )
+            assertFalse(
+                result.text.contains(
+                    "semantic[terms]",
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun strongerQueryBranchCountPrecedesSemanticRank() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "Rank one candidate for first semantic vantage.",
+                        "First.",
+                        minutesAgo(60),
+                    ),
+                    Line(
+                        "Older candidate supported by both semantic vantages.",
+                        "Both.",
+                        minutesAgo(120),
+                    ),
+                    Line(
+                        "Rank one candidate for second semantic vantage.",
+                        "Second.",
+                        minutesAgo(30),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val request =
+                VexLifeContextRevisit.Request(
+                    queries =
+                        listOf(
+                            VexLifeContextRevisit.Query(
+                                ref = "q1",
+                                terms = listOf("nonliteral-one"),
+                                seedRefs = emptyList(),
+                                speaker = VexLifeContextRevisit.Speaker.HUMAN,
+                                window = null,
+                                corrections = false,
+                                from = null,
+                            ),
+                            VexLifeContextRevisit.Query(
+                                ref = "q2",
+                                terms = listOf("nonliteral-two"),
+                                seedRefs = emptyList(),
+                                speaker = VexLifeContextRevisit.Speaker.HUMAN,
+                                window = null,
+                                corrections = false,
+                                from = null,
+                            ),
+                        ),
+                    scopes =
+                        setOf(
+                            VexLifeContextRevisit.Scope.CONVERSATION,
+                        ),
+                    order =
+                        VexLifeContextRevisit.Order.CURRENT_FIRST,
+                    maxTurns =
+                        VexLifeContextRevisit.DefaultMaximumTurns,
+                    maxTokens =
+                        VexLifeContextRevisit.DefaultMaximumTokens,
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs = emptySet(),
+                            historicalCurrentizedEventRefs = emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns = projected,
+                            totalCompletedTurnCount = projected.size,
+                            conversationEventsRead = 6,
+                            exactHeadFileReadCount = 2,
+                            wholeHistoryHeadTraversalPerformed = false,
+                            derivedEntryScanCount = 0,
+                            derivedPostingLookupCount = 4,
+                            derivedRefLookupCount = 0,
+                            derivedTypedEdgeLookupCount = 0,
+                            derivedSemanticLookupCount = 2,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q1",
+                                        turnRef = committed[0].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q1",
+                                        turnRef = committed[1].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q2",
+                                        turnRef = committed[2].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef = "q2",
+                                        turnRef = committed[1].first.turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request = request,
+                    sources = sources,
+                    estimateTokens = ::estimate,
+                )
+
+            val twoBranchIndex =
+                result.text.indexOf(
+                    "Older candidate supported by both semantic vantages.",
+                )
+            val q1RankOneIndex =
+                result.text.indexOf(
+                    "Rank one candidate for first semantic vantage.",
+                )
+            val q2RankOneIndex =
+                result.text.indexOf(
+                    "Rank one candidate for second semantic vantage.",
+                )
+            assertTrue(
+                twoBranchIndex >=
+                    0 &&
+                    q1RankOneIndex >
+                        twoBranchIndex &&
+                    q2RankOneIndex >
+                        twoBranchIndex,
+                "existing multi-branch support must remain stronger than semantic candidate rank",
+            )
+        }
+    }
+
+    @Test
+    fun semanticRankDoesNotCrossAnExactSeedBoundary() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val committed =
+                fixture.commit(
+                    Line(
+                        "Oldest semantic rank one candidate.",
+                        "Oldest candidate.",
+                        minutesAgo(120),
+                    ),
+                    Line(
+                        "Middle exact seed source.",
+                        "Middle seeded.",
+                        minutesAgo(90),
+                    ),
+                    Line(
+                        "Newest semantic rank two candidate.",
+                        "Newest candidate.",
+                        minutesAgo(60),
+                    ),
+                )
+            val projected =
+                VexLifeTurnNavigation.project(
+                    fixture.store
+                        .current()
+                        .canonicalEvents,
+                )
+            val request =
+                VexLifeContextRevisit.Request(
+                    queries =
+                        listOf(
+                            VexLifeContextRevisit.Query(
+                                ref = "semantic",
+                                terms =
+                                    listOf(
+                                        "nonliteral-clue",
+                                    ),
+                                seedRefs =
+                                    emptyList(),
+                                speaker =
+                                    VexLifeContextRevisit.Speaker.HUMAN,
+                                window =
+                                    null,
+                                corrections =
+                                    false,
+                                from =
+                                    null,
+                            ),
+                            VexLifeContextRevisit.Query(
+                                ref = "seed",
+                                terms =
+                                    emptyList(),
+                                seedRefs =
+                                    listOf(
+                                        committed[1].first.eventRef,
+                                    ),
+                                speaker =
+                                    VexLifeContextRevisit.Speaker.ANY,
+                                window =
+                                    null,
+                                corrections =
+                                    false,
+                                from =
+                                    null,
+                            ),
+                        ),
+                    scopes =
+                        setOf(
+                            VexLifeContextRevisit.Scope.CONVERSATION,
+                        ),
+                    order =
+                        VexLifeContextRevisit.Order.CURRENT_FIRST,
+                    maxTurns =
+                        VexLifeContextRevisit.DefaultMaximumTurns,
+                    maxTokens =
+                        VexLifeContextRevisit.DefaultMaximumTokens,
+                )
+            val sources =
+                VexLifeContextRevisit.Sources(
+                    conversation = null,
+                    conversationGap = null,
+                    memory = null,
+                    memoryGap = "no Memory in this fixture",
+                    working = null,
+                    workingGap = "no working checkpoint exists yet",
+                    promptResidentEventRefs = emptySet(),
+                    now = now,
+                    conversationLifecycle =
+                        VexLifeContextRevisit.ConversationLifecycle(
+                            bindingRef =
+                                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                            blockedEventRefs =
+                                emptySet(),
+                            historicalCurrentizedEventRefs =
+                                emptySet(),
+                        ),
+                    conversationView =
+                        VexLifeContextRevisit.ConversationView(
+                            turns =
+                                projected,
+                            totalCompletedTurnCount =
+                                projected.size,
+                            conversationEventsRead =
+                                6,
+                            exactHeadFileReadCount =
+                                2,
+                            wholeHistoryHeadTraversalPerformed =
+                                false,
+                            derivedEntryScanCount =
+                                0,
+                            derivedPostingLookupCount =
+                                2,
+                            derivedRefLookupCount =
+                                1,
+                            derivedTypedEdgeLookupCount =
+                                0,
+                            derivedSemanticLookupCount =
+                                1,
+                            semanticCandidateMatches =
+                                listOf(
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[0].first.turnRef,
+                                    ),
+                                    VexLifeContextRevisit.SemanticCandidateMatch(
+                                        queryRef =
+                                            "semantic",
+                                        turnRef =
+                                            committed[2].first.turnRef,
+                                    ),
+                                ),
+                        ),
+                )
+
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request = request,
+                    sources = sources,
+                    estimateTokens = ::estimate,
+                )
+
+            val newestSemanticIndex =
+                result.text.indexOf(
+                    "Newest semantic rank two candidate.",
+                )
+            val seedIndex =
+                result.text.indexOf(
+                    "Middle exact seed source.",
+                )
+            val oldestRankOneIndex =
+                result.text.indexOf(
+                    "Oldest semantic rank one candidate.",
+                )
+            assertTrue(
+                newestSemanticIndex >=
+                    0 &&
+                    seedIndex >
+                        newestSemanticIndex &&
+                    oldestRankOneIndex >
+                        seedIndex,
+                "semantic rank may reorder a semantic-only run but must not cross a non-semantic direct-route boundary",
+            )
+        }
+    }
+
+    @Test
+    fun windowRequestFallsBackToFullConversationSnapshot() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            fixture.commit(
+                Line(
+                    "Earlier source.",
+                    "Earlier.",
+                    minutesAgo(120),
+                ),
+                Line(
+                    "Actually, this is corrected.",
+                    "Correction noted.",
+                    minutesAgo(60),
+                ),
+            )
+            fixture.store.withWriterLease {
+                val owner =
+                    this
+                var fullConversationReads =
+                    0
+                var indexedViewAttempts =
+                    0
+                val turnSources =
+                    VexLifeContextRevisit.TurnSources(
+                        readConversation = {
+                            fullConversationReads +=
+                                1
+                            owner.current()
+                        },
+                        memory = {
+                            null
+                        },
+                        readWorking = {
+                            null
+                        },
+                        promptResidentEventRefs = {
+                            emptySet()
+                        },
+                        promptResidentStatementRefs = {
+                            emptySet()
+                        },
+                        now = {
+                            now
+                        },
+                        readConversationLifecycle = {
+                            VexLifeContextRevisit.ConversationLifecycle(
+                                bindingRef =
+                                    VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                                blockedEventRefs =
+                                    emptySet(),
+                                historicalCurrentizedEventRefs =
+                                    emptySet(),
+                            )
+                        },
+                        readConversationView = {
+                            revisitRequest,
+                            _,
+                            ->
+                            indexedViewAttempts +=
+                                1
+                            if (
+                                VexLifeContextRevisit.supportsIndexedConversationView(
+                                    revisitRequest,
+                                )
+                            ) {
+                                error(
+                                    "this test expects only unsupported broad requests",
+                                )
+                            }
+                            null
+                        },
+                    )
+
+                val windowRequest =
+                    request(
+                        """{"queries":[{"window":{"lastTurns":2}}],"scopes":["CONVERSATION"]}""",
+                    )
+                assertFalse(
+                    VexLifeContextRevisit.supportsIndexedConversationView(
+                        windowRequest,
+                    ),
+                )
+                val windowSources =
+                    turnSources.sources(
+                        windowRequest,
+                    )
+                assertEquals(
+                    1,
+                    indexedViewAttempts,
+                )
+                assertEquals(
+                    1,
+                    fullConversationReads,
+                )
+                assertTrue(
+                    windowSources.conversationView ==
+                        null,
+                )
+                val windowResult =
+                    VexLifeContextRevisit.revisit(
+                        request =
+                            windowRequest,
+                        sources =
+                            windowSources,
+                        estimateTokens =
+                            ::estimate,
+                    )
+                assertTrue(
+                    windowResult.returnedSourceRefs.isNotEmpty(),
+                )
+
+            }
         }
     }
 

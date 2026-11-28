@@ -909,6 +909,280 @@ class DirectConversationStoreTest {
     }
 
     @Test
+    fun currentAttemptIndexBoundsOldCommittedSourceReopenAndStaleIndexFallsBack() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-indexed-return-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val canonical =
+                DirectConversationStore(
+                    productHome,
+                )
+            var oldestRequest: DirectConversationStore.Event? =
+                null
+            var oldestResponse: DirectConversationStore.Event? =
+                null
+
+            canonical.withWriterLease(
+                instanceRef =
+                    "instance.vexlife-prod.indexed-return.seed",
+            ) {
+                for (
+                    ordinal in
+                    1..3
+                ) {
+                    val base =
+                        Instant.parse(
+                            "2026-11-26T09:0" +
+                                ordinal +
+                                ":00Z",
+                        )
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.indexed-return." +
+                                    ordinal,
+                            requestMessageRef =
+                                "message.self-development.human.indexed-return." +
+                                    ordinal,
+                            content =
+                                "Indexed return request " +
+                                    ordinal,
+                            formedAt =
+                                base,
+                        )
+                    val response =
+                        appendResponse(
+                            request = request,
+                            responseMessageRef =
+                                "message.self-development.companion.indexed-return." +
+                                    ordinal,
+                            content =
+                                "Indexed return response " +
+                                    ordinal,
+                            model =
+                                "default_model",
+                            endpointOrigin =
+                                "http://127.0.0.1:8765",
+                            runtimeObservationRef =
+                                "observation.vexlife-prod.model-runtime.indexed-return." +
+                                    ordinal,
+                            invocationEvidenceRef =
+                                "evidence.vexlife-prod.model-runtime-invocation.indexed-return." +
+                                    ordinal,
+                            formedAt =
+                                base.plusSeconds(
+                                    1,
+                                ),
+                        )
+                    val context =
+                        CanonicalLivedContextFixture.write(
+                            productHome = productHome,
+                            request = request,
+                            response = response,
+                            formedAt =
+                                base.plusSeconds(
+                                    2,
+                                ),
+                        )
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 =
+                            context.sha256,
+                        formedAt =
+                            base.plusSeconds(
+                                3,
+                            ),
+                    )
+                    if (
+                        ordinal ==
+                            1
+                    ) {
+                        oldestRequest =
+                            request
+                        oldestResponse =
+                            response
+                    }
+                }
+            }
+
+            val snapshot =
+                canonical.current()
+            assertEquals(
+                3,
+                snapshot.completedHeads.size,
+            )
+            val attemptIndex =
+                DirectConversationAttemptIndex()
+            val rebuild =
+                attemptIndex.rebuild(
+                    snapshot,
+                )
+            assertEquals(
+                3,
+                rebuild.attemptCount,
+            )
+            val indexed =
+                DirectConversationStore(
+                    productHome = productHome,
+                    attemptIndex =
+                        attemptIndex,
+                )
+            val oldest =
+                listOf(
+                    requireNotNull(
+                        oldestRequest,
+                    ),
+                    requireNotNull(
+                        oldestResponse,
+                    ),
+                )
+            val addresses =
+                oldest.map {
+                    event ->
+                    DirectConversationStore.EventAddress(
+                        sequence =
+                            event.sequence,
+                        eventRef =
+                            event.eventRef,
+                        eventHash =
+                            event.eventHash,
+                    )
+                }
+
+            indexed.withWriterLease(
+                instanceRef =
+                    "instance.vexlife-prod.indexed-return.read",
+            ) {
+                val returned =
+                    exactCommittedConversationEvents(
+                        addresses,
+                    )
+                assertEquals(
+                    oldest,
+                    returned.events,
+                )
+                assertEquals(
+                    2,
+                    returned.exactEventFileReadCount,
+                )
+                assertEquals(
+                    2,
+                    returned.exactHeadFileReadCount,
+                    "current receipt + exact old receipt are sufficient regardless of target age",
+                )
+                assertFalse(
+                    returned.wholeHistoryHeadTraversalPerformed,
+                    "current derived coordinates must nominate source only; canonical exact bytes still verify it",
+                )
+            }
+
+            canonical.withWriterLease(
+                instanceRef =
+                    "instance.vexlife-prod.indexed-return.advance",
+            ) {
+                val base =
+                    Instant.parse(
+                        "2026-11-26T09:04:00Z",
+                    )
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.indexed-return.4",
+                        requestMessageRef =
+                            "message.self-development.human.indexed-return.4",
+                        content =
+                            "Advance canonical source without updating the old index.",
+                        formedAt =
+                            base,
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef =
+                            "message.self-development.companion.indexed-return.4",
+                        content =
+                            "Canonical source advanced.",
+                        model =
+                            "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.indexed-return.4",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.indexed-return.4",
+                        formedAt =
+                            base.plusSeconds(
+                                1,
+                            ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            base.plusSeconds(
+                                2,
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 =
+                        context.sha256,
+                    formedAt =
+                        base.plusSeconds(
+                            3,
+                        ),
+                )
+            }
+
+            indexed.withWriterLease(
+                instanceRef =
+                    "instance.vexlife-prod.indexed-return.stale",
+            ) {
+                val returned =
+                    exactCommittedConversationEvents(
+                        addresses,
+                    )
+                assertEquals(
+                    oldest,
+                    returned.events,
+                )
+                assertEquals(
+                    4,
+                    returned.exactHeadFileReadCount,
+                    "stale acceleration must fall back to the canonical lineage proof",
+                )
+                assertTrue(
+                    returned.wholeHistoryHeadTraversalPerformed,
+                )
+            }
+            assertTrue(
+                attemptIndex.load() is
+                    DirectConversationAttemptIndex.Load.Absent,
+                "stale acceleration must invalidate rather than become historical source authority",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun offHeadFailedRequestRemainsDurableWhileNewTurnMayBranchFromLastValidHead() {
         val parent =
             Files.createTempDirectory(

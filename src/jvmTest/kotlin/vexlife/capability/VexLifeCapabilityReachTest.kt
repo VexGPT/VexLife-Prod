@@ -93,6 +93,113 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun textControlInstructionAndParserKeepBareJsonOutsideMachineControl() {
+        val instruction =
+            VexLifeCapabilityRequest.TextControlProviderInstruction
+
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.RequestHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.ResultHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "bare JSON",
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "ordinary assistant text",
+            ),
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                ```json
+                {
+                  "capability": "registry",
+                  "action": "list",
+                  "arguments": {}
+                }
+                ```
+                """.trimIndent(),
+            ),
+            "A018-style bare JSON remains ordinary assistant text rather than a capability request",
+        )
+    }
+
+    @Test
+    fun oneExactStructuredProtocolWrapperCarriesTheSameRequestMeaning() {
+        val wrapped =
+            assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                VexLifeCapabilityRequest.parseOrNull(
+                    """
+                    ```json
+                    {
+                      "VEXLIFE_CAPABILITY_REQUEST": {
+                        "v1": {
+                          "capability": "atlas",
+                          "action": "list",
+                          "arguments": {}
+                        }
+                      }
+                    }
+                    ```
+                    """.trimIndent()
+                )
+            )
+
+        assertEquals("atlas", wrapped.call.capability)
+        assertEquals("list", wrapped.call.action)
+        assertTrue(wrapped.call.arguments.isEmpty())
+        assertTrue(
+            wrapped.controlContent.contains(
+                "\"VEXLIFE_CAPABILITY_REQUEST\"",
+            )
+        )
+
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": {
+                    "v2": {
+                      "capability": "atlas",
+                      "action": "list",
+                      "arguments": {}
+                    }
+                  }
+                }
+                """.trimIndent()
+            )
+        )
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": {
+                    "v1": {
+                      "action": "list",
+                      "arguments": {}
+                    }
+                  }
+                }
+                """.trimIndent()
+            )
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """{"not_a_capability_request":{"v1":{"capability":"atlas","action":"list"}}}"""
+            )
+        )
+    }
+
+    @Test
     fun aHeaderWithoutAReadableRequestIsMalformedNotIgnored() {
         listOf(
                 "VEXLIFE_CAPABILITY_REQUEST/v1\nfetch the page please",
@@ -945,6 +1052,8 @@ class VexLifeCapabilityReachTest {
                 estimateTokens = tokens,
             )
         assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, malformed.entry.state)
+        assertTrue(malformed.resultMessage.content.contains("top-level \"capability\""))
+        assertTrue(malformed.resultMessage.content.contains("action-specific targets stay inside \"arguments\""))
         assertTrue(malformed.resultMessage.content.contains("The exact form"))
     }
 
@@ -953,7 +1062,7 @@ class VexLifeCapabilityReachTest {
         val described =
             VexLifeCapabilityBridge.perform(
                 request(
-                    """{"capability":"atlas","action":"describe","arguments":{"capability":"github"}}"""
+                    """{"capability":"atlas","action":"describe","arguments":{"handle":"github"}}"""
                 ),
                 admission(home),
                 estimateTokens = tokens,

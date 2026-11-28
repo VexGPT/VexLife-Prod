@@ -12,10 +12,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
@@ -281,6 +283,249 @@ class DirectCompanionTurnTest {
             assertFalse(
                 "capability.vexlife.web.read" in
                     frame.availableCapabilityRefs,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun exact4BTextControlReachQualificationAdvertisesBridgeWithoutNativeTools() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                val request =
+                    Json.parseToJsonElement(
+                        call.body,
+                    )
+                        .jsonObject
+                assertFalse(
+                    request.containsKey(
+                        "tools",
+                    ),
+                    "4B text-control Vex Reach qualification must not re-enable provider-native tools",
+                )
+                assertTrue(
+                    call.body.contains(
+                        "text-control fallback instead of provider-native tools",
+                    ),
+                )
+                assertTrue(
+                    call.body.contains(
+                        "VEXLIFE_CAPABILITY_REQUEST/v1",
+                    ),
+                )
+                assertFalse(
+                    call.body.contains(
+                        "No outside-source capability reach is admitted in this turn.",
+                    ),
+                )
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "4B qualified text-control response"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-qualified.001",
+                            content =
+                                "Use the current qualified text-control reach only if needed.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-26T19:30:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertTrue(
+                result.promptContextReceipt.capabilityExchangeAllowanceTokens >
+                    0,
+            )
+            assertTrue(
+                result.promptContextReceipt.sourceReturnProtocolEnabled,
+                "text-control reach keeps the dedicated Conversation source-return route",
+            )
+            val frame =
+                requireNotNull(
+                    result.promptContextReceipt.capabilityFrameSnapshot,
+                )
+            assertTrue(
+                "capability.vexlife.continuity.revisit" in
+                    frame.availableCapabilityRefs,
+            )
+            assertTrue(
+                "capability.vexlife.web.read" in
+                    frame.availableCapabilityRefs,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun qwen4BSiblingWireNormalizesToCanonicalEnvelopeBeforeBridgeAndContinuation() {
+        val home =
+            productHome()
+        val a020Wire =
+            """{"VEXLIFE_CAPABILITY_REQUEST":"v1","capability":"atlas","action":"list","arguments":{}}"""
+        val providerBodies =
+            mutableListOf<String>()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                providerBodies +=
+                    call.body
+                val content =
+                    if (
+                        calls ==
+                            1
+                    ) {
+                        a020Wire
+                    } else {
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.RequestHeader,
+                            ),
+                            "the second provider stage must carry the canonical Vex request envelope",
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.ResultHeader,
+                            ),
+                            "the second provider stage must carry the canonical Bridge result",
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                """\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\"""",
+                            ),
+                            "the Qwen-specific sibling wire dialect must not survive semantic continuation",
+                        )
+                        "Canonical envelope continuation reached."
+                    }
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": ${JsonPrimitive(content)}
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-canonical-wire-normalization.001",
+                            content =
+                                "Use Atlas if needed, then continue from the real owner result.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-27T22:00:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Canonical envelope continuation reached.",
+                result.content,
+            )
+            assertTrue(
+                providerBodies
+                    .first()
+                    .contains(
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
+                    ),
+                "ordinary Qwen text-control prompting teaches only the canonical Vex request reflex",
             )
         } finally {
             home.parent

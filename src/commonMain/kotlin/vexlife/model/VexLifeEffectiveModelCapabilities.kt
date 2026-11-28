@@ -137,12 +137,21 @@ object VexLifeEffectiveModelCapabilities {
             }
 
         val vexReachStanding =
-            when (profile.reachRepresentationStanding) {
-                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED ->
-                    represented(true)
-
-                HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE ->
-                    Standing.HELD
+            if (
+                HereticCompanionRepresentation.vexReachActive(
+                    profile = profile,
+                    qualification =
+                        qualifiedRuntime
+                            ?.qualification
+                            ?.takeIf {
+                                exactQualifiedRuntime !=
+                                    null
+                            },
+                )
+            ) {
+                represented(true)
+            } else {
+                Standing.HELD
             }
         val providerNativeToolsStanding =
             when (profile.providerNativeToolStanding) {

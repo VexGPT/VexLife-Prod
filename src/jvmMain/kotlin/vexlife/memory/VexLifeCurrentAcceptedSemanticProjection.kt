@@ -232,6 +232,158 @@ internal object VexLifeCurrentAcceptedSemanticProjection {
         )
     }
 
+    internal fun reobserve(
+        projection: Projection,
+        observedConversationHeadSha256: String?,
+    ): Projection {
+        require(
+            projection.schemaVersion ==
+                Schema &&
+                projection.truthClass ==
+                    TruthClass &&
+                projection.state in
+                    setOf(
+                        "EMPTY",
+                        "CURRENT",
+                    ) &&
+                !projection.effectsPerformed
+        ) {
+            "current accepted semantic projection identity is invalid for re-observation"
+        }
+        observedConversationHeadSha256
+            ?.let {
+                require(
+                    it.matches(
+                        Regex(
+                            "^[0-9a-f]{64}$",
+                        ),
+                    )
+                ) {
+                    "observed Conversation head must be one SHA-256"
+                }
+            }
+        if (
+            projection.observedConversationHeadSha256 ==
+                observedConversationHeadSha256
+        ) {
+            return projection
+        }
+
+        val core =
+            Core(
+                schemaVersion =
+                    projection.schemaVersion,
+                truthClass =
+                    projection.truthClass,
+                state =
+                    projection.state,
+                homeRef =
+                    projection.homeRef,
+                deviceRef =
+                    projection.deviceRef,
+                companionLineageRef =
+                    projection.companionLineageRef,
+                threadRef =
+                    projection.threadRef,
+                observedConversationHeadSha256 =
+                    observedConversationHeadSha256,
+                sourceScoreConversationHeadSha256 =
+                    projection.sourceScoreConversationHeadSha256,
+                scoreHeadSha256 =
+                    projection.scoreHeadSha256,
+                semanticAuthorityHeadSha256 =
+                    projection.semanticAuthorityHeadSha256,
+                statements =
+                    projection.statements,
+                effectsPerformed = false,
+            )
+        val fingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    core,
+                ),
+            )
+        val sourceRefs =
+            buildList {
+                observedConversationHeadSha256
+                    ?.let {
+                        add(
+                            "sha256:" +
+                                it,
+                        )
+                    }
+                projection.sourceScoreConversationHeadSha256
+                    ?.let {
+                        add(
+                            "sha256:" +
+                                it,
+                        )
+                    }
+                projection.scoreHeadSha256
+                    ?.let {
+                        add(
+                            "sha256:" +
+                                it,
+                        )
+                    }
+                projection.semanticAuthorityHeadSha256
+                    ?.let {
+                        add(
+                            "sha256:" +
+                                it,
+                        )
+                    }
+                projection.statements.forEach {
+                    statement ->
+                    add(
+                        statement.statementRef,
+                    )
+                    add(
+                        statement.semanticAcceptanceRef,
+                    )
+                }
+            }
+                .distinct()
+                .sorted()
+
+        return Projection(
+            schemaVersion =
+                core.schemaVersion,
+            truthClass =
+                core.truthClass,
+            state =
+                core.state,
+            projectionRef =
+                "projection.vexlife-prod.current-accepted-semantic." +
+                    fingerprint.take(
+                        32,
+                    ),
+            semanticFingerprint =
+                fingerprint,
+            homeRef =
+                core.homeRef,
+            deviceRef =
+                core.deviceRef,
+            companionLineageRef =
+                core.companionLineageRef,
+            threadRef =
+                core.threadRef,
+            observedConversationHeadSha256 =
+                core.observedConversationHeadSha256,
+            sourceScoreConversationHeadSha256 =
+                core.sourceScoreConversationHeadSha256,
+            scoreHeadSha256 =
+                core.scoreHeadSha256,
+            semanticAuthorityHeadSha256 =
+                core.semanticAuthorityHeadSha256,
+            statements =
+                core.statements,
+            sourceRefs =
+                sourceRefs,
+            effectsPerformed = false,
+        )
+    }
+
     private fun sha256(
         value: String,
     ): String =

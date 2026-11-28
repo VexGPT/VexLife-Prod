@@ -160,6 +160,11 @@ class DirectConversationStore(
         val head: Head?,
         val events: List<Event>,
         val canonicalEvents: List<Event>,
+        /**
+         * Exact immutable completed-head projections already validated while this full snapshot was
+         * formed. This is canonical snapshot evidence, not a second head ledger.
+         */
+        val completedHeads: List<Head>,
         val abandonedAttempts: List<AbandonedAttempt>,
     )
 
@@ -186,6 +191,13 @@ class DirectConversationStore(
         val responseEvent: Event,
         val exactEventFileReadCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    @ConsistentCopyVisibility
+    data class CurrentHeadCoordinate internal constructor(
+        val conversationHeadSha256: String,
+        val priorConversationHeadSha256: String?,
+        val sequence: Long,
     )
 
     @ConsistentCopyVisibility
@@ -1465,6 +1477,42 @@ class DirectConversationStore(
             }
     }
 
+    internal fun currentHeadCoordinate(): CurrentHeadCoordinate? {
+        val current =
+            readHeadRecord()
+                ?: return null
+        val immutable =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                    ownedRoot = productHome,
+                    path =
+                        immutableHeadPath(
+                            current.conversationHeadSha256,
+                        ),
+                ),
+            ) {
+                "canonical Conversation current head lacks its immutable receipt"
+            }
+        validateCanonicalHeadRecord(
+            immutable,
+        )
+        require(
+            immutable ==
+                current,
+        ) {
+            "canonical Conversation current head differs from its immutable receipt"
+        }
+
+        return CurrentHeadCoordinate(
+            conversationHeadSha256 =
+                current.conversationHeadSha256,
+            priorConversationHeadSha256 =
+                current.priorConversationHeadSha256,
+            sequence =
+                current.sequence,
+        )
+    }
+
     fun threadWriterCurrentness(): ThreadWriterCurrentness {
         if (
             !Files.exists(
@@ -1982,6 +2030,7 @@ class DirectConversationStore(
                 head = null,
                 events = events,
                 canonicalEvents = emptyList(),
+                completedHeads = emptyList(),
                 abandonedAttempts = abandoned,
             )
         }
@@ -2078,10 +2127,11 @@ class DirectConversationStore(
             "canonical Conversation current head differs from its immutable receipt"
         }
 
-        validateImmutableHeadLineage(
-            currentHead = headRecord,
-            chain = chain,
-        )
+        val completedHeads =
+            validateImmutableHeadLineage(
+                currentHead = headRecord,
+                chain = chain,
+            )
 
         val abandoned =
             classifyAbandonedAttempts(
@@ -2097,6 +2147,7 @@ class DirectConversationStore(
                 ),
             events = events,
             canonicalEvents = chain,
+            completedHeads = completedHeads,
             abandonedAttempts = abandoned,
         )
     }
@@ -2334,7 +2385,7 @@ class DirectConversationStore(
     private fun validateImmutableHeadLineage(
         currentHead: VexLifeConversationContract.Head,
         chain: List<Event>,
-    ) {
+    ): List<Head> {
         val pairCount =
             chain.size /
                 2
@@ -2394,6 +2445,8 @@ class DirectConversationStore(
             "canonical immutable head lineage count does not match completed turns"
         }
 
+        val projections =
+            mutableListOf<Head>()
         reversed.forEachIndexed {
             index,
             historical,
@@ -2441,7 +2494,13 @@ class DirectConversationStore(
             ) {
                 "canonical immutable head lineage does not bind the exact completed pair"
             }
+            projections +=
+                headProjection(
+                    value = historical,
+                    requestEventHash = request.eventHash,
+                )
         }
+        return projections
     }
 
     private fun readImmediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? {
@@ -2785,6 +2844,19 @@ class DirectConversationStore(
             "exact Conversation return requests an event newer than the current completed head"
         }
 
+        attemptIndex
+            ?.let {
+                index ->
+                readExactCommittedConversationEventsFromIndex(
+                    addresses = addresses,
+                    currentHead = currentHead,
+                    index = index,
+                )
+            }
+            ?.let {
+                return it
+            }
+
         val addressesByHeadSequence =
             addresses.groupBy {
                 address ->
@@ -3007,6 +3079,240 @@ class DirectConversationStore(
                 reachedGenesis,
             effectsPerformed = false,
         )
+    }
+
+    private fun readExactCommittedConversationEventsFromIndex(
+        addresses: List<EventAddress>,
+        currentHead: VexLifeConversationContract.Head,
+        index: DirectConversationAttemptIndex,
+    ): ExactConversationReturn? {
+        val generation =
+            when (
+                val load =
+                    index.load()
+            ) {
+                DirectConversationAttemptIndex.Load.Absent ->
+                    return null
+
+                is DirectConversationAttemptIndex.Load.Ready ->
+                    load.generation
+            }
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHead.conversationHeadSha256 ||
+            generation.sourceConversationSequence !=
+                currentHead.sequence
+        ) {
+            index.invalidate()
+            return null
+        }
+
+        return try {
+            val entries =
+                addresses.map {
+                    address ->
+                    requireNotNull(
+                        generation.committedEntriesByEventRef[
+                            address.eventRef
+                        ],
+                    ) {
+                        "Conversation attempt index has no committed coordinate for exact source"
+                    }
+                        .also {
+                            entry ->
+                            require(
+                                entry.committed &&
+                                    entry.committedHeadSha256 !=
+                                        null &&
+                                    (
+                                        entry.request ==
+                                            address ||
+                                        entry.response ==
+                                            address
+                                    )
+                            ) {
+                                "Conversation attempt index exact source coordinate is inconsistent"
+                            }
+                        }
+                }
+            val distinctEntries =
+                entries.distinctBy {
+                    entry ->
+                    requireNotNull(
+                        entry.committedHeadSha256,
+                    )
+                }
+            val headCache =
+                mutableMapOf<String, VexLifeConversationContract.Head>()
+            var headReads =
+                0
+            fun readHead(
+                sha256: String,
+            ): VexLifeConversationContract.Head =
+                headCache[
+                    sha256
+                ]
+                    ?: requireNotNull(
+                        VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                            ownedRoot = productHome,
+                            path =
+                                immutableHeadPath(
+                                    sha256,
+                                ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return is missing an immutable head receipt"
+                    }
+                        .also(
+                            ::validateCanonicalHeadRecord,
+                        )
+                        .also {
+                            head ->
+                            require(
+                                head.conversationHeadSha256 ==
+                                    sha256
+                            ) {
+                                "indexed exact Conversation return head is stored under the wrong identity"
+                            }
+                            headCache[
+                                sha256
+                            ] =
+                                head
+                            headReads +=
+                                1
+                        }
+
+            require(
+                readHead(
+                    currentHead.conversationHeadSha256,
+                ) ==
+                    currentHead
+            ) {
+                "indexed exact Conversation return current head differs from its immutable receipt"
+            }
+
+            val resolved =
+                mutableMapOf<Long, Event>()
+            var eventReads =
+                0
+            distinctEntries.forEach {
+                entry ->
+                val head =
+                    readHead(
+                        requireNotNull(
+                            entry.committedHeadSha256,
+                        ),
+                    )
+                val responseAddress =
+                    requireNotNull(
+                        entry.response,
+                    ) {
+                        "indexed exact Conversation return committed entry has no response"
+                    }
+                require(
+                    head.sequence ==
+                        responseAddress.sequence &&
+                        head.eventHash ==
+                            responseAddress.eventHash &&
+                        head.turnRef ==
+                            entry.turnRef
+                ) {
+                    "indexed exact Conversation return head does not bind its derived committed coordinate"
+                }
+
+                val response =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    responseAddress.sequence,
+                                eventHash =
+                                    responseAddress.eventHash,
+                            ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return response event is missing"
+                    }
+                val request =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    entry.request.sequence,
+                                eventHash =
+                                    entry.request.eventHash,
+                            ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return request event is missing"
+                    }
+                eventReads +=
+                    2
+
+                require(
+                    request.eventRef ==
+                        entry.request.eventRef &&
+                        response.eventRef ==
+                            responseAddress.eventRef
+                ) {
+                    "indexed exact Conversation return event identity differs from its derived coordinate"
+                }
+                validateHeadAgainstPair(
+                    head = head,
+                    request = request,
+                    response = response,
+                )
+                validateContextBinding(
+                    relativePath = head.contextPath,
+                    expectedContextSha256 = head.contextSha256,
+                    request = request,
+                    response = response,
+                )
+
+                resolved[
+                    request.sequence
+                ] =
+                    request
+                resolved[
+                    response.sequence
+                ] =
+                    response
+            }
+
+            ExactConversationReturn(
+                events =
+                    addresses.map {
+                        address ->
+                        requireNotNull(
+                            resolved[
+                                address.sequence
+                            ],
+                        )
+                            .also {
+                                event ->
+                                require(
+                                    event.eventRef ==
+                                        address.eventRef &&
+                                        event.eventHash ==
+                                            address.eventHash
+                                ) {
+                                    "indexed exact Conversation return address does not match canonical committed source"
+                                }
+                            }
+                    },
+                exactEventFileReadCount =
+                    eventReads,
+                exactHeadFileReadCount =
+                    headReads,
+                wholeHistoryHeadTraversalPerformed = false,
+                effectsPerformed = false,
+            )
+        } catch (
+            _: RuntimeException,
+        ) {
+            index.invalidate()
+            null
+        }
     }
 
     private fun validateRequestAsPending(

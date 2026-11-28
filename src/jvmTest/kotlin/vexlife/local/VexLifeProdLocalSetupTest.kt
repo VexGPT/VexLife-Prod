@@ -10,6 +10,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
+import vexlife.continuity.VexLifeBgeM3ArtifactMaterialization
+import vexlife.continuity.VexLifeBgeM3MacPythonEnvironment
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
@@ -114,6 +116,102 @@ class VexLifeProdLocalSetupTest {
             mlxLmVersion = HereticProductIdentity.MlxLmVersion,
             pipReportPath = root.resolve(HereticPythonEnvironment.InstallReportFilename).toString(),
             environmentMutationPerformed = state == "CREATED_VERIFIED",
+        )
+    }
+
+    private fun semanticArtifactMaterialization(
+        home: Path,
+    ): VexLifeBgeM3ArtifactMaterialization.Result =
+        VexLifeBgeM3ArtifactMaterialization.Result(
+            observation =
+                VexLifeBgeM3ArtifactMaterialization.Observation(
+                    artifactRef =
+                        VexLifeBgeM3ArtifactMaterialization.ArtifactRef,
+                    root =
+                        VexLifeBgeM3ArtifactMaterialization
+                            .modelRoot(
+                                home,
+                            )
+                            .toString(),
+                    state =
+                        VexLifeBgeM3ArtifactMaterialization.PresenceState.PRESENT,
+                    totalBytes =
+                        VexLifeBgeM3ArtifactMaterialization.TotalBytes,
+                    verifiedBytes =
+                        VexLifeBgeM3ArtifactMaterialization.TotalBytes,
+                    members =
+                        VexLifeBgeM3ArtifactMaterialization.Members.map {
+                            member ->
+                            VexLifeBgeM3ArtifactMaterialization.MemberObservation(
+                                member =
+                                    member,
+                                state =
+                                    VexLifeBgeM3ArtifactMaterialization.MemberState.VERIFIED,
+                                actualBytes =
+                                    member.expectedBytes,
+                                actualSha256 =
+                                    member.expectedSha256,
+                            )
+                        },
+                ),
+            acquiredMemberCount =
+                0,
+            artifactMutationPerformed =
+                false,
+        )
+
+    private fun semanticEnvironment(
+        home: Path,
+        state: String = "CREATED_VERIFIED",
+    ): VexLifeBgeM3MacPythonEnvironment.Result {
+        val root =
+            VexLifeBgeM3MacPythonEnvironment.environmentRoot(
+                home,
+            )
+        return VexLifeBgeM3MacPythonEnvironment.Result(
+            state =
+                state,
+            environmentRoot =
+                root.toString(),
+            pythonPath =
+                VexLifeBgeM3MacPythonEnvironment
+                    .pythonPath(
+                        root,
+                    )
+                    .toString(),
+            requirementsPath =
+                root.resolve(
+                    VexLifeBgeM3MacPythonEnvironment.RequirementsFilename,
+                )
+                    .toString(),
+            requirementsSha256 =
+                VexLifeBgeM3MacPythonEnvironment.RequirementsSha256,
+            pipReportPath =
+                root.resolve(
+                    VexLifeBgeM3MacPythonEnvironment.InstallReportFilename,
+                )
+                    .toString(),
+            pipReportSha256 =
+                "c".repeat(
+                    64,
+                ),
+            pythonVersion =
+                VexLifeBgeM3MacPythonEnvironment.PythonVersion,
+            numpyVersion =
+                VexLifeBgeM3MacPythonEnvironment.NumPyVersion,
+            onnxRuntimeVersion =
+                VexLifeBgeM3MacPythonEnvironment.OnnxRuntimeVersion,
+            transformersVersion =
+                VexLifeBgeM3MacPythonEnvironment.TransformersVersion,
+            huggingFaceHubVersion =
+                VexLifeBgeM3MacPythonEnvironment.HuggingFaceHubVersion,
+            environmentFingerprintSha256 =
+                "d".repeat(
+                    64,
+                ),
+            environmentMutationPerformed =
+                state ==
+                    "CREATED_VERIFIED",
         )
     }
 
@@ -414,6 +512,27 @@ class VexLifeProdLocalSetupTest {
                 trace += "VISUAL_ENVIRONMENT"
                 null
             },
+            ensureSemanticArtifacts = { home, _ ->
+                trace +=
+                    "SEMANTIC_ARTIFACTS"
+                semanticArtifactMaterialization(
+                    home,
+                )
+            },
+            ensureSemanticEnvironment = { _, home, _ ->
+                trace +=
+                    "SEMANTIC_ENVIRONMENT"
+                semanticEnvironment(
+                    home,
+                    if (
+                        reuse
+                    ) {
+                        "REUSED_VERIFIED"
+                    } else {
+                        "CREATED_VERIFIED"
+                    },
+                )
+            },
             captureStableRuntimeRelease = { _, _ ->
                 {
                     trace +=
@@ -613,6 +732,14 @@ class VexLifeProdLocalSetupTest {
                 result.visualEnvironmentDisposition,
             )
             assertEquals(
+                "PRESENT",
+                result.semanticArtifactDisposition,
+            )
+            assertEquals(
+                "CREATED_VERIFIED",
+                result.semanticEnvironmentDisposition,
+            )
+            assertEquals(
                 listOf(
                     "HOST",
                     "WRITER_CURRENTNESS",
@@ -620,6 +747,8 @@ class VexLifeProdLocalSetupTest {
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
                     "VISUAL_ENVIRONMENT",
+                    "SEMANTIC_ARTIFACTS",
+                    "SEMANTIC_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
@@ -708,12 +837,94 @@ class VexLifeProdLocalSetupTest {
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
                     "VISUAL_ENVIRONMENT",
+                    "SEMANTIC_ARTIFACTS",
+                    "SEMANTIC_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
             )
         } finally {
             parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun semanticPreparationFailureHoldsAccelerationAndStillQualifiesTextRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-semantic-held-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val base =
+                hooks(
+                    trace,
+                )
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome =
+                        home,
+                    allowAcquisition =
+                        true,
+                    hooks =
+                        base.copy(
+                            ensureSemanticArtifacts = {
+                                _,
+                                _,
+                                ->
+                                trace +=
+                                    "SEMANTIC_ARTIFACTS_FAILED"
+                                error(
+                                    "simulated semantic artifact preparation failure",
+                                )
+                            },
+                            ensureSemanticEnvironment = {
+                                _,
+                                _,
+                                _,
+                                ->
+                                error(
+                                    "semantic environment must not run after artifact preparation failure",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "LOCAL_HERETIC_FOUNDATION_READY",
+                result.state,
+            )
+            assertEquals(
+                "HELD_PREPARATION_FAILED",
+                result.semanticArtifactDisposition,
+            )
+            assertEquals(
+                "HELD_PREPARATION_FAILED",
+                result.semanticEnvironmentDisposition,
+            )
+            assertTrue(
+                "SEMANTIC_ARTIFACTS_FAILED" in
+                    trace,
+            )
+            assertTrue(
+                "RUNTIME" in
+                    trace,
+                "semantic acceleration failure must not prevent the selected conversational runtime from qualifying",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 
