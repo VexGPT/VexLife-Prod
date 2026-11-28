@@ -100,12 +100,44 @@ while IFS= read -r source_sha; do
   fi
 done < "$COMMITS"
 
-# Successful per-SHA release calls deliberately defer the public catalog. Project it once from
-# newest current main after the queue pass so an older historical cutoff never becomes site currentness.
-VEXLIFE_REPOSITORY="$REPOSITORY" bash "$ROOT/tools/site/publish-gh-pages.sh"
+# Successful per-SHA release calls deliberately defer the public catalog. Re-ground current main
+# after the potentially long Mac proof/publish loop, then form Pages from that exact newest head.
+# If main advances during the short Pages transaction, retry from the newly observed current main.
+pages_published=false
+pages_source=""
+pages_status=1
+for pages_attempt in 1 2 3; do
+  git -C "$ROOT" fetch --quiet origin main
+  pages_source="$(git -C "$ROOT" rev-parse refs/remotes/origin/main)"
+  pages_worktree="$TMP_ROOT/pages-$pages_attempt-$pages_source"
 
-printf 'VEXLIFE_PREVIEW_QUEUE_RESULT\tmain=%s\tattempted=%s\tpublished=%s\talready=%s\tfailed=%s\n' \
-  "$REMOTE_MAIN" "$attempted" "$published" "$already_published" "$failed"
+  git -C "$ROOT" worktree add --detach "$pages_worktree" "$pages_source" >/dev/null
+  set +e
+  (
+    cd "$pages_worktree"
+    VEXLIFE_REPOSITORY="$REPOSITORY" bash tools/site/publish-gh-pages.sh
+  )
+  pages_status=$?
+  set -e
+  git -C "$ROOT" worktree remove --force "$pages_worktree" >/dev/null 2>&1 || true
+
+  if [ "$pages_status" -eq 0 ]; then
+    pages_published=true
+    printf 'VEXLIFE_PREVIEW_QUEUE_PAGES_CURRENT\t%s\t%s\n' "$pages_source" "$pages_attempt"
+    break
+  fi
+
+  printf 'VEXLIFE_PREVIEW_QUEUE_PAGES_RETRY\t%s\t%s\t%s\n' \
+    "$pages_source" "$pages_attempt" "$pages_status" >&2
+done
+
+if [ "$pages_published" != true ]; then
+  printf 'VEXLIFE_PREVIEW_QUEUE_PAGES_HELD\t%s\t%s\n' "$pages_source" "$pages_status" >&2
+  exit "$pages_status"
+fi
+
+printf 'VEXLIFE_PREVIEW_QUEUE_RESULT\tmain=%s\tpagesMain=%s\tattempted=%s\tpublished=%s\talready=%s\tfailed=%s\n' \
+  "$REMOTE_MAIN" "$pages_source" "$attempted" "$published" "$already_published" "$failed"
 
 if [ "$failed" -ne 0 ]; then
   printf 'VEXLIFE_PREVIEW_QUEUE_HELD\t%s\n' "$failed_shas" >&2
