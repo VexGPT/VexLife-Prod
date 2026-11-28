@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -19,7 +20,13 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
+import vexlife.continuity.VexLifeWorkingContinuity
+import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelCatalog
@@ -1034,6 +1041,238 @@ class DirectCompanionCapabilityTurnTest {
             result.capabilityUses,
         )
     }
+
+    @Test
+    fun failedContinuationLeavesTheReturnedCapabilityCycleAwaitingIntegration() {
+        val home =
+            productHome()
+
+        try {
+            val manifest =
+                assertNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest
+            val focusOwner =
+                VexLifeWorkingFocusOwner(
+                    home,
+                )
+            val focus =
+                focusOwner.setCurrent(
+                    VexLifeWorkingFocus.Draft(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                        formationRef =
+                            "receipt.vexlife.working-cycle.focus.001",
+                        priorRevisionRefOrNull = null,
+                        subjectScopeRefs =
+                            listOf(
+                                "subject.vexlife.working-cycle",
+                            ),
+                        objective =
+                            "Continue the current task through evidence-changing work cycles.",
+                        currentQuestionOrNull =
+                            "What does the returned capability evidence change?",
+                        retainedRelationships =
+                            emptyList(),
+                        openEdges =
+                            emptyList(),
+                        nextProbeOrNull =
+                            "Integrate the returned capability result before choosing the next movement.",
+                        sourceBindingRefs =
+                            listOf(
+                                "binding.vexlife.working-cycle.source.001",
+                            ),
+                        sourceRefs =
+                            listOf(
+                                "source.vexlife.working-cycle.focus.001",
+                            ),
+                    ),
+                )
+                    .current
+
+            var calls =
+                0
+            val listControl =
+                VexLifeCapabilityRequest.RequestHeader +
+                    "\n" +
+                    """{"capability":"atlas","action":"list"}"""
+
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.working-cycle.failure.001",
+                            content =
+                                "Inspect what is available, then continue from the returned evidence.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = {
+                                calls +=
+                                    1
+                                if (
+                                    calls ==
+                                        1
+                                ) {
+                                    reply(
+                                        listControl,
+                                    )
+                                } else {
+                                    error(
+                                        "forced provider stop after one returned capability result",
+                                    )
+                                }
+                            },
+                        ),
+                )
+            }
+
+            assertEquals(
+                2,
+                calls,
+            )
+            val current =
+                assertNotNull(
+                    VexLifeWorkingContinuityOwner(
+                        home,
+                    )
+                        .readCurrentCycle(
+                            lineageRef =
+                                manifest.currentCompanionLineageRef,
+                            threadRef =
+                                DirectConversationIdentity.ThreadRef,
+                        ),
+                )
+            assertEquals(
+                VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                current.phase,
+            )
+            assertEquals(
+                1,
+                current.cycleIndex,
+            )
+            assertEquals(
+                "RETURNED",
+                current.capabilityState,
+            )
+            assertEquals(
+                assertNotNull(
+                    focus.revisionOrNull,
+                )
+                    .workingFocusRef,
+                current.workingFocusRefOrNull,
+            )
+            assertEquals(
+                focus.stateRef,
+                current.workingFocusStateRefOrNull,
+            )
+            assertEquals(
+                focus.revisionRefOrNull,
+                current.workingFocusRevisionRefOrNull,
+            )
+            assertNull(
+                current.nextMoveOrNull,
+            )
+            assertFalse(
+                current.rawProviderContentPersisted,
+            )
+            assertFalse(
+                current.rawPrivateReasoningPersisted,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun completedCapabilityTurnClearsTheInFlightWorkingCycle() {
+        val home =
+            productHome()
+
+        try {
+            var calls =
+                0
+            val listControl =
+                VexLifeCapabilityRequest.RequestHeader +
+                    "\n" +
+                    """{"capability":"atlas","action":"list"}"""
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.working-cycle.complete.001",
+                            content =
+                                "Inspect what is available and answer when the evidence is enough.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = {
+                                calls +=
+                                    1
+                                if (
+                                    calls ==
+                                        1
+                                ) {
+                                    reply(
+                                        listControl,
+                                    )
+                                } else {
+                                    reply(
+                                        "The returned capability evidence is enough to answer.",
+                                    )
+                                }
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            val manifest =
+                assertNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest
+            assertNull(
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+                    .readCurrentCycle(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                    ),
+                "successful turn completion must clear the current in-flight cycle instead of accumulating a hidden cycle history",
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
 }
 
 // [VXG RealForever]

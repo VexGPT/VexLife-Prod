@@ -5,6 +5,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.Serializable
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.continuity.VexLifeWorkingContinuity
@@ -580,6 +581,118 @@ object DirectWorkingContinuity {
             }
 
         return formation
+    }
+
+    internal fun checkpointCapabilityCycle(
+        productHome: Path,
+        currentRequest: DirectConversationStore.Event,
+        workingFocusObservation: DirectWorkingFocus.Observation,
+        capabilityEntry: VexLifeCapabilityBridge.TraceEntry,
+        phase: VexLifeWorkingContinuity.CyclePhase,
+        nextMoveOrNull: VexLifeWorkingContinuity.CycleNextMove? =
+            null,
+        nextControlSha256OrNull: String? =
+            null,
+        formedAt: Instant =
+            Instant.now(),
+    ): VexLifeWorkingContinuity.CycleCheckpoint {
+        require(
+            currentRequest.eventKind ==
+                "REQUEST" &&
+                capabilityEntry.requestNumber >
+                0
+        ) {
+            "direct working continuity cycle requires one exact current request/capability exchange"
+        }
+        DirectWorkingFocus.requireCurrent(
+            productHome = productHome,
+            lineageRef = currentRequest.companionLineageRef,
+            threadRef = currentRequest.threadRef,
+            expected = workingFocusObservation,
+        )
+        val checkpoint =
+            VexLifeWorkingContinuity.formCycleCheckpoint(
+                lineageRef = currentRequest.companionLineageRef,
+                threadRef = currentRequest.threadRef,
+                turnRef = currentRequest.turnRef,
+                requestEventRef = currentRequest.eventRef,
+                requestEventSha256 = currentRequest.eventHash,
+                cycleIndex = capabilityEntry.requestNumber,
+                phase = phase,
+                workingFocusRefOrNull =
+                    workingFocusObservation.workingFocusRefOrNull,
+                workingFocusStateRefOrNull =
+                    workingFocusObservation.stateRefOrNull,
+                workingFocusRevisionRefOrNull =
+                    workingFocusObservation.revisionRefOrNull,
+                capabilityCallRef = capabilityEntry.callRef,
+                capabilityResultSha256 =
+                    capabilityEntry.resultSha256,
+                capabilityState =
+                    capabilityEntry.state.name,
+                capabilitySourceRefs =
+                    capabilityEntry.sourceRefs,
+                capabilityFrontierRefs =
+                    capabilityEntry.frontierRefs,
+                externalEffectsExecuted =
+                    capabilityEntry.externalEffectsExecuted,
+                externalEffectMayHaveExecuted =
+                    capabilityEntry.externalEffectMayHaveExecuted,
+                nextMoveOrNull = nextMoveOrNull,
+                nextControlSha256OrNull =
+                    nextControlSha256OrNull,
+                formedAt = formedAt,
+            )
+        return VexLifeWorkingContinuityOwner(
+            productHome,
+        )
+            .writeCurrentCycle(
+                checkpoint,
+            )
+            .checkpoint
+    }
+
+    fun readCurrentCycle(
+        productHome: Path,
+        lineageRef: String,
+        threadRef: String,
+    ): VexLifeWorkingContinuity.CycleCheckpoint? =
+        VexLifeWorkingContinuityOwner(
+            productHome,
+        )
+            .readCurrentCycle(
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+            )
+
+    fun clearCurrentCycleAfterCompletedTurn(
+        productHome: Path,
+        turnRef: String,
+        prepared: Prepared,
+    ): Boolean {
+        val owner =
+            VexLifeWorkingContinuityOwner(
+                productHome,
+            )
+        val current =
+            owner.readCurrentCycle(
+                lineageRef = prepared.workingSet.lineageRef,
+                threadRef = prepared.workingSet.threadRef,
+            )
+                ?: return false
+        require(
+            current.turnRef ==
+                turnRef
+        ) {
+            "completed turn cannot clear another working continuity cycle"
+        }
+        return owner.clearCurrentCycle(
+            lineageRef = current.lineageRef,
+            threadRef = current.threadRef,
+            turnRef = current.turnRef,
+            expectedFingerprint =
+                current.semanticFingerprint,
+        )
     }
 
     /**
