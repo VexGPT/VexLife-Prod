@@ -19,16 +19,26 @@ object VexLifeFoundationalFieldFixture {
         return "$major.${minor + 1}.0"
     }
 
-    /** A later recorded revision whose first module says one more sentence. */
+    /**
+     * A later recorded revision with different model-facing bytes but the same body size.
+     *
+     * The shipped Foundation intentionally uses nearly the whole kernel budget, so a revision
+     * fixture must not assume spare room by appending text.
+     */
     fun revised(version: String = nextVersion()): Reading.Current {
         val body = shipped.body
         val first = body.modules.first()
+        val firstParagraph = first.kernel.first()
+        check(firstParagraph.endsWith("."))
+        val changedParagraph = firstParagraph.dropLast(1) + "!"
         val changed =
             body.copy(
                 version = version,
                 modules =
                     listOf(
-                        first.copy(kernel = first.kernel + "A sentence added by revision $version.")
+                        first.copy(
+                            kernel = listOf(changedParagraph) + first.kernel.drop(1),
+                        )
                     ) + body.modules.drop(1),
             )
         return read(changed, shipped.revisions) as Reading.Current
