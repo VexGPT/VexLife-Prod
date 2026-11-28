@@ -49,7 +49,7 @@ conversation can therefore supply another source/controller instead of cloning t
 ~~~text
 real canonical Home
   ├─ Product Foundation / current settings ─┐
-  ├─ current accepted Memory (read-only)     │
+  ├─ current accepted Memory (read-only)     │ explicit opt-in only
   ├─ current Context Profile                 │
   ├─ current qualified native runtime        │
   └─ canonical Conversation snapshot         │ explicit opt-in only
@@ -185,22 +185,28 @@ CURRENT_SNAPSHOT  (explicit opt-in)
   real currentness is checked before/after the copy
 ~~~
 
-A fresh Vex Labs context starts from Product Foundation/current Lab context plus an empty disposable
-Conversation. Historical Product Conversation is not part of the Lab baseline merely because it
-exists in canonical Home.
+A fresh Vex Labs context starts from Product Foundation/current host identity plus an empty disposable
+Conversation and no durable Memory content. Historical Product Conversation and current accepted
+Memory are not part of the Lab baseline merely because they exist in canonical Home.
 
 **Reload current conversation** is the explicit human action that discards the current scratch lineage
 and forms a new exact snapshot from the canonical Conversation.
 
-**Restore defaults** restores the Lab's Product/context defaults, current Memory mode, and an empty
-scratch Conversation. It does not erase saved profiles or Memory.
+**Restore defaults** restores the Lab's Product/context defaults, **no-Memory** mode, and an empty
+scratch Conversation. It does not erase saved profiles or Memory. **Use current Memory** remains an
+explicit Lab experiment control.
 
 ~~~text
 LAB DEFAULT
-!= CANONICAL CONVERSATION SNAPSHOT
+= PRODUCT FOUNDATION + FRESH LAB CONVERSATION
++ NO DURABLE MEMORY CONTENT
 
-CURRENT_SNAPSHOT
-= EXPLICIT IMPORT FOR A TEST
+LAB DEFAULT
+!= CANONICAL CONVERSATION SNAPSHOT
+!= CURRENT MEMORY
+
+CURRENT_SNAPSHOT / USE CURRENT MEMORY
+= EXPLICIT IMPORTS FOR A TEST
 != LAB IDENTITY
 ~~~
 
