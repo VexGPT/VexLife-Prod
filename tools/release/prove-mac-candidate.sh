@@ -137,6 +137,21 @@ EXPECTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o 
   exit 1
 }
 
+EXPECTED_DISTRIBUTION_IDENTITY="$DISTRIBUTION_CHANNEL:$SOURCE_SHA"
+if [ "$DISTRIBUTION_CHANNEL" = "stable" ]; then
+  EXPECTED_DISTRIBUTION_IDENTITY="stable:$APP_VERSION@$SOURCE_SHA"
+fi
+OBSERVED_DISTRIBUTION_CHANNEL="$(
+  /usr/bin/plutil -extract VexLifeProdDistributionChannel raw -o - "$APP/Contents/Info.plist"
+)"
+OBSERVED_DISTRIBUTION_IDENTITY="$(
+  /usr/bin/plutil -extract VexLifeProdDistributionIdentity raw -o - "$APP/Contents/Info.plist"
+)"
+[ "$OBSERVED_DISTRIBUTION_CHANNEL" = "$DISTRIBUTION_CHANNEL" ] ||
+  proof_fail "APP_DISTRIBUTION_CHANNEL"
+[ "$OBSERVED_DISTRIBUTION_IDENTITY" = "$EXPECTED_DISTRIBUTION_IDENTITY" ] ||
+  proof_fail "APP_DISTRIBUTION_IDENTITY"
+
 MOUNT="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/vexlife-mac-candidate-proof.XXXXXX")"
 mounted=0
 cleanup() {
