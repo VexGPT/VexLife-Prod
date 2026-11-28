@@ -86,6 +86,9 @@ class VexLifeProdVersioningTest {
         assertContains(buildSource, "\"distributionChannel\"")
         assertContains(buildSource, "\"distributionIdentity\"")
         assertContains(buildSource, "\"diskImageVolumeName\"")
+        assertContains(buildSource, "VexLifeProdDistributionChannel")
+        assertContains(buildSource, "VexLifeProdDistributionIdentity")
+        assertContains(candidateProof, "APP_DISTRIBUTION_IDENTITY")
         assertContains(releaseDocs, "VERSIONED DISTRIBUTION != SECOND PRODUCT")
         assertContains(releaseDocs, "VexLife.app + com.vexlife.prod")
     }
