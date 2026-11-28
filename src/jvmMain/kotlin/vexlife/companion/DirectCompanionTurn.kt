@@ -3481,6 +3481,158 @@ object DirectCompanionTurn {
         }
     }
 
+    private fun resolveCycleRecovery(
+        productHome: Path,
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        workingFocusObservation: DirectWorkingFocus.Observation,
+    ): DirectWorkingContinuity.CycleRecovery? {
+        val owner =
+            VexLifeWorkingContinuityOwner(
+                productHome,
+            )
+        val cycle =
+            owner.readCurrentCycle(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+            )
+                ?: return null
+
+        // A crash may leave the current-cycle slot behind after the turn actually committed.
+        // That cycle is completed stewardship residue, not an unfinished recovery candidate.
+        if (
+            prior
+                ?.head
+                ?.turnRef ==
+                cycle.turnRef
+        ) {
+            owner.clearCurrentCycle(
+                lineageRef = cycle.lineageRef,
+                threadRef = cycle.threadRef,
+                turnRef = cycle.turnRef,
+                expectedFingerprint =
+                    cycle.semanticFingerprint,
+            )
+            return null
+        }
+
+        val requestMessageRef =
+            cycle.requestMessageRefOrNull
+                ?: return null
+        val failedRequest =
+            requireNotNull(
+                conversationOwner
+                    .requestEventForMessageRef(
+                        requestMessageRef,
+                    )
+                    .requestEvent,
+            ) {
+                "working continuity current cycle failed request is not readable from Conversation"
+            }
+        require(
+            failedRequest.eventRef ==
+                cycle.requestEventRef &&
+                failedRequest.eventHash ==
+                cycle.requestEventSha256 &&
+                failedRequest.messageRef ==
+                requestMessageRef &&
+                failedRequest.turnRef ==
+                cycle.turnRef
+        ) {
+            "working continuity current cycle no longer binds its failed Conversation request"
+        }
+
+        val stillBranchesFromCurrentHead =
+            if (
+                prior ==
+                    null
+            ) {
+                failedRequest.sequence ==
+                    0L &&
+                    failedRequest.priorEventHash ==
+                    null
+            } else {
+                failedRequest.sequence ==
+                    prior.head.sequence +
+                        1 &&
+                    failedRequest.priorEventHash ==
+                    prior.responseEvent.eventHash
+            }
+
+        if (
+            !stillBranchesFromCurrentHead
+        ) {
+            owner.clearCurrentCycle(
+                lineageRef = cycle.lineageRef,
+                threadRef = cycle.threadRef,
+                turnRef = cycle.turnRef,
+                expectedFingerprint =
+                    cycle.semanticFingerprint,
+            )
+            return null
+        }
+
+        val failure =
+            readFailureReceipt(
+                productHome = productHome,
+                turnRef = cycle.turnRef,
+            )
+        if (
+            failure !=
+                null
+        ) {
+            require(
+                failure.requestEventRefOrNull ==
+                    failedRequest.eventRef &&
+                    failure.requestEventSha256OrNull ==
+                    failedRequest.eventHash &&
+                    failure.requestMessageRef ==
+                    failedRequest.messageRef
+            ) {
+                "working continuity recovery FailureReceipt does not bind the exact failed request"
+            }
+
+            if (
+                failure.lastValidConversationHeadSha256OrNull !=
+                    prior
+                        ?.head
+                        ?.conversationHeadSha256
+            ) {
+                owner.clearCurrentCycle(
+                    lineageRef = cycle.lineageRef,
+                    threadRef = cycle.threadRef,
+                    turnRef = cycle.turnRef,
+                    expectedFingerprint =
+                        cycle.semanticFingerprint,
+                )
+                return null
+            }
+        }
+
+        return DirectWorkingContinuity.formCycleRecovery(
+            cycle = cycle,
+            failedRequest = failedRequest,
+            currentRequest = currentRequest,
+            workingFocusObservation =
+                workingFocusObservation,
+            failureRefOrNull =
+                failure?.failureRef,
+            failureFingerprintOrNull =
+                failure?.semanticFingerprint,
+            failureCodeOrNull =
+                failure?.failureCode,
+            lastValidConversationHeadSha256OrNull =
+                failure
+                    ?.lastValidConversationHeadSha256OrNull
+                    ?: prior
+                        ?.head
+                        ?.conversationHeadSha256,
+        )
+    }
+
     private fun readFailureReceipt(
         productHome: Path,
         turnRef: String,
