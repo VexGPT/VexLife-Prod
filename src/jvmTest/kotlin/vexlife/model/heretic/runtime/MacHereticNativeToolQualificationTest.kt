@@ -622,6 +622,87 @@ class MacHereticNativeToolQualificationTest {
     }
 
     @Test
+    fun qwen4BReachQualificationUsesExchangeHeadroomAndDuplicateGuardInsteadOfFourRequestQuota() {
+        val atlasDescribe =
+            { handle: String ->
+                VexLifeCapabilityRequest.RequestHeader +
+                    "\n" +
+                    """{"capability":"atlas","action":"describe","arguments":{"handle":"$handle"}}"""
+            }
+        val listControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"list","arguments":{}}"""
+        val derivedControl =
+            atlasDescribe(
+                "workspace-test",
+            )
+
+        val delayedQualified =
+            qualify4BReach(
+                encodedReachStage(
+                    atlasDescribe(
+                        "web",
+                    ),
+                ),
+                encodedReachStage(
+                    atlasDescribe(
+                        "github",
+                    ),
+                ),
+                encodedReachStage(
+                    atlasDescribe(
+                        "sources",
+                    ),
+                ),
+                encodedReachStage(
+                    atlasDescribe(
+                        "home",
+                    ),
+                ),
+                encodedReachStage(
+                    listControl,
+                ),
+                encodedReachStage(
+                    derivedControl,
+                ),
+            )
+
+        assertEquals(
+            HereticRuntimeQualification.VexReachQualificationRef,
+            delayedQualified.qualification.vexReachQualificationRef,
+            "qualification must not inherit the historical four-request quota while real exchange headroom remains",
+        )
+        assertEquals(
+            7,
+            delayedQualified.calls.size,
+        )
+
+        val duplicateHeld =
+            qualify4BReach(
+                encodedReachStage(
+                    listControl,
+                ),
+                encodedReachStage(
+                    listControl,
+                ),
+                encodedReachStage(
+                    derivedControl,
+                ),
+            )
+        assertEquals(
+            null,
+            duplicateHeld.qualification.vexReachQualificationRef,
+            "repeating the same control must stop the qualification motor loop rather than spending more reach",
+        )
+        assertEquals(
+            3,
+            duplicateHeld.calls.size,
+            "runtime qualification plus two provider stages should be enough to detect the duplicate control",
+        )
+    }
+
+    @Test
     fun recognizedNativeToolProbeIsOptionalAndFailSoft() {
         val held =
             qualify(
