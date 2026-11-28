@@ -72,7 +72,7 @@ jobs:
           $Out = Join-Path $env:RUNNER_TEMP 'vexlife-windows-preview'
           New-Item -ItemType Directory -Path $Out -Force | Out-Null
           .\tools\windows-preview\FORM-WINDOWS-PREVIEW.ps1 -OutputDirectory $Out
-          $Zip = Get-ChildItem -LiteralPath $Out -Filter 'VexLife-Windows-x64-preview-*.zip' | Select-Object -Single
+          $Zip = Get-ChildItem -LiteralPath $Out -Filter 'VexLife-Windows-x64-preview-*.zip' | Select-Object -First 1
           if (-not $Zip) { throw 'WINDOWS_PREVIEW_ZIP_NOT_FORMED' }
           $Sha = (Get-FileHash -LiteralPath $Zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "WINDOWS_PARITY_PREVIEW=$($Zip.Name)"
