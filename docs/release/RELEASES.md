@@ -258,12 +258,16 @@ VexRelay / VexLocalBridge Mac cycle
 -> full Product tests + Mac app/DMG proof
 -> publish VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
 -> continue to the next missing SHA
--> publish Pages once from newest current main
+-> re-fetch current main after the potentially long queue drain
+-> form Pages from that newest exact main in a temporary worktree
+-> retry only the Pages projection if main advances during that short transaction
 ~~~
 
 If Victor's Mac is off for several merges, no version identity is lost. The next admitted Relay
-cycle catches up every missing main SHA. A proof failure leaves only that SHA unreleased; it does not
-rewrite history or manufacture success. A later fixing SHA may still prove and publish.
+cycle catches up every missing main SHA. If `main` advances while a Mac proof is running, the queue
+does not reinterpret the already-published cutoff; it re-grounds the final Pages projection from the
+newest exact current main. A proof failure leaves only that SHA unreleased; it does not rewrite
+history or manufacture success. A later fixing SHA may still prove and publish.
 
 ~~~text
 MAIN SHA IDENTITY = DURABLE PREVIEW VERSION
