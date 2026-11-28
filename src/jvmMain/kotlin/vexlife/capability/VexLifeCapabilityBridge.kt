@@ -48,9 +48,12 @@ import vexlife.sources.VexLifeLocalSourceStore
  * - A malformed request costs one request and returns the exact form, so Vex can correct it.
  */
 object VexLifeCapabilityBridge {
-    const val MaximumRequestsPerTurn = 4
-
-    /** Prompt room kept free at materialization for request/result exchanges in one turn. */
+    /**
+     * Real prompt room kept free for request/result exchanges in one human turn.
+     *
+     * This is resource headroom, not a capability-call quota. Reach continues while another
+     * request can materially improve the task and this room remains available.
+     */
     const val ExchangeAllowanceTokens = 24_000
 
     /** One result never takes more than this, so later requests in the turn still have room. */
@@ -59,7 +62,10 @@ object VexLifeCapabilityBridge {
     /** Keep semantic Home line windows comfortably below the generic provider-result hard cap. */
     private const val HomeLineProjectionBytes = 24_000
 
-    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v1"
+    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v2"
+
+    const val ReachBoundaryExchangeHeadroom =
+        "EXCHANGE_HEADROOM"
 
     enum class ResultState {
         RETURNED,
@@ -224,7 +230,9 @@ object VexLifeCapabilityBridge {
         val schemaVersion: String,
         val truthClass: String,
         val entries: List<TraceEntry>,
-        val maximumRequestsPerTurn: Int,
+        /** Null means normal reach is not governed by a small fixed capability-call quota. */
+        val maximumRequestsPerTurn: Int?,
+        val reachBoundary: String,
         val exchangeAllowanceTokens: Int,
         val rawResultContentPersisted: Boolean,
         val effectAuthorityGranted: Boolean,
@@ -233,7 +241,8 @@ object VexLifeCapabilityBridge {
             require(
                 schemaVersion == TraceSchema &&
                     entries.isNotEmpty() &&
-                    entries.size <= MaximumRequestsPerTurn + 1
+                    maximumRequestsPerTurn == null &&
+                    reachBoundary == ReachBoundaryExchangeHeadroom
             ) {
                 "capability exchange trace is invalid"
             }
@@ -274,7 +283,8 @@ object VexLifeCapabilityBridge {
             schemaVersion = TraceSchema,
             truthClass = "REQUEST_RETURN_CAPABILITY_EXCHANGES_OF_ONE_HUMAN_TURN",
             entries = entries,
-            maximumRequestsPerTurn = MaximumRequestsPerTurn,
+            maximumRequestsPerTurn = null,
+            reachBoundary = ReachBoundaryExchangeHeadroom,
             exchangeAllowanceTokens = ExchangeAllowanceTokens,
             rawResultContentPersisted = false,
             effectAuthorityGranted =
@@ -336,13 +346,6 @@ object VexLifeCapabilityBridge {
                         ResultState.INVALID_REQUEST,
                         null,
                         parsed.reason + ". " + FormReminder,
-                        untrusted = false,
-                    )
-                admission.requestNumber > MaximumRequestsPerTurn ->
-                    Body(
-                        ResultState.LIMIT_REACHED,
-                        null,
-                        "This turn already used its $MaximumRequestsPerTurn requests.",
                         untrusted = false,
                     )
                 definition == null ->
@@ -2928,7 +2931,8 @@ object VexLifeCapabilityBridge {
         val held =
             compose(
                 ResultState.HELD_TOKEN_BUDGET,
-                "This turn has no room left for that result. Answer from what you have, or ask for something smaller next turn.",
+                "This turn's capability exchange headroom is exhausted. Do not send another capability request in this turn. " +
+                    "Answer from established evidence, or preserve what remains and continue from the next human turn.",
                 false,
             )
         return Triple(held, false, ResultState.HELD_TOKEN_BUDGET)
@@ -2954,7 +2958,8 @@ object VexLifeCapabilityBridge {
                         )
                 }
         val meta = buildMap {
-            put("request", "$requestNumber of $MaximumRequestsPerTurn")
+            put("request", requestNumber.toString())
+            put("reachBoundary", ReachBoundaryExchangeHeadroom)
             put("state", body.state.name)
             body.target?.let { put("target", it) }
             putAll(body.facts)
@@ -2967,29 +2972,30 @@ object VexLifeCapabilityBridge {
             }
             if (cut || body.truncated || nextOffset != null) put("truncated", "true")
         }
-        val remaining = MaximumRequestsPerTurn - requestNumber
+        val reachHealth =
+            "Use another reach only when its result can materially change what you understand, verify, or can truthfully do for the task. " +
+                "Stop when the evidence is sufficient or another materially similar read would not change the decision. " +
+                "The host will hold further reach if real exchange headroom is exhausted."
         val next =
             if (
-                body.continuation != null &&
-                remaining > 0 &&
-                body.state != ResultState.LIMIT_REACHED
+                body.state ==
+                ResultState.HELD_TOKEN_BUDGET
+            ) {
+                "Capability exchange headroom is exhausted for this turn. Do not send another capability request in this turn. " +
+                    "Answer from established evidence, or preserve the unfinished edge for the next human turn."
+            } else if (
+                body.continuation != null
             ) {
                 body.continuation +
-                    " You can make another request ($remaining left this turn) or answer the person now."
+                    " " +
+                    reachHealth
             } else if (
-                nextOffset != null &&
-                remaining > 0 &&
-                body.state != ResultState.LIMIT_REACHED
+                nextOffset != null
             ) {
                 "More of this source remains. To continue this same page, fetch the same URL with offset $nextOffset. " +
-                    "You can make another request ($remaining left this turn) or answer the person now."
-            } else if (remaining > 0 && body.state != ResultState.LIMIT_REACHED) {
-                "You can make another request ($remaining left this turn) or answer the person now."
+                    reachHealth
             } else {
-                "No requests are left this turn. Do not send another capability request in this turn. " +
-                    "Answer the person now from what you have. If a responsible answer still needs more " +
-                    "outside truth, share what you currently understand and what remains missing, then " +
-                    "ask the person to send another message so you can continue in a fresh turn."
+                reachHealth
             }
         return listOf(
                 VexLifeCapabilityRequest.ResultHeader,
