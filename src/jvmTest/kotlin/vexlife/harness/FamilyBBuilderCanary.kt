@@ -518,9 +518,12 @@ object FamilyBBuilderCanary {
                                         text,
                                     )
                                 },
+                            // Reach Health now permits one productive Send to remain inside
+                            // evidence-changing work for longer than the old observer ceiling.
+                            // Keep this host-only timeout above that observed process-flow duration.
                             timeout =
                                 Duration.ofMinutes(
-                                    12,
+                                    30,
                                 ),
                         )
 
