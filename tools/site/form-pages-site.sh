@@ -21,7 +21,15 @@ rm -rf -- "$OUT"
 mkdir -p "$OUT/data"
 cp -R "$ROOT/site/." "$OUT/"
 
-"$ROOT/gradlew" -p "$ROOT" --no-daemon -q generateVexLifeSiteData \
+# Site formation compiles the same JVM main source used by the Mac release proof. Keep the
+# bounded build-memory profile source-owned here too: Preview Queue A002 proved that retrying
+# generateVexLifeSiteData without these heap bounds can fail repeatedly with Kotlin/JVM OOM.
+GRADLE_MEMORY_ARGS=(
+  "-Dorg.gradle.jvmargs=-Xmx4g"
+  "-Dkotlin.daemon.jvm.options=-Xmx4g"
+)
+
+"$ROOT/gradlew" -p "$ROOT" --no-daemon "${GRADLE_MEMORY_ARGS[@]}" -q generateVexLifeSiteData \
   -PvexlifeSiteDataDir="$OUT/data" \
   -PvexlifeSourceSha="$SOURCE_SHA"
 
