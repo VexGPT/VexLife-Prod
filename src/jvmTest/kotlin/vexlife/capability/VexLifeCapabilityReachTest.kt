@@ -1249,18 +1249,51 @@ class VexLifeCapabilityReachTest {
         }
 
     @Test
-    fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
-        val over =
+    fun requestSequenceDoesNotBecomeASmallFixedReachQuota() = withHome { home ->
+        val later =
             VexLifeCapabilityBridge.perform(
                 request("""{"capability":"atlas","action":"list"}"""),
-                admission(home, number = VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1),
+                admission(
+                    home,
+                    number = 17,
+                    tokens = 20_000,
+                ),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.ResultState.LIMIT_REACHED, over.entry.state)
-        assertTrue(over.resultMessage.content.contains("No requests are left this turn"))
-        assertTrue(over.resultMessage.content.contains("Do not send another capability request"))
-        assertTrue(over.resultMessage.content.contains("share what you currently understand"))
-        assertTrue(over.resultMessage.content.contains("continue in a fresh turn"))
+
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            later.entry.state,
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"request\":\"17\""
+            )
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"reachBoundary\":\"EXCHANGE_HEADROOM\""
+            )
+        )
+        assertFalse(
+            later.resultMessage.content.contains(
+                "17 of"
+            )
+        )
+
+        val trace =
+            VexLifeCapabilityBridge.trace(
+                listOf(
+                    later.entry,
+                )
+            )
+        assertNull(
+            trace.maximumRequestsPerTurn,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
+            trace.reachBoundary,
+        )
     }
 }
 
