@@ -5,11 +5,6 @@
 name: mac-app-proof
 on:
   workflow_dispatch:
-  # [VexLife Prod versioning] TEMPORARY PROOF CARRIAGE ONLY.
-  # Remove before merge; connected GitHub tooling cannot press workflow_dispatch.
-  push:
-    branches:
-      - vexlife-prod-versioning
 permissions:
   contents: read
 concurrency:
