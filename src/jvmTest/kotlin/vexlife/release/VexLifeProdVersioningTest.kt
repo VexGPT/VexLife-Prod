@@ -19,6 +19,8 @@ class VexLifeProdVersioningTest {
     private val releaseDocs = Files.readString(root.resolve("docs/release/RELEASES.md"))
     private val macProofWorkflow =
         Files.readString(root.resolve(".github/workflows/mac-app-proof.yml"))
+    private val releaseWorkflow =
+        Files.readString(root.resolve(".github/workflows/release.yml"))
 
     @Test
     fun distributionIdentityIsVersionedWhileInstalledProductIdentityRemainsCanonical() {
@@ -77,6 +79,20 @@ class VexLifeProdVersioningTest {
         )
     }
 
+    @Test
+    fun everyMainCommitAutomaticallyPublishesItsOwnSourceIdentifiedPreview() {
+        assertContains(releaseWorkflow, "push:")
+        assertContains(releaseWorkflow, "- main")
+        assertContains(
+            releaseWorkflow,
+            "publish-mac-release.sh preview \"\" \"\$GITHUB_SHA\"",
+        )
+        assertContains(releasePublisher, "SOURCE_CUTOFF=\"\${3:-}\"")
+        assertContains(releasePublisher, "merge-base --is-ancestor")
+        assertContains(releasePublisher, "VEXLIFE_RELEASE_CATALOG_REFRESH_DEFERRED")
+        assertContains(releaseDocs, "Preview  = automatic source version for every main commit")
+        assertContains(releaseDocs, "Stable   = explicit SemVer after lived acceptance")
+    }
     @Test
     fun productReceiptRecordsDistributionIdentityWithoutForkingProductIdentity() {
         assertContains(
