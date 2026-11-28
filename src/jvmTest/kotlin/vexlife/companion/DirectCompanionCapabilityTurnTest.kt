@@ -1574,6 +1574,179 @@ class DirectCompanionCapabilityTurnTest {
         }
     }
 
+    @Test
+    fun firstReachOfFreshRecoverySendTakesExactCurrentCycleCustody() {
+        val home =
+            productHome()
+
+        try {
+            DirectCompanionTurn.performWithHooks(
+                setup =
+                    setup(
+                        home,
+                    ),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.working-cycle-handoff.baseline",
+                        content =
+                            "Establish one completed head before the interrupted work.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = {
+                            reply(
+                                "Baseline complete.",
+                            )
+                        },
+                    ),
+            )
+
+            val listControl =
+                VexLifeCapabilityRequest.RequestHeader +
+                    "\n" +
+                    """{"capability":"atlas","action":"list"}"""
+            var firstFailedCalls =
+                0
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.working-cycle-handoff.failed",
+                            content =
+                                "Inspect the body and keep working.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = {
+                                firstFailedCalls +=
+                                    1
+                                if (
+                                    firstFailedCalls ==
+                                        1
+                                ) {
+                                    reply(
+                                        listControl,
+                                    )
+                                } else {
+                                    error(
+                                        "first turn interruption",
+                                    )
+                                }
+                            },
+                        ),
+                )
+            }
+
+            val manifest =
+                assertNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val priorCycle =
+                assertNotNull(
+                    owner.readCurrentCycle(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                    ),
+                )
+
+            var resumedCalls =
+                0
+            val resumedFailure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.working-cycle-handoff.fresh",
+                                content =
+                                    "Continue, and inspect the current body again before deciding.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = {
+                                    resumedCalls +=
+                                        1
+                                    if (
+                                        resumedCalls ==
+                                            1
+                                    ) {
+                                        reply(
+                                            listControl,
+                                        )
+                                    } else {
+                                        error(
+                                            "second interruption after fresh reach",
+                                        )
+                                    }
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                2,
+                resumedCalls,
+            )
+            val freshFailure =
+                assertNotNull(
+                    resumedFailure.failureReceipt,
+                )
+            val current =
+                assertNotNull(
+                    owner.readCurrentCycle(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                    ),
+                )
+            assertEquals(
+                freshFailure.turnRef,
+                current.turnRef,
+                "first new reach must take current cycle custody from the exact recovered prior cycle",
+            )
+            assertEquals(
+                "send.working-cycle-handoff.fresh",
+                current.requestMessageRefOrNull,
+            )
+            assertEquals(
+                1,
+                current.cycleIndex,
+            )
+            assertEquals(
+                VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                current.phase,
+            )
+            assertFalse(
+                current.semanticFingerprint ==
+                    priorCycle.semanticFingerprint,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
