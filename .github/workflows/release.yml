@@ -1,5 +1,5 @@
-# Optional GitHub-hosted executor for the source-owned VexLife release process.
-# VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly instead.
+# Automatic Preview executor for every main commit plus the manual Preview/Stable release surface.
+# VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly for recovery/manual carriage.
 name: release
 on:
   push:
