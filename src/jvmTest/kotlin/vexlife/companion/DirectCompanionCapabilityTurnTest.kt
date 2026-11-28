@@ -22,6 +22,8 @@ import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHomeFiles
@@ -1046,6 +1048,53 @@ class DirectCompanionCapabilityTurnTest {
             productHome()
 
         try {
+            val manifest =
+                assertNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest
+            val focusOwner =
+                VexLifeWorkingFocusOwner(
+                    home,
+                )
+            val focus =
+                focusOwner.setCurrent(
+                    VexLifeWorkingFocus.Draft(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                        formationRef =
+                            "receipt.vexlife.working-cycle.focus.001",
+                        priorRevisionRefOrNull = null,
+                        subjectScopeRefs =
+                            listOf(
+                                "subject.vexlife.working-cycle",
+                            ),
+                        objective =
+                            "Continue the current task through evidence-changing work cycles.",
+                        currentQuestionOrNull =
+                            "What does the returned capability evidence change?",
+                        retainedRelationships =
+                            emptyList(),
+                        openEdges =
+                            emptyList(),
+                        nextProbeOrNull =
+                            "Integrate the returned capability result before choosing the next movement.",
+                        sourceBindingRefs =
+                            listOf(
+                                "binding.vexlife.working-cycle.source.001",
+                            ),
+                        sourceRefs =
+                            listOf(
+                                "source.vexlife.working-cycle.focus.001",
+                            ),
+                    ),
+                )
+                    .current
+
             var calls =
                 0
             val listControl =
@@ -1092,13 +1141,6 @@ class DirectCompanionCapabilityTurnTest {
                 2,
                 calls,
             )
-            val manifest =
-                assertNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
-                    .manifest
             val current =
                 assertNotNull(
                     VexLifeWorkingContinuityOwner(
@@ -1122,6 +1164,21 @@ class DirectCompanionCapabilityTurnTest {
             assertEquals(
                 "RETURNED",
                 current.capabilityState,
+            )
+            assertEquals(
+                assertNotNull(
+                    focus.revisionOrNull,
+                )
+                    .workingFocusRef,
+                current.workingFocusRefOrNull,
+            )
+            assertEquals(
+                focus.stateRef,
+                current.workingFocusStateRefOrNull,
+            )
+            assertEquals(
+                focus.revisionRefOrNull,
+                current.workingFocusRevisionRefOrNull,
             )
             assertNull(
                 current.nextMoveOrNull,
