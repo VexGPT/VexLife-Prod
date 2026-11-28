@@ -83,9 +83,9 @@ class VexLifeProdVersioningTest {
             buildSource,
             "vexlife-prod.macos-application-archive-receipt/v2",
         )
-        assertContains(buildSource, "\"distributionChannel\"")
-        assertContains(buildSource, "\"distributionIdentity\"")
-        assertContains(buildSource, "\"diskImageVolumeName\"")
+        assertContains(buildSource, "\\\"distributionChannel\\\"")
+        assertContains(buildSource, "\\\"distributionIdentity\\\"")
+        assertContains(buildSource, "\\\"diskImageVolumeName\\\"")
         assertContains(buildSource, "VexLifeProdDistributionChannel")
         assertContains(buildSource, "VexLifeProdDistributionIdentity")
         assertContains(candidateProof, "APP_DISTRIBUTION_IDENTITY")
