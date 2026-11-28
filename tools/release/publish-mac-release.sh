@@ -83,7 +83,7 @@ case "$CHANNEL" in
     APP_VERSION="$VERSION"
     ;;
   *)
-    echo "usage: bash tools/release/publish-mac-release.sh preview | stable <major.minor.patch>" >&2
+    echo "usage: bash tools/release/publish-mac-release.sh preview ['' <main-source-sha>] | stable <major.minor.patch>" >&2
     exit 1
     ;;
 esac
