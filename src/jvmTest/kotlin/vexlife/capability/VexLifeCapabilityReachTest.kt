@@ -1249,6 +1249,53 @@ class VexLifeCapabilityReachTest {
         }
 
     @Test
+    fun overBudgetMalformedRequestStopsMovementInsteadOfCoachingAnImpossibleRetry() = withHome { home ->
+        val malformed =
+            assertNotNull(
+                VexLifeCapabilityRequest.parseOrNull(
+                    "VEXLIFE_CAPABILITY_REQUEST/v1\nplease fix the project"
+                )
+            )
+        val over =
+            VexLifeCapabilityBridge.perform(
+                malformed,
+                admission(
+                    home,
+                    number =
+                        VexLifeCapabilityBridge.MaximumRequestsPerTurn +
+                            1,
+                ),
+                estimateTokens = tokens,
+            )
+
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
+            over.entry.state,
+        )
+        assertTrue(
+            over.resultMessage.content.contains(
+                "Do not correct or retry this capability request in the current turn"
+            )
+        )
+        assertTrue(
+            over.resultMessage.content.contains(
+                "No requests are left this turn"
+            )
+        )
+        assertTrue(
+            over.resultMessage.content.contains(
+                "Do not send another capability request"
+            )
+        )
+        assertFalse(
+            over.resultMessage.content.contains(
+                "The exact form"
+            ),
+            "an exhausted motor boundary must not coach a capability retry that cannot be admitted",
+        )
+    }
+
+    @Test
     fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
         val over =
             VexLifeCapabilityBridge.perform(
