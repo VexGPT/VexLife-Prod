@@ -2,6 +2,7 @@ package vexlife.continuity
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.time.Instant
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 
@@ -30,6 +31,9 @@ object VexLifeWorkingContinuity {
 
     const val PlanSchema =
         "vexlife-prod.continuity-rollover-plan/v1"
+
+    const val CycleCheckpointSchema =
+        "vexlife-prod.working-continuity-cycle-checkpoint/v1"
 
     const val PolicyRef =
         "policy.vexlife-prod.resource-context-pressure.001"
@@ -290,6 +294,285 @@ object VexLifeWorkingContinuity {
         val effects: PlanEffects,
         val planRef: String,
         val semanticFingerprint: String,
+    )
+
+    @Serializable
+    enum class CyclePhase {
+        AWAITING_INTEGRATION,
+        INTEGRATED,
+    }
+
+    @Serializable
+    enum class CycleNextMove {
+        REACH,
+        SOURCE_RETURN,
+        FINAL_ANSWER,
+    }
+
+    /**
+     * One bounded CURRENT in-flight work cycle.
+     *
+     * This is not a cycle history. The durable owner keeps only the latest current cycle so a
+     * human interruption or recoverable turn failure can preserve the unfinished edge without
+     * persisting raw reasoning/provider content or duplicating Conversation/capability evidence.
+     */
+    @Serializable
+    data class CycleCheckpoint(
+        val schemaVersion: String,
+        val truthClass: String,
+        val lineageRef: String,
+        val threadRef: String,
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestEventSha256: String,
+        val cycleIndex: Int,
+        val phase: CyclePhase,
+        val workingFocusRefOrNull: String?,
+        val workingFocusStateRefOrNull: String?,
+        val workingFocusRevisionRefOrNull: String?,
+        val capabilityCallRef: String,
+        val capabilityResultSha256: String,
+        val capabilityState: String,
+        val capabilitySourceRefs: List<String>,
+        val capabilityFrontierRefs: List<String>,
+        val externalEffectsExecuted: Boolean,
+        val externalEffectMayHaveExecuted: Boolean,
+        val nextMoveOrNull: CycleNextMove?,
+        val nextControlSha256OrNull: String?,
+        val formedAt: String,
+        val rawProviderContentPersisted: Boolean,
+        val rawPrivateReasoningPersisted: Boolean,
+        val semanticMemoryMutationPerformed: Boolean,
+        val cycleCheckpointRef: String,
+        val semanticFingerprint: String,
+    )
+
+    fun formCycleCheckpoint(
+        lineageRef: String,
+        threadRef: String,
+        turnRef: String,
+        requestEventRef: String,
+        requestEventSha256: String,
+        cycleIndex: Int,
+        phase: CyclePhase,
+        workingFocusRefOrNull: String?,
+        workingFocusStateRefOrNull: String?,
+        workingFocusRevisionRefOrNull: String?,
+        capabilityCallRef: String,
+        capabilityResultSha256: String,
+        capabilityState: String,
+        capabilitySourceRefs: List<String>,
+        capabilityFrontierRefs: List<String>,
+        externalEffectsExecuted: Boolean,
+        externalEffectMayHaveExecuted: Boolean,
+        nextMoveOrNull: CycleNextMove?,
+        nextControlSha256OrNull: String?,
+        formedAt: Instant,
+    ): CycleCheckpoint {
+        val core =
+            CycleCheckpointCore(
+                schemaVersion = CycleCheckpointSchema,
+                truthClass = "CURRENT_REFERENCE_ONLY_WORKING_CONTINUITY_CYCLE",
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+                turnRef = turnRef,
+                requestEventRef = requestEventRef,
+                requestEventSha256 = requestEventSha256,
+                cycleIndex = cycleIndex,
+                phase = phase,
+                workingFocusRefOrNull = workingFocusRefOrNull,
+                workingFocusStateRefOrNull = workingFocusStateRefOrNull,
+                workingFocusRevisionRefOrNull = workingFocusRevisionRefOrNull,
+                capabilityCallRef = capabilityCallRef,
+                capabilityResultSha256 = capabilityResultSha256,
+                capabilityState = capabilityState,
+                capabilitySourceRefs = capabilitySourceRefs.distinct().sorted(),
+                capabilityFrontierRefs = capabilityFrontierRefs.distinct().sorted(),
+                externalEffectsExecuted = externalEffectsExecuted,
+                externalEffectMayHaveExecuted = externalEffectMayHaveExecuted,
+                nextMoveOrNull = nextMoveOrNull,
+                nextControlSha256OrNull = nextControlSha256OrNull,
+                formedAt = formedAt.toString(),
+                rawProviderContentPersisted = false,
+                rawPrivateReasoningPersisted = false,
+                semanticMemoryMutationPerformed = false,
+            )
+        val fingerprint = semanticHash(core)
+        return CycleCheckpoint(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            lineageRef = core.lineageRef,
+            threadRef = core.threadRef,
+            turnRef = core.turnRef,
+            requestEventRef = core.requestEventRef,
+            requestEventSha256 = core.requestEventSha256,
+            cycleIndex = core.cycleIndex,
+            phase = core.phase,
+            workingFocusRefOrNull = core.workingFocusRefOrNull,
+            workingFocusStateRefOrNull = core.workingFocusStateRefOrNull,
+            workingFocusRevisionRefOrNull = core.workingFocusRevisionRefOrNull,
+            capabilityCallRef = core.capabilityCallRef,
+            capabilityResultSha256 = core.capabilityResultSha256,
+            capabilityState = core.capabilityState,
+            capabilitySourceRefs = core.capabilitySourceRefs,
+            capabilityFrontierRefs = core.capabilityFrontierRefs,
+            externalEffectsExecuted = core.externalEffectsExecuted,
+            externalEffectMayHaveExecuted = core.externalEffectMayHaveExecuted,
+            nextMoveOrNull = core.nextMoveOrNull,
+            nextControlSha256OrNull = core.nextControlSha256OrNull,
+            formedAt = core.formedAt,
+            rawProviderContentPersisted = core.rawProviderContentPersisted,
+            rawPrivateReasoningPersisted = core.rawPrivateReasoningPersisted,
+            semanticMemoryMutationPerformed = core.semanticMemoryMutationPerformed,
+            cycleCheckpointRef =
+                "checkpoint.vexlife-prod.working-continuity-cycle." +
+                    fingerprint.take(32),
+            semanticFingerprint = fingerprint,
+        ).also(::validateCycleCheckpoint)
+    }
+
+    fun validateCycleCheckpoint(
+        value: CycleCheckpoint,
+    ): CycleCheckpoint {
+        require(
+            value.schemaVersion == CycleCheckpointSchema &&
+                value.truthClass == "CURRENT_REFERENCE_ONLY_WORKING_CONTINUITY_CYCLE" &&
+                value.cycleIndex > 0 &&
+                value.capabilityState.isNotBlank() &&
+                !value.rawProviderContentPersisted &&
+                !value.rawPrivateReasoningPersisted &&
+                !value.semanticMemoryMutationPerformed &&
+                !(value.externalEffectsExecuted && value.externalEffectMayHaveExecuted)
+        ) {
+            "working continuity cycle checkpoint identity/effect truth is invalid"
+        }
+        requireRef(value.lineageRef, "cycle lineageRef")
+        requireRef(value.threadRef, "cycle threadRef")
+        requireRef(value.turnRef, "cycle turnRef")
+        requireRef(value.requestEventRef, "cycle requestEventRef")
+        requireSha256Value(value.requestEventSha256, "cycle requestEventSha256")
+        requireRef(value.capabilityCallRef, "cycle capabilityCallRef")
+        requireSha256Value(value.capabilityResultSha256, "cycle capabilityResultSha256")
+        value.workingFocusRefOrNull?.let { requireRef(it, "cycle workingFocusRef") }
+        value.workingFocusStateRefOrNull?.let { requireRef(it, "cycle workingFocusStateRef") }
+        value.workingFocusRevisionRefOrNull?.let { requireRef(it, "cycle workingFocusRevisionRef") }
+        require(
+            (value.workingFocusRefOrNull == null) ==
+                (value.workingFocusStateRefOrNull == null && value.workingFocusRevisionRefOrNull == null)
+        ) {
+            "working continuity cycle focus refs are inconsistent"
+        }
+        requireRefs(value.capabilitySourceRefs, "cycle capabilitySourceRefs")
+        requireRefs(value.capabilityFrontierRefs, "cycle capabilityFrontierRefs")
+        require(
+            value.capabilitySourceRefs == value.capabilitySourceRefs.distinct().sorted() &&
+                value.capabilityFrontierRefs == value.capabilityFrontierRefs.distinct().sorted()
+        ) {
+            "working continuity cycle capability refs must be canonical"
+        }
+        when (value.phase) {
+            CyclePhase.AWAITING_INTEGRATION ->
+                require(
+                    value.nextMoveOrNull == null &&
+                        value.nextControlSha256OrNull == null
+                ) {
+                    "awaiting-integration cycle cannot claim a next movement"
+                }
+
+            CyclePhase.INTEGRATED -> {
+                require(value.nextMoveOrNull != null) {
+                    "integrated cycle must name the next movement"
+                }
+                when (value.nextMoveOrNull) {
+                    CycleNextMove.REACH,
+                    CycleNextMove.SOURCE_RETURN,
+                    ->
+                        require(value.nextControlSha256OrNull != null) {
+                            "control-producing integrated cycle requires exact next control SHA-256"
+                        }
+
+                    CycleNextMove.FINAL_ANSWER ->
+                        require(value.nextControlSha256OrNull == null) {
+                            "final-answer cycle does not persist answer bytes/hash as working continuity"
+                        }
+
+                    null -> error("integrated cycle next move disappeared")
+                }
+            }
+        }
+        value.nextControlSha256OrNull?.let {
+            requireSha256Value(it, "cycle nextControlSha256")
+        }
+        Instant.parse(value.formedAt)
+        requireRef(value.cycleCheckpointRef, "cycle checkpointRef")
+
+        val core =
+            CycleCheckpointCore(
+                schemaVersion = value.schemaVersion,
+                truthClass = value.truthClass,
+                lineageRef = value.lineageRef,
+                threadRef = value.threadRef,
+                turnRef = value.turnRef,
+                requestEventRef = value.requestEventRef,
+                requestEventSha256 = value.requestEventSha256,
+                cycleIndex = value.cycleIndex,
+                phase = value.phase,
+                workingFocusRefOrNull = value.workingFocusRefOrNull,
+                workingFocusStateRefOrNull = value.workingFocusStateRefOrNull,
+                workingFocusRevisionRefOrNull = value.workingFocusRevisionRefOrNull,
+                capabilityCallRef = value.capabilityCallRef,
+                capabilityResultSha256 = value.capabilityResultSha256,
+                capabilityState = value.capabilityState,
+                capabilitySourceRefs = value.capabilitySourceRefs,
+                capabilityFrontierRefs = value.capabilityFrontierRefs,
+                externalEffectsExecuted = value.externalEffectsExecuted,
+                externalEffectMayHaveExecuted = value.externalEffectMayHaveExecuted,
+                nextMoveOrNull = value.nextMoveOrNull,
+                nextControlSha256OrNull = value.nextControlSha256OrNull,
+                formedAt = value.formedAt,
+                rawProviderContentPersisted = value.rawProviderContentPersisted,
+                rawPrivateReasoningPersisted = value.rawPrivateReasoningPersisted,
+                semanticMemoryMutationPerformed = value.semanticMemoryMutationPerformed,
+            )
+        val fingerprint = semanticHash(core)
+        require(
+            value.semanticFingerprint == fingerprint &&
+                value.cycleCheckpointRef ==
+                "checkpoint.vexlife-prod.working-continuity-cycle." +
+                    fingerprint.take(32)
+        ) {
+            "working continuity cycle checkpoint semantic identity is invalid"
+        }
+        return value
+    }
+
+    @Serializable
+    private data class CycleCheckpointCore(
+        val schemaVersion: String,
+        val truthClass: String,
+        val lineageRef: String,
+        val threadRef: String,
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestEventSha256: String,
+        val cycleIndex: Int,
+        val phase: CyclePhase,
+        val workingFocusRefOrNull: String?,
+        val workingFocusStateRefOrNull: String?,
+        val workingFocusRevisionRefOrNull: String?,
+        val capabilityCallRef: String,
+        val capabilityResultSha256: String,
+        val capabilityState: String,
+        val capabilitySourceRefs: List<String>,
+        val capabilityFrontierRefs: List<String>,
+        val externalEffectsExecuted: Boolean,
+        val externalEffectMayHaveExecuted: Boolean,
+        val nextMoveOrNull: CycleNextMove?,
+        val nextControlSha256OrNull: String?,
+        val formedAt: String,
+        val rawProviderContentPersisted: Boolean,
+        val rawPrivateReasoningPersisted: Boolean,
+        val semanticMemoryMutationPerformed: Boolean,
     )
 
     fun projectPressure(
@@ -1000,6 +1283,19 @@ object VexLifeWorkingContinuity {
                 values.size,
         ) {
             "$label must be unique"
+        }
+    }
+
+    private fun requireSha256Value(
+        value: String,
+        label: String,
+    ) {
+        require(
+            value.matches(
+                Regex("[0-9a-f]{64}"),
+            ),
+        ) {
+            "$label must be one lowercase SHA-256"
         }
     }
 
