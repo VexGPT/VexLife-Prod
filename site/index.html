@@ -87,8 +87,14 @@
         <div class="mac-download-actions">
           <div class="mac-action-path" aria-label="Mac first-download path">
             <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
-            <span class="mac-action-arrow" id="mac-security-arrow" aria-hidden="true" hidden>→</span>
-            <a class="btn btn-outline" id="mac-security" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension" title="Use this after macOS blocks VexLife on the first launch" hidden>Open Privacy &amp; Security</a>
+            <span class="mac-trust-path" id="mac-trust-path" hidden>
+              <span class="mac-action-arrow" aria-hidden="true">→</span>
+              <span class="mac-os-step" title="This step happens in macOS, not on this webpage">Open DMG</span>
+              <span class="mac-action-arrow" aria-hidden="true">→</span>
+              <a class="btn btn-outline" id="mac-security" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension" title="Open macOS Privacy &amp; Security">Open Privacy &amp; Security</a>
+              <span class="mac-action-arrow" aria-hidden="true">→</span>
+              <span class="mac-os-step" title="This button appears in macOS after VexLife has been blocked once">Open Anyway</span>
+            </span>
           </div>
           <a class="mac-release-notes" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
         </div>
