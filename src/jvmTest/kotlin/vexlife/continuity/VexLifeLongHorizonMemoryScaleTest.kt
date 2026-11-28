@@ -25,8 +25,8 @@ import vexlife.home.CanonicalVexLifeHomeFixture
  */
 class VexLifeLongHorizonMemoryScaleTest {
     companion object {
-        private const val ScaleProperty = "vexlife.lh6.scale"
-        private const val ReportProperty = "vexlife.lh6.report"
+        private const val ScaleEnvironment = "VEXLIFE_LH6_SCALE"
+        private const val ReportEnvironment = "VEXLIFE_LH6_REPORT"
         private const val InitialCompletedTurns = 3_652
         private const val DenseDimension = 1_024
         private const val SemanticTargetOrdinal = 17
@@ -55,7 +55,7 @@ class VexLifeLongHorizonMemoryScaleTest {
 
     @Test
     fun fiveYearCanonicalScaleRebuildRecoveryMeasurement() {
-        if (System.getProperty(ScaleProperty) != "true") {
+        if (System.getenv(ScaleEnvironment) != "1") {
             return
         }
 
@@ -669,10 +669,10 @@ class VexLifeLongHorizonMemoryScaleTest {
 
             val reportPath =
                 Path.of(
-                    System.getProperty(
-                        ReportProperty,
-                        "build/lh6/lh6-scale-report.json",
-                    ),
+                    System.getenv(
+                        ReportEnvironment,
+                    )
+                        ?: "build/lh6/lh6-scale-report.json",
                 )
                     .toAbsolutePath()
             Files.createDirectories(
