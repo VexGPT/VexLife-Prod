@@ -77,3 +77,12 @@ jobs:
           $Sha = (Get-FileHash -LiteralPath $Zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "WINDOWS_PARITY_PREVIEW=$($Zip.Name)"
           Write-Host "WINDOWS_PARITY_PREVIEW_SHA256=$Sha"
+
+      - name: Retain exact Windows preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexlife-windows-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/vexlife-windows-preview/VexLife-Windows-x64-preview-*.zip
+            ${{ runner.temp }}/vexlife-windows-preview/VexLife-Windows-preview-diagnostic-*.log
+          if-no-files-found: error
