@@ -458,7 +458,17 @@ object VexLifeWorkingContinuity {
         value.workingFocusRevisionRefOrNull?.let { requireRef(it, "cycle workingFocusRevisionRef") }
         require(
             (value.workingFocusRefOrNull == null) ==
-                (value.workingFocusStateRefOrNull == null && value.workingFocusRevisionRefOrNull == null)
+                (value.workingFocusRevisionRefOrNull == null) &&
+                (
+                    value.workingFocusStateRefOrNull !=
+                        null ||
+                        (
+                            value.workingFocusRefOrNull ==
+                                null &&
+                                value.workingFocusRevisionRefOrNull ==
+                                null
+                            )
+                )
         ) {
             "working continuity cycle focus refs are inconsistent"
         }
