@@ -2064,6 +2064,17 @@ object DirectCompanionTurn {
                     capabilityEntry = exchange.entry,
                     phase =
                         VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                    recoveredPriorFingerprintOrNull =
+                        if (
+                            exchange.entry.requestNumber ==
+                                1
+                        ) {
+                            workingCycleRecovery
+                                ?.cycle
+                                ?.semanticFingerprint
+                        } else {
+                            null
+                        },
                     formedAt = hooks.now(),
                 )
                 hooks.cancellation?.checkpoint()
