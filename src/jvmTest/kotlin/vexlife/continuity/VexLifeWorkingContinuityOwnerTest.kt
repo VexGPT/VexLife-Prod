@@ -1540,6 +1540,144 @@ class VexLifeWorkingContinuityOwnerTest {
     }
 
 
+    @Test
+    fun crossTurnCycleReplacementRequiresTheExactRecoveredFingerprint() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-continuity-cycle-recovery-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+
+            fun cycle(
+                turnSuffix: String,
+                requestSuffix: String,
+                requestSha: String,
+                resultSha: String,
+            ) =
+                VexLifeWorkingContinuity.formCycleCheckpoint(
+                    lineageRef =
+                        "companion-lineage.vexlife.owner-cycle-recovery",
+                    threadRef =
+                        "thread.self-development.open-conversation",
+                    turnRef =
+                        "turn.vexlife.owner-cycle-recovery.$turnSuffix",
+                    requestEventRef =
+                        "event.vexlife.owner-cycle-recovery.$requestSuffix",
+                    requestEventSha256 =
+                        requestSha,
+                    requestMessageRefOrNull =
+                        "message.vexlife.owner-cycle-recovery.$requestSuffix",
+                    cycleIndex = 1,
+                    phase =
+                        VexLifeWorkingContinuity.CyclePhase.AWAITING_INTEGRATION,
+                    workingFocusRefOrNull = null,
+                    workingFocusStateRefOrNull = null,
+                    workingFocusRevisionRefOrNull = null,
+                    capabilityCallRef =
+                        "call.vexlife.owner-cycle-recovery.$requestSuffix",
+                    capabilityHandleOrNull =
+                        "atlas",
+                    capabilityActionOrNull =
+                        "list",
+                    capabilityTargetOrNull = null,
+                    capabilityResultSha256 =
+                        resultSha,
+                    capabilityState =
+                        "RETURNED",
+                    capabilitySourceRefs =
+                        emptyList(),
+                    capabilityFrontierRefs =
+                        emptyList(),
+                    externalEffectsExecuted = false,
+                    externalEffectMayHaveExecuted = false,
+                    nextMoveOrNull = null,
+                    nextControlSha256OrNull = null,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-28T18:00:00Z",
+                        ),
+                )
+
+            val failedTurnCycle =
+                cycle(
+                    turnSuffix = "failed",
+                    requestSuffix = "failed",
+                    requestSha = "1".repeat(64),
+                    resultSha = "2".repeat(64),
+                )
+            owner.writeCurrentCycle(
+                failedTurnCycle,
+            )
+
+            val freshTurnCycle =
+                cycle(
+                    turnSuffix = "fresh",
+                    requestSuffix = "fresh",
+                    requestSha = "3".repeat(64),
+                    resultSha = "4".repeat(64),
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.writeCurrentCycle(
+                    freshTurnCycle,
+                )
+            }
+            assertEquals(
+                failedTurnCycle,
+                owner.readCurrentCycle(
+                    failedTurnCycle.lineageRef,
+                    failedTurnCycle.threadRef,
+                ),
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.writeCurrentCycle(
+                    checkpoint =
+                        freshTurnCycle,
+                    recoveredPriorFingerprintOrNull =
+                        "5".repeat(64),
+                )
+            }
+            assertEquals(
+                failedTurnCycle,
+                owner.readCurrentCycle(
+                    failedTurnCycle.lineageRef,
+                    failedTurnCycle.threadRef,
+                ),
+            )
+
+            val recovered =
+                owner.writeCurrentCycle(
+                    checkpoint =
+                        freshTurnCycle,
+                    recoveredPriorFingerprintOrNull =
+                        failedTurnCycle.semanticFingerprint,
+                )
+
+            assertEquals(
+                "RECOVERED_CYCLE_REPLACED",
+                recovered.state,
+            )
+            assertEquals(
+                freshTurnCycle,
+                owner.readCurrentCycle(
+                    freshTurnCycle.lineageRef,
+                    freshTurnCycle.threadRef,
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
