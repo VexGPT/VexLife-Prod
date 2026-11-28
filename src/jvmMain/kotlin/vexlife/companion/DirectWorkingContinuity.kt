@@ -593,6 +593,8 @@ object DirectWorkingContinuity {
             null,
         nextControlSha256OrNull: String? =
             null,
+        recoveredPriorFingerprintOrNull: String? =
+            null,
         formedAt: Instant =
             Instant.now(),
     ): VexLifeWorkingContinuity.CycleCheckpoint {
@@ -617,6 +619,8 @@ object DirectWorkingContinuity {
                 turnRef = currentRequest.turnRef,
                 requestEventRef = currentRequest.eventRef,
                 requestEventSha256 = currentRequest.eventHash,
+                requestMessageRefOrNull =
+                    currentRequest.messageRef,
                 cycleIndex = capabilityEntry.requestNumber,
                 phase = phase,
                 workingFocusRefOrNull =
@@ -626,6 +630,12 @@ object DirectWorkingContinuity {
                 workingFocusRevisionRefOrNull =
                     workingFocusObservation.revisionRefOrNull,
                 capabilityCallRef = capabilityEntry.callRef,
+                capabilityHandleOrNull =
+                    capabilityEntry.handle,
+                capabilityActionOrNull =
+                    capabilityEntry.action,
+                capabilityTargetOrNull =
+                    capabilityEntry.target,
                 capabilityResultSha256 =
                     capabilityEntry.resultSha256,
                 capabilityState =
@@ -647,7 +657,9 @@ object DirectWorkingContinuity {
             productHome,
         )
             .writeCurrentCycle(
-                checkpoint,
+                checkpoint = checkpoint,
+                recoveredPriorFingerprintOrNull =
+                    recoveredPriorFingerprintOrNull,
             )
             .checkpoint
     }
@@ -669,6 +681,8 @@ object DirectWorkingContinuity {
         productHome: Path,
         turnRef: String,
         prepared: Prepared,
+        consumedRecoveryOrNull: CycleRecovery? =
+            null,
     ): Boolean {
         val owner =
             VexLifeWorkingContinuityOwner(
@@ -682,9 +696,15 @@ object DirectWorkingContinuity {
                 ?: return false
         require(
             current.turnRef ==
-                turnRef
+                turnRef ||
+                (
+                    consumedRecoveryOrNull !=
+                        null &&
+                        current.semanticFingerprint ==
+                        consumedRecoveryOrNull.cycle.semanticFingerprint
+                    )
         ) {
-            "completed turn cannot clear another working continuity cycle"
+            "completed turn cannot clear an unrelated working continuity cycle"
         }
         return owner.clearCurrentCycle(
             lineageRef = current.lineageRef,
