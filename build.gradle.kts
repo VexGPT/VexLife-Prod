@@ -3525,6 +3525,26 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdDistributionChannel",
+                "-string",
+                distributionChannel,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdDistributionIdentity",
+                "-string",
+                distributionIdentity,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdEmbeddedSetupLauncherRelativePath",
                 "-string",
                 macApplicationEmbeddedSetupLauncherRelativePath,
