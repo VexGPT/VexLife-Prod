@@ -21,7 +21,7 @@ class VexLifeProdSetupLanguageTest {
     private val root = Path.of(System.getProperty("user.dir"))
     private val catalog = VexLifeStrings.catalog
     private val sha = "a".repeat(40)
-    private val languages = VexLifePersonSettings.Languages.map { it.first }
+    private val languages = VexLifePersonSettings.ScreenLanguages.map { it.first }
 
     private val windowSource =
         root
@@ -37,6 +37,11 @@ class VexLifeProdSetupLanguageTest {
             VexLifeProdEntryFamily.UpdateAvailable(sha),
             VexLifeProdEntryFamily.RepairRequired(sha),
             VexLifeProdEntryFamily.UpdateRepairRequired(sha),
+            VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                desiredSourceSha = sha,
+                priorServiceSourceSha = "b".repeat(40),
+                priorServicePid = 4242L,
+            ),
             VexLifeProdEntryFamily.StartRequired(sha, priorServiceSourceSha = null),
             VexLifeProdEntryFamily.StartRequired(sha, priorServiceSourceSha = "b".repeat(40)),
             VexLifeProdEntryFamily.HomeFormationRequired(sha),
@@ -219,6 +224,20 @@ class VexLifeProdSetupLanguageTest {
             val returning = VexLifeProdSetupLanguage.observe(home, explicit = null, system = "de")
             assertEquals("fr", returning.language, "the Home's saved language outranks the Mac's")
             assertTrue(returning.languageChosen)
+
+            // Setup chooses how VexLife reads; once the person has a reply language, it is theirs.
+            VexLifeProdSetupLanguage.choose(home, "zh")
+            val settings = VexLifePersonSettingsStore(home).read()
+            assertEquals("zh", settings.screenLanguage)
+            assertEquals("fr", settings.replyLanguage, "choosing setup's language never moves Vex's replies")
+
+            // A fresh Home is seeded with the matching reply language; Simplified setup seeds
+            // Simplified replies, never the legacy `zh` that means Traditional.
+            val fresh = parent.resolve(".vexlife-fresh")
+            CanonicalVexLifeHomeFixture.form(fresh)
+            VexLifeProdSetupLanguage.choose(fresh, "zh")
+            assertEquals(VexLifePersonSettings.SimplifiedChinese, VexLifePersonSettingsStore(fresh).read().replyLanguage)
+            assertEquals("zh", VexLifeProdSetupLanguage.observe(fresh, explicit = null, system = "en").language)
         } finally {
             parent.toFile().deleteRecursively()
         }

@@ -382,6 +382,31 @@ class VexWebAuthoringTest {
     }
 
     @Test
+    fun localPresentationAndExternalActionsStayTypedAndFailClosed() {
+        assertEquals(
+            "speech.play-pause",
+            VexWebAuthoring.localAction("speech.play-pause").actionRef,
+        )
+        assertEquals(
+            "color-mode.toggle",
+            VexWebAuthoring.presentationAction("color-mode.toggle").actionRef,
+        )
+        assertEquals(
+            "https://example.com/support",
+            VexWebAuthoring.externalNavigation("https://example.com/support").href,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.localAction("Speech Play")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.presentationAction("Color Mode")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.externalNavigation("http://example.com/support")
+        }
+    }
+
+    @Test
     fun surfaceAuthoringCannotHideMissingRootsOrInvalidInteractiveBinding() {
         assertFailsWith<IllegalArgumentException> {
             VexWebAuthoring.surface(

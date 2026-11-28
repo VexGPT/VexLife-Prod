@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -107,6 +108,26 @@ class DirectConversationSourceReturnTest {
                 "Never quote or explain the request header",
             ),
         )
+        assertTrue(
+            protocol.content.contains(
+                "HOST SOURCE-RETURN TRUTH: NOT_PERFORMED",
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.ContextHeader,
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "does not perform it",
+            ),
+        )
+        assertFalse(
+            protocol.content.contains(
+                "PERFORMED_AND_RETURNED",
+            ),
+        )
     }
 
     @Test
@@ -115,6 +136,33 @@ class DirectConversationSourceReturnTest {
             DirectConversationSourceReturn.parseRequestOrNull(
                 "I can answer from what is already present.",
             ),
+        )
+    }
+
+    @Test
+    fun exactV1HeaderSuppliesRedundantBodySchemaVersionWhenProviderOmitsIt() {
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n" +
+                        """{"queryTerms":["river-map"],"speakerScope":"ANY"}""",
+                ),
+            )
+
+        assertEquals(
+            DirectConversationSourceReturn.RequestSchema,
+            request.schemaVersion,
+        )
+        assertEquals(
+            listOf(
+                "river-map",
+            ),
+            request.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            request.speakerScope,
         )
     }
 
@@ -151,6 +199,73 @@ class DirectConversationSourceReturnTest {
                     " trailing prose",
             )
         }
+    }
+
+
+    @Test
+    fun markdownTailAfterExactRequestDoesNotFailTheHumanTurnControlBoundary() {
+        val noisy =
+            requestText(
+                queryTermsJson =
+                    "[\"missing-term\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            ) +
+                "\n```\n\n" +
+                "This will pull the exact older Conversation source before answering."
+
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    noisy,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "missing-term",
+            ),
+            request.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            request.speakerScope,
+        )
+    }
+
+    @Test
+    fun markdownFenceAroundExactRequestStillConvertsOnlyTheRequestObject() {
+        val exactJson =
+            requestText(
+                queryTermsJson =
+                    "[\"lantern-garden\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            )
+                .substringAfter(
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n",
+                )
+        val wrapped =
+            DirectConversationSourceReturn.RequestHeader +
+                "\n```json\n" +
+                exactJson +
+                "\n```\n" +
+                "I will use the returned source next."
+
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    wrapped,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "lantern-garden",
+            ),
+            request.queryTerms,
+        )
     }
 
 
@@ -354,6 +469,141 @@ class DirectConversationSourceReturnTest {
     }
 
     @Test
+    fun lifecycleMembraneAlsoGovernsProviderRequestedSourceReturnWithoutChangingV1Packet() {
+        val home =
+            productHome()
+        val store =
+            DirectConversationStore(
+                home,
+            )
+
+        try {
+            store.withWriterLease {
+                val oldRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.lifecycle.old",
+                        requestMessageRef =
+                            "message.source-return.lifecycle.human.old",
+                        content =
+                            "The historical lifecycle token is ivory-bridge-39.",
+                    )
+                val oldResponse =
+                    appendResponse(
+                        request = oldRequest,
+                        responseMessageRef =
+                            "message.source-return.lifecycle.companion.old",
+                        content =
+                            "I received ivory-bridge-39.",
+                        model = "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.source-return.lifecycle.old",
+                        invocationEvidenceRef =
+                            "evidence.source-return.lifecycle.old",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = oldRequest,
+                        response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = oldRequest,
+                    response = oldResponse,
+                    contextSha256 = context.sha256,
+                )
+
+                val request =
+                    DirectConversationSourceReturn.Request(
+                        schemaVersion =
+                            DirectConversationSourceReturn.RequestSchema,
+                        queryTerms =
+                            listOf(
+                                "ivory-bridge-39",
+                            ),
+                        speakerScope =
+                            DirectConversationSourceReturn.AnySpeaker,
+                    )
+                val blocked =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request = request,
+                        excludedEventRefs =
+                            setOf(
+                                oldRequest.eventRef,
+                                oldResponse.eventRef,
+                            ),
+                        sourceLifecycleBindingRef =
+                            "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                    )
+                assertTrue(
+                    blocked.matches.isEmpty(),
+                )
+                assertEquals(
+                    "lifecycle.score.aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb",
+                    blocked.sourceLifecycleBindingRef,
+                )
+
+                val historical =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request = request,
+                        sourceLifecycleBindingRef =
+                            "lifecycle.score.cccccccccccccccc.dddddddddddddddd",
+                        historicalCurrentizedEventRefs =
+                            setOf(
+                                oldRequest.eventRef,
+                                oldResponse.eventRef,
+                            ),
+                    )
+                val projection =
+                    DirectConversationSourceReturn.project(
+                        discovery = historical,
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget,
+                    )
+
+                assertEquals(
+                    DirectConversationSourceReturn.Returned,
+                    projection.state,
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "historicalCurrentizedEventRefs=" +
+                            oldRequest.eventRef +
+                            "," +
+                            oldResponse.eventRef,
+                    ),
+                )
+                assertTrue(
+                    projection.systemContent.contains(
+                        "do not present them as current Memory or current accepted meaning",
+                    ),
+                )
+                assertFalse(
+                    projection.systemContent
+                        .lineSequence()
+                        .last()
+                        .contains(
+                            "historicalCurrentizedEventRefs",
+                        ),
+                    "v1 machine packet shape must remain unchanged",
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun speakerScopeAndRankingRemainDeterministic() {
         val home =
             productHome()
@@ -525,12 +775,17 @@ class DirectConversationSourceReturnTest {
                         speakerScope =
                             DirectConversationSourceReturn.AnySpeaker,
                     )
+                val runtime =
+                    runtimeEvidence()
                 val inference =
-                    DirectCompanionConnection.invoke(
-                        runtime = runtimeEvidence(),
-                        messages =
-                            initialPrompt.messages +
-                                DirectConversationSourceReturn.protocolMessage(),
+                    LocalHereticInference(
+                        runtime = runtime,
+                        model =
+                            requireNotNull(
+                                HereticModelCatalog.entry(
+                                    runtime.modelRef,
+                                ),
+                            ),
                         transport =
                             DirectCompanionConnection.Transport {
                                 DirectCompanionConnection.HttpResult(
@@ -566,6 +821,17 @@ class DirectConversationSourceReturnTest {
                             )
                         },
                     )
+                        .invoke(
+                            CompanionInferenceConnection.Request(
+                                messages =
+                                    initialPrompt.messages +
+                                        DirectConversationSourceReturn.protocolMessage(),
+                                capabilityOffer = emptyList(),
+                                conversationCacheBoundaryMessageCount = null,
+                                progressObserver = null,
+                                cancellation = null,
+                            ),
+                        )
                 val request =
                     requireNotNull(
                         DirectConversationSourceReturn.parseRequestOrNull(
@@ -719,6 +985,16 @@ class DirectConversationSourceReturnTest {
                         DirectConversationSourceReturn.NoMatch,
                     ),
                 )
+                assertTrue(
+                    projected.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_NO_MATCH",
+                    ),
+                )
+                assertFalse(
+                    projected.systemContent.contains(
+                        "PERFORMED_AND_RETURNED",
+                    ),
+                )
                 assertFalse(
                     projected.systemContent.contains(
                         request.content,
@@ -820,6 +1096,16 @@ class DirectConversationSourceReturnTest {
                         response.content,
                     ),
                 )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_AND_RETURNED",
+                    ),
+                )
+                assertFalse(
+                    returned.systemContent.contains(
+                        "NOT_PERFORMED",
+                    ),
+                )
                 assertEquals(
                     listOf(
                         request.eventRef,
@@ -848,6 +1134,16 @@ class DirectConversationSourceReturnTest {
                 assertEquals(
                     0,
                     held.returnedMatchCount,
+                )
+                assertTrue(
+                    held.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_HELD_TOKEN_BUDGET",
+                    ),
+                )
+                assertFalse(
+                    held.systemContent.contains(
+                        "PERFORMED_AND_RETURNED",
+                    ),
                 )
                 assertFalse(
                     held.systemContent.contains(

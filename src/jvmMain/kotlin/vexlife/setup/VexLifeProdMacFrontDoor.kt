@@ -7,9 +7,11 @@ import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
@@ -62,7 +64,7 @@ object VexLifeProdMacFrontDoor {
         val modelLabel: String,
         val modelArtifactTotalBytes: Long,
         val modelArtifactMissingBytes: Long,
-        val modelMinimumMemoryBytes: Long,
+        val modelMinimumMemoryBytes: Long?,
         val currentTotalMemoryBytes: Long?,
         val currentFreeStorageBytes: Long?,
         val requiredFreeStorageBytes: Long,
@@ -72,12 +74,12 @@ object VexLifeProdMacFrontDoor {
     ) {
         init {
             require(
-                vexlife.model.heretic.HereticModelCatalog.entry(modelRef)?.identity?.modelProfileRef ==
-                    modelProfileRef &&
+                modelRef.isNotBlank() &&
+                    modelProfileRef.isNotBlank() &&
                     modelLabel.isNotBlank() &&
                     modelArtifactTotalBytes > 0 &&
                     modelArtifactMissingBytes in 0..modelArtifactTotalBytes &&
-                    modelMinimumMemoryBytes > 0 &&
+                    (modelMinimumMemoryBytes == null || modelMinimumMemoryBytes > 0) &&
                     requiredFreeStorageBytes >= modelArtifactMissingBytes &&
                     acquisitionDisposition ==
                         "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES" &&
@@ -125,6 +127,16 @@ object VexLifeProdMacFrontDoor {
                             currentServicePid > 0
                     ) {
                         "Mac front-door owned-service state requires exact source/PID projection"
+                    }
+
+                VexLifeProdEntryFamily.StateServiceRecoveryRequired ->
+                    require(
+                        !currentServiceSourceSha.isNullOrBlank() &&
+                            currentServicePid != null &&
+                            currentServicePid > 0 &&
+                            serviceDetail == null
+                    ) {
+                        "service-recovery projection requires one strict witnessed source/PID"
                     }
 
                 VexLifeProdEntryFamily.StateStartRequired ->
@@ -383,10 +395,13 @@ object VexLifeProdMacFrontDoor {
         require(Path.of(location.productHome).normalize() == selectedHome) {
             "Product-entry Home location changed the selected Vex Home coordinate"
         }
-        // The model this setup is about: the window's choice, else the Home's, else what fits this Mac.
+        // The model this setup is about: the window's choice, else the Home's, else what fits
+        // this Mac. Once a Home exists, its explicitly imported offerings are first-class here.
         val chosenModel =
-            model?.let(vexlife.model.heretic.HereticModelCatalog::byHandle)
-                ?: current.activeModelRef?.let(vexlife.model.heretic.HereticModelCatalog::entry)
+            model?.let { VexLifeProdSetupModel.offeredByHandle(selectedHome, it) }
+                ?: current.activeModelRef?.let {
+                    VexLifeProdSetupModel.offeredByRef(selectedHome, it)
+                }
                 ?: vexlife.model.heretic.HereticModelCatalog.recommendedFor(current.totalMemoryBytes)
 
         fun observed(
@@ -477,6 +492,17 @@ object VexLifeProdMacFrontDoor {
                         detail = existing.detail,
                     ),
                     detail = existing.detail,
+                )
+
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                return observed(
+                    VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                        desiredSourceSha = desiredSourceSha,
+                        priorServiceSourceSha = existing.sourceCurrentness.sourceSha,
+                        priorServicePid = existing.launchdObservation.pid,
+                    ),
+                    sourceSha = existing.sourceCurrentness.sourceSha,
+                    pid = existing.launchdObservation.pid,
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
@@ -571,9 +597,13 @@ object VexLifeProdMacFrontDoor {
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
                 val sourceSha = existing.receipt.sourceSha
-                if (existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent) {
-                    // The exact owned receipt survives but launchd no longer carries the service
-                    // (for example after the Mac restarted). That is stopped, not broken.
+                if (
+                    !existing.servesSelectedHome ||
+                    existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent
+                ) {
+                    // The exact service is either stopped or belongs to another prior Home identity.
+                    // Both are ordinary lifetime convergence: preserve every Home, retire only the
+                    // exact owned service if needed, then start it against the selected Home.
                     observed(
                         VexLifeProdEntryFamily.StartRequired(
                             desiredSourceSha = desiredSourceSha,
@@ -593,6 +623,9 @@ object VexLifeProdMacFrontDoor {
                     )
                 }
             }
+
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                error("recoverable legacy orphan was already mapped before prerequisite evaluation")
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned,
             is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
@@ -685,6 +718,22 @@ object VexLifeProdMacFrontDoorProcess {
                     productHome = productHome,
                     progress = progress,
                 )
+            },
+        val retireStaleService: (priorServiceSourceSha: String, priorServicePid: Long) -> Unit =
+            { priorServiceSourceSha, priorServicePid ->
+                VexLifeProdMacServiceLifetime.retireRecoverableLegacyOrphan(
+                    expectedSourceSha = priorServiceSourceSha,
+                    expectedPid = priorServicePid,
+                )
+            },
+        /**
+         * Update & Restart / Repair & Restart are explicit human authority to supersede one exact
+         * older VexLife setup holding this Home's setup lease. Ordinary Set Up / Start keep normal
+         * serialization and never invoke takeover.
+         */
+        val prepareRestartTakeover: (productHome: Path) -> Unit =
+            { productHome ->
+                VexLifeProdLocalSetupLease.prepareRestartTakeover(productHome)
             },
         val convergeProduct:
             (
@@ -902,13 +951,28 @@ object VexLifeProdMacFrontDoorProcess {
         utf8StandardOutput.flush()
     }
 
+    private fun currentRuntimeRealizations(): HereticRuntimeRealization.Resolver =
+        HereticRuntimeRealization.Resolver(
+            HereticRuntimeRealization.TargetSource(
+                vexlife.platform.VexLifeJvmPlatformTarget::requireCurrent,
+            ),
+        )
+
     /** No-effect: the offered models, how each fits this Mac, and which one setup will use. */
     fun observeModel(productHome: Path, model: String?, language: String?) {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
         utf8StandardOutput.println(
-            VexContractJson.encode(VexLifeProdSetupModel.observe(productHome, model, selected, memory))
+            VexContractJson.encode(
+                VexLifeProdSetupModel.observe(
+                    productHome = productHome,
+                    explicit = model,
+                    language = selected,
+                    totalMemoryBytes = memory,
+                    runtimeRealizations = currentRuntimeRealizations(),
+                ),
+            )
         )
         utf8StandardOutput.flush()
     }
@@ -919,7 +983,14 @@ object VexLifeProdMacFrontDoorProcess {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
-        val projection = VexLifeProdSetupModel.choose(productHome, model, selected, memory)
+        val projection =
+            VexLifeProdSetupModel.choose(
+                productHome = productHome,
+                handle = model,
+                language = selected,
+                totalMemoryBytes = memory,
+                runtimeRealizations = currentRuntimeRealizations(),
+            )
         if (projection.effectsPerformed) {
             VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to model))
         }
@@ -980,7 +1051,7 @@ object VexLifeProdMacFrontDoorProcess {
         val selectedHome = productHome.normalize()
         val chosenModel =
             model?.let {
-                requireNotNull(vexlife.model.heretic.HereticModelCatalog.byHandle(it)) {
+                requireNotNull(VexLifeProdSetupModel.offeredByHandle(selectedHome, it)) {
                     "model $it is not offered"
                 }
             }
@@ -1165,6 +1236,7 @@ object VexLifeProdMacFrontDoorProcess {
                 null -> "NONE"
                 VexLifeProdEntryFamily.OpenPresentation -> effect.effectRef
                 VexLifeProdEntryFamily.FormCanonicalHome -> effect.effectRef
+                is VexLifeProdEntryFamily.RetireStaleService -> effect.effectRef
                 is VexLifeProdEntryFamily.ConvergeProduct ->
                     effect.effectRef +
                         (if (effect.allowAcquisition) ":ACQUIRE" else "") +
@@ -1220,12 +1292,47 @@ object VexLifeProdMacFrontDoorProcess {
                 )
             }
 
+            is VexLifeProdEntryFamily.RetireStaleService -> {
+                VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
+                try {
+                    hooks.retireStaleService(
+                        effect.priorServiceSourceSha,
+                        effect.priorServicePid,
+                    )
+                } catch (error: Exception) {
+                    return failed(
+                        resolved.controlRef,
+                        effectRef,
+                        VexLifeProdSetupFailure.classify(error, language),
+                    )
+                }
+                VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
+                ActivationProjection(
+                    schemaVersion = ActivationSchema,
+                    controlRef = resolved.controlRef,
+                    semanticStateRef = reobserve(),
+                    manifestationRef = ManifestationRefreshEntry,
+                )
+            }
+
             is VexLifeProdEntryFamily.ConvergeProduct -> {
                 require(effect.desiredSourceSha == desiredSourceSha) {
                     "Product-entry convergence Effect source differs from the activation source"
                 }
                 VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
                 try {
+                    if (
+                        resolved.semanticStateRef in
+                            setOf(
+                                VexLifeProdEntryFamily.StateUpdateAvailable,
+                                VexLifeProdEntryFamily.StateRepairRequired,
+                                VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                            )
+                    ) {
+                        hooks.prepareRestartTakeover(
+                            selectedHome,
+                        )
+                    }
                     hooks.convergeProduct(
                         effect.desiredSourceSha,
                         effect.allowAcquisition,

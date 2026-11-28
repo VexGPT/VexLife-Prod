@@ -5,17 +5,26 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectCompanionConnectionTest {
@@ -33,6 +42,624 @@ class DirectCompanionConnectionTest {
             requestModel = HereticProductIdentity.RequestModel,
             qualification = HereticRuntimeQualification.qualified(),
         )
+
+    private fun qualifiedMac4BRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            )
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.mac-heretic-4b.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = realization.modelRef,
+            realizationRef = realization.realizationRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens =
+                realization.runtime.livedLaunchProfile
+                    ?.contextTokens,
+        )
+    }
+
+    private fun qualifiedWindowsRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val realization =
+            HereticRuntimeRealization.WindowsQwen4B
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.windows-heretic.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = realization.modelRef,
+            realizationRef = realization.realizationRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens =
+                requireNotNull(
+                    realization.runtime.livedLaunchProfile,
+                )
+                    .contextTokens,
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillClosesAfterFirstNonterminalProviderEventToPreserveSystemCache() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        var terminalEventAttempted =
+            false
+        var transportClosed =
+            false
+        val system =
+            "VEXLIFE_FOUNDATIONAL_FIELD/v1\n\nexact dynamic Foundation bytes"
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    observed: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "cache-preserving prefill must use streaming transport",
+                    )
+
+                override fun postStreaming(
+                    observed: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    call =
+                        observed
+                    try {
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":null,"delta":{"role":"assistant","reasoning":"1"}}]}""",
+                        )
+                        terminalEventAttempted =
+                            true
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":"length","delta":{"role":"assistant","reasoning":"2"}}]}""",
+                        )
+                        error(
+                            "cache-preserving prefill must close before terminal provider data",
+                        )
+                    } finally {
+                        transportClosed =
+                            true
+                    }
+                }
+            }
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedMac4BRuntime(),
+                systemContent = system,
+                transport = transport,
+                monotonicNanos =
+                    listOf(
+                            1_000_000_000L,
+                            1_125_000_000L,
+                        )
+                        .iterator()
+                        .let {
+                            values ->
+                            {
+                                values.next()
+                            }
+                        },
+            )
+
+        val performed =
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Performed>(
+                result,
+            )
+        assertEquals(
+            null,
+            performed.promptTokens,
+        )
+        assertEquals(
+            null,
+            performed.cachedPromptTokens,
+        )
+        assertEquals(
+            null,
+            performed.completionTokens,
+        )
+        assertEquals(
+            125L,
+            performed.totalMillis,
+        )
+        assertFalse(
+            terminalEventAttempted,
+            "warmup must close before terminal assistant-cache insertion can replace the system prefix",
+        )
+        assertTrue(
+            transportClosed,
+        )
+
+        val request =
+            requireNotNull(
+                call,
+            )
+        val body =
+            Json
+                .parseToJsonElement(
+                    request.body,
+                )
+                .jsonObject
+        assertEquals(
+            "true",
+            body[
+                "stream"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            256,
+            body[
+                "max_tokens"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
+        )
+        assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        val messages =
+            requireNotNull(
+                body[
+                    "messages"
+                ],
+            )
+                .jsonArray
+        assertEquals(
+            2,
+            messages.size,
+        )
+        assertEquals(
+            "system",
+            messages[0]
+                .jsonObject[
+                    "role"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            system,
+            messages[0]
+                .jsonObject[
+                    "content"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "user",
+            messages[1]
+                .jsonObject[
+                    "role"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertTrue(
+            messages[1]
+                .jsonObject[
+                    "content"
+                ]
+                ?.jsonPrimitive
+                ?.content
+                .orEmpty()
+                .isNotBlank(),
+            "provider-only framing should keep the warmup nonterminal until the client closes it",
+        )
+        assertFalse(
+            request.body.contains(
+                "Reply with OK",
+            ),
+        )
+    }
+
+    @Test
+    fun cancellationInterruptsTheStablePrefixClientCallForServiceShutdown() {
+        val entered =
+            CountDownLatch(
+                1,
+            )
+        val cancellation =
+            DirectCompanionCancellation()
+        val failure =
+            AtomicReference<Throwable?>(
+                null,
+            )
+        val thread =
+            Thread(
+                {
+                    cancellation
+                        .bindCurrentThread()
+                        .use {
+                            failure.set(
+                                runCatching {
+                                        DirectCompanionConnection.prefillStableSystemPrefix(
+                                            runtime = qualifiedMac4BRuntime(),
+                                            systemContent = "dynamic Foundation",
+                                            transport =
+                                                object :
+                                                    DirectCompanionConnection.StreamingTransport {
+                                                    override fun post(
+                                                        call: DirectCompanionConnection.HttpCall,
+                                                    ): DirectCompanionConnection.HttpResult =
+                                                        error(
+                                                            "cache-preserving prefill must use streaming transport",
+                                                        )
+
+                                                    override fun postStreaming(
+                                                        call: DirectCompanionConnection.HttpCall,
+                                                        onLine: (String) -> Unit,
+                                                    ): DirectCompanionConnection.StreamingHttpResult {
+                                                        entered.countDown()
+                                                        Thread.sleep(
+                                                            60_000L,
+                                                        )
+                                                        error(
+                                                            "cancelled prefill transport must not finish normally",
+                                                        )
+                                                    }
+                                                },
+                                            cancellation = cancellation,
+                                        )
+                                    }
+                                    .exceptionOrNull(),
+                            )
+                        }
+                },
+                "foundation-prefill-cancellation-test",
+            )
+
+        thread.start()
+        assertTrue(
+            entered.await(
+                5,
+                TimeUnit.SECONDS,
+            ),
+        )
+        cancellation.request()
+        thread.join(
+            5_000L,
+        )
+
+        assertFalse(
+            thread.isAlive,
+            "provider prefill client thread remained alive after cancellation",
+        )
+        assertIs<DirectCompanionCancellation.Cancelled>(
+            failure.get(),
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillDoesNotClaimSuccessAfterTerminalAssistantCacheReplacement() {
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedMac4BRuntime(),
+                systemContent = "dynamic Foundation",
+                transport =
+                    object :
+                        DirectCompanionConnection.StreamingTransport {
+                        override fun post(
+                            call: DirectCompanionConnection.HttpCall,
+                        ): DirectCompanionConnection.HttpResult =
+                            error(
+                                "cache-preserving prefill must use streaming transport",
+                            )
+
+                        override fun postStreaming(
+                            call: DirectCompanionConnection.HttpCall,
+                            onLine: (String) -> Unit,
+                        ): DirectCompanionConnection.StreamingHttpResult {
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"done"}}]}""",
+                            )
+                            onLine(
+                                "data: [DONE]",
+                            )
+                            return DirectCompanionConnection.StreamingHttpResult(
+                                status = 200,
+                                responseBodySha256 =
+                                    "a".repeat(
+                                        64,
+                                    ),
+                            )
+                        }
+                    },
+            )
+
+        assertEquals(
+            "PROVIDER_PREFIX_STREAM_TERMINATED_BEFORE_CACHE_PRESERVATION",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillHoldsNativeToolsRepresentationWithoutCallingProvider() {
+        var providerCalls =
+            0
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime =
+                    qualifiedRuntime(),
+                systemContent =
+                    "exact provider-leading system prefix",
+                transport =
+                    DirectCompanionConnection.Transport {
+                        providerCalls +=
+                            1
+                        error(
+                            "native-tools representation must hold before provider invocation",
+                        )
+                    },
+            )
+
+        assertEquals(
+            "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
+        )
+        assertEquals(
+            0,
+            providerCalls,
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillHoldsWhenRuntimeDoesNotOwnTheMlxPromptCacheProfile() {
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedWindowsRuntime(),
+                systemContent = "dynamic Foundation",
+                transport =
+                    DirectCompanionConnection.Transport {
+                        error(
+                            "held non-MLX prefill must not call a provider",
+                        )
+                    },
+            )
+
+        assertEquals(
+            "RUNTIME_PROMPT_CACHE_PROFILE_NOT_MLX",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
+        )
+    }
+
+    @Test
+    fun macQwen4BRequestCarriesConversationBoundaryOnlyAsProviderMetadata() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val messages =
+            listOf(
+                CompanionProviderMessage(
+                    role = "system",
+                    content = "Stable system",
+                ),
+                CompanionProviderMessage(
+                    role = "user",
+                    content = "Prior request",
+                ),
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = "Prior response",
+                ),
+                CompanionProviderMessage(
+                    role = "user",
+                    content = "Current request",
+                ),
+            )
+
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedMac4BRuntime(),
+            model = HereticModelCatalog.Models.Qwen4B,
+            messages = messages,
+            conversationCacheBoundaryMessageCount = 3,
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "Current response"
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                },
+        )
+
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            3,
+            body[
+                "vexlife_prompt_cache_boundary_message_count"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
+        )
+        assertEquals(
+            listOf(
+                "system" to "Stable system",
+                "user" to "Prior request",
+                "assistant" to "Prior response",
+                "user" to "Current request",
+            ),
+            requireNotNull(
+                body[
+                    "messages"
+                ],
+            )
+                .jsonArray
+                .map {
+                    message ->
+                    val value =
+                        message.jsonObject
+                    value[
+                        "role"
+                    ]
+                        ?.jsonPrimitive
+                        ?.content to
+                        value[
+                            "content"
+                        ]
+                            ?.jsonPrimitive
+                            ?.content
+                },
+        )
+        assertEquals(
+            setOf(
+                "enable_thinking",
+            ),
+            requireNotNull(
+                body[
+                    "chat_template_kwargs"
+                ],
+            )
+                .jsonObject
+                .keys,
+        )
+    }
+
+    @Test
+    fun windowsRealizationMayServeTheSameProductModelThroughItsOwnExactEndpoint() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qualifiedWindowsRuntime(),
+                model = HereticModelCatalog.Models.Qwen4B,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "Hello from Windows",
+                        ),
+                    ),
+                conversationCacheBoundaryMessageCount = 1,
+                transport =
+                    DirectCompanionConnection.Transport {
+                        observed ->
+                        call = observed
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "finish_reason": "stop",
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Hello from the Windows realization."
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+                now = {
+                    Instant.parse(
+                        "2026-11-18T17:30:00Z",
+                    )
+                },
+            )
+
+        assertEquals(
+            "http://127.0.0.1:18080/v1/chat/completions",
+            requireNotNull(
+                call,
+            ).uri.toString(),
+        )
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    ).body,
+                )
+                .jsonObject
+        assertEquals(
+            4_096,
+            body[
+                "max_tokens"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
+        )
+        assertFalse(
+            body.containsKey(
+                "vexlife_prompt_cache_boundary_message_count",
+            ),
+        )
+        assertEquals(
+            "default_model",
+            result.model,
+        )
+        assertEquals(
+            "Hello from the Windows realization.",
+            result.content,
+        )
+    }
 
     @Test
     fun qualifiedRuntimeOwnsEndpointAndModelForOneActualLoopbackInference() {
@@ -329,6 +956,202 @@ class DirectCompanionConnectionTest {
         assertEquals(
             "The better ",
             progress[2].delta,
+        )
+    }
+
+    @Test
+    fun recognizedImportedNativeToolsSwitchConnectionCarriageOnlyAfterExactRuntimeQualification() {
+        val recognizedModel =
+            HereticModelCatalog.Models.Qwen27B.copy(
+                companionProfile =
+                    HereticCompanionRepresentation.Profiles.importedQwen(
+                        profileRef =
+                            "companion-profile.vexlife-prod.imported.connection-test.qwen3.v1",
+                        nativeToolCalling = true,
+                    ),
+            )
+        val messages =
+            listOf(
+                CompanionProviderMessage(
+                    role = "system",
+                    content = "Stable system",
+                ),
+                CompanionProviderMessage(
+                    role = "user",
+                    content = "Use reach only when needed.",
+                ),
+            )
+        val offer =
+            VexLifeCapabilityAtlas.definitions()
+                .filter {
+                    it.actions.isNotEmpty()
+                }
+
+        fun requestBody(
+            nativeToolsQualified: Boolean,
+        ): kotlinx.serialization.json.JsonObject {
+            var observed: DirectCompanionConnection.HttpCall? =
+                null
+            val runtime =
+                qualifiedRuntime()
+                    .copy(
+                        qualification =
+                            HereticRuntimeQualification.qualified(
+                                providerNativeToolsQualified =
+                                    nativeToolsQualified,
+                            ),
+                    )
+
+            DirectCompanionConnection.invoke(
+                runtime = runtime,
+                model = recognizedModel,
+                messages = messages,
+                capabilityOffer = offer,
+                conversationCacheBoundaryMessageCount = 1,
+                transport =
+                    DirectCompanionConnection.Transport {
+                        call ->
+                        observed =
+                            call
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "finish_reason": "stop",
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Qualified request shape."
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+            )
+
+            return Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        observed,
+                    )
+                        .body,
+                )
+                .jsonObject
+        }
+
+        val held =
+            requestBody(
+                nativeToolsQualified = false,
+            )
+        assertFalse(
+            held.containsKey(
+                "tools",
+            ),
+        )
+        assertEquals(
+            "1",
+            held[
+                "vexlife_prompt_cache_boundary_message_count"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+
+        val qualified =
+            requestBody(
+                nativeToolsQualified = true,
+            )
+        assertTrue(
+            qualified[
+                "tools"
+            ]
+                ?.jsonArray
+                ?.isNotEmpty() ==
+                true,
+        )
+        assertFalse(
+            qualified.containsKey(
+                "vexlife_prompt_cache_boundary_message_count",
+            ),
+            "provider-native carriage must not reuse the text-control cache boundary",
+        )
+    }
+
+    @Test
+    fun nativeToolFinishWithoutConsumableCallFailsAtConnectionBoundary() {
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "streaming path must not fall back to bulk transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"I need the source."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"finish_reason":"tool_calls","delta":{"role":"assistant","content":"\n\n"}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        "data: [DONE]",
+                    )
+                    onLine(
+                        "",
+                    )
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "b".repeat(
+                            64,
+                        ),
+                    )
+                }
+            }
+
+        val failure =
+            assertFailsWith<DirectCompanionConnection.ConnectionException> {
+                DirectCompanionConnection.invoke(
+                    runtime = qualifiedRuntime(),
+                    messages =
+                        listOf(
+                            CompanionProviderMessage(
+                                role = "user",
+                                content = "Use reach when the source is not in view.",
+                            ),
+                        ),
+                    transport = transport,
+                    capabilityOffer =
+                        VexLifeCapabilityAtlas.definitions()
+                            .filter {
+                                it.actions.isNotEmpty()
+                            },
+                )
+            }
+
+        assertEquals(
+            DirectCompanionConnection.FailureCode.EndpointResponseInvalid,
+            failure.code,
+        )
+        assertEquals(
+            "tool_calls",
+            failure.measurement?.finishReason,
         )
     }
 

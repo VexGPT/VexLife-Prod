@@ -3,11 +3,16 @@ package vexlife.setup
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import vexlife.application.VexLifeProdMacDistributionLifetime
+import vexlife.contract.VexContractJson
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdMacRuntimeHandoff
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
+import vexlife.service.VexLifeProdMacJavaLifetime
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 /**
@@ -80,12 +85,85 @@ object VexLifeProdSetupProcess {
                     expectedSourceSha = expectedSourceSha,
                 )
             },
+        val convergeJavaRuntime:
+            (
+                productHome: Path,
+                providerSourceSha: String,
+                requiredImage: VexLifeProdPrivateServiceImage.Observation,
+            ) -> VexLifeProdMacJavaLifetime.Binding =
+            { productHome, providerSourceSha, requiredImage ->
+                VexLifeProdMacJavaLifetime.convergeFromInstalledProvider(
+                    productHome = productHome,
+                    providerSourceSha = providerSourceSha,
+                    requiredImage = requiredImage,
+                )
+            },
+        val prepareRuntimeHandoff:
+            (
+                productHome: Path,
+                priorService: VexLifeProdMacServiceLifetime.Receipt,
+                session: VexLifeProdLocalSetup.Session,
+            ) -> Unit =
+            { productHome, priorService, session ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.prepare(
+                        productHome = productHome,
+                        priorService = priorService,
+                        expectedRuntime = session.foundation.qualifiedRuntimeEvidence,
+                    )
+                }
+                    .onFailure {
+                        runCatching {
+                            VexLifeProdMacRuntimeHandoff.clear(
+                                productHome,
+                            )
+                        }
+                    }
+            },
+        val clearRuntimeHandoff: (productHome: Path) -> Unit =
+            { productHome ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.clear(
+                        productHome,
+                    )
+                }
+                Unit
+            },
         val startService:
-            (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
-            { productHome, expectedSourceSha ->
+            (
+                productHome: Path,
+                expectedSourceSha: String,
+                onPriorProcessRetirementPlanned: (VexLifeProdMacServiceLifetime.Receipt) -> Unit,
+                onPriorProcessRetiredBeforeReplacementStart: () -> Unit,
+            ) -> VexLifeProdMacServiceLifetime.Result =
+            {
+                productHome,
+                expectedSourceSha,
+                onPriorProcessRetirementPlanned,
+                onPriorProcessRetiredBeforeReplacementStart,
+                ->
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = productHome,
                     desiredSourceSha = expectedSourceSha,
+                    onPriorProcessRetirementPlanned =
+                        onPriorProcessRetirementPlanned,
+                    onPriorProcessRetiredBeforeReplacementStart =
+                        onPriorProcessRetiredBeforeReplacementStart,
+                )
+            },
+        val reclaimRetiredImages:
+            (
+                productHome: Path,
+                currentSourceSha: String,
+                currentPayloadSha256: String,
+                javaProviderSourceSha: String?,
+            ) -> VexLifeProdPrivateServiceImageRetention.Result =
+            { productHome, currentSourceSha, currentPayloadSha256, javaProviderSourceSha ->
+                VexLifeProdPrivateServiceImageRetention.reclaimRetiredVerifiedImages(
+                    productHome = productHome,
+                    currentSourceSha = currentSourceSha,
+                    currentPayloadSha256 = currentPayloadSha256,
+                    javaProviderSourceSha = javaProviderSourceSha,
                 )
             },
         val reportImageVerified: (VexLifeProdPrivateServiceImage.Observation) -> Unit =
@@ -218,6 +296,23 @@ object VexLifeProdSetupProcess {
         )
     }
 
+    /**
+     * Startup hygiene for outer VexLife distribution resources.
+     *
+     * This is intentionally separate from Home/model/service convergence: it can run before a Home
+     * is selected, preserves the distribution currently executing this setup program, retires only
+     * other exact mounted VexLife distributions, and holds uncertainty without blocking Product
+     * entry. The source .dmg files are never deleted.
+     */
+    internal fun reconcileDistributionLifetime():
+        VexLifeProdMacDistributionLifetime.Result =
+        VexLifeProdMacDistributionLifetime.reconcile(
+            currentImageRoot =
+                currentImageRoot()
+                    .toAbsolutePath()
+                    .normalize(),
+        )
+
     internal fun realizeProductConvergence(
         desiredSourceSha: String,
         allowAcquisition: Boolean,
@@ -253,7 +348,7 @@ object VexLifeProdSetupProcess {
 
         hooks.reportImageVerified(observed)
 
-        val session =
+        var session =
             hooks.establishSession(
                 arguments.productHome,
                 arguments.allowAcquisition,
@@ -275,9 +370,72 @@ object VexLifeProdSetupProcess {
             "installed VexLife-Prod private image differs from verified setup image"
         }
 
+        val setupJavaProviderSource =
+            System.getProperty(
+                VexLifeProdMacJavaLifetime.SetupProviderSourceProperty,
+            )
+                ?.takeIf(
+                    GitSha::matches,
+                )
+                ?: arguments.expectedSourceSha
+        hooks.convergeJavaRuntime(
+            Path.of(
+                session.result.productHome,
+            ),
+            setupJavaProviderSource,
+            observed,
+        )
+
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
-            hooks.startService(Path.of(session.result.productHome), arguments.expectedSourceSha)
+            try {
+                hooks.startService(
+                    Path.of(session.result.productHome),
+                    arguments.expectedSourceSha,
+                    { priorService ->
+                        // Setup already holds exact runtime custody. Offer the old service one bounded
+                        // chance to relinquish its duplicate release duty before launchd retirement.
+                        // If this optimization cannot be formed, ordinary service close remains
+                        // authoritative and the post-retirement callback will recover/start runtime.
+                        hooks.prepareRuntimeHandoff(
+                            Path.of(
+                                session.result.productHome,
+                            ),
+                            priorService,
+                            session,
+                        )
+                    },
+                ) {
+                    // Whether the old service preserved or released runtime, re-observe/re-establish
+                    // exact setup custody before the reuse-only replacement service starts.
+                    session =
+                        hooks.establishSession(
+                            Path.of(session.result.productHome),
+                            arguments.allowAcquisition,
+                            arguments.allowRuntimeStart,
+                        )
+                }
+            } catch (failure: Throwable) {
+                // Until a CURRENT service has returned, setup still owns the runtime Session it
+                // established. A failed service start must not strand that runtime after setup exits.
+                hooks.clearRuntimeHandoff(
+                    Path.of(
+                        session.result.productHome,
+                    ),
+                )
+                try {
+                    session.close()
+                } catch (releaseFailure: Throwable) {
+                    failure.addSuppressed(releaseFailure)
+                }
+                throw failure
+            }
+
+        hooks.clearRuntimeHandoff(
+            Path.of(
+                session.result.productHome,
+            ),
+        )
 
         require(
             service.sourceSha == installed.sourceSha &&
@@ -286,10 +444,17 @@ object VexLifeProdSetupProcess {
             "started VexLife-Prod service differs from the verified installed image"
         }
 
+        hooks.reclaimRetiredImages(
+            Path.of(session.result.productHome),
+            service.sourceSha,
+            service.imagePayloadSha256,
+            service.javaProviderSourceSha,
+        )
+
         hooks.reportReady(arguments, session, installed, service)
     }
 
-    private fun currentImageRoot(): Path {
+    internal fun currentImageRoot(): Path {
         val codeSource =
             Path.of(
                     VexLifeProdSetupProcess::class.java.protectionDomain.codeSource.location.toURI()
@@ -345,6 +510,21 @@ fun main(args: Array<String>) {
 
     val command = args.firstOrNull()
     val rest = args.drop(1)
+
+    if (command == "--reconcile-distribution-lifetime") {
+        require(rest.isEmpty()) {
+            "--reconcile-distribution-lifetime takes no arguments"
+        }
+        val result =
+            VexLifeProdSetupProcess.reconcileDistributionLifetime()
+        println(
+            VexContractJson.encode(
+                result,
+            )
+        )
+        System.out.flush()
+        return
+    }
 
     if (command == "--inspect-front-door") {
         val flags =

@@ -43,7 +43,8 @@ A LANGUAGE IS OFFERED ONLY WHEN COMPLETE
 | `strings` | yes | words per language: `text`, optional `aria-label`, `_stale` when its English changed | `VexLifeStringCatalog.resolve` |
 | `surfaces` | yes | every presentation that shows the element, `{scope}.{surface}` | `keysOn(surface)`: the setup window asks for exactly `setup.window` |
 | `dataKey` | when the element presents a semantic ref | `owner:kind:REF` in the owner's own vocabulary | `keysFor(dataKey)`, mapping tests |
-| `testId`, `designToken`, `lens` | reserved | automation id, design token, VexBoard Screen Lens address | attach when that system does |
+| `lens` | when a Screen Lens element shows the key | the Lens `elementRef` the key labels, so the Lens and the catalog name one element | `VexLifeProdScreenLens.elementRefs()`, `aLensNamespaceNamesARealScreenLensElement` |
+| `testId`, `designToken` | reserved | automation id, design token | attach when that system does |
 
 Any other namespace is refused (BLOCK) so a typo cannot become a silent new namespace; adding one
 is a change to `VexLifeStringCatalog.Namespaces` and to this table.
@@ -80,8 +81,10 @@ Tests hold the mapping true rather than trusting it:
 - a displayed Control's label key carries `entry:control:<that Control>`; a State's title and
   detail carry `entry:state:<that State>`; a journey step's label carries `entry:step:<that step>`;
 - every card button's `key` maps through `dataKey` to the exact `actionRef` it returns;
-- every `dataKey` names a ref its owner really has (`VexLifeProdSetupElements.DataKeys` reads the
-  owners' own vocabularies; it owns none of them);
+- every `dataKey` names a ref its owner really has (`VexLifeProdSetupElements.DataKeys` for setup and
+  `VexLifeWorkspaceElements.DataKeys` for workspace and release alerts read the owners' own
+  vocabularies in main source; they own none of them);
+- every `lens` value names an element the Screen Lens really exports;
 - every key used in source exists, and every key in source is used by something.
 
 `dataKey` is how VexBoard, a test or an automation finds "the button that converges the Product"
@@ -118,9 +121,56 @@ scope is complete again.
 
 | Scope | Surfaces | Languages complete | Source |
 |---|---|---|---|
-| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `workspace` | `workspace.settings`, `workspace.conversation` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/workspace.json` |
+| `release-alerts` | `release-alerts.inbox` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/release-alerts.json` |
+| `windows-setup` | `windows-setup.window` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/windows-setup.json` |
 
-The `setup` translations were written by Claude and have not had native-speaker review yet.
+`VexLifeStrings.Scopes` names every shipped source scope. `VexLifeStrings.ScreenLanguageScopes` names the portable scopes governed by the human screen-language choice (`setup`, `workspace`, `release-alerts`). The host-specific Windows setup window intersects those offered setup languages with `windows-setup` completeness and resolves its Windows-specific words through the same selected screen language. All four shipped scopes are currently complete in every offered screen language. The service and host-specific renderer choose a scope language only when that whole scope is complete in it, otherwise English; a partially translated scope is never shown mixed.
+
+All translations were written by Claude and have not had native-speaker review yet. `zh-Hant` was
+derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體,
+預設 …) and checked to contain no Simplified-only characters; it needs a Traditional-Chinese
+reader's review first.
+
+### Two language choices
+
+The person makes two language choices, each with one responsibility, kept side by side in their Vex
+Home (`VexLifePersonSettings`) and offered side by side in the workspace's language panel:
+
+~~~text
+Vex replies in        replyLanguage   ReplyLanguages      Vex is told it on every message;
+                                                          Speech reads in it; dictation hears it
+VexLife appears in    screenLanguage  ScreenLanguages     setup, Windows setup, workspace and release-alert screens;
+                                      (complete only)     absent = the same as the reply language
+~~~
+
+- `VexLifeLanguageFamily` owns how the choices move: State `FOLLOWING_REPLIES` / `SCREEN_CHOSEN`,
+  Controls `CHOOSE_REPLY_LANGUAGE`, `CHOOSE_SCREEN_LANGUAGE`, `FOLLOW_REPLY_LANGUAGE`, Effect
+  `SaveChoices`. Its law, tested over every State × Control: choosing one never moves the other.
+  The service checks that a screen language is complete before the Control reaches the Family.
+- `VexLifePersonSettings.screenLanguageFor` is the only resolver of the screen language; the strings
+  service, setup and the page's `lang` all use it, so they cannot disagree.
+- A settings update names exactly one choice (`SettingsUpdate`); the two workspace dropdowns are
+  Blueprint elements bound to `person.reply-language` and `person.screen-language`, and the Screen
+  Lens shows each as an SCAE pathway through the Family.
+- The setup window is a screen: choosing its language saves the screen language. A Home with no
+  reply language yet is seeded with the matching one (Simplified screens seed `zh-Hans` replies,
+  never the stored `zh` that means Traditional); a reply language the person chose is never moved.
+- `person-settings/v2` adds `screenLanguage`; a v1 file reads as following its reply language and is
+  rewritten as v2 on the next change.
+
+### Chinese script
+
+Reading is script-distinct; speech is not. `VexLifePersonSettings.ScreenLanguages` holds two Chinese
+screen languages (`zh` Simplified, `zh-Hant` Traditional) while `Languages`, the microphone's spoken
+choices, keeps one spoken Chinese.
+
+~~~text
+reply zh-Hans                 -> screens zh       (Simplified)
+reply zh-Hant, legacy zh Home -> screens zh-Hant  (Traditional)
+system zh-Hant-*, zh-TW, zh-HK, zh-MO (no Hans) -> zh-Hant; every other zh-* -> zh
+~~~
 
 ## Language in the Setup Journey
 
@@ -132,7 +182,8 @@ Choosing a language is the first step of setup (see [SETUP-JOURNEY.md](SETUP-JOU
   returns languageChosen, the complete languages, and the setup.window words in that language
 
 --choose-language <code> --home <p>
-  saves into the Home only when it is already a canonical Vex Home; never creates one
+  saves the screen language into the Home only when it is already a canonical Vex Home; never
+  creates one (a Home with no reply language yet is seeded with the matching one)
 
 --inspect-front-door ... --language <code>
 --activate-front-door-control <ref> ... --language <code>
@@ -143,12 +194,10 @@ Choosing a language is the first step of setup (see [SETUP-JOURNEY.md](SETUP-JOU
 The setup window holds no copy of its own except the two messages shown when the setup program
 itself cannot run (no catalog is reachable then).
 
-## Not yet migrated
+## Deliberately not localized
 
-| Surface | Today | Next |
+| Surface | Today | Reason |
 |---|---|---|
-| Workspace chrome (header, settings, composer) | English strings in the generated P1 runtime | `workspace` scope; the service serves the resolved bundle for the person's language |
-| Vision / Memory / Private mode DisplayStates | English `String` fields | `VexLifeText`, same as the Entry Family |
-| Technical detail and observer diagnostics | English, by design | stays English: it is evidence, quoted as observed |
+| Technical detail and observer diagnostics | English, by design | evidence is quoted as observed rather than rewritten as Product-authored copy |
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LOCALIZATION] -->

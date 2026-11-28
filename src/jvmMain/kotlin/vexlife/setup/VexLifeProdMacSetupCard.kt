@@ -67,7 +67,7 @@ object VexLifeProdMacSetupCard {
     ) {
         init {
             require(
-                VexLifePersonSettings.Languages.any { it.first == language } &&
+                VexLifePersonSettings.ScreenLanguages.any { it.first == language } &&
                     title.isNotBlank() &&
                     rail.isNotBlank() &&
                     body.isNotBlank() &&
@@ -324,6 +324,9 @@ object VexLifeProdMacSetupCard {
             VexLifeProdEntryFamily.StateRepairRequired,
             VexLifeProdEntryFamily.StateUpdateRepairRequired ->
                 text("setup.status.service-not-responding")
+
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired ->
+                text("setup.status.service-recovery-available")
 
             VexLifeProdEntryFamily.StateStartRequired -> text("setup.status.service-not-running")
 

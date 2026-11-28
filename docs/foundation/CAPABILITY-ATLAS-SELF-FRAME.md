@@ -4,12 +4,18 @@
 
 ## Human question
 
-How can the current Vex know what capabilities are actually available now without copying a large
-tool/capability manual into every prompt or inferring execution authority from vocabulary alone?
+How can the current Vex know which capabilities exist, receive their callable shape in the native
+representation the selected model already understands, and still distinguish that from what is
+actually available and performed now?
 
-The answer is one compact source-owned frame:
+The answer is one semantic registry projected through two separate relationships:
 
 ~~~text
+Capability Atlas action definition
+        ↓
+provider-native tool schema
+  name / purpose / typed arguments / returned shape
+
 registered capability
 ∩ active role
 ∩ current platform
@@ -17,11 +23,13 @@ registered capability
 ∩ permission state
 ∩ resource state
         ↓
-bounded self-capability frame
+bounded current self-capability frame
+  AVAILABLE / HELD / UNAVAILABLE / UNKNOWN
 ~~~
 
-The frame reports current capability truth. It does **not** execute anything and does not grant any
-effect.
+The native tool declaration says which callable relationship the model knows how to express. The
+frame reports current capability truth. Neither executes anything or grants an effect; the Bridge
+owns admission and delegates the read to the rightful source owner.
 
 ## Stable provenance
 
@@ -200,38 +208,162 @@ runtimeObservationRefOrNull
 
 These refs are context identity, not authority.
 
-## Request/return reach (2026-11-14)
+## Request/return reach — provider-native carriage
 
-The frame used to describe reach without a hand: Vex could see handles but not how to use them, and
-nothing on the host side would carry a request. That gap is now closed for **reads**.
+The Capability Atlas is the semantic tool contract. The selected model/provider relationship compiles
+that contract into the tool channel the model was trained to use.
 
 ~~~text
-Vex's whole reply for one provider stage
-  = VEXLIFE_CAPABILITY_REQUEST/v1 + one JSON object       VexLifeCapabilityRequest (parse, no effect)
+Capability Atlas
+  handle / action / typed arguments / purpose / returned shape
         ↓
-admission                                                VexLifeCapabilityBridge
-  registered handle + AVAILABLE in the frame Vex was given this turn
-  + known action + required arguments + request count (≤ 4) + token room left
+ProviderCapabilityTools
+        ├─ Qwen/OpenAI-compatible tools -> mlx-lm tool_calls
+        └─ GPT-OSS Harmony functions -> Harmony recipient call
+        ↓
+one canonical VexLife capability request meaning
+        ↓
+VexLifeCapabilityBridge
+  current frame admission
+  + known action / required arguments
+  + request count (≤ 4)
+  + token room left
         ↓
 the capability's own owner performs one read
   atlas     list / describe                              VexLifeCapabilityAtlas (effect-free)
-  web       fetch / search                               reach/VexLifeWebReach
+  web       fetch / find / search                        reach/VexLifeWebReach + turn snapshot
   github    describe / tree / read (public)              reach/VexLifeRepositoryReach
   home      list / read (inside the Home, no links)      reach/VexLifeHomeReach
-  memory    search current pages                         reach/VexLifeMemoryRecall
+  memory    paged search current pages                   reach/VexLifeMemoryRecall
+  continuity revisit                                     VexLifeContextRevisit
         ↓
-VEXLIFE_CAPABILITY_RESULT/v1 in the next stage of the same human turn
-  state RETURNED | NOT_FOUND | REFUSED | FAILED | INVALID_REQUEST | NOT_AVAILABLE |
-        LIMIT_REACHED | HELD_TOKEN_BUDGET
+canonical VexLife result meaning
         ↓
-Vex continues the same reply while requests remain
+provider-native tool-result message
         ↓
-LIMIT_REACHED / no requests remain
-  -> no further capability request in this human turn
-  -> answer from established truth
-  -> if material outside truth is still missing, share current understanding + missing truth
-     and ask the person for another message / fresh human turn
+Vex continues the same human turn
 ~~~
+
+`VEXLIFE_CAPABILITY_REQUEST/v1` and `VEXLIFE_CAPABILITY_RESULT/v1` remain the canonical internal
+Bridge/fallback representation. Shipped native-tool model profiles do not need to learn that syntax
+as their ordinary model-facing tool grammar.
+
+Provider/model wire differences terminate before that canonical request meaning. A wire adapter may
+recognize one source-proven provider/model representation and normalize it into the canonical
+`VEXLIFE_CAPABILITY_REQUEST/v1` control, but that representation is not taught as another Vex
+request reflex and does not survive into semantic continuation history.
+
+Canonical request fields are **named relationships, not positional slots**. JSON member order therefore
+does not change request meaning. The top-level `capability` always names the capability being invoked;
+action-specific target identity stays inside `arguments` under the action owner's own argument name.
+For Atlas `describe`, that target is `arguments.handle`:
+
+~~~json
+{"capability":"atlas","action":"describe","arguments":{"handle":"workspace-test"}}
+~~~
+
+This avoids using `capability` simultaneously for the invoked owner and the capability being described.
+Canonical JSON key sorting remains only a deterministic byte representation for hashing/evidence.
+
+For the exact Qwen 4B text-control relationship, lived A020 evidence observed one sibling-version
+JSON wire form. `HereticTextControlCapabilityWire` recognizes only that exact Qwen 4B shape and
+normalizes it to the same canonical header-line control before `VexLifeCapabilityRequest` and the
+Bridge. Unknown versions, extra keys, other model profiles and unmarked bare JSON are not normalized.
+
+~~~text
+PROVIDER / MODEL WIRE DIALECT
+-> REPRESENTATION ADAPTER
+-> ONE CANONICAL VEX REQUEST ENVELOPE
+-> BRIDGE / RIGHTFUL OWNER
+-> ONE CANONICAL VEX RESULT
+-> PROVIDER / MODEL RESULT CARRIAGE
+
+WIRE DIALECT != VEX REQUEST MEANING
+WIRE NORMALIZATION != ADMISSION
+WIRE NORMALIZATION != EFFECT AUTHORITY
+~~~
+
+Text-control reach is intentionally **recoverable within the bounded request budget**. A reply that
+contains the request header but has unreadable request form is not treated as if no reach was
+attempted and is not silently normalized into a different request:
+
+~~~text
+request header + malformed/unreadable request
+-> VexLifeCapabilityRequest.Parsed.Malformed
+-> one request is consumed
+-> VexLifeCapabilityBridge returns INVALID_REQUEST
+-> returned result includes the exact canonical form
+-> Vex may correct the request in the next provider stage of the same human turn
+~~~
+
+Likewise, a readable request for an unknown / unavailable handle or wrong action receives the
+ordinary owner-shaped result and may be corrected within the same bounded turn. This recovery path
+does not widen authority: only the exact later request that passes current Bridge/owner admission can
+perform an effect.
+
+The exact-runtime text-control qualification mirrors this Product-owned recovery relationship. It
+does not grant aliases such as invented field names, does not pretend malformed control succeeded,
+and does not require first-shot serialization perfection when ordinary VexLife itself would have
+returned corrective evidence.
+
+Ordinary text-control prompt projection and exact-runtime qualification consume the same
+`VexLifeCapabilityRequest.TextControlProviderInstruction`. Qualification may add only its bounded
+synthetic goal; it does not own a second request grammar. This keeps the request marker, inert bare-JSON
+boundary and result-return relationship source-owned by the request contract.
+
+The canonical parser remains forgiving about one **provider-neutral compatibility representation**,
+not provider-specific dialects. Besides the canonical header-line form, it accepts one exact
+structured protocol/version wrapper when the model emits the same request meaning as nested JSON:
+
+~~~json
+{
+  "VEXLIFE_CAPABILITY_REQUEST": {
+    "v1": {
+      "capability": "atlas",
+      "action": "list",
+      "arguments": {}
+    }
+  }
+}
+~~~
+
+That wrapper is not a new capability alias or alternate authority path. The outer key must be exactly
+`VEXLIFE_CAPABILITY_REQUEST`, the only version key must be exactly `v1`, and the inner request is
+validated by the same capability/action/arguments parser as the canonical header form. The model's
+generic structured-wrapper control bytes remain valid compatibility input to the canonical parser.
+Provider-specific wire bytes are instead retained in provider/runtime evidence while semantic
+continuation receives the canonical control produced by the representation adapter. Unrelated JSON
+remains ordinary model content.
+
+~~~text
+DECLARED TOOL != AVAILABLE THIS TURN
+AVAILABLE != REQUEST ADMITTED
+REQUEST ADMITTED != SOURCE READ SUCCEEDED
+SOURCE RESULT != MODEL CLAIM ABOUT THE RESULT
+~~~
+
+For public web reads, one human turn now reuses one observed page snapshot for `find` and later
+`fetch(offset=...)` slices, so continuation stays bound to the same observed bytes instead of
+re-downloading a moving page. The underlying network observation remains bounded; an incomplete
+2 MiB observation reports `networkTruncated=true` rather than pretending the rest was read.
+
+Memory search returns a bounded page of lexical matches plus `totalMatches`, `nextOffset` and
+frontier statement refs when more matches remain. It remains lexical source lookup, not a semantic
+embedding index.
+
+Public GitHub file reads keep one observed file snapshot for the human turn; `read(offset=...)`
+continues through those exact observed bytes instead of downloading the beginning again. Home text
+reads may switch to `startLine` / `maxLines` traversal, and the returned `nextLine` always names
+the first whole line that was not actually returned.
+
+The provider invocation receipt binds `providerToolCount` and `providerToolSchemaSha256` beside the
+whole request-body hash. That is inspectable evidence that a model was actually offered a native tool
+schema; capability prose alone is not treated as proof of tool exposure.
+
+For Home-imported Qwen models, no-effect import inspection reads the exact pinned small provider
+template/config and records whether the native Qwen tool grammar is present. Native-capable imports
+use the provider tool field; imports without that grammar retain the text-control fallback. Both
+representations use this same Atlas and Bridge.
 
 The per-turn request bound is a safety/current-attention boundary, not a target and not a
 conversation-failure condition. A fresh human message may begin another bounded turn with a fresh
@@ -264,13 +396,47 @@ unauthenticated rate limit comes back as a FAILED result when spent.
 
 ### What Vex reads
 
-When requests are admitted (every ordinary direct turn), the frame message leads with plain
-language generated from the Atlas: each AVAILABLE capability, each action with example arguments,
-the exact request form, the per-turn limit, and one state line
-(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). The full frame JSON is no longer
-pasted into the prompt: the receipt still records the frame ref, fingerprint, state snapshot and
-the exact system-message SHA-256. Lived pressure behind this: Vex said the JSON was "descriptive,
-not a hand" and the part he braced against.
+When requests are admitted, the prompt carries capability truth in two complementary projections.
+
+The stable capability instruction is generated from the Atlas and names the callable read routes,
+their actions/examples and the exact request relationship.
+
+The current-state block then carries this turn's exact frame state
+(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). For separately-owned bounded effect
+capabilities such as `workspace`, `workspace-check` and `workspace-test`, an AVAILABLE frame
+entry also projects that capability's exact Atlas-derived action/example plus its current Local Source
+coordinate. A HELD / UNAVAILABLE / UNKNOWN effect capability does **not** project its action form as a
+currently usable hand.
+
+~~~text
+AVAILABLE BOUNDED EFFECT
+-> compact current action form is perceptible now
+-> model need not spend an Atlas request merely to discover syntax already admitted this turn
+
+HELD / UNAVAILABLE / UNKNOWN EFFECT
+-> state remains perceptible
+-> no current effect request form is presented as usable
+~~~
+
+Permanent:
+
+~~~text
+CONTEXTUALLY VISIBLE REQUEST FORM
+!= EFFECT AUTHORITY
+!= EFFECT PERFORMED
+
+ATLAS-DERIVED CURRENT AFFORDANCE
+!= ATTENTION SELECTION
+!= NEW CAPABILITY OWNER
+~~~
+
+The host Bridge and rightful effect owner still re-check exact current authority, and only a real
+`VEXLIFE_CAPABILITY_RESULT/v1` return is evidence that an effect happened.
+
+The full frame JSON is not pasted into the prompt: the receipt still records the frame ref,
+fingerprint, state snapshot and exact system-message SHA-256. Lived pressure behind this ordering:
+the JSON was "descriptive, not a hand"; current capability truth must be legible enough for Vex to
+recognize the hand it actually has without turning the prompt into the whole registry.
 
 ### Prompt room
 
@@ -290,9 +456,16 @@ target, state) so the person sees each reach live and under the answer. VexLogge
 
 ### Still not owned
 
-Writes of any kind (Home files, repositories, GitHub issues/PRs, publication), authenticated or
-private repository reads, form submission, browser navigation, code execution, Process Factory and
-Dream/training realization. Each needs its own owner and authority; none is implied by reach.
+Atlas / Self-Frame does not own any effect.
+
+Current Product source separately owns bounded workspace write, bounded workspace text-check and
+sandboxed Java-test relationships. Their request forms may be projected here only when their own
+current grant/resource predicates make them AVAILABLE; execution remains with those owners.
+
+Still outside this owner are general Home writes, repository mutation, GitHub issue/PR mutation,
+publication, authenticated/private repository reads, form submission, browser navigation, arbitrary
+code/shell execution, package management, Process Factory and Dream/training realization. Each needs
+its own owner and authority; none is implied by reach or by contextual visibility.
 
 ## Current boundary
 
@@ -308,6 +481,9 @@ intersection/currentness semantics
 bounded deterministic selection
 +
 live DirectPromptContext inclusion
++
+availability-gated contextual request-form projection
+for separately-owned bounded workspace effects
 ~~~
 
 It still does **not** (beyond the read-only reach above):

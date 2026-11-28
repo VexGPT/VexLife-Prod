@@ -1,17 +1,31 @@
 package vexlife.service
 
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
-import vexlife.local.VexLifeProdLocalSetup
+import kotlin.test.assertTrue
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class VexLifeProdServiceProcessTest {
+    private val productHomePath: Path =
+        Path.of(
+                System.getProperty(
+                    "java.io.tmpdir",
+                ),
+            )
+            .resolve(
+                "vexlife-prod-service-process-test",
+            )
+            .toAbsolutePath()
+            .normalize()
+
     private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.service-process-test",
@@ -27,25 +41,36 @@ class VexLifeProdServiceProcessTest {
             qualification = HereticRuntimeQualification.qualified(),
         )
 
-    private fun setup(): VexLifeProdLocalSetup.Result {
-        val runtime =
+    private fun session(
+        onRelease: () -> Unit = {},
+    ): VexLifeProdRuntimeSession {
+        val evidence =
             runtimeEvidence()
+        return object :
+            VexLifeProdRuntimeSession {
+            override val foundation =
+                VexLifeProdRuntimeSession.Foundation(
+                    state =
+                        VexLifeProdRuntimeSession.ReadyState,
+                    productHome =
+                        productHomePath.toString(),
+                    qualifiedRuntimeEvidence =
+                        evidence,
+                )
 
-        return VexLifeProdLocalSetup.Result(
-            state = "LOCAL_HERETIC_FOUNDATION_READY",
-            productHome = "/tmp/vexlife-prod-service-process-test",
-            homeDisposition = "TEST_CURRENT",
-            modelSelectionDisposition = "TEST_BOUND",
-            managedPythonDisposition = "TEST_REUSED",
-            artifactDisposition = "TEST_REUSED",
-            environmentDisposition = "TEST_REUSED",
-            runtimeDisposition = "TEST_REUSED",
-            modelBindingDisposition = "TEST_BOUND",
-            modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
-            qualifiedRuntimeEvidence = runtime,
-            endpoint = runtime.endpoint,
-            requestModel = runtime.requestModel,
-        )
+            override fun currentQualifiedRuntimeEvidence(
+                onRecovery: (() -> Unit)?,
+            ): HereticModelConfiguration.QualifiedRuntimeEvidence =
+                evidence
+
+            override fun observeCurrentQualifiedRuntimeEvidence():
+                HereticModelConfiguration.QualifiedRuntimeEvidence =
+                evidence
+
+            override fun close() {
+                onRelease()
+            }
+        }
     }
 
     @Test
@@ -61,7 +86,7 @@ class VexLifeProdServiceProcessTest {
                     "--source-sha",
                     sha,
                     "--home",
-                    "/tmp/vexlife-prod-service-process-test",
+                    productHomePath.toString(),
                 ),
             )
 
@@ -70,9 +95,7 @@ class VexLifeProdServiceProcessTest {
             parsed.sourceSha,
         )
         assertEquals(
-            java.nio.file.Path.of(
-                "/tmp/vexlife-prod-service-process-test",
-            ),
+            productHomePath,
             parsed.productHome,
         )
 
@@ -114,18 +137,14 @@ class VexLifeProdServiceProcessTest {
     }
 
     @Test
-    fun serviceProcessReusesExistingLocalFoundationWithoutAcquisitionAuthority() {
+    fun serviceProcessConsumesPortableSessionWithoutAcquisitionAuthority() {
         val trace =
             mutableListOf<String>()
-        val result =
-            setup()
         val session =
-            VexLifeProdLocalSetup.Session(
-                result = result,
-                currentRuntimeEvidence = {
-                    result.qualifiedRuntimeEvidence
-                },
-            )
+            session {
+                trace +=
+                    "RELEASE"
+            }
         val service =
             AutoCloseable {
                 trace +=
@@ -138,16 +157,14 @@ class VexLifeProdServiceProcessTest {
                         40,
                     ),
                 productHome =
-                    java.nio.file.Path.of(
-                        result.productHome,
-                    ),
+                    productHomePath,
             )
 
         VexLifeProdServiceProcess.runWithHooks(
             arguments = arguments,
             hooks =
                 VexLifeProdServiceProcess.Hooks(
-                    resolveVisionRuntimeExecutablePath = {
+                    resolveRuntimeExecutablePaths = {
                         sourceSha ->
                         trace +=
                             "OBSERVE_IMAGE"
@@ -155,7 +172,20 @@ class VexLifeProdServiceProcessTest {
                             arguments.sourceSha,
                             sourceSha,
                         )
-                        "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime"
+                        VexLifeProdServiceProcess.RuntimeExecutablePaths(
+                            visionRuntimeExecutablePathOrNull =
+                                productHomePath
+                                    .resolve(
+                                        "vision-runtime/bin/vexlife-vision-runtime",
+                                    )
+                                    .toString(),
+                            partnerHostExecutablePathOrNull =
+                                productHomePath
+                                    .resolve(
+                                        "partner-host/vexlife-partner-host",
+                                    )
+                                    .toString(),
+                        )
                     },
                     establishSession = {
                         productHome,
@@ -164,9 +194,7 @@ class VexLifeProdServiceProcessTest {
                         trace +=
                             "ESTABLISH"
                         assertEquals(
-                            java.nio.file.Path.of(
-                                result.productHome,
-                            ),
+                            productHomePath,
                             productHome,
                         )
                         assertFalse(
@@ -179,6 +207,7 @@ class VexLifeProdServiceProcessTest {
                         sourceSha,
                         currentSession,
                         visionRuntimeExecutablePathOrNull,
+                        partnerHostExecutablePathOrNull,
                         ->
                         trace +=
                             "START"
@@ -191,8 +220,20 @@ class VexLifeProdServiceProcessTest {
                             currentSession,
                         )
                         assertEquals(
-                            "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime",
+                            productHomePath
+                                .resolve(
+                                    "vision-runtime/bin/vexlife-vision-runtime",
+                                )
+                                .toString(),
                             visionRuntimeExecutablePathOrNull,
+                        )
+                        assertEquals(
+                            productHomePath
+                                .resolve(
+                                    "partner-host/vexlife-partner-host",
+                                )
+                                .toString(),
+                            partnerHostExecutablePathOrNull,
                         )
                         service
                     },
@@ -205,13 +246,35 @@ class VexLifeProdServiceProcessTest {
                             ready,
                         )
                     },
+                    observeHomeIdentity = {
+                        productHome ->
+                        assertEquals(
+                            arguments.productHome,
+                            productHome,
+                        )
+                        VexLifeProdServiceProcess.HomeIdentity(
+                            homePath =
+                                arguments.productHome.toString(),
+                            homeRef =
+                                "vex-home.device.vexlife.service-process-test",
+                            deviceRef =
+                                "device.vexlife.service-process-test",
+                            companionLineageRef =
+                                "companion-lineage.vexlife.service-process-test",
+                        )
+                    },
                     awaitTermination = {
-                        running ->
+                        running,
+                        homeCurrent,
+                        ->
                         trace +=
                             "AWAIT"
                         assertSame(
                             service,
                             running,
+                        )
+                        assertTrue(
+                            homeCurrent(),
                         )
                         running.close()
                     },
@@ -230,6 +293,45 @@ class VexLifeProdServiceProcessTest {
             trace,
         )
     }
+
+    @Test
+    fun homeRetentionRequiresSustainedIdentityLossAndResetsAfterRecovery() {
+        val retention =
+            VexLifeProdServiceProcess.HomeRetention()
+
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                true,
+            ),
+            "a recovered exact Home resets the loss window",
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertTrue(
+            retention.observe(
+                false,
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]

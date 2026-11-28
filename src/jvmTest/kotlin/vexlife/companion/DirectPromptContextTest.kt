@@ -1,12 +1,15 @@
 package vexlife.companion
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -14,20 +17,58 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeWorkspaceEffectDefinitions
+import vexlife.capability.VexLifeWorkspaceCheckDefinitions
+import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.foundational.VexLifeFoundationalFieldFixture
+import vexlife.memory.VexLifeCurrentAcceptedSemanticPromptBlock
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 class DirectPromptContextTest {
+    @Test
+    fun conversationChronologyLeadNamesOrderWithoutGrantingSemanticAuthority() {
+        val lead = DirectPromptContext.ConversationChronologyLead
+
+        assertContains(lead, "original Conversation order")
+        assertContains(lead, "earlier to later")
+        assertContains(lead, "chronology only")
+        assertContains(lead, "does not by itself mark any turn superseded or more authoritative")
+        assertFalse(lead.contains("latest wins"))
+        assertFalse(lead.contains("prefer newer"))
+    }
+
+    @Test
+    fun currentStateLeadKeepsCurrentContextWithinNamedOwnerAndSubject() {
+        val lead = DirectPromptContext.CurrentStateLead
+
+        assertContains(lead, "current host context for this request")
+        assertContains(lead, "current only for the owner and subject it names")
+        assertContains(
+            lead,
+            "does not by itself state or explain a different person, project, or subject in the Conversation",
+        )
+        assertFalse(lead.contains("what is current at this request"))
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {
@@ -36,9 +77,49 @@ class DirectPromptContextTest {
         )
     }
 
+    private fun workingFocusDraft(
+        lineageRef: String,
+        formationRef: String = "receipt.self-inspection.focus.001",
+        priorRevisionRefOrNull: String? = null,
+        detail: String = "Working Focus keeps one current source relationship available.",
+    ) =
+        VexLifeWorkingFocus.Draft(
+            lineageRef = lineageRef,
+            threadRef = DirectConversationIdentity.ThreadRef,
+            formationRef = formationRef,
+            priorRevisionRefOrNull = priorRevisionRefOrNull,
+            subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
+            objective = "Keep the current Self-Inspection relationship in Working Focus.",
+            currentQuestionOrNull = "Which source relationship still matters now?",
+            retainedRelationships =
+                listOf(
+                    VexLifeWorkingFocus.Relationship(
+                        relationshipRef = "relationship.self-inspection.current",
+                        ownerRef = "owner.self-inspection.source",
+                        standing = VexLifeWorkingFocus.Standing.OBSERVED,
+                        compactMeaning = detail,
+                        sourceRefs = listOf("source.self-inspection.current"),
+                    ),
+                ),
+            openEdges =
+                listOf(
+                    VexLifeWorkingFocus.OpenEdge(
+                        edgeRef = "edge.self-inspection.next",
+                        ownerRef = "owner.self-inspection.source",
+                        compactMeaning = "Reopen the exact source when verification is needed.",
+                        sourceRefs = listOf("source.self-inspection.next"),
+                    ),
+                ),
+            nextProbeOrNull = "Verify the next exact source edge.",
+            sourceBindingRefs = listOf("binding.self-inspection.current"),
+            sourceRefs = listOf("source.self-inspection.current"),
+        )
+
     private fun runtimeEvidence(
         receiptRef: String =
             "receipt.vexlife-prod.heretic.prompt-capability",
+        contextWindowTokens: Int? =
+            null,
     ) =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef = receiptRef,
@@ -52,7 +133,105 @@ class DirectPromptContextTest {
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
             qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens = contextWindowTokens,
         )
+
+    @Test
+    fun qualifiedRuntimeContextWindowBoundsTheWholeTurnAttentionBudget() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-runtime-window-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.runtime-window",
+                            requestMessageRef =
+                                "message.self-development.human.runtime-window",
+                            content =
+                                "Use the current runtime honestly.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence =
+                                runtimeEvidence(
+                                    contextWindowTokens =
+                                        16_384,
+                                ),
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = null,
+                            contextProfile = null,
+                            conversationExtentIncluded = false,
+                            capabilityRequestsAdmitted = true,
+                            providerNativeTools = true,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+                            .receipt
+
+                    assertEquals(
+                        16_384,
+                        materialized.hardTokenLimit,
+                    )
+                    assertEquals(
+                        4_096,
+                        materialized.reservedOutputTokens,
+                    )
+                    assertEquals(
+                        3_072,
+                        materialized.capabilityExchangeAllowanceTokens,
+                    )
+                    assertEquals(
+                        9_216,
+                        materialized.inputTokenBudget,
+                    )
+                    assertTrue(
+                        materialized.providerMaterializedInputTokenEstimate <=
+                            materialized.inputTokenBudget,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun personContextAcceptsScriptSpecificReplyLanguage() {
+        val context =
+            DirectPromptContext.PersonContext(
+                replyLanguage = "zh-Hans",
+                replyLanguageName = "简体中文",
+                privateConversations = emptyList(),
+            )
+        assertEquals(
+            "zh-Hans",
+            context.replyLanguage,
+        )
+    }
 
     @Test
     fun personContextTellsVexTheReplyLanguageAndThePrivateGaps() {
@@ -82,9 +261,22 @@ class DirectPromptContextTest {
                             ),
                     )
                 val told = DirectPromptContext.materialize(prior = null, currentRequest = request, personContext = person)
-                val system = told.messages.first { it.role == "system" }.content
-                assertTrue(system.startsWith("VEXLIFE_PERSON_CONTEXT/v1"))
-                assertTrue("日本語" in system && "Victor is nervous about Friday." in system)
+                // Current, not standing: the setting rides the current-state envelope right before
+                // the request, never the leading system block that precedes all history.
+                assertTrue(told.messages.none { it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v1" in it.content })
+                val current = told.messages[told.messages.size - 2]
+                assertEquals("user", current.role)
+                assertTrue(current.content.startsWith(DirectPromptContext.CurrentStateHeader))
+                assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in current.content)
+                assertTrue("日本語" in current.content && "Victor is nervous about Friday." in current.content)
+                assertEquals(request.content, told.messages.last().content)
+                val person0 =
+                    told.receipt.contextComponents.single {
+                        it.componentRef == DirectPromptContext.ComponentRefs.PersonContext
+                    }
+                assertEquals(DirectPromptContext.ComponentStability.MUTABLE_CURRENT, person0.stabilityClass)
+                assertEquals(DirectPromptContext.ComponentPlacement.LIVE_TAIL, person0.placementClass)
+                assertEquals(told.messages.size - 2, person0.providerMessageIndex)
                 assertTrue(told.receipt.personContextIncluded)
                 assertEquals(person, told.receipt.personContext)
 
@@ -609,6 +801,274 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun providerPreparationPrefixExactlyMatchesTheRealGenesisTurnLeadingSystemMessage() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-provider-preparation-prefix-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+            val runtime =
+                runtimeEvidence()
+            val boot =
+                DirectPromptContext.projectProviderPreparationPrefix(
+                    foundationalField =
+                        VexLifeFoundationalFieldFixture.shipped,
+                    memoryContext =
+                        memory,
+                    capabilityRequestsAdmitted =
+                        true,
+                    providerNativeTools =
+                        true,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.provider-preparation-prefix",
+                            requestMessageRef =
+                                "message.self-development.human.provider-preparation-prefix",
+                            content =
+                                "Hello after boot.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                memory,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtime,
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                true,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    val realLeadingSystem =
+                        materialized.messages.first()
+
+                    assertEquals(
+                        "system",
+                        realLeadingSystem.role,
+                    )
+                    assertEquals(
+                        boot.messages.single(),
+                        realLeadingSystem,
+                        "boot preparation is admissible only when it forms the exact provider-leading system message used by the real first turn",
+                    )
+                    assertEquals(
+                        memory.memoryContextRef,
+                        boot.memoryContextRef,
+                    )
+                    assertEquals(
+                        memory.semanticFingerprint,
+                        boot.memoryContextFingerprint,
+                    )
+                    assertFalse(
+                        boot.effectsPerformed,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun providerPreparationPrefixExactlyMatchesTheLivedQwen4BTextControlGenesisShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-provider-preparation-prefix-qwen4b-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+            val runtime =
+                runtimeEvidence()
+            val boot =
+                DirectPromptContext.projectProviderPreparationPrefix(
+                    foundationalField =
+                        VexLifeFoundationalFieldFixture.shipped,
+                    memoryContext =
+                        memory,
+                    capabilityRequestsAdmitted =
+                        false,
+                    providerNativeTools =
+                        false,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.provider-preparation-prefix.qwen4b",
+                            requestMessageRef =
+                                "message.self-development.human.provider-preparation-prefix.qwen4b",
+                            content =
+                                "Hello from the lived 4B text-control shape.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                memory,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtime,
+                            sourceReturnProtocolEnabled =
+                                true,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                true,
+                            capabilityRequestsAdmitted =
+                                false,
+                            providerNativeTools =
+                                false,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    assertEquals(
+                        boot.messages.single(),
+                        materialized.messages.first(),
+                        "the 4B text-control warmup must begin with the exact provider-leading system message used by the real first turn",
+                    )
+                    assertFalse(
+                        materialized.messages
+                            .first()
+                            .content
+                            .contains(
+                                VexLifeCapabilityRequest.TextControlProviderInstruction,
+                            ),
+                        "Qwen warmup with capability requests held must not advertise an executable request channel",
+                    )
+                    val admittedBoot =
+                        DirectPromptContext.projectProviderPreparationPrefix(
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            memoryContext =
+                                memory,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                false,
+                        )
+                    assertTrue(
+                        admittedBoot.messages
+                            .single()
+                            .content
+                            .contains(
+                                VexLifeCapabilityRequest.TextControlProviderInstruction,
+                            ),
+                        "an admitted ordinary Qwen text-control prompt must consume the request-owned instruction",
+                    )
+                    assertFalse(
+                        materialized.messages
+                            .first()
+                            .content
+                            .contains(
+                                DirectConversationSourceReturn.ProtocolHeader,
+                            ),
+                        "source-return currentness belongs after the stable provider prefix",
+                    )
+                    assertTrue(
+                        materialized.messages
+                            .single {
+                                it.content.startsWith(
+                                    DirectPromptContext.CurrentStateHeader,
+                                )
+                            }
+                            .content
+                            .contains(
+                                DirectConversationSourceReturn.ProtocolHeader,
+                            ),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
@@ -758,9 +1218,19 @@ class DirectPromptContextTest {
                             "system"
                     },
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages
                         .first()
+                        .content
+                        .contains(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        ),
+                )
+                assertTrue(
+                    materialized.messages
+                        .single {
+                            it.content.startsWith(DirectPromptContext.CurrentStateHeader)
+                        }
                         .content
                         .contains(
                             DirectConversationSourceReturn.ProtocolHeader,
@@ -804,7 +1274,7 @@ class DirectPromptContextTest {
     fun fixedContextMeasuresCurrentTurnWithoutCreatingMemoryPromptBytesOrASecondReceipt() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-prompt-fixed-context-",
+                "vexlife-prod-direct-prompt-turn-context-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -827,14 +1297,14 @@ class DirectPromptContextTest {
                 val request =
                     beginRequest(
                         turnRef =
-                            "turn.self-development.fixed-context.001",
+                            "turn.self-development.turn-context.001",
                         requestMessageRef =
-                            "message.self-development.human.fixed-context.001",
+                            "message.self-development.human.turn-context.001",
                         content =
-                            "Measure the fixed current-turn context before selecting Memory bytes.",
+                            "Measure the turn context before selecting Memory bytes.",
                     )
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         memoryAvailabilityContext = memory,
@@ -843,51 +1313,54 @@ class DirectPromptContextTest {
 
                 assertEquals(
                     request.eventRef,
-                    fixed.currentRequestEventRef,
+                    turnContext.currentRequestEventRef,
                 )
                 assertEquals(
                     memory.memoryContextRef,
-                    fixed.memoryAvailabilityContextRef,
+                    turnContext.memoryAvailabilityContextRef,
                 )
                 assertNotNull(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                 )
                 assertTrue(
-                    fixed.prefixMessages.any {
+                    turnContext.prefixMessages.any {
                         it.content.startsWith(
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1\n",
                         )
                     },
                 )
                 assertTrue(
-                    fixed.prefixMessages.none {
+                    turnContext.prefixMessages.none {
                         it.content.startsWith(
                             "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
                         )
                     },
                 )
                 assertEquals(
-                    listOf(
-                        request.content,
-                    ),
-                    fixed.suffixMessages.map {
-                        it.content
-                    },
+                    request.content,
+                    turnContext.suffixMessages.last().content,
+                )
+                assertTrue(
+                    turnContext.suffixMessages.single {
+                        it.content.startsWith(DirectPromptContext.CurrentStateHeader)
+                    }
+                        .content
+                        .contains("VEXLIFE_CURRENT_MEMORY_CONTEXT/v1") == false,
                 )
                 assertEquals(
                     (
-                        fixed.prefixMessages +
-                            fixed.suffixMessages
+                        turnContext.prefixMessages +
+                            turnContext.suffixMessages
                     )
                         .sumOf {
                             DirectPromptContext.estimatedMessageTokens(
                                 it.content,
                             )
                         },
-                    fixed.fixedInputTokenEstimate,
+                    turnContext.turnContextInputTokenEstimate,
                 )
                 assertFalse(
-                    fixed.effectsPerformed,
+                    turnContext.effectsPerformed,
                 )
 
                 val actual =
@@ -899,16 +1372,16 @@ class DirectPromptContextTest {
                     )
 
                 assertEquals(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                     actual.receipt.capabilityFrameRef,
                 )
                 assertEquals(
-                    fixed.capabilityFrameFingerprint,
+                    turnContext.capabilityFrameFingerprint,
                     actual.receipt.capabilityFrameFingerprint,
                 )
                 assertTrue(
                     actual.receipt.providerMaterializedInputTokenEstimate >
-                        fixed.fixedInputTokenEstimate,
+                        turnContext.turnContextInputTokenEstimate,
                 )
                 assertTrue(
                     actual.messages.any {
@@ -960,8 +1433,8 @@ class DirectPromptContextTest {
                         content =
                             "Keep current Memory available without selecting its bytes for this prompt.",
                     )
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         memoryAvailabilityContext = availability,
@@ -982,7 +1455,7 @@ class DirectPromptContextTest {
                 )
                 assertEquals(
                     availability.memoryContextRef,
-                    fixed.memoryAvailabilityContextRef,
+                    turnContext.memoryAvailabilityContextRef,
                 )
                 assertEquals(
                     selected.memoryContextRef,
@@ -1011,11 +1484,11 @@ class DirectPromptContextTest {
                     ),
                 )
                 assertEquals(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                     materialized.receipt.capabilityFrameRef,
                 )
                 assertEquals(
-                    fixed.capabilityFrameFingerprint,
+                    turnContext.capabilityFrameFingerprint,
                     materialized.receipt.capabilityFrameFingerprint,
                 )
 
@@ -1267,8 +1740,8 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.messages.any {
                         it.role ==
-                            "system" &&
-                            it.content.contains(
+                            "user" &&
+                            it.content.startsWith(
                                 DirectConversationSourceReturn.ContextHeader,
                             ) &&
                             it.content.contains(
@@ -1468,8 +1941,8 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.messages.any {
                         it.role ==
-                            "system" &&
-                            it.content.contains(
+                            "user" &&
+                            it.content.startsWith(
                                 DirectConversationSourceReturn.ContextHeader,
                             ) &&
                             it.content.contains(
@@ -1894,6 +2367,12 @@ class DirectPromptContextTest {
                     2,
                     materialized.receipt.selectedConversationEventRefs.size,
                 )
+                assertEquals(
+                    2,
+                    DirectPromptContext.conversationHistoryProviderBoundaryMessageCount(
+                        materialized.receipt,
+                    ),
+                )
                 assertFalse(
                     materialized.receipt.wholeHistoryEventEnumerationPerformed,
                 )
@@ -2103,10 +2582,13 @@ class DirectPromptContextTest {
                             successor,
                     )
 
+                // Memory stays in the system block; the working coordinates are current state and
+                // come after the exact prior reply they continue from.
                 assertEquals(
                     listOf(
                         "system",
                         "assistant",
+                        "user",
                         "user",
                     ),
                     materialized.messages.map {
@@ -2120,7 +2602,7 @@ class DirectPromptContextTest {
                             "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
                         ),
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages[0]
                         .content
                         .contains(
@@ -2128,7 +2610,17 @@ class DirectPromptContextTest {
                         ),
                 )
                 assertTrue(
-                    materialized.messages[0]
+                    materialized.messages[2]
+                        .content
+                        .startsWith(DirectPromptContext.CurrentStateHeader) &&
+                        materialized.messages[2]
+                            .content
+                            .contains(
+                                "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                            ),
+                )
+                assertTrue(
+                    materialized.messages[2]
                         .content
                         .contains(
                             "work-node.vexlife.prompt.working",
@@ -2136,10 +2628,7 @@ class DirectPromptContextTest {
                 )
                 assertEquals(
                     "Prior response that must not replay",
-                    materialized.messages[
-                        materialized.messages.size -
-                            2
-                    ]
+                    materialized.messages[1]
                         .content,
                 )
                 assertEquals(
@@ -2318,6 +2807,7 @@ class DirectPromptContextTest {
                     listOf(
                         "system",
                         "user",
+                        "user",
                     ),
                     materialized.messages.map {
                         it.role
@@ -2328,6 +2818,13 @@ class DirectPromptContextTest {
                         .content
                         .startsWith(
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            DirectPromptContext.CurrentStateHeader,
                         ),
                 )
                 assertFalse(
@@ -2449,9 +2946,12 @@ class DirectPromptContextTest {
                         runtimeEvidence = runtime,
                     )
 
+                // Stable description first; this request's frame travels with current state, then
+                // the browser page, then the request.
                 assertEquals(
                     listOf(
                         "system",
+                        "user",
                         "user",
                         "user",
                     ),
@@ -2473,15 +2973,29 @@ class DirectPromptContextTest {
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
                         ),
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages[0]
+                        .content
+                        .contains(
+                            "\"effectAuthorityGranted\":false",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            DirectPromptContext.CurrentStateHeader,
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
                         .content
                         .contains(
                             "capability.vexlife.companion.local-inference",
                         ),
                 )
                 assertTrue(
-                    materialized.messages[0]
+                    materialized.messages[1]
                         .content
                         .contains(
                             "\"effectAuthorityGranted\":false",
@@ -2725,6 +3239,1275 @@ class DirectPromptContextTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun memoryProviderSelectionPlacesDailyAndAcceptedSemanticMemoryAsAdjacentPromptComponents() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-memory-provider-selection-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        fun digest(
+            value: String,
+        ): String =
+            MessageDigest
+                .getInstance(
+                    "SHA-256",
+                )
+                .digest(
+                    value.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .joinToString(
+                    "",
+                ) {
+                    "%02x".format(
+                        it.toInt() and
+                            0xff,
+                    )
+                }
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.memory-provider-selection.001",
+                            requestMessageRef =
+                                "message.self-development.human.memory-provider-selection.001",
+                            content =
+                                "Use the Memory that is actually selected for this turn.",
+                        )
+                    val availability =
+                        VexLifeMemoryContextFixture.current()
+                    val semanticStatementRef =
+                        "statement.vexlife-prod.memory-review.semantic-connector-001"
+
+                    fun selection(
+                        memoryTokenCap: Int,
+                    ): VexLifeCurrentMemoryProviderSelection.Selection {
+                        val daily =
+                            VexLifeMemoryContextFixture.current(
+                                memoryTokenCap,
+                            )
+                        val remaining =
+                            memoryTokenCap -
+                                daily.estimatedSystemMessageTokens
+                        val semanticContent =
+                            listOf(
+                                VexLifeCurrentAcceptedSemanticPromptBlock.Header,
+                                "Current accepted semantic Memory for connector proof.",
+                                semanticStatementRef,
+                            )
+                                .joinToString(
+                                    "\n",
+                                )
+                        val semanticTokens =
+                            DirectPromptContext.estimatedMessageTokens(
+                                semanticContent,
+                            )
+                        require(
+                            semanticTokens <=
+                                remaining,
+                        )
+                        val block =
+                            VexLifeCurrentAcceptedSemanticPromptBlock.Block(
+                                schemaVersion =
+                                    VexLifeCurrentAcceptedSemanticPromptBlock.Schema,
+                                blockRef =
+                                    "prompt-block.vexlife-prod.current-accepted-semantic.connector-proof",
+                                semanticFingerprint =
+                                    "b".repeat(
+                                        64,
+                                    ),
+                                sourceProjectionRef =
+                                    "projection.vexlife-prod.current-accepted-semantic.connector-proof",
+                                sourceProjectionSemanticFingerprint =
+                                    "c".repeat(
+                                        64,
+                                    ),
+                                statementRefs =
+                                    listOf(
+                                        semanticStatementRef,
+                                    ),
+                                excludedStatementRefs =
+                                    daily.pages.map {
+                                        it.statementRef
+                                    },
+                                boundedOutStatementRefs =
+                                    emptyList(),
+                                tokenBoundedOutStatementRefs =
+                                    emptyList(),
+                                memoryTokenCap =
+                                    remaining,
+                                content =
+                                    semanticContent,
+                                contentSha256 =
+                                    digest(
+                                        semanticContent,
+                                    ),
+                                estimatedContentTokens =
+                                    semanticTokens,
+                                sourceRefs =
+                                    listOf(
+                                        "projection.vexlife-prod.current-accepted-semantic.connector-proof",
+                                        semanticStatementRef,
+                                        "score-semantic-acceptance.connector-proof",
+                                    ),
+                                included =
+                                    true,
+                                effectsPerformed =
+                                    false,
+                            )
+                        return VexLifeCurrentMemoryProviderSelection.Selection(
+                            memoryTokenCap =
+                                memoryTokenCap,
+                            dailyContext =
+                                daily,
+                            currentAcceptedSemanticBlock =
+                                block,
+                            remainingCurrentSemanticTokenCap =
+                                remaining,
+                            estimatedSelectedTokens =
+                                daily.estimatedSystemMessageTokens +
+                                semanticTokens,
+                            effectsPerformed =
+                                false,
+                        )
+                    }
+
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                availability,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                false,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                            memoryProviderSelectionAtCap =
+                                ::selection,
+                        )
+
+                    val memoryComponents =
+                        materialized.receipt.contextComponents
+                            .filter {
+                                it.componentRef in
+                                    setOf(
+                                        DirectPromptContext.ComponentRefs.Memory,
+                                        DirectPromptContext.ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                    )
+                            }
+                    assertEquals(
+                        listOf(
+                            DirectPromptContext.ComponentRefs.Memory,
+                            DirectPromptContext.ComponentRefs.MemoryCurrentAcceptedSemantic,
+                        ),
+                        memoryComponents.map {
+                            it.componentRef
+                        },
+                    )
+                    assertTrue(
+                        memoryComponents.all {
+                            it.providerMessageIndex ==
+                                0
+                        },
+                    )
+                    assertTrue(
+                        materialized.messages.first().content.contains(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                        ),
+                    )
+                    assertTrue(
+                        materialized.messages.first().content.contains(
+                            VexLifeCurrentAcceptedSemanticPromptBlock.Header,
+                        ),
+                    )
+                    assertTrue(
+                        availability.pages
+                            .map {
+                                it.statementRef
+                            }
+                            .toSet()
+                            .intersect(
+                                setOf(
+                                    semanticStatementRef,
+                                ),
+                            )
+                            .isEmpty(),
+                    )
+                    assertEquals(
+                        availability.memoryContextRef,
+                        materialized.receipt.memoryContextRef,
+                    )
+                    assertTrue(
+                        materialized.receipt.memoryIncluded,
+                        "legacy Daily receipt fields stay bound to the Daily component",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workspaceWriteAvailabilityReportsCurrentGrantWithoutGrantingEffectAuthority() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-write-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-write",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-write",
+                            content =
+                                "Use only the workspace authority I actually granted.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "a".repeat(
+                                64,
+                            ),
+                        )
+                    val grant =
+                        VexLifeWorkspaceEffectsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceEffectsFamily.GrantRefPrefix +
+                                    "b".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-25T03:00:00Z",
+                            grantedAt =
+                                "2026-11-25T03:01:00Z",
+                        )
+
+                    fun materialize(
+                        grants: List<VexLifeWorkspaceEffectsFamily.Grant>,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            workspaceEffectGrants =
+                                grants,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+                            .receipt
+                            .capabilityFrameSnapshot
+                            .let(
+                                ::requireNotNull,
+                            )
+
+                    val held =
+                        materialize(
+                            emptyList(),
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.heldCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            held.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        held.effectAuthorityGranted,
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            available.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceEffectDefinitions.WriteRef in
+                            available.heldCapabilityRefs,
+                    )
+                    assertFalse(
+                        available.effectAuthorityGranted,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun availableWorkspaceEffectsProjectExactAtlasRequestFormsIntoCurrentContext() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-affordances-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-affordances",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-affordances",
+                            content =
+                                "Build and test the granted project using only what is actually available.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "9".repeat(
+                                64,
+                            ),
+                        )
+                    val writeGrant =
+                        VexLifeWorkspaceEffectsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceEffectsFamily.GrantRefPrefix +
+                                    "a".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:01:00Z",
+                        )
+                    val checkGrant =
+                        VexLifeWorkspaceChecksFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceChecksFamily.GrantRefPrefix +
+                                    "b".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:02:00Z",
+                        )
+                    val runGrant =
+                        VexLifeWorkspaceRunsFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceRunsFamily.GrantRefPrefix +
+                                    "c".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-27T18:00:00Z",
+                            grantedAt =
+                                "2026-11-27T18:03:00Z",
+                        )
+                    val checkRuntimeRef =
+                        "image.vexlife-prod.private-service.product-java.test"
+                    val testRuntimeRef =
+                        "image.vexlife-prod.private-service.sandboxed-java-test.test"
+
+                    fun materialize(
+                        write: List<VexLifeWorkspaceEffectsFamily.Grant>,
+                        check: List<VexLifeWorkspaceChecksFamily.Grant>,
+                        run: List<VexLifeWorkspaceRunsFamily.Grant>,
+                        checkRuntime: String?,
+                        testRuntime: String?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                false,
+                            workspaceEffectGrants =
+                                write,
+                            workspaceCheckGrants =
+                                check,
+                            workspaceCheckRuntimeRef =
+                                checkRuntime,
+                            workspaceRunGrants =
+                                run,
+                            workspaceJavaTestRuntimeRef =
+                                testRuntime,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    val held =
+                        materialize(
+                            emptyList(),
+                            emptyList(),
+                            emptyList(),
+                            null,
+                            null,
+                        )
+                    val heldCurrent =
+                        held.messages[
+                            held.messages.size -
+                                2
+                        ]
+                            .content
+                    assertFalse(
+                        heldCurrent.contains(
+                            "Available bounded effect requests this turn",
+                        ),
+                    )
+                    assertFalse(
+                        heldCurrent.contains(
+                            VexLifeWorkspaceEffectDefinitions
+                                .Definitions
+                                .single()
+                                .actions
+                                .single()
+                                .exampleArguments,
+                        ),
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                writeGrant,
+                            ),
+                            listOf(
+                                checkGrant,
+                            ),
+                            listOf(
+                                runGrant,
+                            ),
+                            checkRuntimeRef,
+                            testRuntimeRef,
+                        )
+                    val current =
+                        available.messages[
+                            available.messages.size -
+                                2
+                        ]
+                            .content
+
+                    assertContains(
+                        current,
+                        "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    assertContains(
+                        current,
+                        sourceRef,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceEffectDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceEffectDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceCheckDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceCheckDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "- ${VexLifeWorkspaceJavaTestDefinitions.Handle}:",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeWorkspaceJavaTestDefinitions
+                            .Definitions
+                            .single()
+                            .actions
+                            .single()
+                            .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        "The capability frame itself grants no effect authority",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.ResultHeader,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workspaceCheckAvailabilityRequiresSeparateGrantAndCurrentProductRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-workspace-check-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.workspace-check",
+                            requestMessageRef =
+                                "message.self-development.human.workspace-check",
+                            content =
+                                "Use only the check authority I actually granted.",
+                        )
+                    val sourceRef =
+                        VexLifeLocalSourcesFamily.sourceRefForSha256(
+                            "c".repeat(
+                                64,
+                            ),
+                        )
+                    val grant =
+                        VexLifeWorkspaceChecksFamily.Grant(
+                            grantRef =
+                                VexLifeWorkspaceChecksFamily.GrantRefPrefix +
+                                    "d".repeat(
+                                        64,
+                                    ),
+                            sourceRef =
+                                sourceRef,
+                            sourceGrantedAt =
+                                "2026-11-25T04:00:00Z",
+                            grantedAt =
+                                "2026-11-25T04:01:00Z",
+                        )
+                    val runtimeRef =
+                        "image.vexlife-prod.private-service." +
+                            "e".repeat(
+                                32,
+                            )
+
+                    fun materialize(
+                        grants: List<VexLifeWorkspaceChecksFamily.Grant>,
+                        checkRuntimeRef: String?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                null,
+                            memoryContextAtCap =
+                                null,
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            workspaceCheckGrants =
+                                grants,
+                            workspaceCheckRuntimeRef =
+                                checkRuntimeRef,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+                            .receipt
+
+                    val noGrant =
+                        materialize(
+                            emptyList(),
+                            runtimeRef,
+                        )
+                    val noGrantFrame =
+                        requireNotNull(
+                            noGrant.capabilityFrameSnapshot,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            noGrantFrame.heldCapabilityRefs,
+                    )
+
+                    val noRuntime =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                            null,
+                        )
+                    val noRuntimeFrame =
+                        requireNotNull(
+                            noRuntime.capabilityFrameSnapshot,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            noRuntimeFrame.heldCapabilityRefs,
+                    )
+
+                    val available =
+                        materialize(
+                            listOf(
+                                grant,
+                            ),
+                            runtimeRef,
+                        )
+                    val availableFrame =
+                        requireNotNull(
+                            available.capabilityFrameSnapshot,
+                        )
+                    assertTrue(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            availableFrame.availableCapabilityRefs,
+                    )
+                    assertFalse(
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef in
+                            availableFrame.heldCapabilityRefs,
+                    )
+                    assertTrue(
+                        available.capabilityFrameSourceRefs.contains(
+                            grant.grantRef,
+                        ),
+                    )
+                    assertTrue(
+                        available.capabilityFrameSourceRefs.contains(
+                            runtimeRef,
+                        ),
+                    )
+                    assertFalse(
+                        availableFrame.effectAuthorityGranted,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun activeWorkingFocusIsMutableCurrentReceiptEvidenceWithoutChangingStablePrefix() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-active-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-active",
+                )
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+            owner.setCurrent(
+                workingFocusDraft(
+                    formed.installation.companionLineageRef,
+                ),
+            )
+            val observation =
+                DirectWorkingFocus.observeCurrent(
+                    productHome = productHome,
+                    lineageRef = formed.installation.companionLineageRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                )
+            val runtime =
+                runtimeEvidence()
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.active",
+                            requestMessageRef = "message.self-development.human.working-focus.active",
+                            content = "Continue from the current focus.",
+                        )
+                    val withoutFocus =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = null,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+                    val withFocus =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = observation,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+
+                    assertEquals(
+                        withoutFocus.messages.first(),
+                        withFocus.messages.first(),
+                        "mutable Working Focus must not invalidate the stable provider prefix",
+                    )
+                    val snapshot =
+                        assertNotNull(
+                            withFocus.receipt.workingFocusSnapshot,
+                        )
+                    assertEquals("INCLUDED_FULL", snapshot.projectionState)
+                    assertEquals("ACTIVE", snapshot.observedStanding)
+                    assertFalse(snapshot.effectsPerformed)
+                    val component =
+                        withFocus.receipt.contextComponents.single {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.WorkingFocus
+                        }
+                    assertEquals(
+                        DirectPromptContext.ComponentStability.MUTABLE_CURRENT,
+                        component.stabilityClass,
+                    )
+                    assertEquals(
+                        DirectPromptContext.ComponentPlacement.LIVE_TAIL,
+                        component.placementClass,
+                    )
+                    assertEquals(snapshot.contentSha256OrNull, component.sha256)
+                    assertTrue(
+                        withFocus.messages.any {
+                            it.content.contains("VEXLIFE_WORKING_FOCUS/v1")
+                        },
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun workingFocusUsesOnlyLeftoverPromptRoomForCoreAndHeldResidency() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-budget-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-budget",
+                )
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+            owner.setCurrent(
+                workingFocusDraft(
+                    lineageRef = formed.installation.companionLineageRef,
+                    detail = "detail ".repeat(250),
+                ),
+            )
+            val observation =
+                DirectWorkingFocus.observeCurrent(
+                    productHome = productHome,
+                    lineageRef = formed.installation.companionLineageRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                )
+            val runtime =
+                runtimeEvidence()
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.budget",
+                            requestMessageRef = "message.self-development.human.working-focus.budget",
+                            content = "Keep the current relationship without crowding out this request.",
+                        )
+                    fun materialize(
+                        focus: DirectWorkingFocus.Observation?,
+                        effectiveBudget: Int?,
+                    ) =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = focus,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = null,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = effectiveBudget,
+                        )
+
+                    val base =
+                        materialize(
+                            focus = null,
+                            effectiveBudget = null,
+                        )
+                    val full =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget = null,
+                        )
+                    val fullSnapshot =
+                        assertNotNull(
+                            full.receipt.workingFocusSnapshot,
+                        )
+                    assertEquals("INCLUDED_FULL", fullSnapshot.projectionState)
+                    assertTrue(
+                        fullSnapshot.estimatedTokens >
+                            fullSnapshot.requiredCoreTokens,
+                    )
+
+                    val held =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget =
+                                base.receipt.providerMaterializedInputTokenEstimate,
+                        )
+                    assertEquals(
+                        "HELD_TOKEN_BUDGET",
+                        assertNotNull(
+                            held.receipt.workingFocusSnapshot,
+                        ).projectionState,
+                    )
+                    assertTrue(
+                        held.receipt.contextComponents.none {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.WorkingFocus
+                        },
+                    )
+
+                    val coreBudget =
+                        base.receipt.providerMaterializedInputTokenEstimate +
+                            fullSnapshot.requiredCoreTokens +
+                            16
+                    assertTrue(
+                        coreBudget <
+                            base.receipt.providerMaterializedInputTokenEstimate +
+                            fullSnapshot.estimatedTokens,
+                    )
+                    val core =
+                        materialize(
+                            focus = observation,
+                            effectiveBudget = coreBudget,
+                        )
+                    assertEquals(
+                        "INCLUDED_CORE_ONLY",
+                        assertNotNull(
+                            core.receipt.workingFocusSnapshot,
+                        ).projectionState,
+                    )
+                    assertTrue(
+                        core.receipt.providerMaterializedInputTokenEstimate <=
+                            core.receipt.inputTokenBudget,
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun absentDisplacedAndClearedWorkingFocusStayObservableButNonResident() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-focus-standing-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "working-focus-standing",
+                )
+            val lineageRef =
+                formed.installation.companionLineageRef
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.working-focus.standing",
+                            requestMessageRef = "message.self-development.human.working-focus.standing",
+                            content = "Observe whether current focus is resident.",
+                        )
+                    fun assertNonResident(
+                        expectedStanding: String,
+                    ) {
+                        val observation =
+                            DirectWorkingFocus.observeCurrent(
+                                productHome = productHome,
+                                lineageRef = lineageRef,
+                                threadRef = DirectConversationIdentity.ThreadRef,
+                            )
+                        val materialized =
+                            DirectPromptContext.materializeContinuityAt(
+                                conversationOwner = this,
+                                prior = null,
+                                currentRequest = request,
+                                memoryAvailabilityContext = null,
+                                memoryContextAtCap = null,
+                                workingContinuityContext = null,
+                                workingFocusObservation = observation,
+                                browserContext = null,
+                                personContext = null,
+                                runtimeEvidence = null,
+                                sourceReturnProtocolEnabled = false,
+                                sourceReturnDiscovery = null,
+                                foundationalField = null,
+                                contextProfile = null,
+                                conversationExtentIncluded = false,
+                                capabilityRequestsAdmitted = false,
+                                providerNativeTools = false,
+                                experimentEffectiveInputTokenBudget = null,
+                            )
+                        val snapshot =
+                            assertNotNull(
+                                materialized.receipt.workingFocusSnapshot,
+                            )
+                        assertEquals("NOT_ACTIVE", snapshot.projectionState)
+                        assertEquals(expectedStanding, snapshot.observedStanding)
+                        assertTrue(
+                            materialized.receipt.contextComponents.none {
+                                it.componentRef ==
+                                    DirectPromptContext.ComponentRefs.WorkingFocus
+                            },
+                        )
+                    }
+
+                    assertNonResident("ABSENT")
+                    owner.setCurrent(
+                        workingFocusDraft(
+                            lineageRef,
+                        ),
+                    )
+                    owner.displace(
+                        lineageRef = lineageRef,
+                        threadRef = DirectConversationIdentity.ThreadRef,
+                        causeOwnerRef = "owner.vexlife-prod.attention-working-focus-convergence.001",
+                        causeRef = "attention.requirement.current",
+                        causeBindingRefs = listOf("binding.attention.current"),
+                    )
+                    assertNonResident("DISPLACED")
+                    owner.clear(
+                        lineageRef = lineageRef,
+                        threadRef = DirectConversationIdentity.ThreadRef,
+                        causeOwnerRef = VexLifeWorkingFocus.EffectOwnerRef,
+                        causeRef = "receipt.focus.clear.current",
+                        causeBindingRefs = listOf("binding.focus.clear.current"),
+                    )
+                    assertNonResident("CLEARED")
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalV10ReceiptRoundTripsWithoutWorkingFocusEvidence() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v10-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef = "turn.self-development.v10-compat",
+                            requestMessageRef = "message.self-development.human.v10-compat",
+                            content = "Historical v10 receipt compatibility",
+                        )
+                    val receipt =
+                        DirectPromptContext.materialize(
+                            prior = null,
+                            currentRequest = request,
+                            runtimeEvidence = runtimeEvidence(),
+                        )
+                            .receipt
+                    val historical =
+                        JsonObject(
+                            VexContractJson.Strict
+                                .encodeToJsonElement(
+                                    receipt,
+                                )
+                                .jsonObject
+                                .filterKeys {
+                                    it != "workingFocusSnapshot"
+                                }
+                                .toMutableMap()
+                                .also {
+                                    it[
+                                        "schemaVersion"
+                                    ] =
+                                        JsonPrimitive(
+                                            DirectPromptContext.ReceiptSchemaV10,
+                                        )
+                                },
+                        )
+                    val decoded =
+                        VexContractJson.decode<DirectPromptContext.Receipt>(
+                            historical.toString(),
+                        )
+
+                    assertEquals(
+                        DirectPromptContext.ReceiptSchemaV10,
+                        decoded.schemaVersion,
+                    )
+                    assertNull(
+                        decoded.workingFocusSnapshot,
+                    )
+                    assertEquals(
+                        VexContractJson.canonicalEncodeElement(
+                            historical,
+                        ),
+                        VexContractJson.canonicalEncode(
+                            decoded,
+                        ),
+                    )
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
         }
     }
 

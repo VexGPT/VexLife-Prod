@@ -107,7 +107,7 @@ object HereticArtifactDeliveryCatalog {
             ),
         ) +
             HereticModelCatalog.Entries
-                .filter { it !== HereticModelCatalog.Certified27B }
+                .filter { it !== HereticModelCatalog.Models.Qwen27B }
                 .flatMap(::channelsFor)
 
     /**
@@ -180,6 +180,43 @@ object HereticArtifactDeliveryCatalog {
         ) {
             "no current Heretic delivery channel for $artifactRef"
         }
+
+    /**
+     * Delivery for one exact current offering. Product-catalog models retain their source-managed
+     * channel identities; Home imports derive the same fixed credential-free Hugging Face
+     * coordinate from their already-admitted repository + revision + member.
+     */
+    fun channelFor(
+        model: HereticModelCatalog.Entry,
+        member: HereticArtifactCatalog.Member,
+    ): Channel {
+        require(
+            model.members.any { it.artifactRef == member.artifactRef && it == member },
+        ) {
+            "artifact member does not belong to the selected Heretic model"
+        }
+        if (model.origin == HereticModelCatalog.Origin.PRODUCT_CATALOG) {
+            return channelFor(member.artifactRef)
+        }
+        return Channel(
+            artifactRef = member.artifactRef,
+            channelRef =
+                "channel.vexlife-prod.heretic." +
+                    model.handle +
+                    "." +
+                    member.roleRef.substringAfterLast(".member.") +
+                    ".hf-import-fixed.001",
+            transportClass = TransportClass,
+            url =
+                "https://huggingface.co/" +
+                    model.providerRepository +
+                    "/resolve/" +
+                    model.providerRevision +
+                    "/" +
+                    member.filename +
+                    "?download=true",
+        )
+    }
 
     private fun channel(
         artifactSuffix: String,

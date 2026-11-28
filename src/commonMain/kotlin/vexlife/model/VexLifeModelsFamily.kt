@@ -2,25 +2,27 @@ package vexlife.model
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.text.VexLifeText
 
 /**
  * Product semantic owner for what the person can do with one offered model in Settings → Models.
  *
- * State is one model's relationship to this Home: whether its files are here, whether a download is
- * running, whether the Home chose it, whether the running runtime serves it.
+ * State is one model's relationship to this Home: whether its required artifacts are present,
+ * whether a download is running, whether the Home chose it, and whether the running runtime serves it.
  *
- * Lawfulness (what each Control may do, by State):
+ * Lawfulness keeps target choice, launch configuration and activation distinct:
  * ```
- * Use        files present, not already chosen          -> ChooseModel (takes effect at next start)
- * Download   files absent or partial, nothing running    -> AcquireModel (resumes a partial)
- * Redownload files damaged (wrong size), nothing running -> RemoveModel then AcquireModel
- * Remove     files here, not chosen, not serving, idle   -> RemoveModel (the model stays offered)
+ * Select      stage the Settings target only; no Home/runtime effect
+ * Configure   persist launch configuration for the staged target; no runtime activation
+ * Use/Start   staged + artifacts present + not current, or current config pending -> SwitchModel
+ * Download    artifacts absent or partial, nothing running -> AcquireArtifacts
+ * Redownload  artifacts damaged, nothing running           -> ReplaceArtifacts
+ * Remove      artifacts here, not chosen, not serving, idle -> RemoveArtifacts
  * ```
  *
- * The model the runtime serves and the model the Home chose are never removed: removing them would
- * break the running Vex or the next start. Choosing a model does not start it — Setup's own Start
- * switches the runtime, because this service process holds no runtime-start authority.
+ * Use is now an explicit activation Control for an already-selected target. The Family owns that
+ * human meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
  */
 object VexLifeModelsFamily :
     VexFamilyContract<
@@ -29,29 +31,79 @@ object VexLifeModelsFamily :
         VexLifeModelsFamily.Control,
         VexLifeModelsFamily.Effect,
     >() {
-    enum class Files {
-        ABSENT,
-        PARTIAL,
-        PRESENT,
-        DAMAGED,
+    sealed interface ArtifactPresence {
+        val stateRef: String
+        val statusKey: String
+
+        data object Absent : ArtifactPresence {
+            override val stateRef = "ABSENT"
+            override val statusKey = "workspace.status.model-not-downloaded"
+        }
+
+        data object Partial : ArtifactPresence {
+            override val stateRef = "PARTIAL"
+            override val statusKey = "workspace.status.model-partly-downloaded"
+        }
+
+        data object Present : ArtifactPresence {
+            override val stateRef = "PRESENT"
+            override val statusKey = "workspace.status.model-on-this-mac"
+        }
+
+        data object Damaged : ArtifactPresence {
+            override val stateRef = "DAMAGED"
+            override val statusKey = "workspace.status.model-damaged"
+        }
     }
 
     data class State(
         val handle: String,
-        val files: Files,
+        val artifactPresence: ArtifactPresence,
         val downloading: Boolean,
         val chosen: Boolean,
+        /** Settings-stage target. This may differ from the durable Home choice until Start. */
+        val targeted: Boolean,
         val serving: Boolean,
+        val switching: Boolean,
+        /** This offering was explicitly added to this Vex Home rather than shipped in the Product. */
+        val imported: Boolean = false,
+        /** The current platform has one exact runtime realization for this offering. */
+        val realizable: Boolean = true,
+        /** Exact effective launch configuration against which configuration Controls are resolved. */
+        val runtimeConfiguration: HereticRuntimeConfiguration.Effective?,
+        /** The selected/serving model has configured launch values not active in the current runtime. */
+        val runtimeConfigurationPending: Boolean = false,
         /** Any model's download is running (one at a time per Home). */
         val anyDownloadRunning: Boolean,
+        /** One model-switch convergence is active for this Home. */
+        val anySwitchRunning: Boolean,
     ) : VexFamilyContract.State<VexLifeModelsFamily>
 
     sealed interface Control : VexFamilyContract.Control<VexLifeModelsFamily> {
         val controlRef: String
     }
 
+    data object Select : Control {
+        override val controlRef: String = ControlSelect
+    }
+
+    /** Explicitly start/restart the already-selected target through the runtime owner. */
     data object Use : Control {
         override val controlRef: String = ControlUse
+    }
+
+    data object UseRecommendedRuntimeConfiguration : Control {
+        override val controlRef: String = ControlUseRecommendedRuntimeConfiguration
+    }
+
+    data class SetPromptCacheEntries(
+        val entries: Int,
+    ) : Control {
+        override val controlRef: String = ControlSetPromptCacheEntries
+
+        init {
+            HereticRuntimeConfiguration.requirePromptCacheEntries(entries)
+        }
     }
 
     data object Download : Control {
@@ -66,18 +118,45 @@ object VexLifeModelsFamily :
         override val controlRef: String = ControlRemove
     }
 
+    data object ForgetImportedModel : Control {
+        override val controlRef: String = ControlForgetImportedModel
+    }
+
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
-        data object ChooseModel : Effect
+        data object SwitchModel : Effect
 
-        data object AcquireModel : Effect
+        data object UseRecommendedRuntimeConfiguration : Effect
 
-        /** Remove this model's own pinned files; then acquire them again. */
-        data object ReplaceModel : Effect
+        data class SetPromptCacheEntries(
+            val entries: Int,
+        ) : Effect
 
-        data object RemoveModel : Effect
+        data object AcquireArtifacts : Effect
+
+        /** Replace this model's own pinned artifact bytes through the materialization owner. */
+        data object ReplaceArtifacts : Effect
+
+        data object RemoveArtifacts : Effect
+
+        data object ForgetImportedModel : Effect
     }
 
     @Serializable data class ControlDisplay(val controlRef: String, val label: VexLifeText)
+
+    /**
+     * One human-facing choice for the existing runtime-configuration relationship.
+     *
+     * [controlRef] is null when choosing this value would not change current semantic meaning.
+     * The presentation renders this projection; it does not classify numeric cache values itself.
+     */
+    @Serializable
+    data class RuntimeConfigurationChoiceDisplay(
+        val promptCacheEntries: Int,
+        val label: VexLifeText,
+        val standing: VexLifeText?,
+        val selected: Boolean,
+        val controlRef: String?,
+    )
 
     /** Language-free: every word is a key the presentation resolves. */
     @Serializable
@@ -86,62 +165,190 @@ object VexLifeModelsFamily :
         val status: VexLifeText,
         val notes: List<VexLifeText>,
         val controls: List<ControlDisplay>,
+        val runtimeConfigurationApplicable: Boolean,
+        val runtimeConfigurationSummary: VexLifeText?,
+        val runtimeConfigurationRecommendation: VexLifeText?,
+        val runtimeConfigurationChoices: List<RuntimeConfigurationChoiceDisplay>,
     ) : VexFamilyContract.DisplayState<VexLifeModelsFamily, State>
 
     override fun act(
         currentState: State,
         control: Control,
     ): Act<VexLifeModelsFamily, State, Effect>? {
-        val idle = !currentState.downloading && !currentState.anyDownloadRunning
+        val idle =
+            !currentState.downloading &&
+                !currentState.anyDownloadRunning &&
+                !currentState.anySwitchRunning
         return when (control) {
+            Select ->
+                if (
+                    currentState.realizable &&
+                        !currentState.targeted &&
+                        idle
+                ) {
+                    admit(
+                        currentState.copy(
+                            targeted = true,
+                        ),
+                    )
+                } else {
+                    null
+                }
             Use ->
                 if (
-                    currentState.files == Files.PRESENT &&
-                        !currentState.chosen &&
-                        !currentState.downloading
-                )
-                    stay(Effect.ChooseModel)
-                else null
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Present &&
+                        currentState.targeted &&
+                        (
+                            !currentState.chosen ||
+                                !currentState.serving ||
+                                currentState.runtimeConfigurationPending
+                        ) &&
+                        !currentState.switching &&
+                        idle
+                ) {
+                    stay(Effect.SwitchModel)
+                } else {
+                    null
+                }
+            UseRecommendedRuntimeConfiguration -> {
+                val runtimeConfiguration =
+                    currentState.runtimeConfiguration
+                        ?: return null
+                if (
+                    currentState.realizable &&
+                        currentState.targeted &&
+                        (
+                            runtimeConfiguration.promptCacheEntries !=
+                                runtimeConfiguration.recommendedPromptCacheEntries ||
+                                runtimeConfiguration.mode ==
+                                    HereticRuntimeConfiguration.ModeLegacyRecommended
+                        ) &&
+                        idle
+                ) {
+                    stay(Effect.UseRecommendedRuntimeConfiguration)
+                } else {
+                    null
+                }
+            }
+            is SetPromptCacheEntries -> {
+                val runtimeConfiguration =
+                    currentState.runtimeConfiguration
+                        ?: return null
+                if (
+                    currentState.realizable &&
+                        currentState.targeted &&
+                        control.entries in
+                            runtimeConfiguration.minimumPromptCacheEntries..
+                                runtimeConfiguration.maximumPromptCacheEntries &&
+                        (
+                            runtimeConfiguration.mode !=
+                                HereticRuntimeConfiguration.ModeExplicit ||
+                                runtimeConfiguration.promptCacheEntries != control.entries
+                        ) &&
+                        idle
+                ) {
+                    stay(Effect.SetPromptCacheEntries(control.entries))
+                } else {
+                    null
+                }
+            }
             Download ->
                 if (
-                    (currentState.files == Files.ABSENT || currentState.files == Files.PARTIAL) &&
+                    currentState.realizable &&
+                        (
+                        currentState.artifactPresence == ArtifactPresence.Absent ||
+                            currentState.artifactPresence == ArtifactPresence.Partial
+                    ) &&
                         idle
                 )
-                    stay(Effect.AcquireModel)
+                    stay(Effect.AcquireArtifacts)
                 else null
             Redownload ->
-                if (currentState.files == Files.DAMAGED && idle && !currentState.serving)
-                    stay(Effect.ReplaceModel)
+                if (
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Damaged &&
+                        idle &&
+                        !currentState.serving
+                )
+                    stay(Effect.ReplaceArtifacts)
                 else null
             Remove ->
                 if (
-                    currentState.files != Files.ABSENT &&
+                    currentState.artifactPresence != ArtifactPresence.Absent &&
                         !currentState.chosen &&
                         !currentState.serving &&
                         idle
-                )
-                    stay(Effect.RemoveModel)
-                else null
+                ) {
+                    if (currentState.targeted) {
+                        admit(
+                            state = currentState.copy(targeted = false),
+                            effect = Effect.RemoveArtifacts,
+                        )
+                    } else {
+                        stay(Effect.RemoveArtifacts)
+                    }
+                } else {
+                    null
+                }
+
+            ForgetImportedModel ->
+                if (
+                    currentState.imported &&
+                        currentState.artifactPresence == ArtifactPresence.Absent &&
+                        !currentState.chosen &&
+                        !currentState.serving &&
+                        idle
+                ) {
+                    if (currentState.targeted) {
+                        admit(
+                            state = currentState.copy(targeted = false),
+                            effect = Effect.ForgetImportedModel,
+                        )
+                    } else {
+                        stay(Effect.ForgetImportedModel)
+                    }
+                } else {
+                    null
+                }
         }
     }
 
-    override fun displayStateFor(state: State): DisplayState =
-        DisplayState(
+    override fun displayStateFor(state: State): DisplayState {
+        val runtimeConfiguration =
+            state.runtimeConfiguration
+        val currentLevel =
+            runtimeConfiguration
+                ?.let {
+                    VexLifeText(
+                        cacheLevelKey(
+                            it.promptCacheEntries,
+                        ),
+                    )
+                }
+        val recommendedLevel =
+            runtimeConfiguration
+                ?.let {
+                    VexLifeText(
+                        cacheLevelKey(
+                            it.recommendedPromptCacheEntries,
+                        ),
+                    )
+                }
+
+        return DisplayState(
             handle = state.handle,
             status =
                 when {
+                    !state.realizable -> VexLifeText("workspace.status.model-control-not-lawful")
+                    state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
-                    state.files == Files.PRESENT ->
-                        VexLifeText("workspace.status.model-on-this-mac")
-                    state.files == Files.PARTIAL ->
-                        VexLifeText("workspace.status.model-partly-downloaded")
-                    state.files == Files.DAMAGED -> VexLifeText("workspace.status.model-damaged")
-                    else -> VexLifeText("workspace.status.model-not-downloaded")
+                    else -> VexLifeText(state.artifactPresence.statusKey)
                 },
             notes =
                 listOfNotNull(
                     VexLifeText("workspace.label.model-serving").takeIf { state.serving },
-                    VexLifeText("workspace.label.model-chosen-next-start").takeIf {
+                    VexLifeText("workspace.label.model-chosen-pending").takeIf {
                         state.chosen && !state.serving
                     },
                     VexLifeText("workspace.label.model-chosen").takeIf {
@@ -149,32 +356,181 @@ object VexLifeModelsFamily :
                     },
                 ),
             controls =
-                listOf(Use, Download, Redownload, Remove)
+                listOf(
+                    Select,
+                    Use,
+                    UseRecommendedRuntimeConfiguration,
+                    Download,
+                    Redownload,
+                    Remove,
+                    ForgetImportedModel,
+                )
                     .filter { act(state, it) != null }
-                    .map { ControlDisplay(it.controlRef, VexLifeText(labelKey(it))) },
+                    .map {
+                        ControlDisplay(
+                            controlRef = it.controlRef,
+                            label =
+                                VexLifeText(
+                                    labelKey(
+                                        control = it,
+                                        state = state,
+                                    ),
+                                ),
+                        )
+                    },
+            runtimeConfigurationApplicable =
+                runtimeConfiguration !=
+                    null,
+            runtimeConfigurationSummary =
+                runtimeConfiguration
+                    ?.let {
+                        if (
+                            it.promptCacheEntries ==
+                                it.recommendedPromptCacheEntries
+                        ) {
+                            VexLifeText(
+                                key = "workspace.label.model-cache-current-recommended",
+                                parts = mapOf("current" to requireNotNull(currentLevel)),
+                            )
+                        } else {
+                            VexLifeText(
+                                key = "workspace.label.model-cache-current",
+                                parts =
+                                    mapOf(
+                                        "current" to requireNotNull(currentLevel),
+                                        "recommended" to requireNotNull(recommendedLevel),
+                                    ),
+                            )
+                        }
+                    },
+            runtimeConfigurationRecommendation =
+                runtimeConfiguration
+                    ?.let {
+                        VexLifeText(
+                            it.recommendationReasonKey,
+                        )
+                    },
+            runtimeConfigurationChoices =
+                runtimeConfiguration
+                    ?.let {
+                        configuration ->
+                        (
+                            configuration.minimumPromptCacheEntries..
+                                configuration.maximumPromptCacheEntries
+                        ).map { value ->
+                            val control =
+                                SetPromptCacheEntries(
+                                    value,
+                                )
+                            RuntimeConfigurationChoiceDisplay(
+                                promptCacheEntries = value,
+                                label = VexLifeText(cacheLevelKey(value)),
+                                standing =
+                                    choiceStandingKey(
+                                        value = value,
+                                        runtimeConfiguration = configuration,
+                                    )
+                                        ?.let { VexLifeText(it) },
+                                selected = value == configuration.promptCacheEntries,
+                                controlRef =
+                                    control.controlRef.takeIf {
+                                        act(
+                                            state,
+                                            control,
+                                        ) != null
+                                    },
+                            )
+                        }
+                    }
+                    .orEmpty(),
         )
+    }
 
-    private fun labelKey(control: Control): String =
+    private fun labelKey(
+        control: Control,
+        state: State,
+    ): String =
         when (control) {
-            Use -> "workspace.button.model-use"
+            Select -> "workspace.button.model-select"
+            Use ->
+                if (
+                    state.serving &&
+                        state.runtimeConfigurationPending
+                ) {
+                    "workspace.button.model-apply-restart"
+                } else {
+                    "workspace.button.model-start"
+                }
+            UseRecommendedRuntimeConfiguration -> "workspace.button.model-use-recommended"
+            is SetPromptCacheEntries -> "workspace.button.model-set-prompt-cache"
             Download -> "workspace.button.model-download"
             Redownload -> "workspace.button.model-redownload"
             Remove -> "workspace.button.model-remove"
+            ForgetImportedModel -> "workspace.button.model-forget"
         }
 
-    fun controlForRef(controlRef: String): Control? =
+    private fun cacheLevelKey(value: Int): String =
+        when (value) {
+            1 -> "workspace.label.model-cache-level-1"
+            2 -> "workspace.label.model-cache-level-2"
+            3 -> "workspace.label.model-cache-level-3"
+            else ->
+                error(
+                    "runtime configuration value $value has no human-facing Models level",
+                )
+        }
+
+    private fun choiceStandingKey(
+        value: Int,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective,
+    ): String? =
+        when {
+            value == runtimeConfiguration.recommendedPromptCacheEntries ->
+                "workspace.label.model-recommended"
+
+            value < runtimeConfiguration.recommendedPromptCacheEntries ->
+                null
+
+            (
+                runtimeConfiguration.recommendationStanding ==
+                    HereticRuntimeConfiguration.RecommendationHeldExperiment ||
+                    runtimeConfiguration.recommendationStanding ==
+                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate
+            ) &&
+                value > runtimeConfiguration.recommendedPromptCacheEntries ->
+                "workspace.label.model-experimental"
+
+            else ->
+                error(
+                    "runtime configuration value $value has no admitted human-facing standing",
+                )
+        }
+
+    fun controlForRef(
+        controlRef: String,
+        promptCacheEntries: Int? = null,
+    ): Control? =
         when (controlRef) {
+            ControlSelect -> Select
             ControlUse -> Use
+            ControlUseRecommendedRuntimeConfiguration -> UseRecommendedRuntimeConfiguration
+            ControlSetPromptCacheEntries ->
+                promptCacheEntries?.let(::SetPromptCacheEntries)
             ControlDownload -> Download
             ControlRedownload -> Redownload
             ControlRemove -> Remove
+            ControlForgetImportedModel -> ForgetImportedModel
             else -> null
         }
 
+    const val ControlSelect = "SELECT_MODEL"
     const val ControlUse = "USE_MODEL"
+    const val ControlUseRecommendedRuntimeConfiguration = "USE_RECOMMENDED_RUNTIME_CONFIGURATION"
+    const val ControlSetPromptCacheEntries = "SET_PROMPT_CACHE_ENTRIES"
     const val ControlDownload = "DOWNLOAD_MODEL"
     const val ControlRedownload = "REDOWNLOAD_MODEL"
     const val ControlRemove = "REMOVE_MODEL"
+    const val ControlForgetImportedModel = "FORGET_IMPORTED_MODEL"
 }
 
 // [VXG RealForever]

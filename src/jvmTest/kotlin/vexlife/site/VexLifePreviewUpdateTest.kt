@@ -10,11 +10,16 @@ import kotlin.test.assertFalse
 class VexLifePreviewUpdateTest {
     private val root: Path = Path.of("").toAbsolutePath()
     private val siteScript = Files.readString(root.resolve("site/assets/site.js"))
+    private val sitePage = Files.readString(root.resolve("site/index.html"))
     private val releaseContract =
         Files.readString(root.resolve("packaging/macos-app/release-contract.json"))
     private val buildSource = Files.readString(root.resolve("build.gradle.kts"))
     private val appIconArtwork =
         Files.readString(root.resolve("packaging/macos-app/vextreme-app-icon.svg"))
+    private val releaseScript =
+        Files.readString(root.resolve("tools/release/publish-mac-release.sh"))
+    private val pagesPublishScript =
+        Files.readString(root.resolve("tools/site/publish-gh-pages.sh"))
 
     @Test
     fun newestTwoPreviewsRemainSelectableDuringUpdateComparison() {
@@ -51,8 +56,18 @@ class VexLifePreviewUpdateTest {
     @Test
     fun sealedDiskImageStripsMountTimeBookkeeping() {
         assertContains(buildSource, "\".fseventsd\"")
+        assertContains(buildSource, "\"no_log\"")
         assertContains(buildSource, "\".Spotlight-V100\"")
         assertContains(buildSource, "\".Trashes\"")
+        val suppression = buildSource.indexOf("val fseventsNoLog =")
+        val finalCleanup = buildSource.indexOf("Final cleanup is deliberately adjacent to detach")
+        val detach = buildSource.indexOf("\"detach\",", finalCleanup)
+        kotlin.test.assertTrue(
+            suppression >= 0 &&
+                finalCleanup > suppression &&
+                detach > finalCleanup,
+            "FSEvents suppression must remain active through writable-volume changes and cleanup must stay immediately before detach",
+        )
     }
 
     @Test
@@ -61,5 +76,31 @@ class VexLifePreviewUpdateTest {
         assertContains(appIconArtwork, "translate(62 62) scale(7.5)")
         assertContains(buildSource, "macApplicationIconArtworkSource")
         assertContains(buildSource, "packaging/macos-app/vextreme-app-icon.svg")
+    }
+
+    @Test
+    fun releasePublicationRefreshesThePublicDownloadCatalogAfterTheReleaseExists() {
+        val releaseCreate = releaseScript.indexOf("gh release create")
+        val pagesPublish = releaseScript.indexOf("tools/site/publish-gh-pages.sh")
+        assertContains(releaseScript, "VEXLIFE_REPOSITORY=\"\$REPOSITORY\"")
+        assertContains(releaseScript, "tools/site/publish-gh-pages.sh")
+        kotlin.test.assertTrue(releaseCreate >= 0 && pagesPublish > releaseCreate)
+    }
+
+    @Test
+    fun hostedPagesPublicationConfiguresGitAuthenticationBeforeTheSeparatePushCheckout() {
+        val setupGit = pagesPublishScript.indexOf("gh auth setup-git")
+        val clone = pagesPublishScript.indexOf("git clone --quiet --no-checkout")
+        kotlin.test.assertTrue(setupGit >= 0 && clone > setupGit)
+    }
+
+    @Test
+    fun publicFooterUsesTheMaintainerContactVictorActuallyControls() {
+        assertContains(sitePage, "VexLife · built and maintained by Victor Gong")
+        assertContains(sitePage, "mailto:vgong24@gmail.com")
+        assertContains(sitePage, "https://github.com/VexGPT/VexLife-Prod")
+        assertContains(sitePage, "https://vgong24.github.io/Vextreme/pages/vex-support.html")
+        assertContains(sitePage, "https://www.instagram.com/victoweng/")
+        assertFalse(sitePage.contains("victor.gong@vextreme24.com"))
     }
 }

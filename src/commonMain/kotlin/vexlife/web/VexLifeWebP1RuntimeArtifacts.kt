@@ -1,7 +1,23 @@
 package vexlife.web
 
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.context.VexLifeContextProfile
+import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.diagnostics.VexLifeDiagnosticsFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
+import vexlife.model.VexLifeModelsFamily
+import vexlife.partner.VexLifePartnerProviderCatalog
+import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
+import vexlife.person.VexLifePersonSettings
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 
@@ -17,7 +33,9 @@ import vexlife.workspace.VexLifeWorkspaceApp
  * - current Send idempotency / Memory / working-continuity / runtime owners remain untouched.
  */
 object VexLifeWebP1RuntimeArtifacts {
-    fun generate(): VexWebArtifacts.Bundle {
+    fun generate(
+        presentationSourceSha: String? = null,
+    ): VexWebArtifacts.Bundle {
         val semantic =
             VexWebArtifacts.generate(
                 VexLifeWebP1.Surface,
@@ -29,12 +47,16 @@ object VexLifeWebP1RuntimeArtifacts {
             css =
                 VexLifeWebP1ExperienceStyle.render(),
             javascript =
-                runtimeJavascript().trimIndent() +
+                runtimeJavascript(
+                    presentationSourceSha,
+                ).trimIndent() +
                     "\n",
         )
     }
 
-    private fun runtimeJavascript(): String {
+    private fun runtimeJavascript(
+        presentationSourceSha: String?,
+    ): String {
         val browserCompanionSeam =
             VexLifeWebP1.BodyFrame.seams
                 .filterIsInstance<VexWeb.Seam.Vertical>()
@@ -75,6 +97,227 @@ object VexLifeWebP1RuntimeArtifacts {
             )
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
+        val partnerProviders =
+            VexLifePartnerProviderCatalog
+                .definitions()
+                .joinToString(
+                    separator = ",",
+                    prefix = "[",
+                    postfix = "]",
+                ) {
+                    provider ->
+                    val label =
+                        when (
+                            provider.providerRef
+                        ) {
+                            VexLifePartnerProviderCatalog.OpenAiRef ->
+                                "OpenAI"
+
+                            VexLifePartnerProviderCatalog.AnthropicRef ->
+                                "Anthropic"
+
+                            VexLifePartnerProviderCatalog.KimiInternationalRef ->
+                                "Kimi Open Platform"
+
+                            else ->
+                                error(
+                                    "Partner provider display label is not source-owned",
+                                )
+                        }
+                    "Object.freeze({providerRef:" +
+                        jsString(
+                            provider.providerRef,
+                        ) +
+                        ",label:" +
+                        jsString(
+                            label,
+                        ) +
+                        ",workspaceOptional:" +
+                        (
+                            provider.accountScopeSelection ==
+                                VexLifePartnerProviderCatalog.AccountScopeSelection.WORKSPACE_ID_IF_CREDENTIAL_NOT_SCOPED
+                        ) +
+                        "})"
+                }
+
+        fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
+
+        fun voiceDisplay(state: VexLifeVoiceInputFamily.State): String {
+            val display = VexLifeVoiceInputFamily.displayStateFor(state)
+            return buildString {
+                append("Object.freeze({statusKey:")
+                append(jsString(display.status.key))
+                append(",primaryControlRef:")
+                append(jsNullable(display.primaryControlRef))
+                append(",primaryLabelKey:")
+                append(jsNullable(display.primaryLabel?.key))
+                append(",active:")
+                append(display.active)
+                append(",attention:")
+                append(jsString(display.attention.name))
+                append("})")
+            }
+        }
+
+        val voiceStateDisplays =
+            listOf(
+                VexLifeVoiceInputFamily.StateReady to
+                    voiceDisplay(VexLifeVoiceInputFamily.Ready),
+                VexLifeVoiceInputFamily.StateRequestingMicrophone to
+                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone),
+                VexLifeVoiceInputFamily.StateListening to
+                    voiceDisplay(VexLifeVoiceInputFamily.Listening),
+                VexLifeVoiceInputFamily.StateStopping to
+                    voiceDisplay(VexLifeVoiceInputFamily.Stopping),
+            ).joinToString(separator = ",", prefix = "{", postfix = "}") { (stateRef, display) ->
+                jsString(stateRef) + ":" + display
+            }
+        val voiceHoldDisplays =
+            VexLifeVoiceInputFamily.HoldReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Held(it))
+            }
+        val voiceFailureDisplays =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Failed(it))
+            }
+
+        fun voiceSemanticState(
+            state: VexLifeVoiceInputFamily.State?,
+        ): String {
+            if (state == null) return "null"
+            val holdReason =
+                (state as? VexLifeVoiceInputFamily.Held)
+                    ?.reason
+                    ?.reasonRef
+            val failureReason =
+                (state as? VexLifeVoiceInputFamily.Failed)
+                    ?.reason
+                    ?.reasonRef
+            return buildString {
+                append("Object.freeze({stateRef:")
+                append(jsString(state.stateRef))
+                append(",holdReasonRef:")
+                append(jsNullable(holdReason))
+                append(",failureReasonRef:")
+                append(jsNullable(failureReason))
+                append("})")
+            }
+        }
+
+        fun voiceAct(
+            state: VexLifeVoiceInputFamily.State,
+            control: VexLifeVoiceInputFamily.Control,
+        ): String {
+            val act =
+                VexLifeVoiceInputFamily.resolve(
+                    currentState = state,
+                    control = control,
+                )
+                    ?: return "null"
+            return buildString {
+                append("Object.freeze({admittedState:")
+                append(voiceSemanticState(act.admittedState))
+                append(",effectRef:")
+                append(jsNullable(act.effect?.effectRef))
+                append("})")
+            }
+        }
+
+        val voiceExampleStates =
+            listOf(
+                VexLifeVoiceInputFamily.Ready,
+                VexLifeVoiceInputFamily.RequestingMicrophone,
+                VexLifeVoiceInputFamily.Listening,
+                VexLifeVoiceInputFamily.Stopping,
+                VexLifeVoiceInputFamily.Held(
+                    VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
+                ),
+                VexLifeVoiceInputFamily.Failed(
+                    VexLifeVoiceInputFamily.FailureReason.Unknown,
+                ),
+            )
+        val voiceActByState =
+            voiceExampleStates.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { state ->
+                jsString(state.stateRef) +
+                    ":Object.freeze({" +
+                    jsString(VexLifeVoiceInputFamily.ControlStart) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Start) +
+                    "," +
+                    jsString(VexLifeVoiceInputFamily.ControlStop) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Stop) +
+                    "})"
+            }
+
+        val voiceCapabilityStateByFacts =
+            buildList {
+                for (localRecognition in listOf(false, true)) {
+                    for (microphoneApi in listOf(false, true)) {
+                        for (audioFeedback in listOf(false, true)) {
+                            val key =
+                                listOf(
+                                    localRecognition,
+                                    microphoneApi,
+                                    audioFeedback,
+                                )
+                                    .joinToString(":") {
+                                        if (it) "1" else "0"
+                                    }
+                            add(
+                                jsString(key) +
+                                    ":" +
+                                    voiceSemanticState(
+                                        VexLifeVoiceInputFamily.observeCapability(
+                                            localRecognitionAvailable = localRecognition,
+                                            microphoneApiAvailable = microphoneApi,
+                                            audioFeedbackAvailable = audioFeedback,
+                                        )
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                )
+
+        val voiceFailureStateByReason =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { reason ->
+                jsString(reason.reasonRef) +
+                    ":" +
+                    voiceSemanticState(
+                        VexLifeVoiceInputFamily.observeFailure(
+                            reason,
+                        )
+                    )
+            }
+
+        val voiceRecognitionStartedState =
+            voiceSemanticState(
+                VexLifeVoiceInputFamily.observeRecognitionStarted()
+            )
 
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
@@ -83,12 +326,53 @@ object VexLifeWebP1RuntimeArtifacts {
               if (!root) return;
 
               const service = Object.freeze({
+                presentationSourceSha: ${jsNullable(presentationSourceSha)},
+                presentationSourceHeader: ${jsString(VexLifeProdServiceContract.PresentationSourceHeader)},
+                stalePresentationCode: ${jsString(VexLifeProdServiceContract.StalePresentationCode)},
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationResourceMetadataPath: ${jsString(VexLifeProdServiceContract.ConversationResourceMetadataPath)},
+                conversationResourceContentPath: ${jsString(VexLifeProdServiceContract.ConversationResourceContentPath)},
+                conversationResourceEventRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventRefHeader)},
+                conversationResourceEventHashHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventHashHeader)},
+                conversationResourceSequenceHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceSequenceHeader)},
+                conversationResourceRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceRefHeader)},
+                conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
+                attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
+                attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
+                attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
+                localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
+                localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
+                workspaceEffectsPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsPath)},
+                workspaceEffectsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlPath)},
+                workspaceChecksPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksPath)},
+                workspaceChecksControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlPath)},
+                workspaceRunsPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsPath)},
+                workspaceRunsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlPath)},
+                attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
+                attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
+                contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
+                contextProfilesControlPath: ${jsString(VexLifeProdServiceContract.ContextProfilesControlPath)},
+                contextProfileHomeRevealPath: ${jsString(VexLifeProdServiceContract.ContextProfileHomeRevealPath)},
+                contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
+                vexLabsPath: ${jsString(VexLifeProdServiceContract.VexLabsPath)},
+                vexLabsControlPath: ${jsString(VexLifeProdServiceContract.VexLabsControlPath)},
+                vexLabsSendPath: ${jsString(VexLifeProdServiceContract.VexLabsSendPath)},
+                foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
+                releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
+                releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
+                releaseAlertsStringsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsStringsPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
+                localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrComposerOutputPath: ${jsString(VexLifeProdServiceContract.LocalAsrComposerOutputPath)},
+                localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
+                localAsrPreparePath: ${jsString(VexLifeProdServiceContract.LocalAsrPreparePath)},
+                localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
                 privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
@@ -100,15 +384,30 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsSourcesPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesPath)},
+                modelsSourcesControlPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesControlPath)},
+                partnerConnectionsPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsPath)},
+                partnerConnectionsControlPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsControlPath)},
+                partnerConnectionControlHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionControlHeader)},
+                partnerConnectionProviderRefHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionProviderRefHeader)},
+                partnerConnectionWorkspaceIdHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader)},
+                partnerConnectionControlConnect: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Connect.wire)},
+                partnerConnectionControlReplace: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Replace.wire)},
+                partnerConnectionHeldFunding: ${jsString(VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
+                modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
+                modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
-                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
+                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
+                cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
+              const partnerProviders = Object.freeze($partnerProviders);
               const apps = Object.freeze({
                 keys: $workspaceApps,
                 sourceTemplate: ${jsString(VexLifeWorkspaceApp.SourceTemplate.key)},
                 archives: ${jsString(VexLifeWorkspaceApp.Archives.key)},
+                vexContext: ${jsString(VexLifeWorkspaceApp.VexContext.key)},
                 browser: ${jsString(VexLifeWorkspaceApp.Browser.key)},
                 sourceTemplateScopes: $sourceTemplateScopes,
                 storageKey: 'vexlife-prod.presentation.app'
@@ -127,27 +426,218 @@ object VexLifeWebP1RuntimeArtifacts {
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
               });
+              // Kotlin ConversationTurn Family vocabulary crossing into presentation. The current
+              // State/DisplayState itself is observed from the service, not invented in JavaScript.
+              const conversationTurn = Object.freeze({
+                control: Object.freeze({
+                  send: ${jsString(VexLifeConversationTurnFamily.ControlSend)},
+                  stop: ${jsString(VexLifeConversationTurnFamily.ControlStop)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.ConversationControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Attachment Draft Family vocabulary. State/DisplayState arrive from the
+              // service; the browser only realizes the native file picker/upload and invokes
+              // exact Controls projected by that Family.
+              const attachmentDraft = Object.freeze({
+                state: Object.freeze({
+                  empty: ${jsString(VexLifeAttachmentDraftFamily.StateEmpty)},
+                  draft: ${jsString(VexLifeAttachmentDraftFamily.StateDraft)}
+                }),
+                status: Object.freeze({
+                  staging: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.STAGING.name)},
+                  ready: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.READY.name)},
+                  held: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.HELD.name)}
+                }),
+                control: Object.freeze({
+                  add: ${jsString(VexLifeAttachmentDraftFamily.ControlAddFiles)},
+                  cancelStage: ${jsString(VexLifeAttachmentDraftFamily.ControlCancelStage)},
+                  remove: ${jsString(VexLifeAttachmentDraftFamily.ControlRemove)}
+                }),
+                stageOutcome: Object.freeze({
+                  ready: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.READY.name)},
+                  held: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.HELD.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED.name)}
+                }),
+                controlOutcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.AttachmentControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Local Sources Family vocabulary. The browser projects State/DisplayState
+              // and invokes exact Controls; host folder selection and grant admission stay in the service.
+              const localSources = Object.freeze({
+                control: Object.freeze({
+                  add: ${jsString(VexLifeLocalSourcesFamily.ControlAddFolder)},
+                  remove: ${jsString(VexLifeLocalSourcesFamily.ControlRemove)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.CANCELLED.name)},
+                  unavailable: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.UNAVAILABLE.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW.name)}
+                })
+              });
+              // Stronger human authority remains separate from the Local Source read grant.
+              const workspaceEffects = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceEffectsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceEffectsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChanges.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChanges.identity.ref)}
+              });
+              const workspaceChecks = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceChecksFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceChecksFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChecks.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChecks.identity.ref)}
+              });
+              const workspaceRuns = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceRunsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceRunsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowTests.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopTests.identity.ref)}
+              });
+              // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
+              // Effects but does not invent Product State, Control, reason refs or display keys.
+              const voiceInput = Object.freeze({
+                state: Object.freeze({
+                  ready: ${jsString(VexLifeVoiceInputFamily.StateReady)},
+                  requestingMicrophone: ${jsString(VexLifeVoiceInputFamily.StateRequestingMicrophone)},
+                  listening: ${jsString(VexLifeVoiceInputFamily.StateListening)},
+                  stopping: ${jsString(VexLifeVoiceInputFamily.StateStopping)},
+                  held: ${jsString(VexLifeVoiceInputFamily.StateHeld)},
+                  failed: ${jsString(VexLifeVoiceInputFamily.StateFailed)}
+                }),
+                control: Object.freeze({
+                  start: ${jsString(VexLifeVoiceInputFamily.ControlStart)},
+                  stop: ${jsString(VexLifeVoiceInputFamily.ControlStop)}
+                }),
+                effect: Object.freeze({
+                  beginLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectBeginLocalDictation)},
+                  endLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectEndLocalDictation)}
+                }),
+                holdReason: Object.freeze({
+                  localRecognitionUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable.reasonRef)},
+                  microphoneApiUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable.reasonRef)},
+                  audioFeedbackUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.AudioFeedbackUnavailable.reasonRef)}
+                }),
+                failureReason: Object.freeze({
+                  microphonePermissionRequired: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophonePermissionRequired.reasonRef)},
+                  microphoneUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable.reasonRef)},
+                  recognitionStopped: ${jsString(VexLifeVoiceInputFamily.FailureReason.RecognitionStopped.reasonRef)},
+                  unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
+                }),
+                attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
+                displayByState: Object.freeze($voiceStateDisplays),
+                holdDisplayByReason: Object.freeze($voiceHoldDisplays),
+                failureDisplayByReason: Object.freeze($voiceFailureDisplays),
+                actByState: Object.freeze($voiceActByState),
+                capabilityStateByFacts: Object.freeze($voiceCapabilityStateByFacts),
+                failureStateByReason: Object.freeze($voiceFailureStateByReason),
+                recognitionStartedState: $voiceRecognitionStartedState
+              });
 
               const byId = (id) => document.getElementById(id);
+              // Elements that carry a typed identity are found by it, not by a DOM id string: the
+              // Blueprint ref is the element at every layer (docs/CULTURE.md).
+              const byRef = (ref) => document.querySelector('[data-vex-ref="' + ref + '"]');
               const ui = Object.freeze({
                 frame: byId('frame'),
                 seam: byId('seam'),
                 collapseBefore: byId('collapse-before'),
                 collapseAfter: byId('collapse-after'),
-                query: byId('query'),
+                query: byRef(${jsString(VexLifeWebP1.BrowserQuery.identity.ref)}),
                 addressForm: byId('address-form'),
                 addressError: byId('address-error'),
                 reload: byId('reload'),
-                appSelector: byId('app-selector'),
+                appSelector: byRef(${jsString(VexLifeWebP1.AppSelector.identity.ref)}),
                 addressForm: byId('address-form'),
-                family: byId('source-template-family'),
+                family: byRef(${jsString(VexLifeWebP1.SourceTemplateFamily.identity.ref)}),
                 viewport: root.querySelector('.viewport'),
-                archives: byId('archives'),
+                archives: byRef(${jsString(VexLifeWebP1.Archives.identity.ref)}),
                 archivesSummary: byId('archives-summary'),
-                archivesTimeline: byId('archives-timeline'),
-                quickActions: byId('quick-actions'),
-                languagePanel: byId('language-panel'),
-                languageList: byId('language-list'),
+                archivesTimeline: byRef(${jsString(VexLifeWebP1.ArchivesTimeline.identity.ref)}),
+                vexContext: byRef(${jsString(VexLifeWebP1.VexContext.identity.ref)}),
+                contextProfileBadge: byId('context-profile-badge'),
+                contextProfileSummary: byId('context-profile-summary'),
+                contextProfileChoice: byId('context-profile-choice'),
+                contextProfileName: byId('context-profile-name'),
+                contextProfileFoundationMode: byId('context-profile-foundation-mode'),
+                contextProfileFoundationField: byId('context-profile-foundation-field'),
+                contextProfileFoundationText: byId('context-profile-foundation-text'),
+                contextProcessRetentionSelect: byId('context-process-retention'),
+                contextProfileSave: byId('context-profile-save'),
+                contextProfileSaveAs: byId('context-profile-save-as'),
+                contextProfileRestore: byRef(${jsString(VexLifeWebP1.VexContextProfileRestore.identity.ref)}),
+                contextProfileExport: byRef(${jsString(VexLifeWebP1.VexContextProfilePortability.identity.ref)}),
+                contextProfileImport: byId('context-profile-import'),
+                contextProfileHome: byRef(${jsString(VexLifeWebP1.VexContextProfileHome.identity.ref)}),
+                contextProfileNote: byId('context-profile-note'),
+                contextChangesList: byId('context-changes-list'),
+                vexLabsStatus: byId('vex-labs-status'),
+                vexLabsTest: byId('vex-labs-test'),
+                vexLabsSaveSupported: byId('vex-labs-save-supported'),
+                vexLabsRestore: byId('vex-labs-restore'),
+                vexLabsReload: byId('vex-labs-reload'),
+                vexLabsClear: byId('vex-labs-clear'),
+                vexLabsInputBudget: byId('vex-labs-input-budget'),
+                vexLabsMemoryMode: byId('vex-labs-memory-mode'),
+                vexLabsMemoryBudget: byId('vex-labs-memory-budget'),
+                vexLabsNote: byId('vex-labs-note'),
+                vexLabsFields: byId('vex-labs-fields'),
+                vexLabsRequest: byId('vex-labs-request'),
+                vexLabsRequestSha: byId('vex-labs-request-sha'),
+                vexLabsRequestBody: byId('vex-labs-request-body'),
+                vexContextTurnSummary: byId('vex-context-turn-summary'),
+                vexContextBudget: byId('vex-context-budget'),
+                contextFoundationStatus: byId('context-foundation-status'),
+                contextFoundationBody: byId('context-foundation-body'),
+                contextMemoryStatus: byId('context-memory-status'),
+                contextMemoryBody: byId('context-memory-body'),
+                contextContinuityStatus: byId('context-continuity-status'),
+                contextContinuityBody: byId('context-continuity-body'),
+                contextConversationStatus: byId('context-conversation-status'),
+                contextConversationBody: byId('context-conversation-body'),
+                contextBrowserStatus: byId('context-browser-status'),
+                contextBrowserBody: byId('context-browser-body'),
+                contextRequestStatus: byId('context-request-status'),
+                contextRequestBody: byId('context-request-body'),
+                contextComponentList: byId('context-component-list'),
+                contextProcessStatus: byId('context-process-status'),
+                contextProcessBody: byId('context-process-body'),
+                contextOutputBody: byId('context-output-body'),
+                contextAfterBody: byId('context-after-body'),
+                quickActions: byRef(${jsString(VexLifeWebP1.QuickActions.identity.ref)}),
+                releaseAlertsPanel: byRef(${jsString(VexLifeWebP1.ReleaseAlertsPanel.identity.ref)}),
+                releaseAlertsTitle: byId('release-alerts-title'),
+                releaseAlertsEmpty: byId('release-alerts-empty'),
+                releaseAlertsList: byRef(${jsString(VexLifeWebP1.ReleaseAlertsList.identity.ref)}),
+                languagePanel: byRef(${jsString(VexLifeWebP1.LanguagePanel.identity.ref)}),
+                // The typed choice is the labelled field; the control the runtime fills is its select.
+                replyLanguage: byRef(${jsString(VexLifeWebP1.ReplyLanguageChoice.identity.ref)})?.querySelector('select'),
+                screenLanguage: byRef(${jsString(VexLifeWebP1.ScreenLanguageChoice.identity.ref)})?.querySelector('select'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
@@ -163,22 +653,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 pageFrame: byId('page-frame'),
                 contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
-                frameStatus: byId('frame-status'),
+                frameStatus: byRef(${jsString(VexLifeWebP1.BrowserFrameStatus.identity.ref)}),
                 companionTitle: byId('companion-title'),
-                companionStatus: byId('companion-status'),
+                companionMode: byId('companion-mode'),
+                companionStatus: byRef(${jsString(VexLifeWebP1.CompanionStatus.identity.ref)}),
                 companionStatusText: byId('companion-status-text'),
                 companionStatusModel: byId('companion-status-model'),
-                visionControl: byId('vision-control'),
+                visionControl: byRef(${jsString(VexLifeWebP1.Vision.identity.ref)}),
                 visionControlStatus: byId('vision-control-status'),
-                viewSwitch: byId('view-switch'),
-                conversation: byId('view-conversation'),
-                settings: byId('view-settings'),
-                timeline: byId('timeline'),
-                jumpLatest: byId('jump-latest'),
-                responseProgress: byId('response-progress'),
-                contextShare: byId('context-share'),
+                viewSwitch: byRef(${jsString(VexLifeWebP1.CompanionViewSwitch.identity.ref)}),
+                conversation: byRef(${jsString(VexLifeWebP1.Conversation.identity.ref)}),
+                settings: byRef(${jsString(VexLifeWebP1.Settings.identity.ref)}),
+                timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
+                jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
+                responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                responseProgressTitle: byId('response-progress-title'),
+                responseProgressDetail: byId('response-progress-detail'),
+                contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
-                ticket: byId('ticket'),
+                ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
                 ticketTitle: byId('ticket-title'),
                 ticketLine: byId('ticket-line'),
                 ticketUrl: byId('ticket-url'),
@@ -187,36 +680,77 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
-                send: byId('send'),
-                stop: byId('stop'),
-                contextWindow: byId('context-window'),
+                voiceInput: byRef(${jsString(VexLifeWebP1.VoiceInput.identity.ref)}),
+                voiceInputOverlay: byId('voice-input-overlay'),
+                voiceInputStatus: byId('voice-input-status'),
+                voiceWaveform: byId('voice-waveform'),
+                attach: byRef(${jsString(VexLifeWebP1.Attach.identity.ref)}),
+                attachInput: byId('attach-input'),
+                composerAttachments: byRef(${jsString(VexLifeWebP1.ComposerAttachments.identity.ref)}),
+                send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
+                stop: byRef(${jsString(VexLifeWebP1.Stop.identity.ref)}),
+                contextWindow: byRef(${jsString(VexLifeWebP1.ContextWindow.identity.ref)}),
                 contextCore: byId('context-core'),
                 contextUsed: byId('context-used'),
                 contextRemaining: byId('context-remaining'),
                 contextText: byId('context-text'),
                 contextNote: byId('context-note'),
-                memory: byId('memory'),
+                memory: byRef(${jsString(VexLifeWebP1.MemoryResource.identity.ref)}),
                 memoryUsed: byId('memory-used'),
                 memoryRemaining: byId('memory-remaining'),
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
-                modelsList: byId('models-list'),
+                modelsState: byRef(${jsString(VexLifeWebP1.ModelsState.identity.ref)}),
+                modelsCurrentState: byId('models-current-state'),
+                modelChoice: byId('model-choice'),
+                modelChoiceFacts: byId('model-choice-facts'),
+                modelChoiceNotes: byId('model-choice-notes'),
+                modelsList: byRef(${jsString(VexLifeWebP1.ModelsList.identity.ref)}),
+                modelImportUrl: byId('model-import-url'),
+                modelImportCheck: byId('model-import-check'),
+                modelImportAdd: byId('model-import-add'),
+                modelImportResult: byId('model-import-result'),
+                modelImportFacts: byId('model-import-facts'),
+                partnerApiCard: byId('partner-api-card'),
+                partnerApiState: byId('partner-api-state'),
+                partnerApiProvider: byId('partner-api-provider'),
+                partnerApiCredential: byId('partner-api-credential'),
+                partnerApiWorkspaceField: byId('partner-api-workspace-field'),
+                partnerApiWorkspace: byId('partner-api-workspace'),
+                partnerApiConnect: byId('partner-api-connect'),
+                partnerApiStatus: byId('partner-api-status'),
+                partnerApiNote: byId('partner-api-note'),
+                modelConfiguration: byRef(${jsString(VexLifeWebP1.ModelConfiguration.identity.ref)}),
+                modelConfigurationRecommendation: byId('model-configuration-recommendation'),
+                modelPromptCacheEntries: byId('model-prompt-cache-entries'),
+                modelUseRecommended: byRef(${jsString(VexLifeWebP1.ModelUseRecommended.identity.ref)}),
+                modelStart: byRef(${jsString(VexLifeWebP1.ModelStart.identity.ref)}),
                 modelsNote: byId('models-note'),
+                localSourcesList: byRef(${jsString(VexLifeWebP1.LocalSourcesList.identity.ref)}),
+                localSourcesAdd: byRef(${jsString(VexLifeWebP1.LocalSourcesAdd.identity.ref)}),
+                localSourcesStatus: byId('local-sources-status'),
+                localAsrSelection: byRef(${jsString(VexLifeWebP1.LocalAsrSelection.identity.ref)}),
+                localAsrModelsList: byRef(${jsString(VexLifeWebP1.LocalAsrModelsList.identity.ref)}),
+                localAsrSpokenLanguage: byRef(${jsString(VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref)}),
+                localAsrComposerOutput: byRef(${jsString(VexLifeWebP1.LocalAsrComposerOutput.identity.ref)}),
+                localAsrStatus: byRef(${jsString(VexLifeWebP1.LocalAsrStatus.identity.ref)}),
+                localAsrNote: byId('local-asr-note'),
+                localAsrStorageNote: byRef(${jsString(VexLifeWebP1.LocalAsrStorageNote.identity.ref)}),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
-                diagnosticsEnhanced: byId('diagnostics-enhanced'),
-                diagnosticsClear: byId('diagnostics-clear'),
+                diagnosticsEnhanced: byRef(${jsString(VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref)}),
+                diagnosticsClear: byRef(${jsString(VexLifeWebP1.DiagnosticsClearHistory.identity.ref)}),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
-                thoughtVisibility: byId('thought-visibility'),
-                lowMemoryAlert: byId('low-memory-alert'),
+                thoughtVisibility: byRef(${jsString(VexLifeWebP1.ThoughtVisibility.identity.ref)}),
+                lowMemoryAlert: byRef(${jsString(VexLifeWebP1.LowMemoryAlert.identity.ref)}),
                 alertThreshold: byId('alert-threshold'),
-                privateMode: byId('private-mode'),
+                privateMode: byRef(${jsString(VexLifeWebP1.PrivateMode.identity.ref)}),
                 privateModeLabel: byId('private-mode-label'),
-                privateBanner: byId('private-banner'),
+                privateBanner: byRef(${jsString(VexLifeWebP1.PrivateBanner.identity.ref)}),
                 privateBannerText: byId('private-banner-text'),
                 privateNotes: byId('private-notes'),
                 privateProposal: byId('private-proposal'),
@@ -224,7 +758,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateKeep: byId('private-keep'),
                 privateDecline: byId('private-decline'),
                 privatePropose: byId('private-propose'),
-                inspector: byId('inspector'),
+                inspector: byRef(${jsString(VexLifeWebP1.ContextInspector.identity.ref)}),
                 inspectorTitle: byId('inspector-title'),
                 inspectorFacts: byId('inspector-facts'),
                 inspectorText: byId('inspector-text'),
@@ -234,6 +768,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const state = {
                 conversation: null,
+                conversationTurn: null,
+                attachmentDraft: null,
+                // Browser-only upload transport/progress. Semantic draft truth remains service-owned.
+                attachmentUploads: new Map(),
                 context: null,
                 currentness: null,
                 currentState: null,
@@ -242,6 +780,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateMode: null,
                 privateInFlight: false,
                 settings: null,
+                releaseAlerts: null,
+                releaseAlertsOpen: false,
+                quickActionsOpen: false,
                 languageOpen: false,
                 privatePending: null,
                 app: (() => {
@@ -252,11 +793,42 @@ object VexLifeWebP1RuntimeArtifacts {
                   return apps.sourceTemplate;
                 })(),
                 memory: null,
+                contextProfiles: null,
+                foundationalField: null,
+                vexLabs: null,
+                vexLabsDraft: null,
+                vexLabsLastResult: null,
+                vexLabsInFlight: false,
+                vexLabsPending: null,
+                companionMode: 'CONVERSATION',
+                contextProfileDirty: false,
+                contextProfileInFlight: false,
+                // Browser-session presentation preference only. Never part of a portable Context Profile.
+                contextProcessRetention: 'SESSION_ONLY',
+                // Browser-session presentation state only. Conversation remains the exact owner;
+                // this map only remembers which long projected message cards the person collapsed.
+                contextConversationTurnRef: null,
+                contextConversationCollapsedByEventRef: new Map(),
                 diagnostics: null,
                 diagnosticsInFlight: false,
-                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                // Settings → Models keeps Local detail plus one provider-neutral source projection.
                 models: null,
+                modelSources: null,
                 modelsInFlight: false,
+                modelImportInFlight: false,
+                partnerConnectionAvailability: null,
+                partnerConnectionInFlight: false,
+                // Local microphone recognition is independent from the serving reasoning model.
+                localAsr: null,
+                localAsrInFlight: false,
+                localSources: null,
+                localSourcesInFlight: false,
+                workspaceEffects: null,
+                workspaceEffectsInFlight: false,
+                workspaceChecks: null,
+                workspaceChecksInFlight: false,
+                workspaceRuns: null,
+                workspaceRunsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -269,11 +841,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                sendCancelInFlight: false,
+                sendCancelRequested: false,
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Exact provider requests returned only by the live Send. Never persisted or re-formed.
+                providerRequestsByResponse: new Map(),
                 // Human-readable browser-session projection of facts already emitted by the Send
                 // stream. This is deliberately not a turn/stage owner: it may open/freeze visual
                 // containers, but it never feeds DirectCompanionTurn, capability execution, or the
@@ -297,14 +873,1029 @@ object VexLifeWebP1RuntimeArtifacts {
                 theme: null
               };
 
-              const QUICK_ACTIONS = [
-                { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
-                { key: 'speech', label: 'Speech', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
-                { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
-                { key: 'language', label: 'Language', bound: true, icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
-                { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
-                { key: 'vision', label: 'Vision', icon: '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>' }
-              ];
+              const vexLabsProfileBudgetFieldRef = 'field.vexlife-prod.context-profile.input-token-budget';
+              const vexLabsMemoryBudgetFieldRef = 'field.vexlife-prod.continuity.maximum-memory-tokens';
+              const isVexLabs = () => state.companionMode === 'LAB';
+              const ensureVexLabsDraft = () => {
+                if (state.vexLabsDraft) return state.vexLabsDraft;
+                const defaults = state.vexLabs?.defaults;
+                state.vexLabsDraft = {
+                  inputTokenBudget: Number(defaults?.inputTokenBudget ?? 192000),
+                  maximumMemoryTokens: Number(defaults?.maximumMemoryTokens ?? 100000),
+                  memoryMode: String(defaults?.memoryMode ?? 'CURRENT')
+                };
+                return state.vexLabsDraft;
+              };
+
+              const vexLabsDraftMatchesLastTest = () => {
+                const draft = ensureVexLabsDraft();
+                const tested = state.vexLabsLastResult;
+                return Boolean(
+                  tested?.state === 'LAB_TURN_COMPLETED' &&
+                  Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
+                  Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
+                  String(tested.memoryMode) === String(draft.memoryMode)
+                );
+              };
+
+              const vexLabsAdmissionText = (admission) => {
+                if (!admission) return '';
+                const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
+                const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
+                const key =
+                  admission.reason === 'IMMEDIATE_PRIOR_REQUIRED'
+                    ? 'workspace.description.vex-labs-admission-immediate-prior'
+                    : 'workspace.description.vex-labs-admission-current-state';
+                return workspaceText(key)
+                  .replace('{requested}', requested)
+                  .replace('{minimum}', minimum);
+              };
+
+              // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
+              // VexLifeVoiceInputFamily above; browser API strings are converted here and do not leak
+              // into Product State or human-facing copy.
+              const dictation = {
+                stateRef: null,
+                holdReasonRef: null,
+                failureReasonRef: null,
+                language: null,
+                desiredActive: false,
+                session: 0,
+                stream: null,
+                audioContext: null,
+                audioSource: null,
+                analyser: null,
+                processor: null,
+                silentGain: null,
+                animationFrame: null,
+                progressiveTimer: null,
+                progressivePromise: null,
+                progressiveInFlight: false,
+                progressiveCooldownUntil: 0,
+                progressiveLastAt: 0,
+                progressiveLastSampleCount: 0,
+                lastSpeechAt: 0,
+                speechActive: false,
+                speechSinceLastCommit: false,
+                noiseFloor: 0.004,
+                lastHypothesis: '',
+                stableHypothesisPasses: 0,
+                sampleRate: 0,
+                pcmChunks: [],
+                sampleCount: 0,
+                draftPrefix: '',
+                finalTranscript: '',
+                interimTranscript: ''
+              };
+
+              const voiceInputLanguage = () => {
+                const code = state.localAsr?.resolvedSpokenLanguageCode ?? null;
+                return code ? { code } : null;
+              };
+
+              // While one Begin/End realization is active, capability refreshes may observe new
+              // provider facts but may not overwrite the Family's in-flight session State.
+              const voiceInputSessionOwnsState = () =>
+                dictation.stateRef === voiceInput.state.requestingMicrophone ||
+                dictation.stateRef === voiceInput.state.listening ||
+                dictation.stateRef === voiceInput.state.stopping;
+
+              // Browser keeps only a local mirror of Family-owned semantic output. It may not
+              // manufacture State/reason refs from provider facts.
+              const applyVoiceInputSemanticState = (semanticState) => {
+                if (!semanticState) return;
+                dictation.stateRef = semanticState.stateRef;
+                dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
+                dictation.failureReasonRef = semanticState.failureReasonRef ?? null;
+              };
+
+              const voiceInputCapabilityKey = (
+                localRecognitionAvailable,
+                microphoneApiAvailable,
+                audioFeedbackAvailable
+              ) =>
+                [localRecognitionAvailable, microphoneApiAvailable, audioFeedbackAvailable]
+                  .map((value) => value ? '1' : '0')
+                  .join(':');
+
+              const selectedLocalAsrOption = () => {
+                const projection = state.localAsr;
+                if (!projection) return null;
+                return (projection.options ?? []).find((option) =>
+                  option.providerRef === projection.selectedProviderRef &&
+                  option.modelRef === projection.selectedModelRef
+                ) ?? null;
+              };
+
+              const localAsrAvailableForLanguage = (language) => {
+                const option = selectedLocalAsrOption();
+                const supportedCodes = option?.languageCodes ?? [];
+                return Boolean(
+                  language &&
+                  option &&
+                  option.currentState === 'READY' &&
+                  (
+                    supportedCodes.includes(language.code) ||
+                    (language.code === 'auto' && supportedCodes.length > 1)
+                  )
+                );
+              };
+
+              const observeVoiceInputCapability = (force = false) => {
+                if (!force && voiceInputSessionOwnsState()) return;
+                const language = voiceInputLanguage();
+                const semanticState =
+                  voiceInput.capabilityStateByFacts[
+                    voiceInputCapabilityKey(
+                      localAsrAvailableForLanguage(language),
+                      Boolean(navigator.mediaDevices?.getUserMedia),
+                      Boolean(window.AudioContext || window.webkitAudioContext)
+                    )
+                  ];
+                if (!semanticState) return;
+                applyVoiceInputSemanticState(semanticState);
+              };
+
+              const voiceInputActFor = (controlRef) =>
+                voiceInput.actByState[dictation.stateRef]?.[controlRef] ?? null;
+
+              const voiceInputDisplay = () => {
+                if (dictation.stateRef === voiceInput.state.held) {
+                  return voiceInput.holdDisplayByReason[dictation.holdReasonRef] ?? null;
+                }
+                if (dictation.stateRef === voiceInput.state.failed) {
+                  return voiceInput.failureDisplayByReason[dictation.failureReasonRef] ??
+                    voiceInput.failureDisplayByReason[voiceInput.failureReason.unknown];
+                }
+                return voiceInput.displayByState[dictation.stateRef] ?? null;
+              };
+
+              const renderVoiceInput = () => {
+                if (!ui.voiceInput) return;
+                const display = voiceInputDisplay();
+                if (!display) return;
+                ui.voiceInput.disabled =
+                  isVexLabs() || !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                ui.voiceInput.dataset.state = dictation.stateRef ?? '';
+                ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
+                ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
+                ui.voiceInput.setAttribute('aria-pressed', String(Boolean(display.active)));
+                const overlay = display.attention === voiceInput.attentionOverlay;
+                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
+                const humanLabel = display.primaryLabelKey
+                  ? workspaceText(display.primaryLabelKey)
+                  : workspaceText(display.statusKey);
+                ui.voiceInput.setAttribute('aria-label', humanLabel);
+                ui.voiceInput.title = humanLabel;
+                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
+                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = workspaceText(display.statusKey);
+              };
+
+              const stopVoiceCapture = async () => {
+                if (dictation.progressiveTimer !== null) {
+                  window.clearInterval(dictation.progressiveTimer);
+                  dictation.progressiveTimer = null;
+                }
+                if (dictation.animationFrame !== null) {
+                  cancelAnimationFrame(dictation.animationFrame);
+                  dictation.animationFrame = null;
+                }
+                if (dictation.processor) {
+                  dictation.processor.onaudioprocess = null;
+                  try { dictation.processor.disconnect(); } catch {}
+                  dictation.processor = null;
+                }
+                if (dictation.silentGain) {
+                  try { dictation.silentGain.disconnect(); } catch {}
+                  dictation.silentGain = null;
+                }
+                if (dictation.audioSource) {
+                  try { dictation.audioSource.disconnect(); } catch {}
+                  dictation.audioSource = null;
+                }
+                if (dictation.stream) {
+                  for (const track of dictation.stream.getTracks()) track.stop();
+                  dictation.stream = null;
+                }
+                const context = dictation.audioContext;
+                dictation.audioContext = null;
+                dictation.analyser = null;
+                if (context && context.state !== 'closed') {
+                  await context.close().catch(() => {});
+                }
+                if (ui.voiceWaveform) {
+                  const context2d = ui.voiceWaveform.getContext('2d');
+                  context2d?.clearRect(0, 0, ui.voiceWaveform.width, ui.voiceWaveform.height);
+                }
+              };
+
+              const drawVoiceWaveform = () => {
+                const analyser = dictation.analyser;
+                const canvas = ui.voiceWaveform;
+                if (!dictation.desiredActive || !analyser || !canvas) return;
+                const context2d = canvas.getContext('2d');
+                if (!context2d) return;
+                const values = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(values);
+                context2d.clearRect(0, 0, canvas.width, canvas.height);
+                context2d.fillStyle = getComputedStyle(ui.voiceInput).color;
+                const bars = 14;
+                const gap = 3;
+                const width = (canvas.width - gap * (bars - 1)) / bars;
+                for (let index = 0; index < bars; index += 1) {
+                  const bucket = Math.floor((index / bars) * values.length);
+                  const normalized = values[bucket] / 255;
+                  const height = Math.max(3, normalized * (canvas.height - 8));
+                  const x = index * (width + gap);
+                  const y = (canvas.height - height) / 2;
+                  context2d.fillRect(x, y, width, height);
+                }
+                dictation.animationFrame = requestAnimationFrame(drawVoiceWaveform);
+              };
+
+              const startVoiceCapture = async (stream) => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const context = new AudioContextClass();
+                await context.resume();
+                const source = context.createMediaStreamSource(stream);
+                const analyser = context.createAnalyser();
+                analyser.fftSize = 128;
+                analyser.smoothingTimeConstant = 0.78;
+                source.connect(analyser);
+
+                // ScriptProcessor is deliberately used only for the first lived local-ASR circuit:
+                // it exposes raw PCM without another browser recognition provider. Once the circuit
+                // is proven, AudioWorklet can replace this concrete capture mechanism without
+                // changing VoiceInput or local-ASR ownership.
+                const processor = context.createScriptProcessor(4096, 1, 1);
+                const silentGain = context.createGain();
+                silentGain.gain.value = 0;
+                source.connect(processor);
+                processor.connect(silentGain);
+                silentGain.connect(context.destination);
+
+                dictation.sampleRate = context.sampleRate;
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                processor.onaudioprocess = (event) => {
+                  if (!dictation.desiredActive) return;
+                  const input = event.inputBuffer.getChannelData(0);
+                  const copy = new Float32Array(input.length);
+                  copy.set(input);
+                  dictation.pcmChunks.push(copy);
+                  dictation.sampleCount += copy.length;
+
+                  let power = 0;
+                  for (let index = 0; index < input.length; index += 1) {
+                    power += input[index] * input[index];
+                  }
+                  const rms = Math.sqrt(power / Math.max(1, input.length));
+                  const threshold = Math.max(0.008, dictation.noiseFloor * 3.0);
+                  const now = performance.now();
+                  if (rms >= threshold) {
+                    dictation.speechActive = true;
+                    dictation.speechSinceLastCommit = true;
+                    dictation.lastSpeechAt = now;
+                  } else {
+                    if (rms < threshold * 0.7) {
+                      dictation.noiseFloor =
+                        Math.max(0.001, Math.min(0.03, dictation.noiseFloor * 0.97 + rms * 0.03));
+                    }
+                    if (
+                      dictation.speechActive &&
+                      dictation.lastSpeechAt > 0 &&
+                      now - dictation.lastSpeechAt >= 220
+                    ) {
+                      dictation.speechActive = false;
+                    }
+                  }
+                };
+
+                dictation.progressiveTimer = window.setInterval(() => {
+                  void maybeProgressiveTranscription();
+                }, 250);
+
+                dictation.audioContext = context;
+                dictation.audioSource = source;
+                dictation.analyser = analyser;
+                dictation.processor = processor;
+                dictation.silentGain = silentGain;
+                drawVoiceWaveform();
+              };
+
+              const appendTranscriptSegment = (existing, next) => {
+                const segment = String(next ?? '').trim();
+                if (!segment) return existing;
+                return existing ? existing + ' ' + segment : segment;
+              };
+
+              const projectDictationIntoDraft = () => {
+                const spoken = [dictation.finalTranscript, dictation.interimTranscript]
+                  .map((value) => String(value ?? '').trim())
+                  .filter(Boolean)
+                  .join(' ');
+                const prefix = dictation.draftPrefix;
+                ui.draft.value =
+                  prefix +
+                  (prefix && spoken && !/\s$/u.test(prefix) ? ' ' : '') +
+                  spoken;
+                sizeDraft();
+              };
+
+              const encodeCapturedPcmWav = () => {
+                const sampleRate = Number(dictation.sampleRate);
+                const sampleCount = Number(dictation.sampleCount);
+                if (!Number.isFinite(sampleRate) || sampleRate <= 0 || sampleCount <= 0) return null;
+
+                const bytes = new ArrayBuffer(44 + sampleCount * 2);
+                const view = new DataView(bytes);
+                const writeText = (offset, text) => {
+                  for (let index = 0; index < text.length; index += 1) {
+                    view.setUint8(offset + index, text.charCodeAt(index));
+                  }
+                };
+
+                writeText(0, 'RIFF');
+                view.setUint32(4, 36 + sampleCount * 2, true);
+                writeText(8, 'WAVE');
+                writeText(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeText(36, 'data');
+                view.setUint32(40, sampleCount * 2, true);
+
+                let sampleIndex = 0;
+                for (const chunk of dictation.pcmChunks) {
+                  for (let index = 0; index < chunk.length; index += 1) {
+                    const sample = Math.max(-1, Math.min(1, chunk[index]));
+                    view.setInt16(
+                      44 + sampleIndex * 2,
+                      sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+                      true
+                    );
+                    sampleIndex += 1;
+                  }
+                }
+                return new Uint8Array(bytes);
+              };
+
+              const clearCapturedPcm = (preserveSampleRate = false) => {
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                if (!preserveSampleRate) dictation.sampleRate = 0;
+                dictation.progressiveLastSampleCount = 0;
+              };
+
+              const voiceInputFailureReason = (error, stage) => {
+                const code = String(error ?? '');
+                if (
+                  stage === 'microphone' &&
+                  (
+                    code === 'not-allowed' ||
+                    code === 'service-not-allowed' ||
+                    code === 'NotAllowedError' ||
+                    code === 'Permission denied'
+                  )
+                ) {
+                  return voiceInput.failureReason.microphonePermissionRequired;
+                }
+                if (
+                  stage === 'microphone' &&
+                  (code === 'audio-capture' || code === 'NotFoundError')
+                ) {
+                  return voiceInput.failureReason.microphoneUnavailable;
+                }
+                if (
+                  stage === 'local-asr' ||
+                  stage === 'local-asr-prepare' ||
+                  code === 'AbortError' ||
+                  code === 'InvalidStateError'
+                ) {
+                  return voiceInput.failureReason.recognitionStopped;
+                }
+                return voiceInput.failureReason.unknown;
+              };
+
+              const settleVoiceInputFailure = async (semanticState) => {
+                dictation.desiredActive = false;
+                applyVoiceInputSemanticState(semanticState);
+                await stopVoiceCapture();
+                clearCapturedPcm();
+                dictation.language = null;
+                renderVoiceInput();
+              };
+
+              const failVoiceInput = async (failureReasonRef, options = {}) => {
+                const semanticState =
+                  voiceInput.failureStateByReason[failureReasonRef] ??
+                  voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
+                if (!semanticState) return;
+                reportFact('VOICE_INPUT_FAILURE_OBSERVED', {
+                  stage: String(options.stage ?? 'unknown'),
+                  code: String(options.code ?? 'unknown'),
+                  failureReasonRef,
+                  stateRef: dictation.stateRef ?? ''
+                });
+                await settleVoiceInputFailure(semanticState);
+              };
+
+              const prepareLocalAsr = async () => {
+                const response = await effectFetch(service.localAsrPreparePath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                });
+                if (!response.ok) {
+                  await readJson(response);
+                }
+              };
+
+              const transcribeCapturedAudio = async (
+                language,
+                dictationPass = ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Final.wire)}
+              ) => {
+                const wav = encodeCapturedPcmWav();
+                if (!wav) return null;
+                const response = await effectFetch(service.localAsrTranscribePath, {
+                  method: 'POST',
+                  headers: {
+                    accept: 'application/json',
+                    'content-type': 'audio/wav',
+                    'x-vexlife-language': language.code,
+                    ${jsString(VexLifeProdServiceContract.LocalAsrDictationPassHeader)}: dictationPass
+                  },
+                  body: wav
+                });
+                const result = await readJson(response);
+                const projection = state.localAsr;
+                if (
+                  !projection ||
+                  result.providerRef !== projection.selectedProviderRef ||
+                  result.modelRef !== projection.selectedModelRef
+                ) {
+                  throw new Error(workspaceText('workspace.status.local-asr-provider-mismatch'));
+                }
+                return String(result.transcript ?? '').trim();
+              };
+
+              const normalizedHypothesis = (value) =>
+                String(value ?? '')
+                  .trim()
+                  .replace(/\s+/gu, ' ');
+
+              const endsAtStrongSentenceBoundary = (value) =>
+                /[.!?。！？؟।॥][\s"'”’）)\]]*$/u.test(String(value ?? '').trim());
+
+              const endsWithEnglishFiller = (value, language) =>
+                language?.code === 'en' &&
+                /(?:^|[\s,])(?:um+|uh+|erm+|hmm+)[.!?…]*$/iu.test(String(value ?? '').trim());
+
+              const maybeProgressiveTranscription = () => {
+                if (
+                  !dictation.desiredActive ||
+                  dictation.progressiveInFlight ||
+                  !dictation.speechSinceLastCommit ||
+                  !dictation.language ||
+                  dictation.sampleRate <= 0 ||
+                  performance.now() < dictation.progressiveCooldownUntil
+                ) {
+                  return;
+                }
+
+                const now = performance.now();
+                const minimumSamples = dictation.sampleRate * 0.8;
+                const newSamples =
+                  dictation.sampleCount - dictation.progressiveLastSampleCount;
+                if (dictation.sampleCount < minimumSamples || newSamples < dictation.sampleRate * 0.35) {
+                  return;
+                }
+
+                const silenceMs =
+                  dictation.lastSpeechAt > 0
+                    ? Math.max(0, now - dictation.lastSpeechAt)
+                    : 0;
+                const periodicWhileSpeaking =
+                  dictation.speechActive &&
+                  now - dictation.progressiveLastAt >= 1400;
+                const refineThinkingPause =
+                  !dictation.speechActive &&
+                  silenceMs >= 550 &&
+                  now - dictation.progressiveLastAt >= 500;
+
+                if (!periodicWhileSpeaking && !refineThinkingPause) return;
+
+                const requestSession = dictation.session;
+                const requestedSamples = dictation.sampleCount;
+                dictation.progressiveLastAt = now;
+                dictation.progressiveLastSampleCount = requestedSamples;
+                dictation.progressiveInFlight = true;
+
+                const run = (async () => {
+                  try {
+                    const transcript =
+                      await transcribeCapturedAudio(
+                        dictation.language,
+                        ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Partial.wire)}
+                      );
+                    if (
+                      !transcript ||
+                      requestSession !== dictation.session ||
+                      !dictation.desiredActive
+                    ) {
+                      return;
+                    }
+
+                    const normalized = normalizedHypothesis(transcript);
+                    if (normalized === normalizedHypothesis(dictation.lastHypothesis)) {
+                      dictation.stableHypothesisPasses += 1;
+                    } else {
+                      dictation.lastHypothesis = transcript;
+                      dictation.stableHypothesisPasses = 1;
+                    }
+
+                    dictation.interimTranscript = transcript;
+                    projectDictationIntoDraft();
+
+                    const completedAt = performance.now();
+                    const silenceAfterResult =
+                      dictation.lastSpeechAt > 0
+                        ? Math.max(0, completedAt - dictation.lastSpeechAt)
+                        : 0;
+                    const noNewAudio = dictation.sampleCount === requestedSamples;
+                    const stable = dictation.stableHypothesisPasses >= 2;
+                    const sentenceBoundary = endsAtStrongSentenceBoundary(transcript);
+                    const fillerTail = endsWithEnglishFiller(transcript, dictation.language);
+
+                    const sentenceSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 900 &&
+                      sentenceBoundary &&
+                      stable &&
+                      !fillerTail;
+                    const longPauseSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 2600 &&
+                      stable &&
+                      !fillerTail;
+
+                    if (sentenceSettled || longPauseSettled) {
+                      dictation.finalTranscript =
+                        appendTranscriptSegment(dictation.finalTranscript, transcript);
+                      dictation.interimTranscript = '';
+                      dictation.lastHypothesis = '';
+                      dictation.stableHypothesisPasses = 0;
+                      dictation.speechSinceLastCommit = false;
+                      clearCapturedPcm(true);
+                      projectDictationIntoDraft();
+                    }
+                  } catch {
+                    // Progressive recognition is an enhancement. A partial-pass failure must never
+                    // kill the microphone session or the proven final Stop -> transcript fallback.
+                    dictation.progressiveCooldownUntil = performance.now() + 3000;
+                  } finally {
+                    if (requestSession === dictation.session) {
+                      dictation.progressiveInFlight = false;
+                    }
+                  }
+                })();
+
+                dictation.progressivePromise = run;
+              };
+
+              const realizeEndLocalDictation = async (abort = false) => {
+                const language = dictation.language ?? voiceInputLanguage();
+                dictation.desiredActive = false;
+                dictation.session += 1;
+                const progressive = dictation.progressivePromise;
+                await stopVoiceCapture();
+                if (progressive) await progressive.catch(() => {});
+
+                if (abort) {
+                  clearCapturedPcm();
+                  dictation.language = null;
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                  return;
+                }
+
+                try {
+                  const transcript =
+                    dictation.speechSinceLastCommit
+                      ? await transcribeCapturedAudio(language)
+                      : null;
+                  if (transcript) {
+                    dictation.finalTranscript =
+                      appendTranscriptSegment(dictation.finalTranscript, transcript);
+                    dictation.interimTranscript = '';
+                    projectDictationIntoDraft();
+                  }
+                  clearCapturedPcm();
+                  dictation.language = null;
+                  await loadLocalAsr().catch(() => {});
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                } catch (error) {
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr'),
+                    { stage: 'local-asr', code }
+                  );
+                }
+              };
+
+              const realizeBeginLocalDictation = async (language) => {
+                if (
+                  !language ||
+                  !localAsrAvailableForLanguage(language) ||
+                  !navigator.mediaDevices?.getUserMedia ||
+                  !(window.AudioContext || window.webkitAudioContext)
+                ) {
+                  dictation.desiredActive = false;
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                  return;
+                }
+
+                const session = dictation.session + 1;
+                dictation.session = session;
+                dictation.desiredActive = true;
+                dictation.language = language;
+                dictation.draftPrefix = ui.draft.value;
+                dictation.finalTranscript = '';
+                dictation.interimTranscript = '';
+                dictation.progressivePromise = null;
+                dictation.progressiveInFlight = false;
+                dictation.progressiveCooldownUntil = 0;
+                dictation.progressiveLastAt = 0;
+                dictation.progressiveLastSampleCount = 0;
+                dictation.lastSpeechAt = 0;
+                dictation.speechActive = false;
+                dictation.speechSinceLastCommit = false;
+                dictation.noiseFloor = 0.004;
+                dictation.lastHypothesis = '';
+                dictation.stableHypothesisPasses = 0;
+                clearCapturedPcm();
+
+                reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
+                  language: language.code
+                });
+
+                const providerReady = prepareLocalAsr();
+
+                let stream;
+                try {
+                  stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                      echoCancellation: true,
+                      noiseSuppression: true,
+                      autoGainControl: true
+                    },
+                    video: false
+                  });
+                } catch (error) {
+                  void providerReady.catch(() => {});
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'microphone'),
+                    { stage: 'microphone', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) {
+                  for (const track of stream.getTracks()) track.stop();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
+                  language: language.code
+                });
+                dictation.stream = stream;
+
+                try {
+                  await providerReady;
+                } catch (error) {
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr-prepare'),
+                    { stage: 'local-asr-prepare', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
+
+                try {
+                  await startVoiceCapture(stream);
+                } catch (error) {
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'audio-capture', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
+
+                reportFact('VOICE_INPUT_AUDIO_CAPTURE_STARTED', {
+                  language: language.code,
+                  sampleRate: String(dictation.sampleRate),
+                  providerRef: String(state.localAsr?.selectedProviderRef ?? ''),
+                  modelRef: String(state.localAsr?.selectedModelRef ?? '')
+                });
+                applyVoiceInputSemanticState(voiceInput.recognitionStartedState);
+                renderVoiceInput();
+              };
+
+              const applyVoiceInputControl = async (options = {}) => {
+                if (state.sendInFlight || state.privateInFlight) return;
+
+                if (
+                  !dictation.desiredActive &&
+                  (dictation.stateRef === null ||
+                    dictation.stateRef === voiceInput.state.ready ||
+                    dictation.stateRef === voiceInput.state.held)
+                ) {
+                  observeVoiceInputCapability();
+                }
+
+                const display = voiceInputDisplay();
+                const controlRef = options.controlRef ?? display?.primaryControlRef ?? null;
+                if (!controlRef) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const act = voiceInputActFor(controlRef);
+                if (!act) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_CONTROL_EMITTED', {
+                  controlRef,
+                  currentStateRef: dictation.stateRef ?? '',
+                  admittedStateRef: act.admittedState?.stateRef ?? '',
+                  effectRef: act.effectRef ?? ''
+                });
+                if (act.admittedState) {
+                  applyVoiceInputSemanticState(act.admittedState);
+                }
+                renderVoiceInput();
+
+                if (act.effectRef === voiceInput.effect.beginLocalDictation) {
+                  const language = voiceInputLanguage();
+                  if (!language) {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                    return;
+                  }
+                  await realizeBeginLocalDictation(language);
+                } else if (act.effectRef === voiceInput.effect.endLocalDictation) {
+                  await realizeEndLocalDictation(Boolean(options.abort));
+                }
+              };
+
+              const quickActionSvg = (paths) =>
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' + paths + '</svg>';
+
+              const configureSourceQuickAction = (id, action, labelKey, icon) => {
+                const button = byId(id);
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-item';
+                button.hidden = false;
+                button.type = 'button';
+                button.className = 'quick-action';
+                button.dataset.action = action;
+                button.dataset.bound = 'true';
+                const label = workspaceText(labelKey);
+                button.setAttribute('aria-label', label);
+                button.title = label;
+                button.innerHTML = quickActionSvg(icon);
+                return { item, button };
+              };
+
+              const configureSourceGlyphQuickAction = (id, action, labelKey, glyph) => {
+                const button = byId(id);
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-item';
+                button.hidden = false;
+                button.type = 'button';
+                button.className = 'quick-action quick-action-glyph';
+                button.dataset.action = action;
+                button.dataset.bound = 'true';
+                const label = workspaceText(labelKey);
+                button.setAttribute('aria-label', label);
+                button.title = label;
+                button.textContent = glyph;
+                return { item, button };
+              };
+
+              const configureSourceSupportQuickAction = () => {
+                const link = byId('support-quick-action');
+                const item = link?.closest('li');
+                if (!link || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-item';
+                link.className = 'quick-action quick-action-glyph';
+                link.dataset.action = 'support';
+                link.dataset.bound = 'true';
+                link.href = ${jsString(VexLifeWebP1.Refs.SupportHref)};
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.setAttribute('aria-label', workspaceText('workspace.button.quick-support'));
+                link.title = workspaceText('workspace.description.quick-support');
+                link.textContent = '🫴';
+                return { item, link };
+              };
+
+              const configureSourceQuickActionsTrigger = () => {
+                const button = byId('quick-actions-trigger');
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-trigger-item';
+                button.hidden = false;
+                button.type = 'button';
+                button.className = 'quick-action quick-action-trigger quick-action-glyph';
+                button.dataset.bound = 'true';
+                button.setAttribute('aria-label', workspaceText('workspace.button.quick-actions-open'));
+                button.setAttribute('aria-expanded', 'false');
+                button.textContent = '🌀';
+                return { item, button };
+              };
+
+              const initializeQuickActions = () => {
+                if (!ui.quickActions || ui.quickActions.dataset.initialized === 'true') return;
+                ui.quickActions.dataset.initialized = 'true';
+
+                const sourceItems = [...ui.quickActions.children];
+                const speechAction = configureSourceQuickAction(
+                  'speech-source',
+                  'speech',
+                  'workspace.button.quick-speech',
+                  '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>'
+                );
+                const languageAction = configureSourceQuickAction(
+                  'language-source',
+                  'language',
+                  'workspace.button.quick-language',
+                  '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>'
+                );
+                const visionAction = configureSourceQuickAction(
+                  'vision-quick-access-source',
+                  'vision',
+                  'workspace.button.vision-quick-access',
+                  '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>'
+                );
+                const releaseAlertsAction = configureSourceQuickAction(
+                  'release-alerts-source',
+                  'release-alerts',
+                  ${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)},
+                  '<path d="M7 10a5 5 0 0 1 10 0v3l2 3H5l2-3z"/><path d="M10 19h4"/>'
+                );
+                const themeAction = configureSourceGlyphQuickAction(
+                  'theme-quick-action',
+                  'theme',
+                  'workspace.description.quick-theme-toggle',
+                  currentTheme() === 'dark' ? '🌙' : '☀️'
+                );
+                const supportAction = configureSourceSupportQuickAction();
+                const triggerAction = configureSourceQuickActionsTrigger();
+                const trigger = triggerAction?.button;
+
+                const visibleSourceItems = new Set(
+                  [
+                    speechAction?.item,
+                    languageAction?.item,
+                    visionAction?.item,
+                    themeAction?.item,
+                    releaseAlertsAction?.item,
+                    supportAction?.item,
+                    triggerAction?.item
+                  ].filter(Boolean)
+                );
+                const preservedSourceItems = sourceItems.filter((item) => !visibleSourceItems.has(item));
+                ui.quickActions.replaceChildren(
+                  ...preservedSourceItems,
+                  ...(speechAction ? [speechAction.item] : []),
+                  ...(languageAction ? [languageAction.item] : []),
+                  ...(visionAction ? [visionAction.item] : []),
+                  ...(themeAction ? [themeAction.item] : []),
+                  ...(releaseAlertsAction ? [releaseAlertsAction.item] : []),
+                  ...(supportAction ? [supportAction.item] : []),
+                  ...(triggerAction ? [triggerAction.item] : [])
+                );
+                ui.quickActions.dataset.open = 'false';
+
+                trigger?.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.quickActionsOpen = !state.quickActionsOpen;
+                  if (!state.quickActionsOpen) {
+                    state.languageOpen = false;
+                    state.releaseAlertsOpen = false;
+                    speech.open = false;
+                    speech.choosing = false;
+                    renderReleaseAlerts();
+                  }
+                  renderQuickActions();
+                });
+
+                themeAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  toggleTheme();
+                  renderQuickActions();
+                });
+
+                speechAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.languageOpen = false;
+                  state.releaseAlertsOpen = false;
+                  speech.open = !speech.open;
+                  if (!speech.open) speech.choosing = false;
+                  renderReleaseAlerts();
+                  renderSpeechVoices();
+                  renderQuickActions();
+                });
+
+                languageAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.languageOpen = !state.languageOpen;
+                  if (state.languageOpen) {
+                    speech.open = false;
+                    speech.choosing = false;
+                    state.releaseAlertsOpen = false;
+                  }
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                });
+
+                visionAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  ui.visionControl?.click();
+                });
+
+                releaseAlertsAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.releaseAlertsOpen = !state.releaseAlertsOpen;
+                  if (state.releaseAlertsOpen) {
+                    state.languageOpen = false;
+                    speech.open = false;
+                    speech.choosing = false;
+                  }
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                });
+
+                document.addEventListener('click', (event) => {
+                  if (!state.quickActionsOpen) return;
+                  // Authored LocalInteractions may activate an existing Product Control with a
+                  // synthetic click. Only a real human click outside the Spiral dismisses it.
+                  if (!event.isTrusted) return;
+                  if (
+                    ui.quickActions.contains(event.target) ||
+                    ui.speech?.contains(event.target) ||
+                    ui.languagePanel?.contains(event.target) ||
+                    ui.releaseAlertsPanel?.contains(event.target)
+                  ) return;
+                  state.quickActionsOpen = false;
+                  state.languageOpen = false;
+                  state.releaseAlertsOpen = false;
+                  speech.open = false;
+                  speech.choosing = false;
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                });
+              };
 
               const readJson = async (response) => {
                 const value = await response.json();
@@ -317,9 +1908,28 @@ object VexLifeWebP1RuntimeArtifacts {
                 return value;
               };
 
+              const productFetch = async (path, init = {}) => {
+                const headers = new Headers(init.headers || {});
+                if (service.presentationSourceSha) {
+                  headers.set(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                const response = await fetch(path, { ...init, headers });
+                if (response.status === 409) {
+                  let value = null;
+                  try { value = await response.clone().json(); } catch {}
+                  if (value?.code === service.stalePresentationCode) {
+                    notify(String(value?.message ?? workspaceText('workspace.status.product-updated')) + ' ' + workspaceText('workspace.status.product-reloading'));
+                    window.setTimeout(() => window.location.reload(), 2500);
+                  }
+                }
+                return response;
+              };
+
+              const effectFetch = productFetch;
+
               const readEventStream = async (response, onEvent) => {
                 if (!response.ok) return readJson(response);
-                if (!response.body) throw new Error('Vex stream did not expose a readable response body.');
+                if (!response.body) throw new Error(workspaceText('workspace.status.conversation-stream-body-unavailable'));
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -333,7 +1943,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!data || data === '[DONE]') return;
                   let event;
                   try { event = JSON.parse(data); }
-                  catch { throw new Error('Vex stream emitted invalid JSON.'); }
+                  catch { throw new Error(workspaceText('workspace.status.conversation-stream-invalid-json')); }
                   onEvent(event);
                 };
 
@@ -453,13 +2063,34 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {}
               };
 
-              const speechLanguage = () => (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+              const speechLanguage = () =>
+                String(state.settings?.replyLanguage ?? document.documentElement.lang ?? 'en');
+
+              const speechVoicePrefixes = () => {
+                const language = speechLanguage();
+                if (language === 'zh-Hans') return ['zh-cn', 'zh-sg', 'zh-hans', 'zh'];
+                if (language === 'zh-Hant') return ['zh-tw', 'zh-hk', 'zh-mo', 'zh-hant', 'zh'];
+                const normalized = language.toLowerCase();
+                return [normalized, normalized.slice(0, 2)];
+              };
 
               const localVoices = () => {
                 if (!speech.systemSupported) return [];
-                const language = speechLanguage();
-                return window.speechSynthesis.getVoices().filter((voice) =>
-                  voice.localService && String(voice.lang || '').toLowerCase().startsWith(language));
+                const prefixes = speechVoicePrefixes();
+                const candidates = window.speechSynthesis.getVoices()
+                  .filter((voice) => voice.localService)
+                  .map((voice) => {
+                    const language = String(voice.lang || '').toLowerCase();
+                    const preference = prefixes.findIndex((prefix) => language.startsWith(prefix));
+                    return { voice, preference };
+                  })
+                  .filter((entry) => entry.preference >= 0);
+                const bestPreference = Math.min(...candidates.map((entry) => entry.preference));
+                return Number.isFinite(bestPreference)
+                  ? candidates
+                      .filter((entry) => entry.preference === bestPreference)
+                      .map((entry) => entry.voice)
+                  : [];
               };
 
               // Kokoro voices are English; other languages use this machine's own voices.
@@ -704,12 +2335,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     speech.settings.voice = 'system:' + fallback.voiceURI;
                     saveSpeechSettings();
                     renderSpeechVoices();
-                    notify("The natural voice couldn't load, so this Mac's voice is reading instead.");
+                    notify(workspaceText('workspace.status.speech-natural-fallback'));
                     pumpSpeech();
                     return;
                   }
                   stopSpeech();
-                  notify("Speech stopped because the voice couldn't continue.");
+                  notify(workspaceText('workspace.status.speech-stopped-unavailable'));
                 });
               };
 
@@ -792,7 +2423,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const plan = readablePlan();
                 stopSpeech();
                 if (!plan.length) {
-                  notify('There is nothing to read yet.');
+                  notify(workspaceText('workspace.status.speech-nothing-to-read'));
                   return;
                 }
                 let index = eventRef ? plan.findIndex((message) => message.eventRef === eventRef) : -1;
@@ -825,8 +2456,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.speechVoice) return;
                 const choices = voiceChoices();
                 const groups = [
-                  ['natural', 'Natural voices · downloaded once, made on this Mac'],
-                  ['system', "This Mac's voices"]
+                  ['natural', workspaceText('workspace.label.speech-natural-voices')],
+                  ['system', workspaceText('workspace.label.speech-system-voices')]
                 ].map(([group, label]) => {
                   const members = choices.filter((choice) => choice.group === group);
                   if (!members.length) return null;
@@ -849,6 +2480,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderSpeech = () => {
                 if (!ui.speech) return;
                 ui.speech.hidden = !speech.open;
+                ui.speech.dataset.open = String(speech.open);
                 const playing = Boolean(speech.current) && !speech.paused;
                 const busy = Boolean(speech.current) || speech.queue.length > 0;
                 ui.speech.dataset.mode = playing ? 'playing' : busy ? 'paused' : 'idle';
@@ -862,8 +2494,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.speechThoughts.checked = speech.settings.readThoughts;
                 ui.speechRate.value = String(speech.settings.rate);
                 ui.speechRateValue.textContent = speech.settings.rate.toFixed(1) + '×';
-                ui.speechPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-                ui.speechPlay.title = playing ? 'Pause' : 'Play';
+                const playPauseLabel =
+                  workspaceText(playing ? 'workspace.button.speech-pause' : 'workspace.button.speech-play');
+                ui.speechPlay.setAttribute('aria-label', playPauseLabel);
+                ui.speechPlay.title = playPauseLabel;
                 ui.speechChoose.setAttribute('aria-pressed', String(speech.choosing));
                 const usable = voiceChoices().length > 0;
                 ui.speechSwitch.disabled = !usable;
@@ -875,104 +2509,340 @@ object VexLifeWebP1RuntimeArtifacts {
                 const natural = chosenVoice()?.group === 'natural';
                 const kokoroState = speech.kokoro.state;
                 ui.speechStatus.textContent = !usable
-                  ? 'No voice on this Mac is available for speech.'
+                  ? workspaceText('workspace.status.speech-no-voice')
                   : speech.choosing
-                    ? 'Choose a message to start from. Esc cancels.'
+                    ? workspaceText('workspace.status.speech-choose-start')
                     : natural && kokoroState === 'loading'
-                      ? 'Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac.'
+                      ? workspaceText('workspace.status.speech-natural-loading')
                       : natural && kokoroState === 'failed'
-                        ? "The natural voice couldn't load; this Mac's voices still work."
+                        ? workspaceText('workspace.status.speech-natural-failed')
                         : busy
-                          ? (playing ? 'Reading Vex…' : 'Paused.')
+                          ? workspaceText(playing ? 'workspace.status.speech-reading' : 'workspace.status.speech-paused')
                           : speech.settings.enabled
-                            ? (speech.settings.readThoughts ? "Vex's thoughts and replies will be read aloud." : "Vex's replies will be read aloud.")
-                            : 'Speech is off. You can still choose where to start reading.';
+                            ? workspaceText(speech.settings.readThoughts
+                                ? 'workspace.status.speech-thoughts-and-replies'
+                                : 'workspace.status.speech-replies')
+                            : workspaceText('workspace.status.speech-off');
                 markReading();
               };
 
-              // Reply language is a Home setting the service tells Vex about on every message.
+              const LANGUAGE_FLAGS = Object.freeze({
+                en: '🇺🇸',
+                ja: '🇯🇵',
+                es: '🇪🇸',
+                fr: '🇫🇷',
+                de: '🇩🇪',
+                pt: '🇧🇷',
+                zh: '🇨🇳',
+                ko: '🇰🇷',
+                ar: '🇸🇦',
+                hi: '🇮🇳'
+              });
+
+              const presentationLanguageCode = (code) => {
+                const value = String(code ?? '').trim();
+                if (!value) return '';
+                if (value === 'zh-Hans' || value === 'zh-Hant') return 'zh';
+                return value.split('-')[0].toLowerCase();
+              };
+
+              const languageFlagFor = (code) =>
+                LANGUAGE_FLAGS[presentationLanguageCode(code)] ?? '🏳';
+
+              // This is intentionally a projection seam, not selection ownership. The application-
+              // language owner is now current (VexLifeLanguageFamily), so the Swirl shows the
+              // language VexLife's screens are shown in; the title names both choices.
+              const currentSwirlLanguage = () => {
+                const code = state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en';
+                const name =
+                  (state.settings?.screenLanguages ?? [])
+                    .find((language) => language.code === code)
+                    ?.name ?? code;
+                return Object.freeze({
+                  code,
+                  name,
+                  meaning: 'VexLife screen language'
+                });
+              };
+
+              // Two Home settings, each with its own responsibility (VexLifePersonSettings): the
+              // language Vex replies in (told on every message; Speech and dictation follow it) and
+              // the language VexLife's own screens are written in. Choosing one never moves the other.
+              const choiceName = (languages, code) =>
+                (languages ?? []).find((language) => language.code === code)?.name ?? code;
+              const fillChoice = (select, options, current) => {
+                if (!select) return;
+                select.replaceChildren(...options.map(([value, label]) => {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = label;
+                  option.selected = value === current;
+                  return option;
+                }));
+              };
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
                 ui.languagePanel.hidden = !state.languageOpen;
-                const current = state.settings?.replyLanguage ?? 'en';
-                document.documentElement.lang = current;
+                ui.languagePanel.dataset.open = String(state.languageOpen);
+                const settings = state.settings ?? {};
+                const reply = settings.replyLanguage ?? 'en';
+                const replyName = choiceName(settings.languages, reply);
+                const shownName = choiceName(settings.screenLanguages, settings.screenLanguageShown ?? 'en');
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
                 if (action) {
+                  const swirlLanguage = currentSwirlLanguage();
+                  action.classList.add('quick-action-glyph');
+                  action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
-                  const name = (state.settings?.languages ?? []).find((language) => language.code === current)?.name;
-                  action.title = 'Vex replies in ' + (name ?? current);
+                  action.title =
+                    workspaceText('workspace.label.reply-language') + ' ' + replyName + ' · ' +
+                    workspaceText('workspace.label.screen-language') + ' ' + shownName;
                   action.setAttribute('aria-label', action.title);
                 }
-                const items = (state.settings?.languages ?? []).map((language) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  button.type = 'button';
-                  button.dataset.language = language.code;
-                  button.setAttribute('role', 'option');
-                  button.setAttribute('aria-selected', String(language.code === current));
-                  button.textContent = language.name;
-                  item.append(button);
-                  return item;
-                });
-                ui.languageList.replaceChildren(...items);
+                fillChoice(ui.replyLanguage, (settings.languages ?? []).map((language) => [language.code, language.name]), reply);
+                const follow = ${jsString(VexLifePersonSettings.FollowReplyLanguage)};
+                fillChoice(
+                  ui.screenLanguage,
+                  [
+                    [follow, workspaceText('workspace.label.screen-language-follow').replace('{language}', shownName)],
+                    ...(settings.screenLanguages ?? []).map((language) => [language.code, language.name])
+                  ],
+                  settings.screenLanguage ?? follow
+                );
               };
 
               const loadSettings = async () => {
-                const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.settings = await readJson(response);
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
+                observeVoiceInputCapability();
+                renderVoiceInput();
                 return state.settings;
               };
 
-              const chooseLanguage = async (code) => {
+              // kind is 'replyLanguage' or 'screenLanguage': the update names exactly one choice.
+              const chooseLanguage = async (kind, code) => {
                 try {
-                  const response = await fetch(service.settingsPath, {
+                  const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ replyLanguage: code })
+                    body: JSON.stringify({ [kind]: code })
                   });
                   state.settings = await readJson(response);
-                  state.languageOpen = false;
+                  // Screens follow the reply language until one is chosen, so either change may move them.
+                  await loadWorkspaceStrings().catch(() => applyStaticText());
                   renderLanguage();
-                  renderSpeechVoices();
-                  renderSpeech();
-                  const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
-                  notify('Vex will reply in ' + name + '.');
+                  if (kind === 'replyLanguage') {
+                    renderSpeechVoices();
+                    renderSpeech();
+                    await loadLocalAsr().catch(() => {
+                      observeVoiceInputCapability();
+                      renderVoiceInput();
+                    });
+                    renderVexContext();
+                    notify(workspaceText('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
+                  } else {
+                    notify(workspaceText('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The language could not be changed.');
+                  renderLanguage();
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.language-change-failed'));
                 }
+              };
+
+              const releaseAlertControl = async (entry, controlRef) => {
+                try {
+                  const response = await effectFetch(service.releaseAlertsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      controlRef,
+                      release: entry.release
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.releaseAlerts = result.releaseAlerts;
+                  if (result.pageToOpenOrNull) {
+                    state.releaseAlertsOpen = false;
+                    renderReleaseAlerts();
+                    renderQuickActions();
+                    navigate(result.pageToOpenOrNull);
+                    return;
+                  }
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('release-alerts.status.action-failed'));
+                }
+              };
+
+              const renderReleaseAlerts = () => {
+                if (!ui.releaseAlertsPanel) return;
+                const display = state.releaseAlerts?.display;
+                ui.releaseAlertsPanel.hidden = !state.releaseAlertsOpen;
+                ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen);
+                if (!display) {
+                  ui.releaseAlertsTitle.textContent = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyHeading)});
+                  ui.releaseAlertsEmpty.textContent = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyUnavailable)});
+                  ui.releaseAlertsEmpty.hidden = false;
+                  ui.releaseAlertsList.replaceChildren();
+                  return;
+                }
+                ui.releaseAlertsTitle.textContent = resolveText(display.heading);
+                ui.releaseAlertsEmpty.textContent = resolveText(display.empty);
+                const items = (display.items ?? []).map((entry) => {
+                  const item = document.createElement('li');
+                  item.className = 'release-alerts-item';
+                  item.dataset.unread = String(entry.unread === true);
+
+                  const header = document.createElement('div');
+                  header.className = 'release-alerts-item-head';
+
+                  const release = document.createElement('strong');
+                  release.className = 'release-alerts-version';
+                  release.textContent = String(entry.releaseIdentifier ?? '');
+
+                  const status = document.createElement('span');
+                  status.className = 'release-alerts-status';
+                  status.textContent = resolveText(entry.status);
+
+                  const date = document.createElement('time');
+                  date.className = 'release-alerts-date';
+                  const instant = Number(entry.publishedAtEpochMillis);
+                  if (Number.isFinite(instant) && instant >= 0) {
+                    date.dateTime = new Date(instant).toISOString();
+                    date.textContent = new Date(instant).toLocaleDateString(
+                      document.documentElement.lang || undefined
+                    );
+                  }
+
+                  header.append(release, status, date);
+
+                  const controls = document.createElement('div');
+                  controls.className = 'release-alerts-controls';
+
+                  const view = document.createElement('button');
+                  view.type = 'button';
+                  view.className = 'release-alerts-view';
+                  view.textContent = resolveText(entry.viewLabel);
+                  view.addEventListener('click', () => {
+                    void releaseAlertControl(entry, entry.viewControlRef);
+                  });
+
+                  const dismiss = document.createElement('button');
+                  dismiss.type = 'button';
+                  dismiss.className = 'release-alerts-dismiss';
+                  dismiss.textContent = resolveText(entry.dismissLabel);
+                  dismiss.addEventListener('click', () => {
+                    void releaseAlertControl(entry, entry.dismissControlRef);
+                  });
+
+                  controls.append(view, dismiss);
+                  item.append(header, controls);
+                  return item;
+                });
+                ui.releaseAlertsEmpty.hidden = items.length > 0;
+                ui.releaseAlertsList.replaceChildren(...items);
+              };
+
+              const loadReleaseAlerts = async () => {
+                const response = await productFetch(service.releaseAlertsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.releaseAlerts = await readJson(response);
+                renderReleaseAlerts();
+                renderQuickActions();
+                return state.releaseAlerts;
               };
 
               const renderQuickActions = () => {
                 if (!ui.quickActions) return;
-                const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
-                const items = QUICK_ACTIONS.map((action) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  const visionDisplay = state.vision?.display;
-                  const visionBound = action.key === 'vision' && Boolean(visionDisplay?.primaryControlRef);
-                  const bound = visionBound || Boolean(action.bound);
-                  button.type = 'button';
-                  button.className = 'quick-action';
-                  button.dataset.action = action.key;
-                  button.dataset.bound = String(bound);
-                  if (action.key === 'vision') button.dataset.indicator = String(visionDisplay?.indicatorRef ?? 'None');
-                  button.disabled = action.key === 'vision' && state.visionInFlight;
-                  button.setAttribute('aria-label', action.key === 'vision'
-                    ? String(visionDisplay?.label ?? 'Vision · Held')
-                    : (bound ? action.label : action.label + ' (Held)'));
-                  button.title = action.key === 'vision'
-                    ? (state.visionInFlight
-                        ? 'Vision · Working'
-                        : String(visionDisplay?.label ?? 'Vision · Held') + (visionDisplay?.primaryLabel ? ' — ' + visionDisplay.primaryLabel : ''))
-                    : (bound ? action.label : action.label + ': not connected yet');
-                  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
-                  item.append(button);
-                  return item;
-                });
-                ui.quickActions.replaceChildren(...sourceOnly, ...items);
+
+                const unreadReleaseAlerts =
+                  Number(state.releaseAlerts?.display?.unreadCount ?? 0) > 0;
+
+                const trigger = byId('quick-actions-trigger');
+                if (trigger) {
+                  trigger.setAttribute('aria-expanded', String(state.quickActionsOpen));
+                  trigger.setAttribute(
+                    'aria-label',
+                    workspaceText(state.quickActionsOpen
+                      ? 'workspace.button.quick-actions-close'
+                      : 'workspace.button.quick-actions-open')
+                  );
+                  trigger.dataset.attention =
+                    String(unreadReleaseAlerts && !state.quickActionsOpen);
+                }
+                ui.quickActions.dataset.open = String(state.quickActionsOpen);
+
+                const theme = byId('theme-quick-action');
+                if (theme) {
+                  theme.textContent = currentTheme() === 'dark' ? '🌙' : '☀️';
+                  theme.title = workspaceText('workspace.button.quick-theme-toggle');
+                  theme.setAttribute('aria-label', workspaceText('workspace.description.quick-theme-toggle'));
+                }
+
+                const speechButton = byId('speech-source');
+                if (speechButton) {
+                  const label = workspaceText('workspace.button.quick-speech');
+                  speechButton.dataset.bound = 'true';
+                  speechButton.setAttribute('aria-label', label);
+                  speechButton.title = label;
+                  speechButton.setAttribute('aria-expanded', String(speech.open));
+                  speechButton.setAttribute('aria-pressed', String(speech.settings.enabled));
+                  speechButton.dataset.active = String(speech.settings.enabled);
+                }
+
+                const languageButton = byId('language-source');
+                if (languageButton) {
+                  const label = workspaceText('workspace.button.quick-language');
+                  languageButton.dataset.bound = 'true';
+                  languageButton.setAttribute('aria-label', label);
+                  languageButton.title = label;
+                  languageButton.setAttribute('aria-expanded', String(state.languageOpen));
+                }
+
+                const visionButton = byId('vision-quick-access-source');
+                if (visionButton) {
+                  const display = state.vision?.display;
+                  const bound = Boolean(display?.primaryControlRef);
+                  const label =
+                    display ? resolveText(display.label) : workspaceText('workspace.button.vision-quick-access');
+                  const primaryLabel =
+                    display?.primaryLabel ? resolveText(display.primaryLabel) : '';
+                  const working = workspaceText('workspace.status.vision-working');
+                  visionButton.dataset.bound = String(bound);
+                  visionButton.dataset.indicator = String(display?.indicatorRef ?? 'None');
+                  visionButton.disabled = !bound || state.visionInFlight;
+                  visionButton.setAttribute('aria-label', state.visionInFlight ? working : label);
+                  visionButton.title = state.visionInFlight
+                    ? working
+                    : label + (primaryLabel ? ' — ' + primaryLabel : '');
+                }
+
+                const releaseAlertsButton = byId('release-alerts-source');
+                if (releaseAlertsButton) {
+                  const label = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)});
+                  releaseAlertsButton.dataset.bound = 'true';
+                  releaseAlertsButton.dataset.attention =
+                    String(unreadReleaseAlerts && state.quickActionsOpen);
+                  releaseAlertsButton.setAttribute(
+                    'aria-expanded',
+                    String(state.releaseAlertsOpen)
+                  );
+                  releaseAlertsButton.setAttribute('aria-label', label);
+                  releaseAlertsButton.title = label;
+                }
+
+                const support = byId('support-quick-action');
+                if (support) {
+                  support.setAttribute('aria-label', workspaceText('workspace.button.quick-support'));
+                  support.title = workspaceText('workspace.description.quick-support');
+                }
+
                 renderSpeech();
                 renderLanguage();
               };
@@ -981,25 +2851,37 @@ object VexLifeWebP1RuntimeArtifacts {
               // this renderer only shows them and sends the Control back for fresh resolution.
               const renderMemory = () => {
                 const display = state.memory?.display;
-                ui.vexMemoryLabel.textContent = String(display?.label ?? 'Memory · Checking');
-                ui.vexMemoryDetail.textContent = String(display?.detail ?? "VexLife hasn't read Vex's Memory yet.");
+                ui.vexMemoryLabel.textContent =
+                  display ? resolveText(display.label) : workspaceText('workspace.status.memory-checking');
+                ui.vexMemoryDetail.textContent =
+                  display ? resolveText(display.detail) : workspaceText('workspace.description.memory-checking');
                 root.dataset.vexMemoryState = String(state.memory?.state ?? '');
               };
 
               const renderVision = () => {
                 if (!ui.visionControl) return;
                 const display = state.vision?.display;
-                const label = String(display?.label ?? 'Vision · Held');
+                const checking = workspaceText('workspace.status.vision-checking');
+                const working = workspaceText('workspace.status.vision-working');
+                const stateLabel = display ? resolveText(display.stateLabel) : checking;
+                const summary = display
+                  ? resolveText(display.label)
+                  : workspaceText('workspace.status.vision-summary')
+                      .replace('{vision}', workspaceText('workspace.label.vision'))
+                      .replace('{state}', checking);
                 const stateNode = ui.visionControl.querySelector('.vision-state');
-                if (stateNode) stateNode.textContent = state.visionInFlight ? 'Working' : label.replace(/^Vision · /, '');
+                if (stateNode) stateNode.textContent = state.visionInFlight ? working : stateLabel;
                 ui.visionControl.dataset.indicator = String(display?.indicatorRef ?? 'None');
                 ui.visionControl.disabled = !display?.primaryControlRef || state.visionInFlight;
                 ui.visionControl.setAttribute('aria-disabled', String(ui.visionControl.disabled));
                 ui.visionControl.title = state.visionInFlight
-                  ? 'Vision · Working'
-                  : label + (display?.primaryLabel ? ' — ' + display.primaryLabel : '');
+                  ? workspaceText('workspace.status.vision-summary')
+                      .replace('{vision}', workspaceText('workspace.label.vision'))
+                      .replace('{state}', working)
+                  : summary;
                 if (ui.visionControlStatus) {
-                  ui.visionControlStatus.textContent = String(display?.detail ?? 'Vision availability is checking.');
+                  ui.visionControlStatus.textContent =
+                    display ? resolveText(display.detail) : workspaceText('workspace.description.vision-checking');
                 }
                 renderQuickActions();
               };
@@ -1019,21 +2901,21 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const admitPageAddress = (value) => {
                 let text = String(value ?? '').trim();
-                if (!text) throw new Error('Type a web address.');
+                if (!text) throw new Error(workspaceText('workspace.status.browser-address-required'));
                 if (!/^[a-z][a-z0-9+.-]*:/iu.test(text)) text = 'https://' + text;
                 const page = new URL(text);
                 if (!browser.humanPageSchemes.includes(page.protocol)) {
-                  throw new Error('Only http and https web pages open here.');
+                  throw new Error(workspaceText('workspace.status.browser-scheme-unsupported'));
                 }
                 if (page.username || page.password) {
-                  throw new Error('Addresses with embedded credentials do not open here.');
+                  throw new Error(workspaceText('workspace.status.browser-embedded-credentials'));
                 }
                 const host = page.hostname.toLowerCase();
                 if (
                   browser.rejectedHumanPageHosts.includes(host) ||
                   host.endsWith(browser.rejectedHumanPageHostSuffix)
                 ) {
-                  throw new Error('The embedded Browser does not navigate to the local Product service.');
+                  throw new Error(workspaceText('workspace.status.browser-local-service-rejected'));
                 }
                 return page.href;
               };
@@ -1078,7 +2960,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.contextLoading = false;
 
                 ui.query.value = pageUrl;
-                ui.query.placeholder = 'Type a web address';
+                ui.query.placeholder = workspaceText('workspace.placeholder.browser-query');
                 ui.pageFrame.src = pageUrl;
                 ui.contextFrame.removeAttribute('src');
                 ui.viewportEmpty.hidden = true;
@@ -1088,8 +2970,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 renderFrameStatus(
                   contextFrameUrl
-                    ? 'Opening page directly · Vex page context is available on demand.'
-                    : 'Opening page directly · Vex page context is not available for this site yet.',
+                    ? workspaceText('workspace.status.browser-opening-context-available')
+                    : workspaceText('workspace.status.browser-opening-context-unavailable'),
                   'Loading'
                 );
                 renderComposer();
@@ -1193,10 +3075,10 @@ object VexLifeWebP1RuntimeArtifacts {
                           : use?.handle === 'memory'
                             ? 'workspace.status.reach-memory'
                             : 'workspace.status.reach-atlas';
-                const words = t(key).replace('{target}', target);
+                const words = workspaceText(key).replace('{target}', target);
                 if (!use?.state || use.state === 'RETURNED') return words;
                 const settled = String(use.state).toLowerCase().replace(/_/gu, ' ');
-                return words + ' ' + t('workspace.label.reach-state').replace('{state}', settled);
+                return words + ' ' + workspaceText('workspace.label.reach-state').replace('{state}', settled);
               };
 
               const reachList = (uses) => {
@@ -1275,12 +3157,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const failureRouteLabel = (route) =>
                 route === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
-                  ? 'Try again from the last completed turn with a new Send.'
+                  ? workspaceText('workspace.description.conversation-retry-last-completed')
                   : route === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'
-                    ? 'Try again as a new Send.'
+                    ? workspaceText('workspace.description.conversation-retry-new-send')
                     : route
-                      ? 'Next: ' + String(route).replaceAll('_', ' ').toLowerCase() + '.'
-                      : 'This Send stopped before Vex completed a reply.';
+                      ? workspaceText('workspace.description.conversation-retry-safe-route')
+                      : workspaceText('workspace.description.conversation-failure-stopped');
 
               const processEntryNode = (entry, viewportKey, live) => {
                 if (entry.kind === 'thought') {
@@ -1420,7 +3302,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggle.hidden = !collapseWithAnswer;
                   toggle.setAttribute('aria-expanded', String(expanded));
                   const label = toggle.querySelector('span');
-                  if (label) label.textContent = expanded ? 'hide process' : 'view process';
+                  if (label) label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 }
 
                 const history = panel.querySelector('.live-process-history');
@@ -1440,13 +3322,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!uses || !uses.length) return null;
                 const line = document.createElement('p');
                 line.className = 'receipt-line reached-line';
-                line.textContent = t('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
+                line.textContent = workspaceText('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
                 return line;
               };
 
               const completedThoughtNode = (message) => {
                 if (message.role !== 'vex') return null;
-                const key = String(message.messageRef ?? '');
+                // Durable Conversation responses use messageRef. Private responses intentionally do
+                // not become Conversation messages, so their existing eventRef is enough as a
+                // presentation-local key for the same ephemeral thought UI.
+                const key = String(message.messageRef ?? message.eventRef ?? '');
                 const entries = state.processEntriesByResponse.get(key) ?? [];
                 const reasoning = state.thoughtsVisible ? state.humanReasoningByResponse.get(key) : null;
                 const hasVisibleProcess =
@@ -1462,7 +3347,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = expanded ? 'hide process' : 'view process';
+                label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
@@ -1866,6 +3751,145 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                 });
               };
+              const sentResourceHeaders = (message, resource) => {
+                const headers = new Headers();
+                headers.set(service.conversationResourceEventRefHeader, String(message.eventRef ?? ''));
+                headers.set(service.conversationResourceEventHashHeader, String(message.eventSha256 ?? ''));
+                headers.set(service.conversationResourceSequenceHeader, String(Number(message.sequence) || 0));
+                headers.set(service.conversationResourceRefHeader, String(resource.resourceRef ?? ''));
+                return headers;
+              };
+
+              const sentResourceDetail = (metadata) => {
+                if (metadata?.status) return resolveText(metadata.status);
+                if (metadata?.representation === 'STATIC_IMAGE') {
+                  const width = Number(metadata?.widthPixels ?? 0);
+                  const height = Number(metadata?.heightPixels ?? 0);
+                  return width > 0 && height > 0
+                    ? width.toLocaleString(document.documentElement.lang || undefined) +
+                        ' × ' +
+                        height.toLocaleString(document.documentElement.lang || undefined)
+                    : '';
+                }
+                return '';
+              };
+
+              const sentResourceNode = (message, resource) => {
+                const card = document.createElement('div');
+                card.className = 'sent-resource';
+                card.dataset.state = 'bound';
+
+                const summary = document.createElement('button');
+                summary.type = 'button';
+                summary.className = 'sent-resource-summary';
+                summary.title = String(resource.displayName ?? '');
+
+                const name = document.createElement('span');
+                name.className = 'sent-resource-name';
+                name.textContent = String(resource.displayName ?? '');
+
+                const detail = document.createElement('span');
+                detail.className = 'sent-resource-detail';
+                detail.hidden = true;
+
+                summary.append(name, detail);
+
+                const preview = document.createElement('div');
+                preview.className = 'sent-resource-preview';
+                preview.hidden = true;
+
+                let loaded = false;
+                summary.addEventListener('click', async () => {
+                  if (loaded) {
+                    preview.hidden = !preview.hidden;
+                    summary.setAttribute('aria-expanded', String(!preview.hidden));
+                    return;
+                  }
+
+                  card.dataset.state = 'loading';
+                  summary.setAttribute('aria-busy', 'true');
+                  detail.textContent = '';
+                  detail.hidden = true;
+                  summary.disabled = true;
+                  try {
+                    const headers = sentResourceHeaders(message, resource);
+                    const metadataResponse = await productFetch(
+                      service.conversationResourceMetadataPath,
+                      { method: 'GET', headers }
+                    );
+                    const metadata = await readJson(metadataResponse);
+                    detail.textContent = sentResourceDetail(metadata);
+                    detail.hidden = !detail.textContent;
+
+                    if (!metadata?.contentAvailable) {
+                      card.dataset.state =
+                        metadata?.originalCustody === 'INVALID' || metadata?.projectionCustody === 'INVALID'
+                          ? 'invalid'
+                          : 'missing';
+                      return;
+                    }
+
+                    const contentResponse = await productFetch(
+                      service.conversationResourceContentPath,
+                      { method: 'GET', headers }
+                    );
+                    if (!contentResponse.ok) await readJson(contentResponse);
+
+                    if (metadata.representation === 'STATIC_IMAGE') {
+                      const blob = await contentResponse.blob();
+                      const image = document.createElement('img');
+                      image.className = 'sent-resource-thumbnail';
+                      image.loading = 'lazy';
+                      image.alt = String(resource.displayName ?? '');
+                      const url = URL.createObjectURL(blob);
+                      image.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+                      image.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+                      image.src = url;
+                      preview.replaceChildren(image);
+                    } else if (metadata.representation === 'PARSED_TEXT') {
+                      const text = await contentResponse.text();
+                      const pre = document.createElement('pre');
+                      pre.className = 'sent-resource-text-preview';
+                      const maximumPreviewCharacters = 6000;
+                      pre.textContent =
+                        text.length > maximumPreviewCharacters
+                          ? text.slice(0, maximumPreviewCharacters) + '\n…'
+                          : text;
+                      preview.replaceChildren(pre);
+                    }
+
+                    loaded = preview.childNodes.length > 0;
+                    preview.hidden = !loaded;
+                    summary.setAttribute('aria-expanded', String(loaded));
+                    card.dataset.state = loaded ? 'reviewed' : 'bound';
+                  } catch (error) {
+                    card.dataset.state = 'error';
+                    detail.textContent = workspaceText(${jsString(VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey)});
+                    detail.hidden = false;
+                    notify(detail.textContent);
+                  } finally {
+                    summary.removeAttribute('aria-busy');
+                    summary.disabled = false;
+                  }
+                });
+
+                card.append(summary, preview);
+                return card;
+              };
+
+              const sentResourcesNode = (message) => {
+                const resources =
+                  Array.isArray(message?.resources)
+                    ? message.resources.filter((resource) => resource && resource.resourceRef && resource.displayName)
+                    : [];
+                if (!resources.length) return null;
+
+                const tray = document.createElement('div');
+                tray.className = 'sent-resources';
+                tray.append(...resources.map((resource) => sentResourceNode(message, resource)));
+                return tray;
+              };
+
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -1879,17 +3903,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
                 if (human) {
-                  // What the person wrote is shown exactly as written.
+                  // What the person wrote is shown exactly as written. Sent resources are a separate
+                  // projection of the durable RequestBinding and never rewrite this paragraph.
                   const paragraph = document.createElement('p');
                   paragraph.textContent = String(message.content ?? '');
                   bubble.append(paragraph);
+                  const resources = sentResourcesNode(message);
+                  if (resources) bubble.append(resources);
                 } else {
                   bubble.append(textPresentationBody(message.content));
                 }
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = human ? 'You' : 'Vex';
+                speaker.textContent = workspaceText(
+                  human ? 'workspace.label.conversation-role-you' : 'workspace.label.conversation-role-vex'
+                );
 
                 const thought = completedThoughtNode(message);
                 if (thought) item.append(index, thought, bubble, speaker);
@@ -1912,7 +3941,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 thought.className = 'thought thinking-now';
                 const who = document.createElement('span');
                 who.className = 'speaker-inline';
-                who.textContent = 'Vex';
+                who.textContent = workspaceText('workspace.label.conversation-role-vex');
                 const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 mark.setAttribute('class', 'thought-mark');
                 mark.setAttribute('viewBox', '0 0 16 16');
@@ -1920,15 +3949,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
                 label.textContent =
-                  state.streamPhase === 'CheckingRuntime'
-                    ? 'checking Vex…'
-                    : state.streamPhase === 'Reconnecting'
-                      ? 'reconnecting Vex…'
-                      : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                        ? 'thinking…'
-                        : state.streamPhase === 'Responding'
-                          ? 'responding…'
-                          : 'preparing…';
+                  workspaceText(
+                    state.streamPhase === 'CheckingRuntime'
+                      ? 'workspace.status.conversation-checking-vex'
+                      : state.streamPhase === 'Reconnecting'
+                        ? 'workspace.status.conversation-reconnecting-vex'
+                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                          ? 'workspace.status.conversation-thinking'
+                          : state.streamPhase === 'Responding'
+                            ? 'workspace.status.conversation-responding'
+                            : 'workspace.status.conversation-preparing'
+                  );
                 thought.append(who, mark, label);
                 // Live process DOM is mounted once for this waiting message. Streaming updates
                 // mutate/append inside it; they do not replace the panel or existing containers.
@@ -1940,7 +3971,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.streamedContent) bubble.append(textPresentationBody(state.streamedContent));
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = 'Vex';
+                speaker.textContent = workspaceText('workspace.label.conversation-role-vex');
 
                 item.append(index, thought, bubble, speaker);
                 return item;
@@ -1959,11 +3990,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 thought.className = 'thought';
                 const who = document.createElement('span');
                 who.className = 'speaker-inline';
-                who.textContent = 'Vex';
+                who.textContent = workspaceText('workspace.label.conversation-role-vex');
                 const mark = thoughtMark();
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
-                label.textContent = 'stopped before finishing';
+                label.textContent = workspaceText('workspace.status.conversation-stopped-before-finishing');
                 thought.append(who, mark, label);
 
                 const history =
@@ -1978,61 +4009,129 @@ object VexLifeWebP1RuntimeArtifacts {
                 bubble.className = 'bubble';
                 const detail = document.createElement('p');
                 detail.textContent =
-                  String(attempt.failureCode ?? 'TURN_FAILED') +
-                  ' · ' +
-                  failureRouteLabel(attempt.exactNextSafeRoute);
+                  attempt.cancelledByPerson
+                    ? workspaceText('workspace.status.conversation-stopped')
+                    : workspaceText('workspace.description.conversation-failure')
+                        .replace('{code}', String(attempt.failureCode ?? 'TURN_FAILED'))
+                        .replace('{route}', failureRouteLabel(attempt.exactNextSafeRoute));
                 bubble.append(detail);
 
                 const retry = document.createElement('button');
                 retry.type = 'button';
                 retry.className = 'thought-toggle failed-attempt-retry';
                 retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
-                retry.textContent = 'Try Again';
+                retry.textContent = workspaceText('workspace.button.conversation-retry');
                 retry.disabled = state.sendInFlight;
                 bubble.append(retry);
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = 'Vex';
+                speaker.textContent = workspaceText('workspace.label.conversation-role-vex');
 
                 item.append(index, thought, bubble, speaker);
                 return item;
               };
 
+              const ephemeralConversationSurface = ({
+                kind,
+                exchanges,
+                pending,
+                emptyHeading,
+                emptyNote
+              }) => {
+                const prefix = kind + '.';
+                const messages = (exchanges ?? []).flatMap((exchange, index) => {
+                  const humanKey = prefix + String(index * 2 + 1);
+                  const vexKey = prefix + String(index * 2 + 2);
+                  const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                  if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
+                  else {
+                    state.humanReasoningByResponse.delete(vexKey);
+                    state.expandedThoughts.delete(vexKey);
+                    state.reasoningViewports.delete('response.' + vexKey);
+                  }
+                  return [
+                    { role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey },
+                    { role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey }
+                  ];
+                });
+                return {
+                  kind,
+                  reasoningPrefix: prefix,
+                  messages,
+                  pending: pending
+                    ? {
+                        content: pending,
+                        sequence: messages.length + 1,
+                        eventRef: prefix + 'pending'
+                      }
+                    : null,
+                  failedAttempts: [],
+                  emptyHeading,
+                  emptyNote
+                };
+              };
+
+              const activeConversationSurface = () => {
+                if (isVexLabs()) {
+                  return ephemeralConversationSurface({
+                    kind: 'vex-labs',
+                    exchanges: state.vexLabs?.exchanges ?? [],
+                    pending: state.vexLabsPending,
+                    emptyHeading: workspaceText('workspace.heading.conversation-empty-labs'),
+                    emptyNote: workspaceText('workspace.description.conversation-empty-labs')
+                  });
+                }
+                if (isPrivate()) {
+                  return ephemeralConversationSurface({
+                    kind: 'private',
+                    exchanges: state.privateMode?.exchanges ?? [],
+                    pending: state.privatePending,
+                    emptyHeading: workspaceText('workspace.heading.conversation-empty-private'),
+                    emptyNote: workspaceText('workspace.description.conversation-empty-private')
+                  });
+                }
+                return {
+                  kind: 'canonical',
+                  reasoningPrefix: null,
+                  messages: state.conversation?.messages ?? [],
+                  pending: state.pending
+                    ? {
+                        content: state.pending.content,
+                        sequence: nextSequence(),
+                        eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                      }
+                    : null,
+                  failedAttempts: state.failedAttempts,
+                  emptyHeading: workspaceText('workspace.heading.conversation-empty'),
+                  emptyNote: workspaceText('workspace.description.conversation-empty')
+                };
+              };
+
+              const pruneInactiveEphemeralReasoning = (activePrefix) => {
+                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                  const ephemeral = key.startsWith('private.') || key.startsWith('vex-labs.');
+                  if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;
+                  state.humanReasoningByResponse.delete(key);
+                  state.expandedThoughts.delete(key);
+                  state.reasoningViewports.delete('response.' + key);
+                }
+              };
+
               const renderTimeline = () => {
                 if (!ui.timeline) return;
-                ui.timeline.dataset.private = String(isPrivate());
-                if (isPrivate()) {
-                  const exchanges = state.privateMode?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => [
-                    messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: 'private.' + (index * 2 + 1) }),
-                    messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: 'private.' + (index * 2 + 2) })
-                  ]);
-                  if (state.privatePending) {
-                    nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
-                    nodes.push(waitingNode(exchanges.length * 2 + 2));
-                  }
-                  if (!nodes.length) {
-                    const empty = document.createElement('li');
-                    empty.className = 'timeline-empty';
-                    const heading = document.createElement('p');
-                    heading.className = 'timeline-empty-heading';
-                    heading.textContent = 'Private conversation';
-                    const note = document.createElement('p');
-                    note.textContent = 'Nothing you say here is kept. Vex still knows what it knew.';
-                    empty.append(heading, note);
-                    nodes.push(empty);
-                  }
-                  ui.timeline.replaceChildren(...nodes);
-                  applyTimelineViewport();
-                  markReading();
-                  return;
-                }
-                const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
-                let sequence = nextSequence();
+                const surface = activeConversationSurface();
+                ui.timeline.dataset.private = String(surface.kind === 'private');
+                ui.timeline.dataset.vexLabs = String(surface.kind === 'vex-labs');
+                pruneInactiveEphemeralReasoning(surface.reasoningPrefix);
 
-                for (const attempt of state.failedAttempts) {
+                const nodes = surface.messages.map(messageNode);
+                let sequence =
+                  surface.kind === 'canonical'
+                    ? nextSequence()
+                    : surface.messages.length + 1;
+
+                for (const attempt of surface.failedAttempts) {
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -2044,14 +4143,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   sequence += 1;
                 }
 
-                if (state.pending) {
+                if (surface.pending) {
+                  const pendingSequence =
+                    surface.kind === 'canonical'
+                      ? sequence
+                      : surface.pending.sequence;
                   nodes.push(messageNode({
                     role: 'human',
-                    content: state.pending.content,
-                    sequence,
-                    eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                    content: surface.pending.content,
+                    sequence: pendingSequence,
+                    eventRef: surface.pending.eventRef
                   }));
-                  nodes.push(waitingNode(sequence + 1));
+                  nodes.push(waitingNode(pendingSequence + 1));
                 }
 
                 if (!nodes.length) {
@@ -2059,9 +4162,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   empty.className = 'timeline-empty';
                   const heading = document.createElement('p');
                   heading.className = 'timeline-empty-heading';
-                  heading.textContent = 'Converse with Vex';
+                  heading.textContent = surface.emptyHeading;
                   const note = document.createElement('p');
-                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
+                  note.textContent = surface.emptyNote;
                   empty.append(heading, note);
                   nodes.push(empty);
                 }
@@ -2083,15 +4186,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = item.querySelector('.thinking-label');
                 if (label) {
                   label.textContent =
-                    state.streamPhase === 'CheckingRuntime'
-                      ? 'checking Vex…'
-                      : state.streamPhase === 'Reconnecting'
-                        ? 'reconnecting Vex…'
-                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                          ? 'thinking…'
-                          : state.streamPhase === 'Responding'
-                            ? 'responding…'
-                            : 'preparing…';
+                    workspaceText(
+                      state.streamPhase === 'CheckingRuntime'
+                        ? 'workspace.status.conversation-checking-vex'
+                        : state.streamPhase === 'Reconnecting'
+                          ? 'workspace.status.conversation-reconnecting-vex'
+                          : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                            ? 'workspace.status.conversation-thinking'
+                            : state.streamPhase === 'Responding'
+                              ? 'workspace.status.conversation-responding'
+                              : 'workspace.status.conversation-preparing'
+                    );
                 }
 
                 const thought = item.querySelector('.thinking-now');
@@ -2121,8 +4226,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.ticket.hidden = !visible;
                 if (!visible) return;
                 ui.ticket.dataset.state = 'Ready';
-                ui.ticketTitle.textContent = context.title || 'Included page';
-                ui.ticketLine.textContent = 'A separately rendered snapshot of this entered URL will be given to Vex on the next turn.';
+                ui.ticketTitle.textContent = context.title || workspaceText('workspace.label.context-receipt-included-page');
+                ui.ticketLine.textContent = workspaceText('workspace.description.context-receipt-next-turn');
                 ui.ticketUrl.textContent = context.pageUrl;
                 ui.ticketHash.textContent = '';
                 ui.ticketView.dataset.contextReady = 'true';
@@ -2130,29 +4235,41 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
               // private transcript exists only in the running service; this renderer only shows it.
-              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
+              const isPrivate = () => state.privateMode?.state === ${jsString(VexLifePrivateModeFamily.StatePrivate)};
 
               const renderPrivate = () => {
                 const display = state.privateMode?.display;
                 const privateNow = isPrivate();
+                renderCompanionHead();
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
-                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
-                ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
+                const privateLabel =
+                  display ? resolveText(display.label) : workspaceText('workspace.status.private-kept');
+                ui.privateModeLabel.textContent = privateLabel;
+                const detail = display ? resolveText(display.detail) : workspaceText('workspace.description.private-kept');
+                const primaryLabel = display ? resolveText(display.primaryLabel) : workspaceText('workspace.button.private-begin');
+                ui.privateMode.title = detail + ' (' + primaryLabel + ')';
+                ui.privateMode.setAttribute(
+                  'aria-label',
+                  workspaceText('workspace.label.conversation-persistence') + ': ' + privateLabel + '. ' + primaryLabel + '.'
+                );
                 ui.privateMode.disabled = !display || state.privateInFlight;
                 root.dataset.vexPrivate = String(privateNow);
                 ui.privateBanner.hidden = !privateNow;
                 if (!privateNow) return;
-                ui.privateBannerText.textContent = String(display?.detail ?? '');
+                ui.privateBannerText.textContent =
+                  display?.banner ? resolveText(display.banner) : workspaceText('workspace.description.private-banner');
                 const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
                   const item = document.createElement('li');
-                  item.textContent = 'Kept: ' + note;
+                  item.textContent = workspaceText('workspace.label.private-note-kept').replace('{note}', String(note));
                   return item;
                 });
                 ui.privateNotes.replaceChildren(...notes);
                 const proposal = state.privateMode?.proposedNoteOrNull;
                 ui.privateProposal.hidden = !proposal;
-                ui.privateProposalText.textContent = proposal ? 'Vex would keep: “' + proposal + '”' : '';
+                ui.privateProposalText.textContent = proposal
+                  ? workspaceText('workspace.label.private-note-proposal').replace('{note}', String(proposal))
+                  : '';
                 ui.privatePropose.hidden = Boolean(proposal);
                 ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
                 ui.privateKeep.disabled = state.privateInFlight;
@@ -2160,7 +4277,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadPrivate = async () => {
-                const response = await fetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const wasPrivate = isPrivate();
                 state.privateMode = await readJson(response);
                 renderPrivate();
@@ -2173,7 +4290,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.privateInFlight = true;
                 renderPrivate();
                 try {
-                  const response = await fetch(path, {
+                  const response = await effectFetch(path, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify(body ?? {})
@@ -2197,11 +4314,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     controlRef,
                     requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
                   });
-                  notify(isPrivate()
-                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
-                    : 'Private mode is off. Vex will know a private conversation happened.');
+                  notify(workspaceText(isPrivate()
+                    ? 'workspace.status.private-enabled-notice'
+                    : 'workspace.status.private-disabled-notice'));
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Private mode could not change.');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-change-failed'));
                   await loadPrivate().catch(() => {});
                 }
               };
@@ -2223,7 +4340,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch (error) {
                   if (!ui.draft.value) ui.draft.value = content;
                   sizeDraft();
-                  notify(error instanceof Error ? error.message : 'Vex could not reply. Nothing was kept.');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-send-failed'));
                 } finally {
                   state.privatePending = null;
                   renderTimeline();
@@ -2240,10 +4357,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.appSelector.value = app;
                 ui.family.hidden = app !== apps.sourceTemplate;
                 ui.archives.hidden = app !== apps.archives;
-                ui.viewport.hidden = app === apps.archives;
+                ui.vexContext.hidden = app !== apps.vexContext;
+                ui.viewport.hidden = app === apps.archives || app === apps.vexContext;
                 ui.addressForm.dataset.app = app;
-                ui.query.disabled = app === apps.archives;
-                if (app === apps.archives) ui.frameStatus.hidden = true;
+                ui.query.disabled = app === apps.archives || app === apps.vexContext;
+                if (app === apps.archives || app === apps.vexContext) ui.frameStatus.hidden = true;
                 for (const member of ui.family.querySelectorAll('.family-member')) {
                   const current = String(state.humanPageUrl ?? '').startsWith(member.dataset.familyScope);
                   if (current) member.setAttribute('aria-current', 'page');
@@ -2251,6 +4369,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 root.dataset.vexApp = app;
                 if (app === apps.archives) renderArchives();
+                if (app === apps.vexContext) renderVexContext();
               };
 
               const archiveDayKey = (date) =>
@@ -2260,10 +4379,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.archivesTimeline) return;
                 const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
                 if (!messages.length) {
-                  ui.archivesSummary.textContent = 'Everything you and Vex say is kept here, in your Vex Home, by day.';
+                  ui.archivesSummary.textContent = workspaceText('workspace.description.archives-empty');
                   const empty = document.createElement('li');
                   empty.className = 'archives-empty';
-                  empty.textContent = 'Nothing here yet.';
+                  empty.textContent = workspaceText('workspace.status.archives-empty');
                   ui.archivesTimeline.replaceChildren(empty);
                   return;
                 }
@@ -2282,18 +4401,29 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
                 const first = new Date(messages[0].formedAt);
                 ui.archivesSummary.textContent =
-                  messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
-                  ' since ' + first.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) +
-                  ' · kept in your Vex Home';
+                  workspaceText('workspace.status.archives-summary')
+                    .replace(
+                      '{date}',
+                      first.toLocaleDateString(
+                        document.documentElement.lang || undefined,
+                        { year: 'numeric', month: 'long', day: 'numeric' }
+                      )
+                    )
+                    .replace('{messages}', String(messages.length))
+                    .replace('{days}', String(days.size));
                 const items = [...days.entries()].reverse().map(([key, day]) => {
                   const item = document.createElement('li');
                   item.className = 'archives-day';
                   item.dataset.day = key;
                   const heading = document.createElement('h3');
-                  heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                  heading.textContent = day.date.toLocaleDateString(
+                    document.documentElement.lang || undefined,
+                    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+                  );
                   const count = document.createElement('span');
                   const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
-                  count.textContent = spoken + ' message' + (spoken === 1 ? '' : 's');
+                  count.textContent = workspaceText('workspace.label.archives-day-count')
+                    .replace('{count}', String(spoken));
                   heading.append(count);
                   const entries = document.createElement('ol');
                   entries.className = 'archives-entries';
@@ -2306,15 +4436,30 @@ object VexLifeWebP1RuntimeArtifacts {
                       entry.className = 'archives-entry archives-private';
                       const time = document.createElement('time');
                       time.dateTime = String(interval.startedAt);
-                      time.textContent = from.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                      time.textContent = from.toLocaleTimeString(
+                        document.documentElement.lang || undefined,
+                        { hour: 'numeric', minute: '2-digit' }
+                      );
                       const who = document.createElement('span');
                       who.className = 'who';
-                      who.textContent = 'Private';
+                      who.textContent = workspaceText('workspace.label.archives-private');
                       const text = document.createElement('p');
+                      const until =
+                        to.toLocaleTimeString(
+                          document.documentElement.lang || undefined,
+                          { hour: 'numeric', minute: '2-digit' }
+                        );
+                      const kept =
+                        (interval.keptNotes ?? [])
+                          .map((note) =>
+                            workspaceText('workspace.label.archives-kept-note')
+                              .replace('{note}', String(note))
+                          );
                       text.textContent =
-                        'Private conversation until ' + to.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) +
-                        ' · ' + interval.exchangeCount + ' exchange' + (interval.exchangeCount === 1 ? '' : 's') + ' · not kept' +
-                        (interval.keptNotes.length ? '\nKept: ' + interval.keptNotes.join('\nKept: ') : '');
+                        workspaceText('workspace.description.archives-private-interval')
+                          .replace('{time}', until)
+                          .replace('{count}', String(interval.exchangeCount)) +
+                        (kept.length ? '\n' + kept.join('\n') : '');
                       entry.append(time, who, text);
                       entries.append(entry);
                       continue;
@@ -2323,10 +4468,17 @@ object VexLifeWebP1RuntimeArtifacts {
                     entry.dataset.eventRef = String(message.eventRef ?? '');
                     const time = document.createElement('time');
                     time.dateTime = String(message.formedAt);
-                    time.textContent = new Date(message.formedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                    time.textContent = new Date(message.formedAt).toLocaleTimeString(
+                      document.documentElement.lang || undefined,
+                      { hour: 'numeric', minute: '2-digit' }
+                    );
                     const who = document.createElement('span');
                     who.className = 'who';
-                    who.textContent = message.role === 'human' ? 'You' : 'Vex';
+                    who.textContent = workspaceText(
+                      message.role === 'human'
+                        ? 'workspace.label.archives-role-you'
+                        : 'workspace.label.archives-role-vex'
+                    );
                     const text = document.createElement('p');
                     text.textContent = String(message.content ?? '');
                     entry.append(time, who, text);
@@ -2338,13 +4490,1240 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.archivesTimeline.replaceChildren(...items);
               };
 
+              const shortIdentity = (value) => {
+                const text = String(value ?? '');
+                if (!text) return '';
+                return text.length > 22 ? text.slice(0, 10) + '…' + text.slice(-8) : text;
+              };
+
+              const keyedText = (key, args = {}) => ({ key, args });
+              const presentationText = (value) =>
+                value && typeof value === 'object' && typeof value.key === 'string'
+                  ? resolveText(value)
+                  : String(value ?? '');
+
+              const contextLine = (parent, text, strong = null) => {
+                const p = document.createElement('p');
+                const words = presentationText(text);
+                if (strong) {
+                  const bold = document.createElement('strong');
+                  bold.textContent = presentationText(strong);
+                  p.append(bold, document.createTextNode(' ' + words));
+                } else {
+                  p.textContent = words;
+                }
+                parent.append(p);
+                return p;
+              };
+
+              const contextExactText = (parent, text) => {
+                const pre = document.createElement('pre');
+                pre.textContent = String(text ?? '');
+                parent.append(pre);
+                return pre;
+              };
+
+              const contextEvidenceDisclosure = (parent, summaryText, text) => {
+                const details = document.createElement('details');
+                details.className = 'context-evidence-disclosure';
+                const summary = document.createElement('summary');
+                summary.textContent = presentationText(summaryText);
+                const pre = document.createElement('pre');
+                pre.textContent = String(text ?? '');
+                details.append(summary, pre);
+                parent.append(details);
+                return details;
+              };
+
+              const currentContextProfile = () => state.contextProfiles?.active ?? null;
+
+              const profileDefinitionFromForm = () => {
+                const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
+                const foundationText =
+                  mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
+                    ? String(ui.contextProfileFoundationText.value ?? '').trim()
+                    : '';
+                return {
+                  schemaVersion: 'vexlife-prod.context-profile/v1',
+                  name: String(ui.contextProfileName.value ?? '').trim() || workspaceText('workspace.label.context-profile-new-name-default'),
+                  description: '',
+                  foundationMode: mode,
+                  foundationText
+                };
+              };
+
+              const renderContextProfile = () => {
+                const projection = state.contextProfiles;
+                if (!projection) {
+                  ui.contextProfileSummary.textContent = workspaceText('workspace.description.context-profile-checking');
+                  return;
+                }
+                const active = projection.active;
+                const choices = [
+                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: workspaceText('workspace.label.context-profile-product-default') }, productDefault: true },
+                  ...(projection.saved ?? [])
+                ];
+                ui.contextProfileChoice.replaceChildren(...choices.map((profile) => {
+                  const option = document.createElement('option');
+                  option.value = profile.profileRef;
+                  option.textContent = profile.productDefault
+                    ? profile.definition.name
+                    : workspaceText('workspace.label.context-profile-saved-option')
+                        .replace('{name}', String(profile.definition.name ?? ''))
+                        .replace('{revision}', String(profile.revision ?? ''));
+                  return option;
+                }));
+                ui.contextProfileChoice.value = active.profileRef;
+                ui.contextProfileChoice.disabled = state.contextProfileInFlight;
+                ui.contextProfileBadge.textContent = resolveText(projection.display.label);
+                ui.contextProfileSummary.textContent = resolveText(projection.display.detail);
+                ui.contextProfileRestore.hidden = active.productDefault;
+                ui.contextProfileSave.disabled = active.productDefault || state.contextProfileInFlight;
+                ui.contextProfileSaveAs.disabled = state.contextProfileInFlight;
+                ui.contextProfileRestore.disabled = state.contextProfileInFlight;
+                ui.contextProfileHome.disabled = state.contextProfileInFlight;
+                ui.contextProfileFoundationField.hidden =
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
+                ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
+                if (!state.contextProfileDirty) {
+                  ui.contextProfileName.value = active.definition.name;
+                  ui.contextProfileFoundationMode.value = active.definition.foundationMode;
+                  ui.contextProfileFoundationText.value = active.definition.foundationText || '';
+                  ui.contextProfileFoundationField.hidden =
+                    active.definition.foundationMode !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
+                  ui.contextProfileNote.textContent =
+                    active.productDefault
+                      ? workspaceText('workspace.description.context-profile-default-note')
+                      : workspaceText('workspace.description.context-profile-saved-note');
+                }
+                const card = ui.contextProfileName.closest('.context-profile-card');
+                if (card) card.dataset.dirty = String(state.contextProfileDirty);
+              };
+
+              const renderVexLabs = () => {
+                if (!ui.vexLabsFields) return;
+                const projection = state.vexLabs;
+                if (!projection) {
+                  ui.vexLabsStatus.textContent = workspaceText('workspace.status.vex-labs-loading');
+                  ui.vexLabsFields.replaceChildren(
+                    Object.assign(document.createElement('p'), {
+                      className: 'context-empty',
+                      textContent: workspaceText('workspace.description.vex-labs-loading-fields')
+                    })
+                  );
+                  return;
+                }
+
+                const draft = ensureVexLabsDraft();
+                const inputFocused = document.activeElement === ui.vexLabsInputBudget;
+                const memoryFocused = document.activeElement === ui.vexLabsMemoryBudget;
+                if (!inputFocused) ui.vexLabsInputBudget.value = String(draft.inputTokenBudget);
+                if (!memoryFocused) ui.vexLabsMemoryBudget.value = String(draft.maximumMemoryTokens);
+                ui.vexLabsMemoryMode.value = draft.memoryMode;
+
+                const staleSnapshot =
+                  projection.seedConversationHeadSha256 &&
+                  projection.currentProductConversationHeadSha256 &&
+                  projection.seedConversationHeadSha256 !== projection.currentProductConversationHeadSha256;
+                ui.vexLabsStatus.textContent =
+                  workspaceText(projection.conversationPreset === 'EMPTY'
+                    ? 'workspace.status.vex-labs-empty-scratch'
+                    : 'workspace.status.vex-labs-current-snapshot')
+                    .replace(
+                      '{count}',
+                      Number(projection.scratchConversationMessageCount ?? 0)
+                        .toLocaleString(document.documentElement.lang || undefined)
+                    );
+                const lastAdmission = projection.lastAdmission ?? null;
+                ui.vexLabsNote.textContent = state.vexLabsInFlight
+                  ? workspaceText('workspace.description.vex-labs-running')
+                  : lastAdmission
+                    ? vexLabsAdmissionText(lastAdmission)
+                  : vexLabsDraftMatchesLastTest()
+                    ? workspaceText('workspace.description.vex-labs-tested')
+                    : staleSnapshot
+                    ? workspaceText('workspace.description.vex-labs-stale')
+                    : draft.memoryMode === 'NONE'
+                      ? workspaceText('workspace.description.vex-labs-memory-off')
+                      : workspaceText('workspace.description.vex-labs-scratch-boundary');
+
+                const busy = state.vexLabsInFlight;
+                for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
+                  if (button) button.disabled = busy;
+                }
+                if (ui.vexLabsSaveSupported) {
+                  ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
+                  ui.vexLabsSaveSupported.title =
+                    vexLabsDraftMatchesLastTest()
+                      ? workspaceText('workspace.description.vex-labs-save-supported-ready')
+                      : workspaceText('workspace.description.vex-labs-save-supported-blocked');
+                }
+                ui.vexLabsInputBudget.disabled = busy;
+                ui.vexLabsMemoryBudget.disabled = busy;
+                ui.vexLabsMemoryMode.disabled = busy;
+
+                const fieldNodes = (projection.fields ?? []).map((field) => {
+                  const row = document.createElement('details');
+                  row.className = 'vex-labs-field';
+                  row.dataset.fieldRef = String(field.fieldRef ?? '');
+
+                  const summary = document.createElement('summary');
+                  const title = document.createElement('span');
+                  title.className = 'vex-labs-field-title';
+                  title.textContent = field.label
+                    ? resolveText(field.label)
+                    : String(field.fieldRef ?? '');
+
+                  const badge = document.createElement('span');
+                  badge.className = 'vex-labs-field-badge';
+                  const editable = field.labEditability === 'EDITABLE_LAB_ONLY';
+                  const restart = field.labEditability === 'EDITABLE_PRODUCT_CONTROL_RESTART';
+                  badge.dataset.state = editable ? 'edit' : field.labEditability === 'HELD' ? 'held' : 'read';
+                  badge.textContent = workspaceText(editable
+                    ? 'workspace.status.vex-labs-field-edit-test'
+                    : restart
+                      ? 'workspace.status.vex-labs-field-restart'
+                      : field.labEditability === 'HELD'
+                        ? 'workspace.status.vex-labs-field-held'
+                        : 'workspace.status.vex-labs-field-read-only');
+
+                  const current = document.createElement('span');
+                  current.className = 'vex-labs-field-value';
+                  const testValue =
+                    field.fieldRef === vexLabsProfileBudgetFieldRef
+                      ? draft.inputTokenBudget
+                      : field.fieldRef === vexLabsMemoryBudgetFieldRef
+                        ? draft.maximumMemoryTokens
+                        : null;
+                  const fieldValueText = (value) => {
+                    const words = String(value ?? workspaceText('workspace.label.vex-labs-field-not-set'));
+                    if (!field.unit) return words;
+                    return workspaceText('workspace.label.vex-labs-field-value-unit')
+                      .replace('{value}', words)
+                      .replace('{unit}', resolveText(field.unit));
+                  };
+                  const currentValue = fieldValueText(field.currentValue);
+                  const testValueText =
+                    testValue === null
+                      ? null
+                      : fieldValueText(
+                          Number(testValue).toLocaleString(document.documentElement.lang || undefined)
+                        );
+                  current.textContent =
+                    testValueText === null
+                      ? workspaceText('workspace.label.vex-labs-field-current')
+                          .replace('{value}', currentValue)
+                      : workspaceText('workspace.label.vex-labs-field-current-test')
+                          .replace('{value}', currentValue)
+                          .replace('{test}', testValueText);
+                  summary.append(title, badge, current);
+
+                  const body = document.createElement('div');
+                  body.className = 'vex-labs-field-body';
+                  const purpose = document.createElement('p');
+                  purpose.textContent = field.explanation ? resolveText(field.explanation) : '';
+                  body.append(purpose);
+
+                  const editDetail = document.createElement('p');
+                  editDetail.textContent = field.labEditDetail ? resolveText(field.labEditDetail) : '';
+                  body.append(editDetail);
+
+                  if (editable) {
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'quiet-button vex-labs-field-edit';
+                    edit.dataset.fieldRef = String(field.fieldRef ?? '');
+                    edit.textContent = workspaceText('workspace.button.vex-labs-edit-test-value');
+                    body.append(edit);
+                  }
+
+                  const facts = document.createElement('div');
+                  facts.className = 'vex-labs-field-facts';
+                  const factValues = [
+                    field.inheritedDefaultValue != null
+                      ? workspaceText('workspace.label.vex-labs-field-default')
+                          .replace('{value}', String(field.inheritedDefaultValue))
+                      : null,
+                    field.recommendedValue != null
+                      ? workspaceText('workspace.label.vex-labs-field-recommended')
+                          .replace('{value}', String(field.recommendedValue))
+                      : null,
+                    field.minimumValue != null || field.maximumValue != null
+                      ? workspaceText('workspace.label.vex-labs-field-range')
+                          .replace('{minimum}', String(field.minimumValue ?? '…'))
+                          .replace('{maximum}', String(field.maximumValue ?? '…'))
+                      : null,
+                    field.labObservedMinimumValue != null
+                      ? workspaceText('workspace.label.vex-labs-field-observed-floor')
+                          .replace(
+                            '{value}',
+                            Number(field.labObservedMinimumValue)
+                              .toLocaleString(document.documentElement.lang || undefined)
+                          )
+                      : null,
+                    field.ownerRef
+                      ? workspaceText('workspace.label.vex-labs-field-owner')
+                          .replace('{value}', String(field.ownerRef))
+                      : null,
+                    field.userApplyBoundary
+                      ? workspaceText('workspace.label.vex-labs-field-applies')
+                          .replace('{value}', String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase())
+                      : null
+                  ].filter(Boolean);
+                  for (const value of factValues) {
+                    const chip = document.createElement('span');
+                    chip.textContent = value;
+                    facts.append(chip);
+                  }
+                  if (facts.childElementCount) body.append(facts);
+
+                  if (field.increaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = workspaceText('workspace.description.vex-labs-field-increase')
+                      .replace('{detail}', resolveText(field.increaseConsequence));
+                    body.append(line);
+                  }
+                  if (field.decreaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = workspaceText('workspace.description.vex-labs-field-decrease')
+                      .replace('{detail}', resolveText(field.decreaseConsequence));
+                    body.append(line);
+                  }
+
+                  row.append(summary, body);
+                  return row;
+                });
+                ui.vexLabsFields.replaceChildren(...fieldNodes);
+
+                const result = state.vexLabsLastResult;
+                ui.vexLabsRequest.hidden = !result?.providerRequestBody;
+                if (result?.providerRequestBody) {
+                  ui.vexLabsRequestSha.textContent = 'SHA-256 ' + String(result.providerRequestBodySha256 ?? '');
+                  ui.vexLabsRequestBody.textContent = String(result.providerRequestBody);
+                } else {
+                  ui.vexLabsRequestSha.textContent = '';
+                  ui.vexLabsRequestBody.textContent = '';
+                }
+              };
+
+              const renderVexContext = () => {
+                if (!ui.vexContext) return;
+                renderContextProfile();
+                renderVexLabs();
+                const prompt = state.context?.promptContext ?? null;
+                const active = currentContextProfile();
+                const messages = state.conversation?.messages ?? [];
+                const latestVex =
+                  [...messages].reverse().find((message) =>
+                    message.role === 'vex' &&
+                    (!state.context?.turnRef || message.turnRef === state.context.turnRef)
+                  ) ?? null;
+                const latestHuman =
+                  latestVex
+                    ? [...messages].reverse().find((message) =>
+                        message.role === 'human' && message.turnRef === latestVex.turnRef
+                      ) ?? null
+                    : null;
+                const responseKey = String(latestVex?.messageRef ?? '');
+
+                if (!prompt) {
+                  const contextHeldUnsupported =
+                    state.context?.state === service.contextHeldUnsupportedState;
+                  const heldSchema =
+                    String(state.context?.durablePromptReceiptSchema ?? workspaceText('workspace.label.context-unknown-schema'));
+                  ui.vexContextTurnSummary.textContent =
+                    workspaceText(
+                      contextHeldUnsupported
+                        ? 'workspace.status.context-held-completed-turn'
+                        : 'workspace.status.vex-context-no-turn'
+                    );
+                  ui.vexContextBudget.textContent = '';
+                  ui.contextChangesList.replaceChildren(
+                    Object.assign(document.createElement('p'), {
+                      className: 'context-empty',
+                      textContent: contextHeldUnsupported
+                        ? presentationText(
+                            keyedText(
+                              'workspace.description.context-held-unsupported',
+                              { schema: heldSchema }
+                            )
+                          )
+                        : workspaceText('workspace.description.context-beginning')
+                    })
+                  );
+                  for (const node of [
+                    ui.contextFoundationBody,
+                    ui.contextMemoryBody,
+                    ui.contextContinuityBody,
+                    ui.contextConversationBody,
+                    ui.contextBrowserBody,
+                    ui.contextRequestBody,
+                    ui.contextProcessBody,
+                    ui.contextOutputBody,
+                    ui.contextAfterBody
+                  ]) node.replaceChildren();
+                  ui.contextComponentList.replaceChildren();
+                  return;
+                }
+
+                const exactTurnRef = String(state.context.turnRef ?? '');
+                if (state.contextConversationTurnRef !== exactTurnRef) {
+                  state.contextConversationTurnRef = exactTurnRef;
+                  state.contextConversationCollapsedByEventRef.clear();
+                }
+                const usedInputTokens = Number(prompt.providerMaterializedInputTokenEstimate ?? 0);
+                const inputTokenBudget = Number(prompt.inputTokenBudget ?? 0);
+                const priorCompletedExchanges = Number(prompt.priorCompletedExchangeCount ?? 0);
+                const usedWorkingContinuity = String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT');
+                ui.vexContextTurnSummary.textContent = workspaceText('workspace.status.context-last-completed-reply');
+                ui.vexContextTurnSummary.title = exactTurnRef;
+                ui.vexContextBudget.textContent =
+                  workspaceText(
+                    usedWorkingContinuity
+                      ? 'workspace.status.context-budget-condensed'
+                      : priorCompletedExchanges > 0
+                        ? 'workspace.status.context-budget-recent-fit'
+                        : 'workspace.status.context-budget-started'
+                  );
+                ui.vexContextBudget.title =
+                  presentationText(
+                    keyedText(
+                      'workspace.label.context-input-tokens',
+                      {
+                        used: usedInputTokens.toLocaleString(document.documentElement.lang || undefined),
+                        budget: inputTokenBudget.toLocaleString(document.documentElement.lang || undefined)
+                      }
+                    )
+                  );
+
+                const promptMemoryComponents =
+                  (prompt.contextComponents ?? []).filter((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-context' ||
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-accepted-semantic'
+                  );
+                const dailyMemoryUsed =
+                  promptMemoryComponents.some((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-context');
+                const acceptedSemanticMemoryUsed =
+                  promptMemoryComponents.some((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-accepted-semantic');
+                const anyPromptMemoryUsed = promptMemoryComponents.length > 0;
+
+                const changes = [];
+                const change = (title, detail, stateName) => {
+                  const item = document.createElement('div');
+                  item.className = 'context-change';
+                  item.dataset.state = stateName;
+                  const body = document.createElement('p');
+                  const strong = document.createElement('strong');
+                  strong.textContent = presentationText(title);
+                  body.append(strong, document.createTextNode(' ' + presentationText(detail)));
+                  item.append(body);
+                  changes.push(item);
+                };
+
+                if (active && prompt.contextProfileFingerprint && active.fingerprint !== prompt.contextProfileFingerprint) {
+                  change(
+                    keyedText('workspace.heading.context-change-profile-changed'),
+                    keyedText(
+                      'workspace.description.context-change-profile-changed',
+                      { name: String(active.definition.name ?? '') }
+                    ),
+                    'changed'
+                  );
+                } else if (active) {
+                  change(
+                    keyedText('workspace.heading.context-change-profile-current'),
+                    keyedText(
+                      'workspace.description.context-change-profile-current',
+                      { name: String(active.definition.name ?? '') }
+                    ),
+                    'current'
+                  );
+                }
+
+                const usedReplyLanguage = String(prompt.replyLanguage ?? '');
+                const currentReplyLanguage = String(state.settings?.replyLanguage ?? '');
+                const languageName = (code) =>
+                  state.settings?.languages?.find((language) => language.code === code)?.name ??
+                  (code === usedReplyLanguage ? prompt.replyLanguageName : null) ??
+                  code;
+                if (usedReplyLanguage) {
+                  if (currentReplyLanguage && currentReplyLanguage !== usedReplyLanguage) {
+                    change(
+                      keyedText('workspace.heading.context-change-reply-language-changed'),
+                      keyedText(
+                        'workspace.description.context-change-reply-language-changed',
+                        {
+                          used: languageName(usedReplyLanguage),
+                          current: languageName(currentReplyLanguage)
+                        }
+                      ),
+                      'changed'
+                    );
+                  } else {
+                    change(
+                      keyedText('workspace.heading.context-change-reply-language-current'),
+                      keyedText(
+                        'workspace.description.context-change-reply-language-current',
+                        { language: languageName(usedReplyLanguage) }
+                      ),
+                      'current'
+                    );
+                  }
+                }
+
+                if (usedWorkingContinuity) {
+                  change(
+                    keyedText('workspace.heading.context-change-continuity-condensed'),
+                    keyedText('workspace.description.context-change-continuity-condensed'),
+                    'changed'
+                  );
+                } else if (priorCompletedExchanges > 0) {
+                  change(
+                    keyedText('workspace.heading.context-change-conversation-recent'),
+                    keyedText('workspace.description.context-change-conversation-recent'),
+                    'current'
+                  );
+                } else {
+                  change(
+                    keyedText('workspace.heading.context-change-conversation-started'),
+                    keyedText('workspace.description.context-change-conversation-started'),
+                    'current'
+                  );
+                }
+
+                if (acceptedSemanticMemoryUsed) {
+                  change(
+                    keyedText('workspace.heading.context-change-memory-shaped'),
+                    keyedText(
+                      dailyMemoryUsed
+                        ? 'workspace.description.context-change-memory-daily-and-semantic'
+                        : 'workspace.description.context-change-memory-semantic-only'
+                    ),
+                    'current'
+                  );
+                } else if (dailyMemoryUsed) {
+                  const currentMemory = state.memory?.memoryContextFingerprint ?? null;
+                  const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
+                  if (currentMemory && prompt.memoryContextFingerprint && currentMemory !== prompt.memoryContextFingerprint) {
+                    change(
+                      keyedText('workspace.heading.context-change-memory-changed'),
+                      keyedText('workspace.description.context-change-memory-changed'),
+                      'changed'
+                    );
+                  } else {
+                    change(
+                      keyedText('workspace.heading.context-change-memory-current'),
+                      keyedText(
+                        'workspace.description.context-change-memory-current',
+                        { count: rememberedCount.toLocaleString(document.documentElement.lang || undefined) }
+                      ),
+                      'current'
+                    );
+                  }
+                } else {
+                  change(
+                    keyedText('workspace.heading.context-change-memory-current'),
+                    keyedText('workspace.description.context-change-memory-none'),
+                    'current'
+                  );
+                }
+                ui.contextChangesList.replaceChildren(...changes);
+
+                // Foundation: Product source remains present; a profile may add a personal extension.
+                ui.contextFoundationBody.replaceChildren();
+                const productField = prompt.foundationalField;
+                const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
+                ui.contextFoundationStatus.textContent =
+                  productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
+                    ? workspaceText('workspace.status.context-foundation-carried')
+                        .replace('{version}', String(productField.fieldVersion ?? ''))
+                    : workspaceText('workspace.status.context-foundation-unavailable');
+                if (productField) {
+                  const omittedFoundationParts = Number(productField.omittedModuleRefs?.length ?? 0);
+                  contextLine(
+                    ui.contextFoundationBody,
+                    omittedFoundationParts > 0
+                      ? keyedText(
+                          'workspace.description.context-foundation-included-omitted',
+                          { count: String(omittedFoundationParts) }
+                        )
+                      : keyedText('workspace.description.context-foundation-included'),
+                    keyedText('workspace.label.context-foundation-built-in')
+                  );
+                  const liveField = state.foundationalField;
+                  if (
+                    liveField?.kernelText &&
+                    liveField?.foundationalField?.bodySha256 === productField.bodySha256
+                  ) {
+                    contextEvidenceDisclosure(
+                      ui.contextFoundationBody,
+                      keyedText('workspace.button.context-foundation-show-exact'),
+                      liveField.kernelText
+                    );
+                  } else {
+                    contextLine(
+                      ui.contextFoundationBody,
+                      keyedText('workspace.description.context-foundation-historical'),
+                      keyedText('workspace.label.context-foundation-exact-evidence')
+                    );
+                  }
+                }
+                if (prompt.contextProfileRef) {
+                  contextLine(
+                    ui.contextFoundationBody,
+                    profileMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
+                      ? keyedText('workspace.description.context-foundation-profile-extension')
+                      : keyedText('workspace.description.context-foundation-product-only'),
+                    keyedText('workspace.label.context-foundation-profile-for-reply')
+                  );
+                }
+                if (
+                  prompt.profileFoundationState === 'CARRIED' &&
+                  active &&
+                  active.fingerprint === prompt.contextProfileFingerprint &&
+                  active.definition.foundationText
+                ) {
+                  contextEvidenceDisclosure(
+                    ui.contextFoundationBody,
+                    keyedText('workspace.button.context-foundation-show-profile'),
+                    active.definition.foundationText
+                  );
+                } else if (prompt.profileFoundationState === 'CARRIED') {
+                  contextLine(
+                    ui.contextFoundationBody,
+                    keyedText('workspace.description.context-foundation-profile-historical'),
+                    keyedText('workspace.label.context-foundation-personal')
+                  );
+                }
+
+                // Structured Memory.
+                ui.contextMemoryBody.replaceChildren();
+                const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
+                ui.contextMemoryStatus.textContent =
+                  acceptedSemanticMemoryUsed
+                    ? workspaceText(dailyMemoryUsed
+                        ? 'workspace.status.context-memory-daily-and-semantic'
+                        : 'workspace.status.context-memory-semantic')
+                    : dailyMemoryUsed
+                      ? workspaceText('workspace.status.context-memory-daily')
+                          .replace('{count}', rememberedCount.toLocaleString(document.documentElement.lang || undefined))
+                      : workspaceText('workspace.status.context-memory-not-used');
+                if (anyPromptMemoryUsed) {
+                  if (dailyMemoryUsed) {
+                    contextLine(
+                      ui.contextMemoryBody,
+                      prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
+                        ? keyedText('workspace.description.context-memory-daily-current')
+                        : keyedText('workspace.description.context-memory-daily-historical'),
+                      keyedText('workspace.label.context-memory-daily-currentness')
+                    );
+                    contextEvidenceDisclosure(
+                      ui.contextMemoryBody,
+                      keyedText('workspace.button.context-memory-show-reference'),
+                      String(prompt.memoryContextRef ?? '')
+                    );
+                  }
+                  if (acceptedSemanticMemoryUsed) {
+                    contextLine(
+                      ui.contextMemoryBody,
+                      dailyMemoryUsed
+                        ? keyedText('workspace.description.context-memory-semantic-with-daily')
+                        : keyedText('workspace.description.context-memory-semantic-without-daily'),
+                      keyedText('workspace.label.context-memory-accepted-semantic')
+                    );
+                  }
+                  contextLine(
+                    ui.contextMemoryBody,
+                    keyedText('workspace.description.context-memory-evidence'),
+                    keyedText('workspace.label.context-memory-evidence')
+                  );
+                } else {
+                  contextLine(
+                    ui.contextMemoryBody,
+                    state.memory?.display
+                      ? resolveText(state.memory.display.detail)
+                      : keyedText('workspace.description.context-memory-none')
+                  );
+                }
+
+                // Working continuity / rollover.
+                ui.contextContinuityBody.replaceChildren();
+                ui.contextContinuityStatus.textContent =
+                  workspaceText(prompt.workingContinuityIncluded
+                    ? 'workspace.status.context-continuity-carried'
+                    : 'workspace.status.context-continuity-not-needed');
+                if (prompt.workingContinuityIncluded) {
+                  contextLine(
+                    ui.contextContinuityBody,
+                    keyedText('workspace.description.context-continuity-carried')
+                  );
+                  contextEvidenceDisclosure(
+                    ui.contextContinuityBody,
+                    keyedText('workspace.button.context-continuity-show-reference'),
+                    String(prompt.workingContinuityContextRef ?? '')
+                  );
+                } else {
+                  contextLine(
+                    ui.contextContinuityBody,
+                    keyedText('workspace.description.context-continuity-not-needed')
+                  );
+                }
+
+                // Exact selected Conversation.
+                ui.contextConversationBody.replaceChildren();
+                const selectedRefs = new Set(prompt.selectedConversationEventRefs ?? []);
+                const selectedMessages = messages.filter((message) => selectedRefs.has(message.eventRef));
+                ui.contextConversationStatus.textContent =
+                  selectedMessages.length === 0
+                    ? workspaceText('workspace.status.context-conversation-none')
+                    : selectedMessages.length === 1
+                      ? workspaceText('workspace.status.context-conversation-one')
+                      : workspaceText('workspace.status.context-conversation-many')
+                          .replace('{count}', selectedMessages.length.toLocaleString(document.documentElement.lang || undefined));
+                contextLine(
+                  ui.contextConversationBody,
+                  priorCompletedExchanges === 0
+                    ? keyedText('workspace.description.context-conversation-started')
+                    : keyedText(
+                        'workspace.description.context-conversation-selection',
+                        {
+                          exchanges: priorCompletedExchanges.toLocaleString(document.documentElement.lang || undefined),
+                          messages: selectedMessages.length.toLocaleString(document.documentElement.lang || undefined)
+                        }
+                      ),
+                  keyedText('workspace.label.context-conversation-source')
+                );
+                for (const message of selectedMessages) {
+                  const card = document.createElement('div');
+                  card.className = 'context-exact-message';
+                  card.dataset.role = message.role;
+
+                  const header = document.createElement('div');
+                  header.className = 'context-exact-message-head';
+                  const meta = document.createElement('small');
+                  meta.textContent = workspaceText(message.role === 'human'
+                    ? 'workspace.label.context-conversation-human-exact'
+                    : 'workspace.label.context-conversation-vex-exact');
+                  header.append(meta);
+
+                  const messageRef = String(message.eventRef ?? '');
+                  const content = String(message.content ?? '');
+                  const collapsible =
+                    content.length > 480 ||
+                    content.split('\n').length > 8;
+                  const collapsed =
+                    collapsible &&
+                    state.contextConversationCollapsedByEventRef.get(messageRef) === true;
+
+                  if (collapsible) {
+                    const toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'context-message-toggle';
+                    toggle.textContent = workspaceText(collapsed
+                      ? 'workspace.button.context-conversation-show'
+                      : 'workspace.button.context-conversation-collapse');
+                    toggle.setAttribute('aria-expanded', String(!collapsed));
+                    toggle.addEventListener('click', () => {
+                      state.contextConversationCollapsedByEventRef.set(messageRef, !collapsed);
+                      renderVexContext();
+                    });
+                    header.append(toggle);
+                  }
+
+                  const body = document.createElement('p');
+                  body.textContent = content;
+                  body.hidden = collapsed;
+                  card.dataset.collapsed = String(collapsed);
+                  card.append(header, body);
+                  ui.contextConversationBody.append(card);
+                }
+
+                // Browser / reached context: exact historical content is intentionally not reconstructed.
+                ui.contextBrowserBody.replaceChildren();
+                ui.contextBrowserStatus.textContent = workspaceText(prompt.browserContextIncluded
+                  ? 'workspace.status.context-browser-used'
+                  : 'workspace.status.context-browser-not-used');
+                if (prompt.browserContextIncluded) {
+                  contextLine(
+                    ui.contextBrowserBody,
+                    prompt.browserTitle || prompt.browserPageUrl || workspaceText('workspace.label.context-browser-page'),
+                    keyedText('workspace.label.context-browser-context')
+                  );
+                  contextLine(
+                    ui.contextBrowserBody,
+                    keyedText(
+                      'workspace.description.context-browser-amount',
+                      {
+                        count: Number(prompt.browserContextCharacters ?? 0)
+                          .toLocaleString(document.documentElement.lang || undefined),
+                        capture: prompt.browserContextCapture ?? workspaceText('workspace.label.context-browser-captured-text')
+                      }
+                    ),
+                    keyedText('workspace.label.context-browser-amount')
+                  );
+                  contextLine(
+                    ui.contextBrowserBody,
+                    keyedText('workspace.description.context-browser-receipt'),
+                    keyedText('workspace.label.context-browser-afterward')
+                  );
+                } else {
+                  contextLine(
+                    ui.contextBrowserBody,
+                    keyedText('workspace.description.context-browser-none')
+                  );
+                }
+                const reaches = latestVex ? (state.reachesByResponse.get(String(latestVex.messageRef)) ?? []) : [];
+                for (const reach of reaches) {
+                  contextLine(
+                    ui.contextBrowserBody,
+                    String(reach.handle ?? '') + ':' + String(reach.action ?? '') +
+                      (reach.target ? ' · ' + reach.target : '') +
+                      ' · ' + String(reach.state ?? ''),
+                    keyedText('workspace.label.context-browser-reached')
+                  );
+                }
+
+                // The current request is not part of selected prior Conversation; show its exact
+                // canonical event separately so the causal stack never skips the human cause.
+                ui.contextRequestBody.replaceChildren();
+                ui.contextRequestStatus.textContent = workspaceText(latestHuman
+                  ? 'workspace.status.context-request-exact'
+                  : 'workspace.status.context-request-unavailable');
+                if (latestHuman) {
+                  contextExactText(ui.contextRequestBody, latestHuman.content);
+                } else {
+                  contextLine(
+                    ui.contextRequestBody,
+                    keyedText('workspace.description.context-request-unavailable')
+                  );
+                }
+
+                // Exact provider component order remains available, but human meaning is primary.
+                const componentLabels = Object.freeze({
+                  'foundational-field': 'workspace.label.context-component-foundation',
+                  'memory-current-context': 'workspace.label.context-component-memory-daily',
+                  'memory-current-accepted-semantic': 'workspace.label.context-component-memory-semantic',
+                  'capability-frame': 'workspace.label.context-component-capability-guide',
+                  'current-state-envelope': 'workspace.label.context-component-current-state',
+                  'capability-frame-current': 'workspace.label.context-component-capabilities-current',
+                  'person-context': 'workspace.label.context-component-person-settings',
+                  'conversation-extent': 'workspace.label.context-component-conversation-extent',
+                  'working-continuity': 'workspace.label.context-component-continuity',
+                  'browser-context': 'workspace.label.context-component-browser',
+                  'source-return-protocol': 'workspace.label.context-component-source-return',
+                  'current-request': 'workspace.label.context-component-current-request'
+                });
+                const placementLabels = Object.freeze({
+                  SYSTEM_PREFIX: 'workspace.label.context-placement-standing',
+                  LIVE_TAIL: 'workspace.label.context-placement-current',
+                  CURRENT_REQUEST: 'workspace.label.context-placement-request'
+                });
+                const componentItems = (prompt.contextComponents ?? []).map((component) => {
+                  const item = document.createElement('li');
+                  const exactRef = component.componentRef.replace('component.vexlife-prod.prompt.', '');
+                  const name = document.createElement('span');
+                  name.textContent = componentLabels[exactRef]
+                    ? workspaceText(componentLabels[exactRef])
+                    : exactRef.replaceAll('-', ' ');
+                  name.title = component.componentRef;
+                  const detail = document.createElement('span');
+                  const placement =
+                    placementLabels[component.placementClass]
+                      ? workspaceText(placementLabels[component.placementClass])
+                      : component.placementClass.toLowerCase().replaceAll('_', ' ');
+                  const arrival =
+                    exactRef === 'person-context'
+                      ? workspaceText('workspace.description.context-component-person-arrival')
+                      : '';
+                  detail.textContent = ' · ' + placement + arrival;
+                  detail.title =
+                    component.stabilityClass + ' · ' + component.placementClass +
+                    ' · provider message ' + component.providerMessageIndex;
+                  item.append(name, detail);
+                  return item;
+                });
+                const providerRequests =
+                  responseKey
+                    ? (state.providerRequestsByResponse.get(responseKey) ?? [])
+                    : [];
+                const modelViewItem = document.createElement('li');
+                modelViewItem.className = 'context-model-view';
+                const modelView = document.createElement('details');
+                modelView.className = 'context-evidence-disclosure';
+                const modelSummary = document.createElement('summary');
+                modelSummary.textContent =
+                  providerRequests.length
+                    ? workspaceText(providerRequests.length === 1
+                        ? 'workspace.label.context-model-view-one'
+                        : 'workspace.label.context-model-view-many')
+                    : workspaceText('workspace.status.context-model-view-unavailable');
+                modelView.append(modelSummary);
+                if (providerRequests.length) {
+                  for (const request of providerRequests) {
+                    const stage = document.createElement('div');
+                    stage.className = 'context-model-stage';
+                    const label = document.createElement('small');
+                    label.textContent =
+                      workspaceText('workspace.label.context-model-stage')
+                        .replace('{stage}', String(request.stageIndex))
+                        .replace('{sha}', String(request.requestBodySha256));
+                    const pre = document.createElement('pre');
+                    let visible = String(request.requestBody ?? '');
+                    try {
+                      visible = JSON.stringify(JSON.parse(visible), null, 2);
+                    } catch {}
+                    pre.textContent = visible;
+                    stage.append(label, pre);
+                    modelView.append(stage);
+                  }
+                  const note = document.createElement('p');
+                  note.className = 'context-empty';
+                  note.textContent = workspaceText('workspace.description.context-model-view-session');
+                  modelView.append(note);
+                } else {
+                  const note = document.createElement('p');
+                  note.className = 'context-empty';
+                  note.textContent =
+                    state.context?.finalProviderRequestBodySha256
+                      ? workspaceText('workspace.description.context-model-view-final-hash')
+                          .replace('{sha}', String(state.context.finalProviderRequestBodySha256))
+                      : workspaceText('workspace.description.context-model-view-none');
+                  modelView.append(note);
+                }
+                modelViewItem.append(modelView);
+                componentItems.push(modelViewItem);
+                ui.contextComponentList.replaceChildren(...componentItems);
+
+                // Session process and exact output.
+                ui.contextProcessBody.replaceChildren();
+                const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
+                ui.contextProcessStatus.textContent =
+                  workspaceText(reasoning
+                    ? 'workspace.status.context-process-visible-session'
+                    : 'workspace.status.context-process-not-kept');
+                if (reasoning) {
+                  contextExactText(ui.contextProcessBody, reasoning);
+                } else {
+                  contextLine(
+                    ui.contextProcessBody,
+                    workspaceText('workspace.description.context-process-not-kept')
+                  );
+                }
+                if (reaches.length) {
+                  contextLine(
+                    ui.contextProcessBody,
+                    reaches.length === 1
+                      ? keyedText('workspace.description.context-process-reach-one')
+                      : keyedText(
+                          'workspace.description.context-process-reach-many',
+                          { count: reaches.length.toLocaleString(document.documentElement.lang || undefined) }
+                        )
+                  );
+                }
+
+                ui.contextOutputBody.replaceChildren();
+                if (latestVex) {
+                  contextExactText(ui.contextOutputBody, latestVex.content);
+                } else {
+                  contextLine(ui.contextOutputBody, keyedText('workspace.description.context-output-unavailable'));
+                }
+
+                ui.contextAfterBody.replaceChildren();
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-conversation'),
+                  keyedText('workspace.label.context-after-conversation')
+                );
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-evidence'),
+                  keyedText('workspace.label.context-after-evidence')
+                );
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-process'),
+                  keyedText('workspace.label.context-after-process')
+                );
+                contextLine(
+                  ui.contextAfterBody,
+                  active
+                    ? keyedText(
+                        'workspace.description.context-after-next-profile',
+                        { name: String(active.definition.name ?? '') }
+                      )
+                    : keyedText('workspace.description.context-after-next-default'),
+                  keyedText('workspace.label.context-after-next-turn')
+                );
+              };
+
+              const loadContextProfiles = async () => {
+                const response = await productFetch(service.contextProfilesPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.contextProfiles = await readJson(response);
+                state.contextProfileDirty = false;
+                renderVexContext();
+                return state.contextProfiles;
+              };
+
+              const loadFoundationalField = async () => {
+                const response = await productFetch(service.foundationalFieldPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.foundationalField = await readJson(response);
+                renderVexContext();
+                return state.foundationalField;
+              };
+
+              const contextProfileControl = async (controlRef, body = {}) => {
+                if (state.contextProfileInFlight) return null;
+                state.contextProfileInFlight = true;
+                renderContextProfile();
+                try {
+                  const response = await effectFetch(service.contextProfilesControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef, ...body })
+                  });
+                  const result = await readJson(response);
+                  state.contextProfiles = result.profiles;
+                  state.contextProfileDirty = false;
+                  renderVexContext();
+                  return result;
+                } finally {
+                  state.contextProfileInFlight = false;
+                  renderContextProfile();
+                }
+              };
+
+              const loadVexLabs = async (resetDraft = false) => {
+                const response = await productFetch(service.vexLabsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.vexLabs = await readJson(response);
+                if (resetDraft || !state.vexLabsDraft) {
+                  const defaults = state.vexLabs.defaults;
+                  state.vexLabsDraft = {
+                    inputTokenBudget: Number(defaults.inputTokenBudget),
+                    maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                    memoryMode: String(state.vexLabs.memoryMode ?? defaults.memoryMode)
+                  };
+                }
+                renderVexLabs();
+                if (isVexLabs()) renderTimeline();
+                return state.vexLabs;
+              };
+
+              const vexLabsControl = async (controlRef, resetDraft = false) => {
+                if (state.vexLabsInFlight) return null;
+                state.vexLabsInFlight = true;
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  state.vexLabsLastResult = null;
+                  if (resetDraft) {
+                    const defaults = state.vexLabs.defaults;
+                    state.vexLabsDraft = {
+                      inputTokenBudget: Number(defaults.inputTokenBudget),
+                      maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                      memoryMode: String(defaults.memoryMode)
+                    };
+                  }
+                  return result;
+                } finally {
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
+              const saveVexLabsSupportedSettings = async () => {
+                const draft = ensureVexLabsDraft();
+                if (!vexLabsDraftMatchesLastTest()) {
+                  notify(workspaceText('workspace.status.vex-labs-test-before-save'));
+                  return;
+                }
+                const active = currentContextProfile();
+                if (!active) {
+                  notify(workspaceText('workspace.status.vex-labs-profile-not-loaded'));
+                  return;
+                }
+                const definition = {
+                  ...active.definition,
+                  schemaVersion: 'vexlife-prod.context-profile/v2',
+                  inputTokenBudget: Number(draft.inputTokenBudget)
+                };
+                const saveAs = Boolean(active.productDefault);
+                if (saveAs) {
+                  const name = window.prompt(
+                    workspaceText('workspace.description.vex-labs-save-name-prompt'),
+                    workspaceText('workspace.label.vex-labs-save-name-default')
+                      .replace(
+                        '{budget}',
+                        Number(draft.inputTokenBudget)
+                          .toLocaleString(document.documentElement.lang || undefined)
+                      )
+                  );
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active.profileRef, definition }
+                  );
+                  if (!result) return;
+                  await loadVexLabs(true);
+                  notify(
+                    workspaceText('workspace.status.vex-labs-saved-supported')
+                      .replace('{name}', String(result.profiles.active.definition.name ?? ''))
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-save-failed'));
+                }
+              };
+
+              const sendVexLabs = async () => {
+                if (state.vexLabsInFlight) return;
+                const content = ui.draft.value.trim();
+                if (!content) return;
+                const draft = ensureVexLabsDraft();
+                state.vexLabsInFlight = true;
+                state.vexLabsPending = content;
+                ui.draft.value = '';
+                renderTimeline();
+                renderComposer();
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsSendPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      content,
+                      inputTokenBudget: Number(draft.inputTokenBudget),
+                      maximumMemoryTokens: Number(draft.maximumMemoryTokens),
+                      memoryMode: String(draft.memoryMode)
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
+                    throw new Error(workspaceText('workspace.status.vex-labs-real-state-mutation'));
+                  }
+                  if (result.state === 'HELD_CONTEXT_BUDGET') {
+                    state.vexLabsLastResult = null;
+                    ui.draft.value = content;
+                    sizeDraft();
+                    const detail = vexLabsAdmissionText(result.admission);
+                    notify(detail || workspaceText('workspace.status.vex-labs-context-budget-held'));
+                  } else {
+                    state.vexLabsLastResult = result;
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-turn-failed'));
+                } finally {
+                  state.vexLabsPending = null;
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                  ui.draft.focus();
+                }
+              };
+
+              const saveContextProfile = async (saveAs) => {
+                const definition = profileDefinitionFromForm();
+                if (
+                  definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)} &&
+                  !definition.foundationText
+                ) {
+                  notify(workspaceText('workspace.status.context-profile-foundation-required'));
+                  return;
+                }
+                if (saveAs) {
+                  const name = window.prompt(
+                    workspaceText('workspace.description.context-profile-name-prompt'),
+                    definition.name === 'VexLife Default'
+                      ? workspaceText('workspace.label.context-profile-new-name-default')
+                      : definition.name
+                  );
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const active = currentContextProfile();
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active?.productDefault ? null : active?.profileRef, definition }
+                  );
+                  if (!result) return;
+                  const profile = result.profiles.active;
+                  notify(
+                    workspaceText('workspace.status.context-profile-saved')
+                      .replace('{name}', String(profile.definition.name ?? '')) +
+                    (definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
+                      ? ' ' + workspaceText('workspace.description.context-profile-saved-extension')
+                      : '')
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-save-failed'));
+                }
+              };
+
+              const importContextProfile = async (file) => {
+                if (!file) return;
+                try {
+                  const portable = JSON.parse(await file.text());
+                  const name = String(portable.name ?? workspaceText('workspace.label.context-profile-imported-fallback'));
+                  const mode = String(portable.foundationMode ?? '');
+                  const modeLabel =
+                    mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
+                      ? workspaceText('workspace.label.context-profile-foundation-extended')
+                      : mode === ${jsString(VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT.name)}
+                        ? workspaceText('workspace.label.context-profile-foundation-product')
+                        : mode;
+                  if (!window.confirm(
+                    workspaceText('workspace.description.context-profile-import-confirm')
+                      .replace('{name}', name)
+                      .replace('{mode}', modeLabel)
+                  )) return;
+                  const result = await contextProfileControl('IMPORT', { portable });
+                  if (result) {
+                    notify(
+                      workspaceText('workspace.status.context-profile-imported')
+                        .replace('{name}', String(result.profiles.active.definition.name ?? ''))
+                    );
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-import-invalid'));
+                } finally {
+                  ui.contextProfileImport.value = '';
+                }
+              };
+
               const chooseApp = (app) => {
                 if (!apps.keys.includes(app)) return;
                 state.app = app;
                 try {
                   localStorage.setItem(apps.storageKey, app);
                 } catch {}
-                if (app === apps.archives) {
+                if (app === apps.archives || app === apps.vexContext) {
                   state.includePage = false;
                 } else if (app === apps.sourceTemplate && !inSourceTemplate(state.humanPageUrl)) {
                   const home = ui.family.querySelector('.family-member')?.dataset.familyHome;
@@ -2354,12 +5733,234 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              const activeConversationController = () => {
+                if (isVexLabs()) {
+                  return {
+                    kind: 'vex-labs',
+                    inFlight: state.vexLabsInFlight,
+                    submit: sendVexLabs,
+                    pageContextAllowed: false,
+                    voiceAllowed: false,
+                    holdText: workspaceText(state.vexLabsInFlight
+                      ? 'workspace.description.vex-labs-controller-running'
+                      : 'workspace.description.vex-labs-controller-scratch')
+                  };
+                }
+                if (isPrivate()) {
+                  return {
+                    kind: 'private',
+                    inFlight: state.privateInFlight,
+                    submit: sendPrivate,
+                    pageContextAllowed: false,
+                    voiceAllowed: true,
+                    holdText: workspaceText(state.privateInFlight
+                      ? 'workspace.description.private-replying'
+                      : 'workspace.description.private-composer-hold')
+                  };
+                }
+                return {
+                  kind: 'canonical',
+                  inFlight: state.sendInFlight,
+                  submit: send,
+                  pageContextAllowed: true,
+                  voiceAllowed: true,
+                  holdText: null
+                };
+              };
+
+              const submitActiveConversation = () => {
+                const controller = activeConversationController();
+                void controller.submit();
+              };
+
+              const attachmentDisplayByRef = () =>
+                new Map(
+                  (state.attachmentDraft?.display?.items ?? []).map((item) => [
+                    String(item.draftRef ?? ''),
+                    item
+                  ])
+                );
+
+              const renderAttachments = ({ canonicalNow, sendLawful, turnActive, turnCancelling }) => {
+                if (!ui.attach || !ui.composerAttachments) return;
+                const projection = state.attachmentDraft;
+                const display = projection?.display ?? null;
+                const displayByRef = attachmentDisplayByRef();
+                const items = Array.isArray(projection?.items) ? projection.items : [];
+                const editable =
+                  canonicalNow &&
+                  sendLawful &&
+                  !turnActive &&
+                  !turnCancelling &&
+                  !state.sendInFlight &&
+                  !state.pending;
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : workspaceText('workspace.button.attach');
+                ui.attach.hidden = !canonicalNow;
+                ui.attach.disabled =
+                  !editable ||
+                  display?.addControlRef !== attachmentDraft.control.add;
+                ui.attach.setAttribute('aria-label', addLabel);
+                ui.attach.title = addLabel;
+
+                ui.composerAttachments.replaceChildren();
+                for (const item of items) {
+                  const itemDisplay = displayByRef.get(String(item.draftRef ?? '')) ?? null;
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = String(item.status ?? '');
+
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = String(item.displayName ?? 'File');
+                  name.title = name.textContent;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+
+                  const upload = state.attachmentUploads.get(String(item.draftRef ?? ''));
+                  if (item.status === attachmentDraft.status.staging && upload) {
+                    const loaded = Number(upload.loaded ?? 0);
+                    const total = Number(upload.total ?? 0);
+                    status.textContent =
+                      total > 0
+                        ? workspaceText('workspace.status.attachment-staging') + ' ' +
+                          Math.min(100, Math.round((loaded / total) * 100)) + '%'
+                        : workspaceText('workspace.status.attachment-staging');
+                  } else {
+                    status.textContent = itemDisplay?.status
+                      ? resolveText(itemDisplay.status)
+                      : String(item.status ?? '');
+                  }
+                  main.append(name, status);
+                  row.append(main);
+
+                  const controlRef = itemDisplay?.controlRef ?? null;
+                  if (controlRef && canonicalNow) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.controlRef = String(controlRef);
+                    button.dataset.draftRef = String(item.draftRef ?? '');
+                    const label = itemDisplay?.controlLabel
+                      ? resolveText(itemDisplay.controlLabel)
+                      : controlRef === attachmentDraft.control.cancelStage
+                        ? workspaceText('workspace.button.attachment-cancel')
+                        : workspaceText('workspace.button.attachment-remove');
+                    button.textContent =
+                      controlRef === attachmentDraft.control.cancelStage ? 'Cancel' : '×';
+                    button.setAttribute('aria-label', label + ' ' + name.textContent);
+                    button.title = label;
+                    button.disabled =
+                      state.sendInFlight ||
+                      Boolean(state.pending) ||
+                      (controlRef === attachmentDraft.control.remove && !editable);
+                    row.append(button);
+                  }
+                  ui.composerAttachments.append(row);
+                }
+
+                const localOnly = [...state.attachmentUploads.values()]
+                  .filter((upload) => !items.some((item) => item.draftRef === upload.draftRef));
+                for (const upload of localOnly) {
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = attachmentDraft.status.staging;
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = upload.name;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+                  status.textContent = workspaceText('workspace.status.attachment-staging');
+                  main.append(name, status);
+                  row.append(main);
+                  ui.composerAttachments.append(row);
+                }
+
+                ui.composerAttachments.hidden =
+                  !canonicalNow ||
+                  (items.length === 0 && localOnly.length === 0);
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
-                const privateNow = isPrivate();
-                const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
+                const controller = activeConversationController();
+                const privateNow = controller.kind === 'private';
+                const labsNow = controller.kind === 'vex-labs';
+                const modelSwitching = Boolean(state.models?.switching);
+                const modelSwitchHeld =
+                  Boolean(state.models?.switchPending) &&
+                  state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
+                  state.models?.lastOutcome?.state === 'FAILED';
+                // Stop belongs to the canonical ConversationTurn Family only; private and Vex Labs
+                // composers keep their own in-flight bookkeeping and never project canonical Stop.
+                const canonicalNow = controller.kind === 'canonical';
+                const turnDisplay = canonicalNow ? (state.conversationTurn?.display ?? null) : null;
+                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
+                const turnActive = Boolean(turnDisplay?.active);
+                const turnCancelling = Boolean(turnDisplay?.cancelling);
+                const sendLawful = turnControlRef === conversationTurn.control.send;
+                const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const firstLocalStartPending =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationPendingForNextTurn) &&
+                  !turnActive &&
+                  !turnCancelling;
+                const firstLocalStartTurn =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationForActiveTurn) &&
+                  (turnActive || turnCancelling);
+                const firstLocalStartVisible = firstLocalStartPending || firstLocalStartTurn;
+                const followUpReadiness =
+                  canonicalNow ? (state.conversationTurn?.followUpReadiness ?? null) : null;
+                const followUpState = String(followUpReadiness?.state ?? '');
+                const followUpVisible =
+                  canonicalNow &&
+                  !firstLocalStartVisible &&
+                  Boolean(followUpState) &&
+                  followUpState !== 'UNAVAILABLE';
+                ui.responseProgress.hidden = !(firstLocalStartVisible || followUpVisible);
+                if (firstLocalStartVisible) {
+                  ui.responseProgress.dataset.state = 'FirstLocalStart';
+                  ui.responseProgress.removeAttribute('data-follow-up-state');
+                  ui.responseProgressTitle.textContent = workspaceText('workspace.heading.first-local-start');
+                  ui.responseProgressDetail.textContent = workspaceText(
+                    firstLocalStartTurn
+                      ? 'workspace.description.first-local-start-sent'
+                      : 'workspace.description.first-local-start-ready-to-send'
+                  );
+                } else if (followUpVisible) {
+                  const detailKey =
+                    followUpState === 'LOWER_MEMORY_REALIZATION'
+                      ? 'workspace.label.model-cache-level-1'
+                      : followUpState === 'NOT_YET_PREPARED'
+                        ? 'workspace.description.follow-up-readiness-will-prepare'
+                        : followUpState === 'PREPARING'
+                          ? 'workspace.description.follow-up-readiness-preparing'
+                          : followUpState === 'SUCCESSOR_RESET'
+                            ? 'workspace.description.follow-up-readiness-successor-reset'
+                            : followUpState === 'FASTER_FOLLOWUPS_ENABLED'
+                              ? 'workspace.label.model-cache-level-2'
+                              : null;
+                  ui.responseProgress.dataset.state = 'FollowUpReadiness';
+                  ui.responseProgress.dataset.followUpState = followUpState;
+                  ui.responseProgressTitle.textContent =
+                    workspaceText('workspace.label.model-prompt-cache-entries');
+                  ui.responseProgressDetail.textContent =
+                    detailKey ? workspaceText(detailKey) : '';
+                } else {
+                  ui.responseProgress.removeAttribute('data-state');
+                  ui.responseProgress.removeAttribute('data-follow-up-state');
+                  ui.responseProgressTitle.textContent = '';
+                  ui.responseProgressDetail.textContent = '';
+                }
+                const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -2370,30 +5971,63 @@ object VexLifeWebP1RuntimeArtifacts {
                       : 'Unavailable';
                 ui.contextShare.setAttribute('aria-pressed', String(state.includePage && contextReady));
                 ui.contextShareLabel.textContent = state.contextLoading
-                  ? 'Reading page…'
+                  ? workspaceText('workspace.status.context-share-reading')
                   : state.includePage && contextReady
-                    ? 'Page included'
-                    : 'Include this page';
-                ui.composerHold.textContent = state.contextLoading
-                  ? 'Reading the current page separately for Vex…'
-                  : privateNow
-                    ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
+                    ? workspaceText('workspace.status.context-share-included')
+                    : workspaceText('workspace.button.context-share');
+                ui.composerHold.textContent = turnActive
+                  ? resolveText(turnDisplay.status)
+                  : modelSwitching
+                  ? resolveText(state.models.switching.message)
+                  : modelSwitchHeld
+                    ? resolveText(state.models.lastOutcome.message)
+                    : controller.holdText
+                      ? controller.holdText
+                    : state.contextLoading
+                    ? workspaceText('workspace.description.composer-reading-context')
                   : archivesOpen
-                    ? "Vex doesn't see your archives yet."
+                    ? workspaceText('workspace.description.composer-archives-hidden')
                   : !canInclude
-                    ? 'Vex page context is not available for this site yet.'
+                    ? workspaceText('workspace.description.composer-context-unavailable')
                     : contextEligible && !contextReady
-                      ? 'Page context is available on demand.'
+                      ? workspaceText('workspace.description.composer-context-on-demand')
                       : state.pending && !state.sendInFlight
-                        ? 'The prior Send outcome is unresolved. Send again to reconcile that exact attempt.'
+                        ? workspaceText('workspace.description.composer-send-unresolved')
                         : state.failedAttempts.length
-                          ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
+                          ? workspaceText('workspace.description.composer-send-failed-preserved')
                           : '';
-                ui.send.disabled = privateNow
-                  ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
-                ui.responseProgress.hidden = true;
+                // Family projection owns which Control is lawful. sendInFlight is only transport
+                // bookkeeping while the service is being re-observed.
+                ui.send.hidden = canonicalNow && (state.sendInFlight || (turnDisplay !== null && !sendLawful));
+                ui.stop.hidden = !(turnActive || turnCancelling);
+                const sendLabel = sendLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : workspaceText('workspace.button.conversation-send');
+                ui.send.textContent = sendLabel;
+                ui.send.setAttribute('aria-label', sendLabel);
+                ui.send.title = sendLabel;
+                const stopLabel = stopLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : workspaceText('workspace.button.conversation-stop');
+                ui.stop.textContent = stopLabel;
+                ui.stop.setAttribute('aria-label', stopLabel);
+                ui.stop.title = stopLabel;
+                ui.stop.disabled = !stopLawful || state.sendCancelInFlight;
+                const attachmentResourcesReady =
+                  state.attachmentDraft?.display?.requestResourcesReady !== false &&
+                  state.attachmentUploads.size === 0;
+                ui.send.disabled = modelSwitching || modelSwitchHeld ||
+                  controller.inFlight ||
+                  (canonicalNow
+                    ? (turnDisplay !== null && !sendLawful) ||
+                      !attachmentResourcesReady ||
+                      (!state.pending && !ui.draft.value.trim())
+                    : !ui.draft.value.trim());
                 renderTicket();
+                renderAttachments({ canonicalNow, sendLawful, turnActive, turnCancelling });
+                ui.contextShare.hidden = !controller.pageContextAllowed;
+                ui.voiceInput.hidden = !controller.voiceAllowed;
+                renderVoiceInput();
               };
 
               const setMeter = (meter, parts, text, label, known = true) => {
@@ -2406,9 +6040,9 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const formatBytes = (value) => {
-                if (value === null || value === undefined || value === '') return 'Unknown';
+                if (value === null || value === undefined || value === '') return workspaceText('workspace.label.resources-unknown-value');
                 const bytes = Number(value);
-                if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
+                if (!Number.isFinite(bytes) || bytes < 0) return workspaceText('workspace.label.resources-unknown-value');
                 const units = ['B', 'KB', 'MB', 'GB', 'TB'];
                 let scaled = bytes;
                 let unit = 0;
@@ -2420,7 +6054,350 @@ object VexLifeWebP1RuntimeArtifacts {
                 return scaled.toFixed(digits) + ' ' + units[unit];
               };
 
+              const renderLocalSources = () => {
+                if (!ui.localSourcesList || !ui.localSourcesAdd) return;
+                const projection = state.localSources;
+                const display = projection?.display ?? null;
+                ui.localSourcesList.replaceChildren();
+
+                for (const grant of display?.grants ?? []) {
+                  const item = document.createElement('li');
+                  item.className = 'local-source';
+
+                  const main = document.createElement('span');
+                  main.className = 'local-source-main';
+
+                  const name = document.createElement('span');
+                  name.className = 'local-source-name';
+                  name.textContent = String(grant.name ?? 'Folder');
+
+                  const path = document.createElement('span');
+                  path.className = 'local-source-path';
+                  path.textContent = String(grant.path ?? '');
+                  path.title = path.textContent;
+
+                  main.append(name, path);
+
+                  const currentWorkspaceGrant =
+                    (state.workspaceEffects?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const authority = document.createElement('span');
+                  authority.className = 'local-source-authority';
+                  authority.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.status.workspace-effects-writable')
+                    : workspaceText('workspace.status.workspace-effects-read-only');
+
+                  const authorityControl = document.createElement('button');
+                  authorityControl.type = 'button';
+                  authorityControl.className = 'outline-button';
+                  authorityControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  authorityControl.dataset.controlRef = currentWorkspaceGrant
+                    ? workspaceEffects.control.revoke
+                    : workspaceEffects.control.allow;
+                  authorityControl.setAttribute(
+                    'data-vex-ref',
+                    currentWorkspaceGrant ? workspaceEffects.revokeRef : workspaceEffects.allowRef
+                  );
+                  authorityControl.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.button.workspace-effects-revoke')
+                    : workspaceText('workspace.button.workspace-effects-allow');
+                  authorityControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceEffectsInFlight ||
+                    state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const currentCheckGrant =
+                    (state.workspaceChecks?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const checkAuthority = document.createElement('span');
+                  checkAuthority.className = 'local-source-authority';
+                  checkAuthority.textContent = currentCheckGrant
+                    ? workspaceText('workspace.status.workspace-checks-allowed')
+                    : workspaceText('workspace.status.workspace-checks-not-allowed');
+
+                  const checkControl = document.createElement('button');
+                  checkControl.type = 'button';
+                  checkControl.className = 'outline-button';
+                  checkControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  checkControl.dataset.controlRef = currentCheckGrant
+                    ? workspaceChecks.control.revoke
+                    : workspaceChecks.control.allow;
+                  checkControl.setAttribute(
+                    'data-vex-ref',
+                    currentCheckGrant ? workspaceChecks.revokeRef : workspaceChecks.allowRef
+                  );
+                  checkControl.textContent = currentCheckGrant
+                    ? workspaceText('workspace.button.workspace-checks-revoke')
+                    : workspaceText('workspace.button.workspace-checks-allow');
+                  checkControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const currentRunGrant =
+                    (state.workspaceRuns?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const runAuthority = document.createElement('span');
+                  runAuthority.className = 'local-source-authority';
+                  runAuthority.textContent = currentRunGrant
+                    ? workspaceText('workspace.status.workspace-runs-allowed')
+                    : workspaceText('workspace.status.workspace-runs-not-allowed');
+
+                  const runControl = document.createElement('button');
+                  runControl.type = 'button';
+                  runControl.className = 'outline-button';
+                  runControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  runControl.dataset.controlRef = currentRunGrant
+                    ? workspaceRuns.control.revoke
+                    : workspaceRuns.control.allow;
+                  runControl.setAttribute(
+                    'data-vex-ref',
+                    currentRunGrant ? workspaceRuns.revokeRef : workspaceRuns.allowRef
+                  );
+                  runControl.textContent = currentRunGrant
+                    ? workspaceText('workspace.button.workspace-runs-revoke')
+                    : workspaceText('workspace.button.workspace-runs-allow');
+                  runControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.className = 'outline-button';
+                  remove.dataset.controlRef = String(grant.removeControlRef ?? '');
+                  remove.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  remove.textContent = grant.removeLabel
+                    ? resolveText(grant.removeLabel)
+                    : workspaceText('workspace.button.local-sources-remove');
+                  remove.disabled =
+                    state.localSourcesInFlight ||
+                    grant.removeControlRef !== localSources.control.remove;
+
+                  item.append(
+                    main,
+                    authority,
+                    authorityControl,
+                    checkAuthority,
+                    checkControl,
+                    runAuthority,
+                    runControl,
+                    remove
+                  );
+                  ui.localSourcesList.append(item);
+                }
+
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : workspaceText('workspace.button.local-sources-add');
+                ui.localSourcesAdd.textContent = addLabel;
+                ui.localSourcesAdd.setAttribute('aria-label', addLabel);
+                ui.localSourcesAdd.title = addLabel;
+                ui.localSourcesAdd.disabled =
+                  state.localSourcesInFlight ||
+                  state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                  display?.addControlRef !== localSources.control.add;
+
+                if (display?.limitStatus && !state.localSourcesInFlight) {
+                  ui.localSourcesStatus.textContent = resolveText(display.limitStatus);
+                } else if (!state.localSourcesInFlight && ui.localSourcesStatus.dataset.transient !== 'true') {
+                  ui.localSourcesStatus.textContent = '';
+                }
+              };
+
+              const loadLocalSources = async (renderNow = true) => {
+                const response = await productFetch(service.localSourcesPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localSources = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.localSources;
+              };
+
+              const loadWorkspaceEffects = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceEffectsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceEffects = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceEffects;
+              };
+
+              const applyWorkspaceEffectsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceEffectsInFlight) return;
+                state.workspaceEffectsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceEffectsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceEffects = result.effects ?? state.workspaceEffects;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceEffects.control.allow
+                      ? workspaceText('workspace.status.workspace-effects-granted')
+                      : workspaceText('workspace.status.workspace-effects-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-effects-source-not-current');
+                } finally {
+                  state.workspaceEffectsInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
+
+              const loadWorkspaceChecks = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceChecksPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceChecks = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceChecks;
+              };
+
+              const applyWorkspaceChecksControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceChecksInFlight) return;
+                state.workspaceChecksInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceChecksControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceChecks = result.checks ?? state.workspaceChecks;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceChecks.control.allow
+                      ? workspaceText('workspace.status.workspace-checks-granted')
+                      : workspaceText('workspace.status.workspace-checks-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-checks-source-not-current');
+                } finally {
+                  state.workspaceChecksInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
+              const loadWorkspaceRuns = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceRunsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceRuns = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceRuns;
+              };
+
+              const applyWorkspaceRunsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceRunsInFlight) return;
+                state.workspaceRunsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceRunsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceRuns = result.runs ?? state.workspaceRuns;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceRuns.control.allow
+                      ? workspaceText('workspace.status.workspace-runs-granted')
+                      : workspaceText('workspace.status.workspace-runs-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-runs-source-not-current');
+                } finally {
+                  state.workspaceRunsInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
+              const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
+                if (!controlRef || state.localSourcesInFlight) return;
+                state.localSourcesInFlight = true;
+                ui.localSourcesStatus.dataset.transient = 'false';
+                ui.localSourcesStatus.textContent =
+                  controlRef === localSources.control.add
+                    ? workspaceText('workspace.status.local-sources-choosing-folder')
+                    : '';
+                renderLocalSources();
+
+                try {
+                  const response = await effectFetch(service.localSourcesControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.localSources = result.sources ?? state.localSources;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    result.outcome === localSources.outcome.realized
+                      ? controlRef === localSources.control.add
+                        ? workspaceText('workspace.status.local-sources-added')
+                        : workspaceText('workspace.status.local-sources-removed')
+                      : result.outcome === localSources.outcome.cancelled
+                        ? workspaceText('workspace.status.local-sources-cancelled')
+                        : result.outcome === localSources.outcome.unavailable
+                          ? workspaceText('workspace.status.local-sources-picker-unavailable')
+                          : workspaceText('workspace.status.local-sources-refused-not-granted');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    key
+                      ? workspaceText(key)
+                      : String(result.message ?? fallback);
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.local-sources-picker-unavailable');
+                } finally {
+                  state.localSourcesInFlight = false;
+                  await loadWorkspaceEffects(false).catch(() => {});
+                  await loadWorkspaceChecks(false).catch(() => {});
+                  await loadWorkspaceRuns(false).catch(() => {});
+                  renderLocalSources();
+                }
+              };
+
               const renderSettings = () => {
+                renderLocalSources();
                 const prompt = state.context?.promptContext ?? null;
                 if (prompt) {
                   const hard = Number(prompt.hardTokenLimit) || 0;
@@ -2431,8 +6408,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   setMeter(
                     ui.contextWindow,
                     [[ui.contextCore, coreShare], [ui.contextUsed, reservedShare]],
-                    hard > 0 ? used.toLocaleString() + ' input · ' + reserved.toLocaleString() + ' reserved · ' + Math.max(0, hard - used - reserved).toLocaleString() + ' remaining' : 'Context measured',
-                    'Prompt context from the current canonical turn',
+                    hard > 0
+                      ? workspaceText('workspace.label.settings-context-meter')
+                          .replace('{used}', used.toLocaleString(document.documentElement.lang || undefined))
+                          .replace('{reserved}', reserved.toLocaleString(document.documentElement.lang || undefined))
+                          .replace('{remaining}', Math.max(0, hard - used - reserved).toLocaleString(document.documentElement.lang || undefined))
+                      : workspaceText('workspace.status.settings-context-measured'),
+                    workspaceText('workspace.description.settings-context-current'),
                     hard > 0
                   );
                   const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
@@ -2441,30 +6423,65 @@ object VexLifeWebP1RuntimeArtifacts {
                   const field = prompt.foundationalField ?? null;
                   const fieldParts = field && Array.isArray(field.carriedModules) ? field.carriedModules.length : 0;
                   const fieldLeftOut = field && Array.isArray(field.omittedModuleRefs) ? field.omittedModuleRefs.length : 0;
-                  const fieldNote = !field
-                    ? ''
-                    : field.state === 'HELD'
-                      ? ' The foundational field was not carried (' + String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + ').'
-                      : ' Foundational field ' + String(field.fieldVersion ?? '') + ' was carried: ' + fieldParts + ' part' + (fieldParts === 1 ? '' : 's') +
-                        (fieldLeftOut ? ', ' + fieldLeftOut + ' left out for room' : '') +
-                        ', about ' + (Number(field.estimatedSystemMessageTokens) || 0).toLocaleString() + ' tokens.';
                   const recordExchanges = prompt.priorCompletedExchangeCount ?? null;
-                  const recordNote = recordExchanges === null
-                    ? ''
-                    : ' of ' + (Number(recordExchanges) * 2).toLocaleString() + ' on record';
-                  ui.contextNote.textContent =
-                    'Canonical turn receipt: ' + priorCount + ' prior Conversation event' + (priorCount === 1 ? '' : 's') +
-                    ' selected' + recordNote + '. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.' +
-                    (prompt.replyLanguageName ? ' Vex was told to reply in ' + prompt.replyLanguageName + '.' : '') +
-                    (gaps ? ' It was told about ' + gaps + ' private conversation' + (gaps === 1 ? '' : 's') + ' it does not remember.' : '') +
-                    fieldNote;
+                  const contextNotes = [
+                    workspaceText('workspace.description.settings-context-selected-events')
+                      .replace('{count}', priorCount.toLocaleString(document.documentElement.lang || undefined)),
+                    recordExchanges === null
+                      ? null
+                      : workspaceText('workspace.description.settings-context-record-events')
+                          .replace(
+                            '{count}',
+                            (Number(recordExchanges) * 2).toLocaleString(document.documentElement.lang || undefined)
+                          ),
+                    workspaceText('workspace.description.settings-context-whole-history')
+                      .replace(
+                        '{value}',
+                        workspaceText(prompt.wholeHistoryEventEnumerationPerformed
+                          ? 'workspace.label.settings-context-yes'
+                          : 'workspace.label.settings-context-no')
+                      ),
+                    prompt.replyLanguageName
+                      ? workspaceText('workspace.description.settings-context-reply-language')
+                          .replace('{language}', String(prompt.replyLanguageName))
+                      : null,
+                    gaps
+                      ? workspaceText('workspace.description.settings-context-private-gaps')
+                          .replace('{count}', gaps.toLocaleString(document.documentElement.lang || undefined))
+                      : null,
+                    field
+                      ? field.state === 'HELD'
+                        ? workspaceText('workspace.description.settings-context-foundation-held')
+                            .replace(
+                              '{reason}',
+                              String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase()
+                            )
+                        : workspaceText('workspace.description.settings-context-foundation-carried')
+                            .replace('{version}', String(field.fieldVersion ?? ''))
+                            .replace('{parts}', fieldParts.toLocaleString(document.documentElement.lang || undefined))
+                            .replace('{omitted}', fieldLeftOut.toLocaleString(document.documentElement.lang || undefined))
+                            .replace(
+                              '{tokens}',
+                              (Number(field.estimatedSystemMessageTokens) || 0)
+                                .toLocaleString(document.documentElement.lang || undefined)
+                            )
+                      : null
+                  ].filter(Boolean);
+                  ui.contextNote.textContent = contextNotes.join(' ');
                   ui.memoryNote.textContent = prompt.memoryIncluded
-                    ? 'VexLife Memory contributed through ' + memoryCount + ' source' + (memoryCount === 1 ? '' : 's') + ' to the current prompt.'
-                    : 'No VexLife Memory packet was included in the current prompt.';
+                    ? workspaceText('workspace.description.settings-memory-included')
+                        .replace('{count}', memoryCount.toLocaleString(document.documentElement.lang || undefined))
+                    : workspaceText('workspace.description.settings-memory-none');
                 } else {
-                  setMeter(ui.contextWindow, [[ui.contextCore, 0], [ui.contextUsed, 0]], 'No turn receipt yet', 'No current prompt receipt', false);
-                  ui.contextNote.textContent = 'Send a turn to inspect the current New-Beginnings prompt sequencing.';
-                  ui.memoryNote.textContent = 'Memory inclusion is reported per completed canonical turn.';
+                  setMeter(
+                    ui.contextWindow,
+                    [[ui.contextCore, 0], [ui.contextUsed, 0]],
+                    workspaceText('workspace.status.settings-context-no-receipt'),
+                    workspaceText('workspace.description.settings-context-no-receipt'),
+                    false
+                  );
+                  ui.contextNote.textContent = workspaceText('workspace.description.settings-context-awaiting-turn');
+                  ui.memoryNote.textContent = workspaceText('workspace.description.settings-memory-awaiting-turn');
                 }
 
                 const current = state.currentState;
@@ -2476,76 +6493,119 @@ object VexLifeWebP1RuntimeArtifacts {
                   const minimumShare = memoryKnown && minimumKnown
                     ? Math.max(0, Math.min(1, minimumMemory / totalMemory))
                     : 0;
+                  const systemMemoryLabel =
+                    memoryKnown
+                      ? minimumKnown
+                        ? workspaceText('workspace.label.system-memory-known')
+                            .replace('{total}', formatBytes(totalMemory))
+                            .replace('{minimum}', formatBytes(minimumMemory))
+                        : workspaceText('workspace.label.system-memory-minimum-unknown')
+                            .replace('{total}', formatBytes(totalMemory))
+                      : workspaceText('workspace.label.system-memory-unknown');
                   setMeter(
                     ui.memory,
                     [[ui.memoryUsed, minimumShare], [ui.memoryRemaining, memoryKnown ? 1 - minimumShare : 0]],
-                    memoryKnown
-                      ? formatBytes(totalMemory) + ' system · ' + (minimumKnown ? formatBytes(minimumMemory) + ' current-model minimum' : 'model minimum unknown')
-                      : 'System memory unknown',
-                    'Fresh host memory observation and current model requirement',
+                    systemMemoryLabel,
+                    workspaceText('workspace.description.system-memory-current'),
                     memoryKnown
                   );
 
                   const freeStorage = formatBytes(current.freeStorageBytes);
                   const modelTotal = formatBytes(current.modelArtifactTotalBytes);
                   const modelPresent = formatBytes(current.modelArtifactPresentBySizeBytes);
-                  const modelLabel = current.activeModelRef ?? 'No model selected';
+                  const modelLabel = current.activeModelRef ?? workspaceText('workspace.label.resources-no-model-selected');
                   const modelStorage =
                     current.modelArtifactTotalBytes === null || current.modelArtifactTotalBytes === undefined
-                      ? 'No selected-model artifact requirement.'
-                      : 'Model files present by declared size: ' + modelPresent + ' of ' + modelTotal +
-                        ' (' + String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '). ' +
-                        'Exact hashes are not rechecked in this awareness view.';
+                      ? workspaceText('workspace.description.resources-no-model-requirement')
+                      : workspaceText('workspace.description.resources-model-files')
+                          .replace('{present}', modelPresent)
+                          .replace('{total}', modelTotal)
+                          .replace('{state}', String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.resourceNote.textContent =
-                    'Storage available: ' + freeStorage +
-                    '. Model: ' + modelLabel + '. ' + modelStorage + ' ' +
-                    'Runtime binding: ' + String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
-                    '; currentness: ' + String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
+                    workspaceText('workspace.description.resources-summary')
+                      .replace('{free}', freeStorage)
+                      .replace('{model}', String(modelLabel))
+                      .replace('{storage}', modelStorage)
+                      .replace('{runtime}', String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
+                      .replace('{currentness}', String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.homeCurrentState.textContent =
-                    'Current Home: ' + String(current.homePath ?? 'Unknown') +
-                    ' · ' + String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
-                    ' · ' + String(current.homeRef ?? 'Unknown') + '.';
+                    workspaceText('workspace.status.home-current')
+                      .replace('{path}', String(current.homePath ?? workspaceText('workspace.label.home-unknown-value')))
+                      .replace('{disposition}', String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
+                      .replace('{ref}', String(current.homeRef ?? workspaceText('workspace.label.home-unknown-value')));
                 } else {
-                  setMeter(ui.memory, [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]], 'Not measured', 'Current machine state is unavailable', false);
-                  ui.resourceNote.textContent = 'Current machine and model resource truth is unavailable.';
-                  ui.homeCurrentState.textContent = 'Current Home has not been observed yet.';
+                  setMeter(
+                    ui.memory,
+                    [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]],
+                    workspaceText('workspace.status.system-memory-not-measured'),
+                    workspaceText('workspace.description.system-memory-unavailable'),
+                    false
+                  );
+                  ui.resourceNote.textContent = workspaceText('workspace.description.resources-unavailable');
+                  ui.homeCurrentState.textContent = workspaceText('workspace.status.home-unobserved');
                 }
 
                 ui.thoughtVisibility.setAttribute('aria-checked', String(state.thoughtsVisible));
                 ui.lowMemoryAlert.setAttribute('aria-checked', 'false');
                 ui.lowMemoryAlert.disabled = true;
-                ui.alertThreshold.textContent = 'not connected';
+                ui.alertThreshold.textContent = workspaceText('workspace.status.low-memory-not-connected');
               };
 
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
-                ui.companionTitle.textContent = settings ? 'Settings' : 'Converse with Vex';
+                const labs = isVexLabs();
+                const privateNow = isPrivate();
+                const engagementMode = labs ? 'LAB' : privateNow ? 'PRIVATE' : 'CONVERSATION';
+                ui.companionTitle.textContent = workspaceText(
+                  settings
+                    ? 'workspace.heading.companion-settings'
+                    : labs
+                      ? 'workspace.heading.companion-labs'
+                      : 'workspace.heading.companion-conversation'
+                );
+                ui.companionMode.hidden = settings;
+                ui.companionMode.disabled = settings || state.privateInFlight || state.sendInFlight;
+                ui.companionMode.value = engagementMode;
+                ui.companionMode.title = labs
+                  ? workspaceText('workspace.heading.companion-labs')
+                  : state.privateMode?.display?.detail
+                    ? resolveText(state.privateMode.display.detail)
+                    : '';
                 ui.companionStatus.hidden = settings;
-                ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
+                ui.viewSwitch.textContent = workspaceText(
+                  settings
+                    ? 'workspace.button.companion-return'
+                    : 'workspace.button.companion-settings'
+                );
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
+                const region = ui.companionTitle.closest('.region-companion');
+                if (region) region.dataset.companionMode = engagementMode;
               };
 
               const render = () => {
                 renderCompanionHead();
+                renderReleaseAlerts();
                 renderVision();
                 renderTimeline();
                 renderComposer();
+                renderVoiceInput();
                 renderSettings();
+                renderLocalAsr();
                 renderMemory();
               };
 
               const loadSourceCurrentness = async () => {
-                const response = await fetch(service.sourceCurrentnessPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.sourceCurrentnessPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.currentness = await readJson(response);
                 root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
                 root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
-                setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
+                setCompanionStatus('Ready', workspaceText('workspace.status.companion-ready'), ui.companionStatusModel.textContent);
               };
 
               const loadCurrentState = async () => {
-                const response = await fetch(service.currentStatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.currentStatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.currentState = await readJson(response);
                 root.dataset.vexCurrentStateObservedAt = String(state.currentState?.observedAt ?? '');
                 renderSettings();
@@ -2554,7 +6614,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Keyed words of the workspace scope, in the person's language. Until they arrive an
               // element shows its key, never an English string written here (localization law).
-              const t = (key) => {
+              const workspaceText = (key) => {
                 const words = state.workspaceStrings?.[key];
                 return typeof words === 'string' ? words : key;
               };
@@ -2565,7 +6625,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const args = text.args || {};
                 const gib = text.gib || {};
                 const parts = text.parts || {};
-                return t(text.key).replace(/\{([a-zA-Z0-9]+)\}/gu, (whole, name) => {
+                return workspaceText(text.key).replace(/\{([a-zA-Z0-9]+)\}/gu, (whole, name) => {
                   if (name in args) {
                     // Formatting is presentation: an ISO instant is shown in the person's locale.
                     const value = String(args[name]);
@@ -2580,17 +6640,45 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const applyStaticText = () => {
-                for (const element of root.querySelectorAll('[data-vex-text]')) {
-                  element.textContent = t(element.getAttribute('data-vex-text'));
+                const bindings = [
+                  ['data-vex-text', null],
+                  ['data-vex-placeholder', 'placeholder'],
+                  ['data-vex-aria-label', 'aria-label'],
+                  ['data-vex-title', 'title']
+                ];
+                for (const [binding, attribute] of bindings) {
+                  for (const element of root.querySelectorAll('[' + binding + ']')) {
+                    const words = workspaceText(element.getAttribute(binding));
+                    if (attribute === null) element.textContent = words;
+                    else element.setAttribute(attribute, words);
+                  }
                 }
               };
 
               const loadWorkspaceStrings = async () => {
-                const response = await fetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                const body = await readJson(response);
-                state.workspaceStrings = body?.strings ?? {};
+                const [workspaceResponse, releaseAlertsResponse] = await Promise.all([
+                  productFetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' }),
+                  productFetch(service.releaseAlertsStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' })
+                ]);
+                const workspace = await readJson(workspaceResponse);
+                const releaseAlerts = await readJson(releaseAlertsResponse);
+                state.workspaceStrings = {
+                  ...(workspace?.strings ?? {}),
+                  ...(releaseAlerts?.strings ?? {})
+                };
+                // The page is written in the screen language (not the reply language): it names the
+                // page's lang for assistive technology and for locale formatting.
+                if (workspace?.language) document.documentElement.lang = workspace.language;
                 applyStaticText();
+                renderLanguage();
                 renderDiagnostics();
+                renderReleaseAlerts();
+                renderQuickActions();
+                renderLocalAsr();
+                renderVoiceInput();
+                renderTimeline();
+                renderComposer();
+                if (state.app === apps.archives) renderArchives();
               };
 
               // The presentation reports only what it observed itself (what it showed, what it could
@@ -2598,7 +6686,7 @@ object VexLifeWebP1RuntimeArtifacts {
               // those facts belong to their owners. A failed report changes nothing.
               const reportFact = (fact, refs = {}) => {
                 try {
-                  void fetch(service.chronologyPath, {
+                  void effectFetch(service.chronologyPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     body: JSON.stringify({ fact, refs })
@@ -2619,7 +6707,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.diagnosticsStatus) return;
                 const projection = state.diagnostics;
                 if (!projection) {
-                  ui.diagnosticsStatus.textContent = t('workspace.status.diagnostics-unavailable');
+                  ui.diagnosticsStatus.textContent = workspaceText('workspace.status.diagnostics-unavailable');
                   ui.diagnosticsCapture.textContent = '';
                   ui.diagnosticsRecords.textContent = '';
                   ui.diagnosticsEnhanced.disabled = true;
@@ -2630,13 +6718,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.diagnosticsStatus.textContent = resolveText(display.status);
                 ui.diagnosticsCapture.textContent = resolveText(display.capture);
                 ui.diagnosticsRecords.textContent = projection.chronologyRecords > 0 && projection.oldestAt
-                  ? t('workspace.label.diagnostics-records')
+                  ? workspaceText('workspace.label.diagnostics-records')
                       .replace('{count}', String(projection.chronologyRecords))
                       .replace('{since}', new Date(projection.oldestAt).toLocaleString(document.documentElement.lang || undefined))
-                  : t('workspace.label.diagnostics-no-records');
+                  : workspaceText('workspace.label.diagnostics-no-records');
                 // Buttons carry the Family's Control refs; their words come from the Control's key.
-                const enhanced = display.controls.find((control) => control.controlRef === 'START_ENHANCED' || control.controlRef === 'STOP_ENHANCED');
-                const clear = display.controls.find((control) => control.controlRef === 'CLEAR_HISTORY');
+                const enhanced = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStartEnhanced)} || control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStopEnhanced)});
+                const clear = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlClearHistory)});
                 ui.diagnosticsEnhanced.hidden = !enhanced;
                 if (enhanced) {
                   ui.diagnosticsEnhanced.dataset.controlRef = enhanced.controlRef;
@@ -2649,7 +6737,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadDiagnostics = async () => {
-                const response = await fetch(service.diagnosticsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.diagnosticsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.diagnostics = await readJson(response);
                 renderDiagnostics();
                 return state.diagnostics;
@@ -2660,14 +6748,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.diagnosticsInFlight = true;
                 renderDiagnostics();
                 try {
-                  const response = await fetch(service.diagnosticsControlPath, {
+                  const response = await effectFetch(service.diagnosticsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ controlRef })
                   });
                   state.diagnostics = await readJson(response);
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.diagnostics-unavailable'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.diagnostics-unavailable'));
                 } finally {
                   state.diagnosticsInFlight = false;
                   renderDiagnostics();
@@ -2676,99 +6764,1049 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
-              // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
-              // the service; this renderer only lays them out and returns the chosen Control ref.
+              const sourceRows = () =>
+                state.modelSources?.models?.rows || [];
+
+              const sourceRowLabel = (row) => {
+                if (!row) return '';
+                const local =
+                  (state.models?.models || []).find((model) => model.handle === row.handle);
+                return local?.label ?? String(row.modelRef ?? row.handle ?? '');
+              };
+
+              const servingSourceRow = () => {
+                const serving = state.modelSources?.inference?.serving ?? null;
+                return serving
+                  ? sourceRows().find((row) => row.handle === serving.handle) ?? null
+                  : null;
+              };
+
+              const selectedSourceRow = () =>
+                sourceRows().find((row) => row.targeted) ?? null;
+
+              const servingModelLabel = () =>
+                sourceRowLabel(servingSourceRow()) ||
+                (state.models?.models || []).find((model) => model.serving)?.label ||
+                '';
+
+              const selectedModel = () => {
+                const selected = selectedSourceRow();
+                if (!selected || selected.sourceKind !== 'LOCAL') return null;
+                return (state.models?.models || []).find((model) => model.handle === selected.handle) ?? null;
+              };
+
+              const modelHasControl = (model, controlRef) =>
+                (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
+
+              const modelResourceFacts = (model) =>
+                model.recommendedMemoryBytes == null
+                  ? workspaceText('workspace.label.model-facts-memory-unestablished').replace('{size}', gibText(model.totalBytes))
+                  : workspaceText('workspace.label.model-facts')
+                      .replace('{size}', gibText(model.totalBytes))
+                      .replace('{memory}', gibText(model.recommendedMemoryBytes))
+                      .replace('{fit}', workspaceText(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
+
+              const modelCapabilityFacts = (model) =>
+                (model?.capabilities?.displayFacts || []).map((fact) =>
+                  [resolveText(fact.label), resolveText(fact.status)]
+                    .filter(Boolean)
+                    .join(': ')
+                );
+
+              const partnerProviderConfigured = (providerRef) =>
+                (state.modelSources?.models?.rows || []).some(
+                  (row) =>
+                    row.sourceKind === 'PARTNER' &&
+                    row.providerRef === providerRef &&
+                    row.partnerConnectionStanding &&
+                    row.partnerConnectionStanding !== 'NEEDS_CREDENTIAL'
+                );
+
+              const renderPartnerApiConnection = () => {
+                if (!ui.partnerApiProvider || !ui.partnerApiConnect) return;
+                const availability = state.partnerConnectionAvailability;
+                const currentProvider =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+                const selectedProviderRef = currentProvider?.providerRef ?? '';
+                const options = partnerProviders.map((provider) => {
+                  const option = document.createElement('option');
+                  option.value = provider.providerRef;
+                  option.textContent = provider.label;
+                  option.selected = provider.providerRef === selectedProviderRef;
+                  return option;
+                });
+                ui.partnerApiProvider.replaceChildren(...options);
+
+                const enabled =
+                  availability?.connectEnabled === true &&
+                  !state.partnerConnectionInFlight;
+                const selected =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+
+                ui.partnerApiProvider.disabled = !enabled;
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.disabled = !enabled;
+                }
+                if (ui.partnerApiWorkspaceField) {
+                  ui.partnerApiWorkspaceField.hidden = selected?.workspaceOptional !== true;
+                }
+                if (ui.partnerApiWorkspace) {
+                  ui.partnerApiWorkspace.disabled = !enabled || selected?.workspaceOptional !== true;
+                }
+
+                const hasCredential =
+                  Boolean(String(ui.partnerApiCredential?.value ?? ''));
+                ui.partnerApiConnect.disabled = !enabled || !hasCredential;
+                ui.partnerApiConnect.onclick = () => {
+                  if (!ui.partnerApiConnect.disabled) void connectPartnerApi();
+                };
+                ui.partnerApiProvider.onchange = () => renderPartnerApiConnection();
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.oninput = () => renderPartnerApiConnection();
+                }
+
+                if (availability?.state === service.partnerConnectionHeldFunding) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'held';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'held';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiNote) {
+                    ui.partnerApiNote.textContent = workspaceText('workspace.description.partner-api-held-funding');
+                  }
+                } else if (availability?.connectEnabled === true) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'ready';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'ready';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiStatus) {
+                    const row =
+                      (state.modelSources?.models?.rows || []).find(
+                        (candidate) =>
+                          candidate.sourceKind === 'PARTNER' &&
+                          candidate.providerRef === selected?.providerRef
+                      ) ?? null;
+                    ui.partnerApiStatus.textContent =
+                      row?.partnerConnectionStanding
+                        ? workspaceText('workspace.status.partner-api-ready') + ' · ' + row.partnerConnectionStanding
+                        : workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                } else {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'unavailable';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'unavailable';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                }
+              };
+
+              const loadPartnerConnectionAvailability = async () => {
+                const response = await productFetch(
+                  service.partnerConnectionsPath,
+                  { headers: { accept: 'application/json' }, cache: 'no-store' }
+                );
+                state.partnerConnectionAvailability = await readJson(response);
+                renderPartnerApiConnection();
+                return state.partnerConnectionAvailability;
+              };
+
+              const connectPartnerApi = async () => {
+                if (state.partnerConnectionInFlight) return;
+                if (state.partnerConnectionAvailability?.connectEnabled !== true) return;
+                const provider =
+                  partnerProviders.find(
+                    (candidate) => candidate.providerRef === ui.partnerApiProvider?.value
+                  ) ?? null;
+                if (!provider || !ui.partnerApiCredential) return;
+
+                let secretText = String(ui.partnerApiCredential.value ?? '');
+                if (!secretText) return;
+                const secretBytes = new TextEncoder().encode(secretText);
+                secretText = '';
+                ui.partnerApiCredential.value = '';
+
+                const headers = new Headers({
+                  'content-type': 'application/octet-stream',
+                  accept: 'application/json'
+                });
+                headers.set(service.partnerConnectionControlHeader, partnerProviderConfigured(provider.providerRef)
+                  ? service.partnerConnectionControlReplace
+                  : service.partnerConnectionControlConnect);
+                headers.set(service.partnerConnectionProviderRefHeader, provider.providerRef);
+                const workspaceId = String(ui.partnerApiWorkspace?.value ?? '').trim();
+                if (provider.workspaceOptional && workspaceId) {
+                  headers.set(service.partnerConnectionWorkspaceIdHeader, workspaceId);
+                }
+
+                state.partnerConnectionInFlight = true;
+                renderPartnerApiConnection();
+                try {
+                  const response = await effectFetch(
+                    service.partnerConnectionsControlPath,
+                    { method: 'POST', headers, body: secretBytes }
+                  );
+                  await readJson(response);
+                  notify(workspaceText('workspace.status.partner-api-connected'));
+                  await Promise.all([
+                    loadPartnerConnectionAvailability(),
+                    loadModels()
+                  ]);
+                } catch (error) {
+                  notify(workspaceText('workspace.status.partner-api-unavailable'));
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent =
+                      error instanceof Error
+                        ? error.message
+                        : workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                } finally {
+                  secretBytes.fill(0);
+                  state.partnerConnectionInFlight = false;
+                  renderPartnerApiConnection();
+                }
+              };
+
+              // Settings -> Models. Selection, launch configuration and activation remain separate
+              // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
                 if (!ui.modelsList) return;
                 ui.modelsList.textContent = '';
                 const projection = state.models;
                 if (!projection) return;
-                for (const model of projection.models || []) {
+
+                const models = projection.models || [];
+                const sourceProjection = state.modelSources?.models ?? null;
+                const rows = sourceProjection?.rows ?? [];
+                const selectedSource = selectedSourceRow();
+                const servingSource = servingSourceRow();
+                const selected = selectedModel();
+                const serving =
+                  servingSource?.sourceKind === 'LOCAL'
+                    ? models.find((model) => model.handle === servingSource.handle) ?? null
+                    : null;
+                const modelImport = projection.modelImport ?? null;
+
+                if (ui.modelImportCheck) ui.modelImportCheck.disabled = state.modelImportInFlight;
+                if (ui.modelImportUrl) ui.modelImportUrl.disabled = state.modelImportInFlight;
+                if (ui.modelImportResult) {
+                  ui.modelImportResult.textContent = modelImport?.message ? resolveText(modelImport.message) : '';
+                }
+                if (ui.modelImportFacts) {
+                  ui.modelImportFacts.textContent =
+                    modelImport && modelImport.state !== 'HELD' && modelImport.totalBytes != null
+                      ? workspaceText('workspace.label.model-import-facts')
+                          .replace('{size}', gibText(modelImport.totalBytes))
+                          .replace('{license}', modelImport.providerLicense ?? '')
+                          .replace('{revision}', String(modelImport.providerRevision ?? '').slice(0, 12))
+                      : '';
+                }
+                if (ui.modelImportAdd) {
+                  ui.modelImportAdd.hidden = modelImport?.state !== 'READY';
+                  ui.modelImportAdd.disabled = state.modelImportInFlight || modelImport?.state !== 'READY';
+                  ui.modelImportAdd.dataset.importRef = modelImport?.importRef ?? '';
+                }
+
+                if (ui.modelsCurrentState) {
+                  const stateParts = [
+                    workspaceText('workspace.label.model-state-serving').replace(
+                      '{model}',
+                      servingSource ? sourceRowLabel(servingSource) : workspaceText('workspace.label.model-none')
+                    )
+                  ];
+                  if (
+                    selectedSource &&
+                    (!servingSource || selectedSource.handle !== servingSource.handle)
+                  ) {
+                    stateParts.push(
+                      workspaceText('workspace.label.model-state-selected')
+                        .replace('{model}', sourceRowLabel(selectedSource))
+                    );
+                  }
+                  if (projection.switching) {
+                    stateParts.push(resolveText(projection.switching.message));
+                  } else if (selected?.runtimeConfigurationPending) {
+                    stateParts.push(workspaceText('workspace.status.model-runtime-configuration-pending'));
+                  }
+                  ui.modelsCurrentState.textContent = stateParts.join(' · ');
+                }
+
+                if (ui.modelChoice) {
+                  const options = rows.map((row) => {
+                    const option = document.createElement('option');
+                    option.value = row.handle;
+                    const local =
+                      row.sourceKind === 'LOCAL'
+                        ? models.find((model) => model.handle === row.handle) ?? null
+                        : null;
+                    const standing =
+                      local
+                        ? resolveText(local.display.status)
+                        : [row.providerRef, row.partnerConnectionStanding, row.partnerSupportStanding]
+                            .filter(Boolean)
+                            .join(' · ');
+                    option.textContent =
+                      [sourceRowLabel(row), standing]
+                        .filter(Boolean)
+                        .join(' · ');
+                    option.selected = Boolean(row.targeted);
+                    return option;
+                  });
+                  ui.modelChoice.replaceChildren(...options);
+                  ui.modelChoice.disabled =
+                    state.modelsInFlight ||
+                    Boolean(projection.switching) ||
+                    rows.length === 0;
+                  ui.modelChoice.onchange = () => {
+                    const handle = ui.modelChoice.value;
+                    const row = rows.find((candidate) => candidate.handle === handle);
+                    if (row && !row.targeted) {
+                      void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
+                    }
+                  };
+                }
+
+                if (selected) {
+                  const status = selected.downloadedBytes != null
+                    ? workspaceText('workspace.status.model-downloading')
+                        .replace('{done}', gibText(selected.downloadedBytes))
+                        .replace('{total}', gibText(selected.totalBytes))
+                    : resolveText(selected.display.status);
+
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent = status + ' · ' + modelResourceFacts(selected);
+                  }
+
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent = [
+                      ...(selected.display.notes || []).map(resolveText),
+                      ...modelCapabilityFacts(selected),
+                      selected.imported ? workspaceText('workspace.label.model-imported') : '',
+                      selected.standing === 'CANDIDATE' && !selected.imported ? workspaceText('workspace.label.model-candidate') : ''
+                    ].filter(Boolean).join(' · ');
+                  }
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.modelRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent =
+                      selectedSource.liveValidationDisclosureRequired
+                        ? String(selectedSource.partnerSupportStanding ?? '')
+                        : '';
+                  }
+                } else {
+                  if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
+                  if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
+                }
+
+                const storageModels =
+                  models.filter((model) => model.presentBytes > 0 || model.imported);
+                for (const model of storageModels) {
                   const row = document.createElement('div');
-                  row.className = 'model-row';
-                  row.dataset.chosen = String(Boolean(model.chosen));
-                  const name = document.createElement('p');
-                  name.className = 'model-name';
-                  name.textContent = model.label;
-                  const facts = document.createElement('p');
-                  facts.className = 'model-facts';
-                  const status = model.downloadedBytes != null
-                    ? t('workspace.status.model-downloading')
-                        .replace('{done}', gibText(model.downloadedBytes))
-                        .replace('{total}', gibText(model.totalBytes))
-                    : resolveText(model.display.status);
-                  facts.textContent = status + ' · ' + t('workspace.label.model-facts')
-                    .replace('{size}', gibText(model.totalBytes))
-                    .replace('{memory}', gibText(model.recommendedMemoryBytes))
-                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
-                  const notes = document.createElement('p');
-                  notes.className = 'model-notes';
-                  notes.textContent = [
+                  row.className = 'model-storage-row';
+
+                  const copy = document.createElement('div');
+                  copy.className = 'model-storage-copy';
+
+                  const label = document.createElement('span');
+                  label.className = 'model-storage-label';
+                  label.textContent = model.label;
+
+                  const detail = document.createElement('span');
+                  detail.className = 'model-storage-detail';
+                  detail.textContent = [
+                    resolveText(model.display.status),
+                    modelResourceFacts(model),
                     ...(model.display.notes || []).map(resolveText),
-                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                    model.imported ? workspaceText('workspace.label.model-imported') : ''
                   ].filter(Boolean).join(' · ');
-                  const controls = document.createElement('div');
-                  controls.className = 'model-controls';
+
+                  copy.append(label, detail);
+
+                  const actions = document.createElement('div');
+                  actions.className = 'model-storage-controls';
+
                   for (const control of model.display.controls || []) {
+                    if (![
+                      ${jsString(VexLifeModelsFamily.ControlDownload)},
+                      ${jsString(VexLifeModelsFamily.ControlRedownload)},
+                      ${jsString(VexLifeModelsFamily.ControlRemove)},
+                      ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)}
+                    ].includes(control.controlRef)) continue;
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'outline-button';
-                    button.textContent = resolveText(control.label);
-                    button.disabled = state.modelsInFlight;
-                    button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
-                    controls.append(button);
+                    const forgetting =
+                      control.controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)};
+                    button.className = forgetting ? 'model-forget-button' : 'outline-button';
+                    if (forgetting) {
+                      button.textContent = '×';
+                      button.title = resolveText(control.label);
+                      button.setAttribute('aria-label', resolveText(control.label));
+                    } else {
+                      button.textContent = resolveText(control.label);
+                    }
+                    button.disabled = state.modelsInFlight || Boolean(projection.switching);
+                    button.addEventListener('click', () => {
+                      void modelControl(control.controlRef, model.handle);
+                    });
+                    actions.append(button);
                   }
-                  row.append(name, controls, facts, notes);
+
+                  row.append(copy, actions);
                   ui.modelsList.append(row);
                 }
+
+                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selectedSource;
+                if (selected) {
+                  const display = selected.display;
+                  if (ui.modelConfigurationRecommendation) {
+                    ui.modelConfigurationRecommendation.textContent = [
+                      resolveText(display.runtimeConfigurationSummary),
+                      resolveText(display.runtimeConfigurationRecommendation)
+                    ].filter(Boolean).join(' ');
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    const choices = display.runtimeConfigurationChoices || [];
+                    const options = choices.map((choice) => {
+                      const option = document.createElement('option');
+                      option.value = String(choice.promptCacheEntries);
+                      option.textContent =
+                        [resolveText(choice.label), resolveText(choice.standing)]
+                          .filter(Boolean)
+                          .join(' · ');
+                      option.selected = Boolean(choice.selected);
+                      option.disabled = !choice.selected && !choice.controlRef;
+                      return option;
+                    });
+                    ui.modelPromptCacheEntries.replaceChildren(...options);
+                    ui.modelPromptCacheEntries.disabled =
+                      state.modelsInFlight ||
+                      !choices.some((choice) => Boolean(choice.controlRef));
+                    ui.modelPromptCacheEntries.onchange = () => {
+                      const value = Number(ui.modelPromptCacheEntries.value);
+                      const choice =
+                        choices.find((candidate) => candidate.promptCacheEntries === value);
+                      if (!choice?.controlRef) return;
+                      void modelControl(
+                        choice.controlRef,
+                        selected.handle,
+                        choice.promptCacheEntries
+                      );
+                    };
+                  }
+                  if (ui.modelUseRecommended) {
+                    const useRecommendedControl =
+                      (display.controls || []).find(
+                        (control) =>
+                          control.controlRef ===
+                          ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)}
+                      ) ?? null;
+                    ui.modelUseRecommended.hidden = !useRecommendedControl;
+                    ui.modelUseRecommended.disabled =
+                      state.modelsInFlight || !useRecommendedControl;
+                    ui.modelUseRecommended.onclick = () => {
+                      if (!useRecommendedControl) return;
+                      void modelControl(
+                        useRecommendedControl.controlRef,
+                        selected.handle
+                      );
+                    };
+                  }
+                  if (ui.modelStart) {
+                    const startControl =
+                      (display.controls || []).find(
+                        (control) =>
+                          control.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)}
+                      ) ?? null;
+                    ui.modelStart.disabled = state.modelsInFlight || !startControl;
+                    ui.modelStart.onclick = () => {
+                      if (!startControl) return;
+                      void modelControl(startControl.controlRef, selected.handle);
+                    };
+                    ui.modelStart.textContent =
+                      startControl
+                        ? resolveText(startControl.label)
+                        : workspaceText('workspace.button.model-start');
+                  }
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelConfigurationRecommendation) {
+                    ui.modelConfigurationRecommendation.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    ui.modelPromptCacheEntries.replaceChildren();
+                    ui.modelPromptCacheEntries.disabled = true;
+                    ui.modelPromptCacheEntries.onchange = null;
+                  }
+                  if (ui.modelUseRecommended) {
+                    ui.modelUseRecommended.hidden = true;
+                    ui.modelUseRecommended.disabled = true;
+                    ui.modelUseRecommended.onclick = null;
+                  }
+                  if (ui.modelStart) {
+                    const mayUse =
+                      selectedSource.targeted &&
+                      !selectedSource.serving &&
+                      !projection.switching;
+                    ui.modelStart.hidden = false;
+                    ui.modelStart.disabled = state.modelsInFlight || !mayUse;
+                    ui.modelStart.onclick = () => {
+                      if (!mayUse) return;
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlUse)},
+                        selectedSource.handle
+                      );
+                    };
+                    ui.modelStart.textContent = workspaceText('workspace.button.model-start');
+                  }
+                }
+
                 const lines = [];
-                if (projection.lastOutcome) lines.push(resolveText(projection.lastOutcome.message));
-                if (projection.switchPending) lines.push(t('workspace.status.models-switch-pending'));
+                if (projection.switching) {
+                  lines.push(resolveText(projection.switching.message));
+                } else if (projection.lastOutcome) {
+                  lines.push(resolveText(projection.lastOutcome.message));
+                }
+                if (projection.switchPending && !projection.switching) {
+                  lines.push(workspaceText('workspace.status.models-switch-pending'));
+                }
                 if (projection.freeStorageBytes != null) {
-                  lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
+                  lines.push(workspaceText('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
                 }
                 if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+                renderPartnerApiConnection();
+                if (projection.switching) {
+                  setCompanionStatus(
+                    'Checking',
+                    resolveText(projection.switching.message),
+                    servingModelLabel() || ui.companionStatusModel.textContent
+                  );
+                } else if (ui.companionStatus?.dataset.state !== 'Unavailable') {
+                  setCompanionStatus(
+                    'Ready',
+                    workspaceText('workspace.status.companion-ready'),
+                    servingModelLabel() || ui.companionStatusModel.textContent
+                  );
+                }
+                renderComposer();
               };
 
               const loadModels = async () => {
-                const response = await fetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.models = await readJson(response);
+                const wasSwitching = Boolean(state.models?.switching);
+                const [localResponse, sourceResponse] = await Promise.all([
+                  productFetch(service.modelsPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  }),
+                  productFetch(service.modelsSourcesPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  })
+                ]);
+                state.models = await readJson(localResponse);
+                state.modelSources = await readJson(sourceResponse);
+                const switchingNow = Boolean(state.models?.switching);
                 renderModels();
-                // A running download is followed until it settles; nothing polls when idle.
-                if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                if (wasSwitching && !switchingNow) {
+                  void loadConversationTurn().catch(() => {});
+                }
+                // Follow only active model work; nothing polls when the relationship is stable.
+                if (state.models?.downloading || state.models?.switching) {
+                  window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
+                }
                 return state.models;
               };
 
-              const modelControl = async (controlRef, handle) => {
+              const checkModelImport = async () => {
+                if (state.modelImportInFlight) return;
+                const sourceUrl = String(ui.modelImportUrl?.value ?? '').trim();
+                if (!sourceUrl) return;
+                state.modelImportInFlight = true;
+                renderModels();
+                try {
+                  const response = await effectFetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
+                  state.models = await readJson(response);
+                } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
+                finally { state.modelImportInFlight = false; renderModels(); }
+              };
+
+              const addModelImport = async () => {
+                if (state.modelImportInFlight) return;
+                const importRef = String(ui.modelImportAdd?.dataset.importRef ?? '');
+                if (!importRef) return;
+                state.modelImportInFlight = true;
+                renderModels();
+                try {
+                  const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
+                  state.models = await readJson(response);
+                  await loadModels();
+                } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
+                finally { state.modelImportInFlight = false; renderModels(); }
+              };
+
+              const modelControl = async (controlRef, handle, promptCacheEntries = null) => {
                 if (state.modelsInFlight) return;
-                if (controlRef === 'REMOVE_MODEL' && !window.confirm(t('workspace.button.model-remove') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlRemove)} && !window.confirm(workspaceText('workspace.button.model-remove') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)} && !window.confirm(workspaceText('workspace.button.model-forget') + '?')) return;
                 state.modelsInFlight = true;
                 renderModels();
                 try {
-                  const response = await fetch(service.modelsControlPath, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ controlRef, handle })
-                  });
-                  state.models = await readJson(response);
+                  const body = { controlRef, handle };
+                  if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
+                  const sourceAware =
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)};
+                  const response = await effectFetch(
+                    sourceAware
+                      ? service.modelsSourcesControlPath
+                      : service.modelsControlPath,
+                    {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json', accept: 'application/json' },
+                      body: JSON.stringify(body)
+                    }
+                  );
+                  if (sourceAware) {
+                    state.modelSources = await readJson(response);
+                    await loadModels();
+                  } else {
+                    state.models = await readJson(response);
+                  }
+                  if (
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)}
+                  ) {
+                    const message = state.models?.switching?.message ?? state.models?.lastOutcome?.message;
+                    if (message) notify(resolveText(message));
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Models are not available.');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.models-unavailable'));
                 } finally {
                   state.modelsInFlight = false;
                   renderModels();
-                  if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                  if (state.models?.downloading || state.models?.switching) {
+                    window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
+                  }
+                }
+              };
+
+              const localAsrSelectionValue = (option) =>
+                JSON.stringify([option.providerRef, option.modelRef]);
+
+              const localAsrSpokenLanguageValue = (choice) =>
+                JSON.stringify([choice.mode, choice.languageCode ?? null]);
+
+              const localAsrSpokenLanguageLabel = (choice) => {
+                if (choice.labelKey) {
+                  return workspaceText(choice.labelKey)
+                    .replace('{language}', String(choice.languageLabel ?? ''));
+                }
+                return String(choice.languageLabel ?? choice.languageCode ?? '');
+              };
+
+              const localAsrArtifactStatusText = (option) => {
+                if (option.downloadedBytes != null) {
+                  return workspaceText('workspace.status.model-downloading')
+                    .replace('{done}', gibText(option.downloadedBytes))
+                    .replace('{total}', gibText(option.modelBytes));
+                }
+                switch (option.artifactState) {
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
+                    return workspaceText('workspace.status.model-on-this-mac');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
+                    return workspaceText('workspace.status.model-partly-downloaded');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
+                    return workspaceText('workspace.status.model-damaged');
+                  default:
+                    return workspaceText('workspace.status.model-not-downloaded');
+                }
+              };
+
+              const renderLocalAsr = () => {
+                if (!ui.localAsrSelection) return;
+                const projection = state.localAsr;
+                ui.localAsrSelection.replaceChildren();
+                ui.localAsrModelsList?.replaceChildren();
+                ui.localAsrSpokenLanguage?.replaceChildren();
+                ui.localAsrComposerOutput?.replaceChildren();
+                if (!projection) {
+                  ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrSpokenLanguage) {
+                    ui.localAsrSpokenLanguage.disabled = true;
+                  }
+                  if (ui.localAsrComposerOutput) {
+                    ui.localAsrComposerOutput.disabled = true;
+                  }
+                  if (ui.localAsrStatus) {
+                    ui.localAsrStatus.textContent = workspaceText('workspace.status.local-asr-unavailable');
+                  }
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                for (const option of projection.options ?? []) {
+                  const node = document.createElement('option');
+                  node.value = localAsrSelectionValue(option);
+                  node.textContent =
+                    option.providerLabel + ' · ' + option.modelLabel + ' · ' +
+                    localAsrArtifactStatusText(option);
+                  node.selected =
+                    option.providerRef === projection.selectedProviderRef &&
+                    option.modelRef === projection.selectedModelRef;
+                  node.disabled =
+                    !node.selected &&
+                    !(option.controls ?? []).some(
+                      (control) =>
+                        control.controlRef ===
+                        ${jsString(VexLifeLocalAsrModelsFamily.ControlUse)}
+                    );
+                  ui.localAsrSelection.append(node);
+
+                  if (ui.localAsrModelsList) {
+                    const row = document.createElement('div');
+                    row.className = 'model-row';
+                    row.dataset.chosen = String(Boolean(option.selected));
+
+                    const name = document.createElement('div');
+                    name.className = 'model-name';
+                    name.textContent = option.providerLabel + ' · ' + option.modelLabel;
+
+                    const facts = document.createElement('div');
+                    facts.className = 'model-facts';
+                    facts.textContent =
+                      localAsrArtifactStatusText(option) +
+                      ' · ' +
+                      formatBytes(option.modelBytes);
+
+                    const notes = document.createElement('div');
+                    notes.className = 'model-notes';
+                    notes.textContent =
+                      option.selected
+                        ? workspaceText('workspace.label.model-chosen')
+                        : '';
+
+                    const controls = document.createElement('div');
+                    controls.className = 'model-controls';
+                    for (const control of option.controls ?? []) {
+                      const button = document.createElement('button');
+                      button.type = 'button';
+                      button.className = 'outline-button';
+                      button.textContent = workspaceText(control.labelKey);
+                      button.disabled = state.localAsrInFlight || voiceInputSessionOwnsState();
+                      button.addEventListener('click', () => {
+                        void localAsrModelControl(control.controlRef, option.modelRef);
+                      });
+                      controls.append(button);
+                    }
+
+                    row.append(name, facts, notes, controls);
+                    ui.localAsrModelsList.append(row);
+                  }
+                }
+
+                if (ui.localAsrStorageNote) {
+                  ui.localAsrStorageNote.textContent =
+                    projection.freeStorageBytes == null
+                      ? ''
+                      : workspaceText('workspace.label.local-asr-free-space')
+                          .replace('{free}', gibText(projection.freeStorageBytes));
+                }
+
+                if (ui.localAsrSpokenLanguage) {
+                  for (const choice of projection.spokenLanguageChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = localAsrSpokenLanguageValue(choice);
+                    node.textContent = localAsrSpokenLanguageLabel(choice);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrSpokenLanguage.append(node);
+                  }
+                }
+
+                if (ui.localAsrComposerOutput) {
+                  for (const choice of projection.composerOutputChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = String(choice.mode);
+                    node.textContent = workspaceText(choice.labelKey);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrComposerOutput.append(node);
+                  }
+                }
+
+                const selected = selectedLocalAsrOption();
+                ui.localAsrSelection.disabled =
+                  state.localAsrInFlight ||
+                  voiceInputSessionOwnsState() ||
+                  !(projection.options ?? []).length;
+                if (ui.localAsrSpokenLanguage) {
+                  ui.localAsrSpokenLanguage.disabled =
+                    state.localAsrInFlight ||
+                    voiceInputSessionOwnsState() ||
+                    !(projection.spokenLanguageChoices ?? []).length;
+                }
+                if (ui.localAsrComposerOutput) {
+                  ui.localAsrComposerOutput.disabled =
+                    state.localAsrInFlight ||
+                    voiceInputSessionOwnsState() ||
+                    !(projection.composerOutputChoices ?? []).length;
+                }
+
+                if (ui.localAsrStatus) {
+                  if (!selected) {
+                    ui.localAsrStatus.textContent = workspaceText('workspace.status.local-asr-unavailable');
+                  } else if (selected.currentState === 'READY') {
+                    ui.localAsrStatus.textContent =
+                      workspaceText('workspace.status.local-asr-ready')
+                        .replace('{provider}', selected.providerLabel)
+                        .replace('{model}', selected.modelLabel)
+                        .replace('{size}', formatBytes(selected.modelBytes));
+                  } else {
+                    const statusKey =
+                      selected.currentDetailRef === 'PROVIDER_SOURCE_NOT_CURRENT'
+                        ? 'workspace.status.local-asr-provider-not-current'
+                        : selected.currentDetailRef === 'PROVIDER_EXECUTABLE_UNAVAILABLE'
+                          ? 'workspace.status.local-asr-runtime-unavailable'
+                          : selected.currentDetailRef === 'MODEL_UNAVAILABLE'
+                            ? 'workspace.status.local-asr-model-unavailable'
+                            : selected.currentDetailRef === 'MODEL_DIGEST_NOT_CURRENT'
+                              ? 'workspace.status.local-asr-model-not-current'
+                              : 'workspace.status.local-asr-unavailable';
+                    ui.localAsrStatus.textContent = workspaceText(statusKey);
+                  }
+                }
+
+                observeVoiceInputCapability();
+                renderVoiceInput();
+              };
+
+              const loadLocalAsr = async () => {
+                const response = await productFetch(service.localAsrPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localAsr = await readJson(response);
+                renderLocalAsr();
+                if (
+                  (state.localAsr?.options ?? []).some(
+                    (option) => option.downloadedBytes != null
+                  )
+                ) {
+                  window.setTimeout(() => {
+                    void loadLocalAsr().catch(() => {});
+                  }, 1000);
+                }
+                return state.localAsr;
+              };
+
+              const selectLocalAsr = async (providerRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ providerRef, modelRef })
+                  });
+                  state.localAsr = await readJson(response);
+                  const selected = selectedLocalAsrOption();
+                  notify(
+                    selected
+                      ? workspaceText('workspace.status.local-asr-selected')
+                          .replace('{provider}', selected.providerLabel)
+                          .replace('{model}', selected.modelLabel)
+                      : workspaceText('workspace.status.local-asr-unavailable')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const localAsrModelControl = async (controlRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (
+                  controlRef ===
+                    ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
+                  !window.confirm(workspaceText('workspace.button.model-remove') + '?')
+                ) {
+                  return;
+                }
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrModelControlPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      controlRef: String(controlRef),
+                      modelRef: String(modelRef)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.model-control-not-lawful')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                  if (
+                    (state.localAsr?.options ?? []).some(
+                      (option) => option.downloadedBytes != null
+                    )
+                  ) {
+                    window.setTimeout(() => {
+                      void loadLocalAsr().catch(() => {});
+                    }, 1000);
+                  }
+                }
+              };
+
+              const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrSpokenLanguagePath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      mode: String(mode),
+                      languageCode: languageCode == null ? null : String(languageCode)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const selectLocalAsrComposerOutput = async (mode) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrComposerOutputPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ mode: String(mode) })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
                 }
               };
 
               const loadMemory = async () => {
-                const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
                 renderMemory();
+                renderVexContext();
                 return state.memory;
               };
 
               const loadVision = async () => {
-                const response = await fetch(service.visionPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.visionPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.vision = await readJson(response);
                 root.dataset.vexVisionState = String(state.vision?.state ?? 'HELD');
                 root.dataset.vexVisionRouteReachable = String(state.vision?.routeReachable === true);
@@ -2782,7 +7820,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!controlRef) {
                   state.view = 'conversation';
                   renderCompanionHead();
-                  notify(String(state.vision?.display?.label ?? 'Vision · Held') + ' — ' + String(state.vision?.display?.detail ?? ''));
+                  const display = state.vision?.display;
+                  const summary = display
+                    ? resolveText(display.label)
+                    : workspaceText('workspace.status.vision-summary')
+                        .replace('{vision}', workspaceText('workspace.label.vision'))
+                        .replace('{state}', workspaceText('workspace.status.vision-checking'));
+                  const detail = display ? resolveText(display.detail) : workspaceText('workspace.description.vision-checking');
+                  notify(summary + ' — ' + detail);
                   return;
                 }
 
@@ -2793,25 +7838,31 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
 
                 try {
-                  const response = await fetch(service.visionControlPath, {
+                  const response = await effectFetch(service.visionControlPath, {
                     method: 'POST',
                     headers: { accept: 'application/json', 'content-type': 'application/json' },
                     body: JSON.stringify({ controlRef, requestRef })
                   });
                   const result = await response.json();
                   if (String(result?.requestRef ?? '') !== requestRef || !result?.vision) {
-                    throw new Error('Vision result does not match the exact request.');
+                    throw new Error(workspaceText('workspace.status.vision-request-mismatch'));
                   }
                   state.vision = result.vision;
-                  if (result.outcome === 'NOT_LAWFUL_NOW') {
-                    notify('Vision changed before VexLife acted. ' + result.vision.display.detail);
-                  } else if (result.outcome === 'RUNTIME_REFUSED') {
-                    notify(result.vision.display.label + ' — that request did not complete.');
+                  if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
+                    notify(
+                      workspaceText('workspace.status.vision-changed-before-action')
+                        .replace('{detail}', resolveText(result.vision.display.detail))
+                    );
+                  } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
+                    notify(
+                      workspaceText('workspace.status.vision-request-not-completed')
+                        .replace('{label}', resolveText(result.vision.display.label))
+                    );
                   } else {
-                    notify(result.vision.display.label);
+                    notify(resolveText(result.vision.display.label));
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Vision did not complete that request.');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vision-request-failed'));
                 } finally {
                   state.visionInFlight = false;
                   await loadVision().catch(() => {
@@ -2830,30 +7881,71 @@ object VexLifeWebP1RuntimeArtifacts {
                 ].join(':');
               };
 
+              const loadConversationTurn = async () => {
+                const response = await productFetch(service.conversationTurnPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.conversationTurn = await readJson(response);
+                renderComposer();
+                return state.conversationTurn;
+              };
+
+              const loadAttachmentDraft = async (renderNow = true) => {
+                const response = await productFetch(service.attachmentDraftPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.attachmentDraft = await readJson(response);
+                if (renderNow) renderComposer();
+                return state.attachmentDraft;
+              };
+
               const loadConversation = async (renderNow = true) => {
-                const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const priorIdentity = conversationRenderIdentity(state.conversation);
                 const nextConversation = await readJson(response);
                 const nextIdentity = conversationRenderIdentity(nextConversation);
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
+                if (!state.conversationTurn?.display?.active) {
+                  setCompanionStatus(
+                    'Ready',
+                    workspaceText('workspace.status.conversation-ready'),
+                    servingModelLabel() || latest?.model || ''
+                  );
+                }
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
+                  if (state.app === apps.vexContext) renderVexContext();
                 }
               };
 
               const loadContext = async () => {
-                const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
+                renderVexContext();
+                if (state.context?.state === service.contextHeldUnsupportedState) {
+                  const schema = String(
+                    state.context.durablePromptReceiptSchema ??
+                      workspaceText('workspace.label.resources-unknown-value')
+                  );
+                  notify(
+                    workspaceText('workspace.status.context-unsupported-detail')
+                      .replace('{schema}', schema)
+                  );
+                }
+                return state.context;
               };
 
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -2872,6 +7964,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (responseKey) {
                   state.processEntriesByResponse.delete(responseKey);
                 }
+                if (responseKey && Array.isArray(result.providerRequests) && result.providerRequests.length > 0) {
+                  state.providerRequestsByResponse.set(responseKey, result.providerRequests);
+                } else if (responseKey) {
+                  state.providerRequestsByResponse.delete(responseKey);
+                }
                 const reasoning = result.humanReasoning;
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
@@ -2886,22 +7983,53 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
                 }
+                if (
+                  responseKey &&
+                  state.contextProcessRetention === 'PREVIOUS_TURN'
+                ) {
+                  for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                    if (!key.startsWith('private.') && key !== responseKey) state.humanReasoningByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.providerRequestsByResponse.keys())) {
+                    if (key !== responseKey) state.providerRequestsByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.processEntriesByResponse.keys())) {
+                    if (key !== responseKey) state.processEntriesByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.reachesByResponse.keys())) {
+                    if (key !== responseKey) state.reachesByResponse.delete(key);
+                  }
+                }
                 state.liveReaches = [];
 
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
                 try {
-                  await Promise.all([loadConversation(false), loadContext()]);
+                  await Promise.all([
+                    loadConversation(false),
+                    loadConversationTurn(),
+                    loadAttachmentDraft(false),
+                    loadContext()
+                  ]);
                 } catch (projectionError) {
                   notify(
-                    'Turn completed, but the current projection could not be refreshed: ' +
-                    (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                    workspaceText('workspace.status.context-refresh-failed')
+                      .replace(
+                        '{detail}',
+                        projectionError instanceof Error
+                          ? projectionError.message
+                          : workspaceText('workspace.status.context-unavailable-build')
+                      )
                   );
                 }
 
                 state.pending = null;
                 clearLiveProcessState();
-                setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                setCompanionStatus(
+                  'Ready',
+                  workspaceText('workspace.status.companion-ready'),
+                  servingModelLabel() || result.model || ''
+                );
                 render();
               };
 
@@ -2911,12 +8039,56 @@ object VexLifeWebP1RuntimeArtifacts {
                 // already-failed attempt, or performs the originally intended Send if the first
                 // transport never reached it. It must never create a second model call for one
                 // already-completed/failed attempt.
-                const response = await fetch(service.sendPath, {
+                const response = await effectFetch(service.sendPath, {
                   method: 'POST',
                   headers: { accept: 'application/json', 'content-type': 'application/json' },
                   body: JSON.stringify(pending)
                 });
                 return readJson(response);
+              };
+
+              const cancelSend = async () => {
+                const display = state.conversationTurn?.display ?? null;
+                const attemptRef = display?.targetAttemptRef ?? null;
+                if (
+                  state.sendCancelInFlight ||
+                  display?.primaryControlRef !== conversationTurn.control.stop ||
+                  !attemptRef
+                ) return;
+
+                state.sendCancelInFlight = true;
+                setCompanionStatus(
+                  'Checking',
+                  resolveText(display.status),
+                  servingModelLabel() || ''
+                );
+                renderComposer();
+                try {
+                  const response = await effectFetch(service.cancelPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ attemptRef })
+                  });
+                  const result = await readJson(response);
+                  state.conversationTurn = result.turn ?? state.conversationTurn;
+                  if (result.outcome === conversationTurn.outcome.realized) {
+                    state.sendCancelRequested = true;
+                  }
+                  notify(
+                    result.outcome === conversationTurn.outcome.realized
+                      ? resolveText(result.turn?.display?.status)
+                      : workspaceText('workspace.status.conversation-cancel-not-active')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.conversation-cancel-unavailable')
+                  );
+                } finally {
+                  state.sendCancelInFlight = false;
+                  renderComposer();
+                }
               };
 
               const send = async (newAttemptSeed = null) => {
@@ -2925,6 +8097,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 if (state.sendInFlight) return;
+                if (state.attachmentUploads.size > 0) return;
+                if (state.attachmentDraft?.display?.requestResourcesReady === false) return;
 
                 const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
                 const content =
@@ -2949,6 +8123,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
@@ -2972,30 +8148,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus(
                   'Checking',
                   retryingExactAttempt
-                    ? 'Retrying exact Send'
+                    ? workspaceText('workspace.status.companion-retrying-exact')
                     : newAttemptSeed
-                      ? 'Trying again'
-                      : 'Checking Vex',
+                      ? workspaceText('workspace.status.companion-trying-again')
+                      : workspaceText('workspace.status.companion-checking'),
                   ''
                 );
                 render();
 
                 try {
-                  const response = await fetch(service.sendPath, {
+                  const response = await effectFetch(service.sendPath, {
                     method: 'POST',
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
+                  // The service registers the exact Family BeginTurn before it emits SSE headers.
+                  // Re-observe that outside execution truth before offering Stop.
+                  await loadConversationTurn();
                   let result = null;
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
                       if (state.streamPhase === 'CheckingRuntime') {
-                        setCompanionStatus('Checking', 'Checking Vex', '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-checking'), '');
                       } else if (state.streamPhase === 'Reconnecting') {
-                        setCompanionStatus('Checking', 'Reconnecting Vex', '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-reconnecting'), '');
                       } else if (state.streamPhase === 'Generating') {
-                        setCompanionStatus('Checking', 'Thinking', '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-thinking'), '');
                       }
                       updateLiveTurn();
                       return;
@@ -3004,7 +8183,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
                       appendProcessReasoning(event.delta);
-                      setCompanionStatus('Checking', 'Thinking', '');
+                      setCompanionStatus('Checking', workspaceText('workspace.status.companion-thinking'), '');
                       updateLiveTurn();
                       // Kokoro consumes the raw aggregate above, never the visual containers.
                       followStreamSpeech(false);
@@ -3036,7 +8215,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamedContent += event.delta;
                       freezeActiveProcessThought();
                       if (!state.liveProcessManuallyToggled) state.liveProcessExpanded = false;
-                      setCompanionStatus('Checking', 'Responding', '');
+                      setCompanionStatus('Checking', workspaceText('workspace.status.companion-responding'), '');
                       updateLiveTurn();
                       // Final-answer speech remains on the same raw stream as T004.
                       followStreamSpeech(false);
@@ -3044,14 +8223,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     if (event?.type === 'FAILED') {
                       const failure = event.error ?? {};
-                      const error = new Error(String(failure.message ?? 'Vex turn failed.'));
+                      const error = new Error(String(failure.message ?? workspaceText('workspace.status.conversation-turn-failed')));
                       error.vexStatus = 409;
                       error.vexResponse = failure;
                       throw error;
                     }
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
-                  if (!result) throw new Error('Vex stream ended without a completed turn.');
+                  if (!result) throw new Error(workspaceText('workspace.status.conversation-stream-ended'));
                   await completeCanonicalSend(result, true);
                 } catch (error) {
                   // Preserve what the human already saw until the canonical turn owner returns
@@ -3065,7 +8244,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let retireAttempt = status === 400 || retryAllowed === false;
 
                   if (!retireAttempt) {
-                    setCompanionStatus('Checking', 'Reconciling Send', '');
+                    setCompanionStatus('Checking', workspaceText('workspace.status.companion-reconciling'), '');
                     render();
                     try {
                       const reconciled = await reconcileSendOutcome(pending);
@@ -3080,6 +8259,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.sendCancelInFlight = false;
+                  await Promise.all([
+                    loadConversationTurn().catch(() => {}),
+                    loadAttachmentDraft(false).catch(() => {})
+                  ]);
+                  const cancelledByPerson = state.sendCancelRequested;
+                  state.sendCancelRequested = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
                     state.failedAttempts.push({
@@ -3088,17 +8274,27 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      processEntries: interruptedProcess
+                      processEntries: interruptedProcess,
+                      cancelledByPerson
                     });
+                    if (cancelledByPerson && !ui.draft.value.trim()) {
+                      ui.draft.value = pending.content;
+                    }
                     state.pending = null;
                     clearLiveProcessState();
-                    setCompanionStatus('Unavailable', 'Send failed', '');
+                    setCompanionStatus(
+                      cancelledByPerson ? 'Ready' : 'Unavailable',
+                      cancelledByPerson
+                        ? workspaceText('workspace.status.conversation-stopped')
+                        : workspaceText('workspace.status.companion-send-failed'),
+                      servingModelLabel() || ''
+                    );
                   } else {
                     // Outcome is still unresolved: keep the same idempotency key and the process the
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
                     state.pending = pending;
                     state.streamPhase = 'Reconnecting';
-                    setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
+                    setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-send-unresolved'), '');
                     reportFact(
                       'SEND_OUTCOME_UNRESOLVED_SHOWN',
                       { reason: terminalError instanceof Error ? terminalError.name : 'unknown' }
@@ -3107,7 +8303,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   sizeDraft();
                   render();
-                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
+                  notify(
+                    cancelledByPerson
+                      ? workspaceText('workspace.description.conversation-stopped')
+                      : terminalError instanceof Error
+                        ? terminalError.message
+                        : workspaceText('workspace.status.companion-send-failed')
+                  );
                 }
               };
 
@@ -3117,18 +8319,56 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              // Browser + Companion keep one allocation/collapse relationship across responsive
+              // manifestations. Wide screens place the Seam left/right; narrow screens manifest the
+              // same relationship top/bottom. Responsive orientation is renderer-owned and does not
+              // create a second spatial state machine.
+              const NARROW_BROWSER_DEFAULT_SHARE = 0.34;
+              const narrowWorkspace = () => window.matchMedia('(max-width: 860px)').matches;
+              const currentSplitShare = (narrow = narrowWorkspace()) =>
+                state.allocation ??
+                (narrow ? NARROW_BROWSER_DEFAULT_SHARE : browser.authoredBrowserShare);
+
               const applySplit = () => {
-                const share = state.allocation ?? browser.authoredBrowserShare;
+                const narrow = narrowWorkspace();
+                // Preserve the lived narrow composition until the human explicitly resizes. Once an
+                // allocation is chosen, the same value carries across both renderer orientations.
+                const share = currentSplitShare(narrow);
+                const percent = Math.round(share * 100);
+                const browserCollapsed = state.collapsed === 'before';
+                const companionCollapsed = state.collapsed === 'after';
                 ui.frame.dataset.collapsed = state.collapsed ?? 'none';
                 ui.frame.style.setProperty('--before', (share * 100).toFixed(2) + '%');
-                ui.seam.setAttribute('aria-valuenow', String(Math.round(share * 100)));
-                ui.seam.setAttribute('aria-valuetext', 'Browser ' + Math.round(share * 100) + ' percent');
+                ui.seam.setAttribute('aria-orientation', narrow ? 'horizontal' : 'vertical');
+                ui.seam.setAttribute('aria-valuenow', String(percent));
+                ui.seam.setAttribute(
+                  'aria-valuetext',
+                  browserCollapsed
+                    ? workspaceText('workspace.status.browser-collapsed')
+                    : companionCollapsed
+                      ? workspaceText('workspace.status.companion-collapsed')
+                      : workspaceText(narrow ? 'workspace.status.browser-height' : 'workspace.status.browser-width')
+                          .replace('{percent}', String(percent))
+                );
+                const browserAction = workspaceText(
+                  browserCollapsed ? 'workspace.button.browser-show' : 'workspace.button.browser-hide'
+                );
+                const companionAction = workspaceText(
+                  companionCollapsed ? 'workspace.button.companion-show' : 'workspace.button.companion-hide'
+                );
+                ui.collapseBefore.setAttribute('aria-label', browserAction);
+                ui.collapseBefore.title = browserAction;
+                ui.collapseAfter.setAttribute('aria-label', companionAction);
+                ui.collapseAfter.title = companionAction;
               };
 
-              const setSplitFromClientX = (clientX) => {
+              const setSplitFromPointer = (clientX, clientY) => {
                 const rect = ui.frame.getBoundingClientRect();
-                if (rect.width <= 0) return;
-                state.allocation = Math.min(0.85, Math.max(0.15, (clientX - rect.left) / rect.width));
+                const narrow = narrowWorkspace();
+                const span = narrow ? rect.height : rect.width;
+                if (span <= 0) return;
+                const position = narrow ? (clientY - rect.top) : (clientX - rect.left);
+                state.allocation = Math.min(0.85, Math.max(0.15, position / span));
                 state.collapsed = 'none';
                 applySplit();
               };
@@ -3149,14 +8389,19 @@ object VexLifeWebP1RuntimeArtifacts {
               const openCurrentContext = () => {
                 if (!state.browserContext) return;
                 showInspector(
-                  'Captured page',
-                  [['Page', state.browserContext.pageUrl], ['Title', state.browserContext.title || 'None'], ['Read from', 'Separate context-provider rendering']],
+                  workspaceText('workspace.heading.context-inspector-captured-page'),
+                  [
+                    [workspaceText('workspace.label.context-inspector-page'), state.browserContext.pageUrl],
+                    [workspaceText('workspace.label.context-inspector-title'), state.browserContext.title || workspaceText('workspace.label.context-inspector-none')],
+                    [workspaceText('workspace.label.context-inspector-read-from'), workspaceText('workspace.label.context-inspector-context-provider')]
+                  ],
                   state.browserContext.text
                 );
               };
 
               loadThoughtVisibility();
               applyTheme();
+              initializeQuickActions();
               renderQuickActions();
               applySplit();
               render();
@@ -3168,7 +8413,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.query.blur();
                   ui.addressError.hidden = true;
                 } catch (error) {
-                  ui.addressError.textContent = error instanceof Error ? error.message : 'Page could not be opened.';
+                  ui.addressError.textContent = error instanceof Error ? error.message : workspaceText('workspace.status.browser-open-failed');
                   ui.addressError.hidden = false;
                 }
               });
@@ -3177,20 +8422,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
-              ui.languageList.addEventListener('click', (event) => {
-                const button = event.target.closest('button[data-language]');
-                if (button) void chooseLanguage(button.dataset.language);
-              });
+              ui.replyLanguage.addEventListener('change', () => void chooseLanguage('replyLanguage', ui.replyLanguage.value));
+              ui.screenLanguage.addEventListener('change', () => void chooseLanguage('screenLanguage', ui.screenLanguage.value));
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
-                  notify(error instanceof Error ? error.message : 'Vex could not propose a note.'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-note-propose-failed')));
               });
               ui.privateKeep.addEventListener('click', () => {
                 const text = state.privateMode?.proposedNoteOrNull;
                 if (!text) return;
                 void privatePost(service.privateNoteKeepPath, { text }).catch((error) =>
-                  notify(error instanceof Error ? error.message : 'The note was not kept.'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-note-keep-failed')));
               });
               ui.privateDecline.addEventListener('click', () => {
                 void privatePost(service.privateNoteDeclinePath, {}).catch(() => {});
@@ -3204,6 +8447,124 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (text) text.dataset.open = String(text.dataset.open !== 'true');
               });
 
+              const markContextProfileDirty = () => {
+                state.contextProfileDirty = true;
+                renderContextProfile();
+              };
+              ui.contextProfileChoice.addEventListener('change', () => {
+                const profileRef = ui.contextProfileChoice.value;
+                const active = currentContextProfile();
+                if (!profileRef || profileRef === active?.profileRef) return;
+                if (state.contextProfileDirty && !window.confirm(workspaceText('workspace.description.context-profile-confirm-switch-discard'))) {
+                  ui.contextProfileChoice.value = active?.profileRef ?? '';
+                  return;
+                }
+                void contextProfileControl(
+                  profileRef === 'profile.vexlife.context.product-default' ? 'RESTORE_PRODUCT_DEFAULT' : 'USE',
+                  profileRef === 'profile.vexlife.context.product-default' ? {} : { profileRef }
+                )
+                  .then((result) => {
+                    if (result) notify(workspaceText('workspace.status.context-profile-selected').replace('{name}', String(result.profiles.active.definition.name ?? '')));
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-select-failed')));
+              });
+              ui.contextProfileName.addEventListener('input', markContextProfileDirty);
+              ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
+              ui.contextProcessRetentionSelect.addEventListener('change', () => {
+                state.contextProcessRetention =
+                  ui.contextProcessRetentionSelect.value === 'PREVIOUS_TURN'
+                    ? 'PREVIOUS_TURN'
+                    : 'SESSION_ONLY';
+                renderVexContext();
+              });
+              ui.contextProfileFoundationMode.addEventListener('change', () => {
+                state.contextProfileDirty = true;
+                ui.contextProfileFoundationField.hidden =
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
+                renderContextProfile();
+              });
+              ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
+              ui.contextProfileSaveAs.addEventListener('click', () => void saveContextProfile(true));
+              ui.contextProfileRestore.addEventListener('click', () => {
+                if (!window.confirm(workspaceText('workspace.description.context-profile-confirm-restore-default'))) return;
+                void contextProfileControl('RESTORE_PRODUCT_DEFAULT')
+                  .then((result) => {
+                    if (result) notify(workspaceText('workspace.status.context-profile-restored-default'));
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-restore-failed')));
+              });
+              ui.contextProfileHome.addEventListener('click', () => {
+                void effectFetch(service.contextProfileHomeRevealPath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                })
+                  .then(readJson)
+                  .then((result) => {
+                    if (result?.outcome !== 'REALIZED') notify(workspaceText('workspace.status.context-profile-home-reveal-unavailable'));
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-home-open-failed')));
+              });
+              ui.contextProfileImport.addEventListener('change', () => {
+                void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
+              });
+
+              ui.vexLabsTest.addEventListener('click', () => {
+                state.companionMode = 'LAB';
+                ui.companionMode.value = 'LAB';
+                render();
+                ui.vexLabsNote.textContent = workspaceText('workspace.status.vex-labs-configuration-armed');
+                ui.draft.focus();
+              });
+              ui.vexLabsSaveSupported.addEventListener('click', () => {
+                void saveVexLabsSupportedSettings();
+              });
+              ui.vexLabsRestore.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.restore-defaults', true);
+              });
+              ui.vexLabsReload.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.reload-current-conversation', false);
+              });
+              ui.vexLabsClear.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.clear-conversation', false);
+              });
+              ui.vexLabsInputBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsInputBudget.value);
+                if (Number.isFinite(value) && value > 0) draft.inputTokenBudget = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsMemoryBudget.value);
+                if (Number.isFinite(value) && value >= 0) draft.maximumMemoryTokens = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryMode.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.memoryMode = ui.vexLabsMemoryMode.value === 'NONE' ? 'NONE' : 'CURRENT';
+                void vexLabsControl(
+                  draft.memoryMode === 'NONE'
+                    ? 'control.vexlife-prod.vex-labs.memory-none'
+                    : 'control.vexlife-prod.vex-labs.memory-current',
+                  false
+                );
+              });
+              ui.vexLabsFields.addEventListener('click', (event) => {
+                const edit = event.target.closest('.vex-labs-field-edit');
+                if (!edit) return;
+                const fieldRef = String(edit.dataset.fieldRef ?? '');
+                const target =
+                  fieldRef === vexLabsProfileBudgetFieldRef
+                    ? ui.vexLabsInputBudget
+                    : fieldRef === vexLabsMemoryBudgetFieldRef
+                      ? ui.vexLabsMemoryBudget
+                      : null;
+                if (target) {
+                  target.focus();
+                  target.select();
+                }
+              });
+
               // Context is admitted only from the Product-owned context frame, only for the exact page
               // whose identity is currently proven (contextTargetPageUrl). A message for any other
               // page is stale or foreign; arrival alone never makes a page eligible.
@@ -3215,7 +8576,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.browserContext = next;
                 state.contextLoading = false;
                 state.includePage = true;
-                renderFrameStatus('Vex page context is ready for the next turn.', 'ContextReady');
+                renderFrameStatus(workspaceText('workspace.status.browser-context-ready'), 'ContextReady');
                 renderComposer();
               });
 
@@ -3229,9 +8590,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.humanFrameLoadExpected) {
                   state.humanFrameLoadExpected = false;
                   if (state.contextTargetPageUrl && !state.browserContext) {
-                    renderFrameStatus('Page opened directly · Vex page context is available on demand.', 'Direct');
+                    renderFrameStatus(workspaceText('workspace.status.browser-opened-context-available'), 'Direct');
                   } else if (!state.contextTargetPageUrl) {
-                    renderFrameStatus('Page opened directly · Vex page context is not available for this site yet.', 'Direct');
+                    renderFrameStatus(workspaceText('workspace.status.browser-opened-context-unavailable'), 'Direct');
                   }
                 } else {
                   reportFact('BROWSER_PAGE_UNLOCATED', {
@@ -3246,45 +8607,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.contextLoading = false;
                   ui.contextFrame.removeAttribute('src');
                   ui.query.value = '';
-                  ui.query.placeholder = 'Current address unavailable · enter a web address';
+                  ui.query.placeholder = workspaceText('workspace.placeholder.browser-query-unlocated');
                   renderFrameStatus(
-                    'The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared.',
+                    workspaceText('workspace.status.browser-page-unlocated'),
                     'Unlocated'
                   );
                 }
                 renderComposer();
-              });
-
-              ui.quickActions.addEventListener('click', (event) => {
-                const button = event.target.closest('.quick-action');
-                if (!button) return;
-                const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
-                if (!action) return;
-                if (action.key === 'theme') {
-                  toggleTheme();
-                  return;
-                }
-                if (action.key === 'language') {
-                  state.languageOpen = !state.languageOpen;
-                  if (state.languageOpen) speech.open = false;
-                  renderLanguage();
-                  renderSpeech();
-                  return;
-                }
-                if (action.key === 'speech') {
-                  state.languageOpen = false;
-                  renderLanguage();
-                  speech.open = !speech.open;
-                  if (!speech.open) speech.choosing = false;
-                  renderSpeechVoices();
-                  renderSpeech();
-                  return;
-                }
-                if (action.key === 'vision') {
-                  void activateVision();
-                  return;
-                }
-                notify(action.label + " isn't connected in this workspace yet.");
               });
 
               ui.visionControl.addEventListener('click', () => {
@@ -3346,7 +8675,11 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               document.addEventListener('keydown', (event) => {
                 if (event.key !== 'Escape') return;
-                if (speech.choosing) {
+                if (state.releaseAlertsOpen) {
+                  state.releaseAlertsOpen = false;
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                } else if (speech.choosing) {
                   speech.choosing = false;
                   renderSpeech();
                 } else if (speech.open) {
@@ -3355,7 +8688,60 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (state.languageOpen) {
                   state.languageOpen = false;
                   renderLanguage();
+                } else if (state.quickActionsOpen) {
+                  state.quickActionsOpen = false;
+                  renderQuickActions();
                 }
+              });
+
+              const setCompanionMode = (next) => {
+                if (next === state.companionMode) {
+                  renderCompanionHead();
+                  return;
+                }
+                state.companionMode = next;
+                state.timelineFollowTail = true;
+                if (next === 'LAB' && !state.vexLabs) {
+                  void loadVexLabs().catch((error) =>
+                    notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-load-failed'))
+                  );
+                }
+                render();
+              };
+
+              const selectEngagementMode = async (requested) => {
+                if (state.privateInFlight || state.sendInFlight) {
+                  renderCompanionHead();
+                  return;
+                }
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.timelineFollowTail = true;
+                if (requested === 'PRIVATE') {
+                  if (isVexLabs()) setCompanionMode('CONVERSATION');
+                  if (!isPrivate()) await togglePrivate();
+                  renderCompanionHead();
+                  ui.draft.focus();
+                  return;
+                }
+                if (isPrivate()) {
+                  await togglePrivate();
+                  if (isPrivate()) {
+                    renderCompanionHead();
+                    return;
+                  }
+                }
+                setCompanionMode(requested === 'LAB' ? 'LAB' : 'CONVERSATION');
+                renderCompanionHead();
+                ui.draft.focus();
+              };
+
+              ui.companionMode.addEventListener('change', () => {
+                void selectEngagementMode(ui.companionMode.value);
               });
 
               ui.viewSwitch.addEventListener('click', () => {
@@ -3363,8 +8749,54 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderCompanionHead();
                 if (state.view === 'settings') {
                   renderSettings();
+                  renderLocalAsr();
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadLocalSources().catch(() => {});
+                  void loadWorkspaceEffects().catch(() => {});
+                  void loadWorkspaceChecks().catch(() => {});
+                  void loadWorkspaceRuns().catch(() => {});
+                  void loadLocalAsr().catch(() => {});
+                }
+              });
+
+              ui.localSourcesAdd?.addEventListener('click', () => {
+                const controlRef = state.localSources?.display?.addControlRef ?? null;
+                if (controlRef === localSources.control.add) {
+                  void applyLocalSourcesControl(controlRef);
+                }
+              });
+              ui.localSourcesList?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-source-ref]');
+                if (!button) return;
+                const controlRef = String(button.dataset.controlRef ?? '');
+                const sourceRef = String(button.dataset.sourceRef ?? '');
+                if (controlRef === localSources.control.remove && sourceRef) {
+                  void applyLocalSourcesControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceEffects.control.allow ||
+                    controlRef === workspaceEffects.control.revoke)
+                ) {
+                  void applyWorkspaceEffectsControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceChecks.control.allow ||
+                    controlRef === workspaceChecks.control.revoke)
+                ) {
+                  void applyWorkspaceChecksControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceRuns.control.allow ||
+                    controlRef === workspaceRuns.control.revoke)
+                ) {
+                  void applyWorkspaceRunsControl(controlRef, sourceRef);
                 }
               });
 
@@ -3385,23 +8817,211 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.includePage = false;
                 reportFact('BROWSER_CONTEXT_REQUESTED', pageRefs(state.contextTargetPageUrl));
                 ui.contextFrame.src = contextFrameUrl;
-                renderFrameStatus('Reading the current page separately for Vex…', 'Loading');
+                renderFrameStatus(workspaceText('workspace.status.browser-reading-context'), 'Loading');
                 renderComposer();
+              });
+
+              ui.voiceInput?.addEventListener('click', () => {
+                void applyVoiceInputControl();
+              });
+
+              ui.stop.addEventListener('click', () => {
+                void cancelSend();
+              });
+
+              const applyAttachmentControl = async (controlRef, draftRef) => {
+                if (!controlRef || !draftRef || state.sendInFlight || state.pending) return;
+                try {
+                  const response = await effectFetch(service.attachmentControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, draftRef })
+                  });
+                  const result = await readJson(response);
+                  state.attachmentDraft = result.draft ?? state.attachmentDraft;
+                  if (
+                    result.outcome === attachmentDraft.controlOutcome.realized &&
+                    controlRef === attachmentDraft.control.cancelStage
+                  ) {
+                    state.attachmentUploads.get(draftRef)?.xhr?.abort();
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.attachment-refused'));
+                } finally {
+                  renderComposer();
+                  if (controlRef === attachmentDraft.control.cancelStage) {
+                    window.setTimeout(() => {
+                      void loadAttachmentDraft().catch(() => {});
+                    }, 75);
+                  }
+                }
+              };
+
+              const stageAttachmentFile = (file) => {
+                if (!file || state.sendInFlight || state.pending) return;
+                const draftRef = 'draft.attachment.' + crypto.randomUUID().toLowerCase();
+                const xhr = new XMLHttpRequest();
+                const upload = {
+                  draftRef,
+                  name: String(file.name || 'file'),
+                  loaded: 0,
+                  total: Number(file.size) || 0,
+                  xhr
+                };
+                state.attachmentUploads.set(draftRef, upload);
+                renderComposer();
+
+                xhr.open('POST', service.attachmentStagePath);
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('accept', 'application/json');
+                xhr.setRequestHeader('content-type', 'application/octet-stream');
+                xhr.setRequestHeader(service.attachmentDraftRefHeader, draftRef);
+                xhr.setRequestHeader(service.attachmentNameHeader, encodeURIComponent(upload.name));
+                if (service.presentationSourceSha) {
+                  xhr.setRequestHeader(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                xhr.upload.addEventListener('progress', (event) => {
+                  upload.loaded = Number(event.loaded) || upload.loaded;
+                  upload.total = Number(event.total) || upload.total;
+                  renderComposer();
+                });
+                const settle = () => {
+                  state.attachmentUploads.delete(draftRef);
+                  renderComposer();
+                };
+                xhr.addEventListener('load', () => {
+                  try {
+                    const result =
+                      xhr.response && typeof xhr.response === 'object'
+                        ? xhr.response
+                        : null;
+                    if (xhr.status === 409 && result?.code === service.stalePresentationCode) {
+                      notify(
+                        String(result?.message ?? workspaceText('workspace.status.product-updated')) +
+                          ' ' + workspaceText('workspace.status.product-reloading')
+                      );
+                      window.setTimeout(() => window.location.reload(), 2500);
+                    }
+                    if (xhr.status >= 200 && xhr.status < 300 && result?.draft) {
+                      state.attachmentDraft = result.draft;
+                      if (result.outcome === attachmentDraft.stageOutcome.held && result.message) {
+                        notify(resolveText(result.message));
+                      }
+                    } else {
+                      notify(
+                        result?.message
+                          ? resolveText(result.message)
+                          : workspaceText('workspace.status.attachment-refused')
+                      );
+                    }
+                  } catch {
+                    notify(workspaceText('workspace.status.attachment-refused'));
+                  } finally {
+                    settle();
+                    void loadAttachmentDraft().catch(() => {});
+                  }
+                });
+                xhr.addEventListener('error', () => {
+                  settle();
+                  notify(workspaceText('workspace.status.attachment-refused'));
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.addEventListener('abort', () => {
+                  settle();
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.send(file);
+                window.setTimeout(() => {
+                  void loadAttachmentDraft().catch(() => {});
+                }, 100);
+              };
+
+              const stageAttachmentFiles = (files) => {
+                const selected = Array.from(files ?? []);
+                if (!selected.length) return;
+                const currentCount = Number(state.attachmentDraft?.items?.length ?? 0);
+                const room = Math.max(
+                  0,
+                  ${VexLifeLocalArtifact.MaximumPerRequest} -
+                    currentCount -
+                    state.attachmentUploads.size
+                );
+                if (room <= 0) {
+                  notify(workspaceText('workspace.status.attachment-limit'));
+                  return;
+                }
+                selected.slice(0, room).forEach(stageAttachmentFile);
+                if (selected.length > room) notify(workspaceText('workspace.status.attachment-limit'));
+              };
+
+              ui.attach?.addEventListener('click', () => {
+                if (state.attachmentDraft?.display?.addControlRef !== attachmentDraft.control.add) return;
+                ui.attachInput?.click();
+              });
+              ui.attachInput?.addEventListener('change', () => {
+                const files = Array.from(ui.attachInput.files ?? []);
+                ui.attachInput.value = '';
+                stageAttachmentFiles(files);
+              });
+              ui.composerAttachments?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-draft-ref]');
+                if (!button) return;
+                void applyAttachmentControl(
+                  String(button.dataset.controlRef ?? ''),
+                  String(button.dataset.draftRef ?? '')
+                );
+              });
+              ui.draft.addEventListener('paste', (event) => {
+                const files = Array.from(event.clipboardData?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical') return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
+              });
+              ui.composeForm.addEventListener('dragover', (event) => {
+                if (activeConversationController().kind === 'canonical' && !state.pending) {
+                  event.preventDefault();
+                }
+              });
+              ui.composeForm.addEventListener('drop', (event) => {
+                const files = Array.from(event.dataTransfer?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical' || state.pending) return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
               });
 
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
-                void send();
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                submitActiveConversation();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
-                  void send();
+                  if (dictation.desiredActive) {
+                    void applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  submitActiveConversation();
                 }
               });
 
-              ui.draft.addEventListener('input', () => sizeDraft());
+              ui.draft.addEventListener('input', () => {
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                sizeDraft();
+              });
               ui.timeline.addEventListener('scroll', () => {
                 state.timelineScrollTop = ui.timeline.scrollTop;
                 state.timelineFollowTail = isElementAtBottom(ui.timeline);
@@ -3416,7 +9036,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!failed) return;
                   void send({
                     content: failed.content,
-                    browserContext: failed.browserContext
+                    // Try Again is one new Send, not a replay of the failed attempt. Re-read the
+                    // current explicit browser-context choice so navigation/unlocation cannot
+                    // smuggle stale page bytes into the successor attempt.
+                    browserContext: state.includePage ? state.browserContext : null
                   });
                   return;
                 }
@@ -3470,7 +9093,7 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.seam.addEventListener('pointermove', (event) => {
                 if (!ui.seam.hasPointerCapture(event.pointerId)) return;
-                setSplitFromClientX(event.clientX);
+                setSplitFromPointer(event.clientX, event.clientY);
               });
               ui.seam.addEventListener('pointerup', (event) => {
                 if (ui.seam.hasPointerCapture(event.pointerId)) ui.seam.releasePointerCapture(event.pointerId);
@@ -3483,10 +9106,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 applySplit();
               });
               ui.seam.addEventListener('keydown', (event) => {
-                const current = state.allocation ?? browser.authoredBrowserShare;
-                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                const narrow = narrowWorkspace();
+                const current = currentSplitShare(narrow);
+                const decrease = narrow ? 'ArrowUp' : 'ArrowLeft';
+                const increase = narrow ? 'ArrowDown' : 'ArrowRight';
+                if (event.key === decrease || event.key === increase) {
                   event.preventDefault();
-                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === 'ArrowLeft' ? -0.05 : 0.05)));
+                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === decrease ? -0.05 : 0.05)));
                   state.collapsed = 'none';
                   applySplit();
                 } else if (event.key === 'Home' || event.key === 'Enter') {
@@ -3496,37 +9122,137 @@ object VexLifeWebP1RuntimeArtifacts {
                   applySplit();
                 }
               });
+              window.addEventListener('resize', applySplit);
+              document.addEventListener('visibilitychange', () => {
+                if (document.hidden && dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                } else if (!document.hidden) {
+                  void loadReleaseAlerts().catch(() => {});
+                }
+              });
+
+              observeVoiceInputCapability();
+              renderVoiceInput();
+              // Local ASR currentness is independent from Conversation/Context/Release startup.
+              // One bounded retry covers setup/service convergence without creating stable polling.
+              void loadLocalAsr().catch(() => {
+                window.setTimeout(() => {
+                  void loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
+                }, 1000);
+              });
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
+              ui.modelImportCheck?.addEventListener('click', () => { void checkModelImport(); });
+              ui.modelImportUrl?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); void checkModelImport(); } });
+              ui.modelImportAdd?.addEventListener('click', () => { void addModelImport(); });
+
+
+              ui.localAsrSelection?.addEventListener('change', () => {
+                try {
+                  const [providerRef, modelRef] =
+                    JSON.parse(ui.localAsrSelection.value);
+                  void selectLocalAsr(
+                    String(providerRef),
+                    String(modelRef)
+                  );
+                } catch {
+                  notify(workspaceText('workspace.status.local-asr-unavailable'));
+                }
+              });
+              ui.localAsrSpokenLanguage?.addEventListener('change', () => {
+                try {
+                  const [mode, languageCode] =
+                    JSON.parse(ui.localAsrSpokenLanguage.value);
+                  void selectLocalAsrSpokenLanguage(
+                    String(mode),
+                    languageCode == null ? null : String(languageCode)
+                  );
+                } catch {
+                  notify(workspaceText('workspace.status.local-asr-unavailable'));
+                }
+              });
+              ui.localAsrComposerOutput?.addEventListener('change', () => {
+                void selectLocalAsrComposerOutput(
+                  ui.localAsrComposerOutput.value
+                );
+              });
+
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
                 if (controlRef) void diagnosticsControl(controlRef);
               });
               ui.diagnosticsClear?.addEventListener('click', () => {
-                if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
+                if (window.confirm(workspaceText('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
               });
 
-              void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversation(), loadContext(), loadVision()])
+              void Promise.all([
+                loadSourceCurrentness(),
+                loadCurrentState(),
+                loadConversationTurn(),
+                loadAttachmentDraft(),
+                loadLocalSources(),
+                loadWorkspaceEffects(),
+                loadWorkspaceChecks(),
+                loadWorkspaceRuns(),
+                loadConversation(),
+                loadVision()
+              ])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
+                  void loadContext().catch((error) => {
+                    state.context = null;
+                    renderSettings();
+                    renderVexContext();
+                    notify(
+                      error instanceof Error
+                        ? workspaceText('workspace.status.context-unavailable-detail')
+                            .replace('{detail}', String(error.message))
+                        : workspaceText('workspace.status.context-unavailable-build')
+                    );
+                  });
+                  void loadContextProfiles().catch(() => {});
+                  void loadVexLabs().catch((error) => {
+                    state.vexLabs = null;
+                    renderVexLabs();
+                    notify(error instanceof Error
+                      ? workspaceText('workspace.status.vex-labs-unavailable-detail')
+                          .replace('{detail}', String(error.message))
+                      : workspaceText('workspace.status.vex-labs-unavailable-build'));
+                  });
+                  void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
+                  void loadPartnerConnectionAvailability().catch(() => {
+                    state.partnerConnectionAvailability = null;
+                    renderPartnerApiConnection();
+                  });
+                  // Release truth is outside Product startup truth. Observe it only after the core
+                  // presentation is already usable; its own freshness policy suppresses redundant
+                  // remote checks on later visibility opportunities.
+                  void loadReleaseAlerts().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
                 .catch((error) => {
-                  setCompanionStatus('Unavailable', 'Unavailable', '');
-                  notify(error instanceof Error ? error.message : 'Local service is not ready.');
+                  setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-unavailable'), '');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.local-service-not-ready'));
                 });
 
               setInterval(() => {
-                if (state.pending) return;
-                void loadConversation().catch(() => {});
+                void loadConversationTurn().catch(() => {});
+                void loadAttachmentDraft().catch(() => {});
+                if (!state.pending) void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
                 if (!state.privateInFlight) void loadPrivate().catch(() => {});
               }, 2500);

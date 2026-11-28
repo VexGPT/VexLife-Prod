@@ -22,6 +22,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import vexlife.companion.DirectPromptContext
 import vexlife.continuity.VexLifeContinuityObservation
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
@@ -159,6 +160,7 @@ object VexLifeCurrentMemoryReader {
         val sourceSemanticAuthorityHeadSha256: String,
         val activeStatementRefs: List<String>,
         val heldStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
     )
 
     internal data class DreamPriorDaily(
@@ -221,6 +223,82 @@ object VexLifeCurrentMemoryReader {
         val acceptance: JsonObject,
     )
 
+    internal data class CurrentScoreStatementBinding(
+        val statementRef: String,
+        val semanticSubjectFingerprint: String,
+        val memoryRelation: String,
+        val semanticAcceptanceRef: String,
+        val semanticAcceptanceSha256: String,
+    )
+
+    internal data class CurrentAcceptedStatement(
+        val statementRef: String,
+        val subjectRef: String,
+        val semanticSubjectFingerprint: String,
+        val summary: String,
+        val summaryHash: String,
+        val memoryRelation: String,
+        val recordedStatementState: String,
+        val effectiveState: String,
+        val consentState: String,
+        val semanticAcceptanceRef: String,
+        val semanticAcceptanceSha256: String,
+        val semanticAuthorityHeadSha256: String,
+        val sourceConversationHeadSha256: String,
+    )
+
+    internal data class CurrentAcceptedSemanticSnapshot(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val observedConversationHeadSha256: String?,
+        val scoreHeadSha256: String?,
+        val sourceScoreConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val statements: List<CurrentAcceptedStatement>,
+    )
+
+    internal data class CurrentMemoryHotPathFrontier(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val conversationHeadSha256: String?,
+        val priorConversationHeadSha256: String?,
+        val conversationSequence: Long?,
+        val scoreHeadSha256: String?,
+        val scoreSourceConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val dailyDreamHeadSha256: String?,
+        val dailySourceConversationHeadSha256: String?,
+        val dailySourceScoreHeadSha256: String?,
+        val dailySourceSemanticAuthorityHeadSha256: String?,
+    )
+
+    /**
+     * Read-only lifecycle projection consumed by request-bound historical Conversation recall.
+     *
+     * Conversation still owns the source bytes. This projection says only whether current
+     * Score/semantic authority allows a source-bound event to participate in continuity recall, or
+     * whether an older source remains returnable only as historical evidence after correction /
+     * supersession.
+     */
+    internal data class ConversationRecallMembrane(
+        val bindingRef: String,
+        val blockedEventRefs: Set<String>,
+        val historicalCurrentizedEventRefs: Set<String>,
+    )
+
+    internal data class ConversationRecallStatementStanding(
+        val sourceEventRefs: Set<String>,
+        val current: Boolean,
+        val effectiveState: String,
+        val acceptedForContinuity: Boolean,
+        val consentState: String,
+        val currentAuthorityMember: Boolean,
+    )
+
     @Serializable
     private data class PageIdentity(
         val dailyStratumSha256: String,
@@ -267,6 +345,295 @@ object VexLifeCurrentMemoryReader {
         } else {
             "HELD"
         }
+    }
+
+    internal fun rebindCurrentContext(
+        source: VexLifeMemoryContract.Context,
+        memoryTokenCap: Int,
+        heldReasonOverride: String? =
+            null,
+    ): VexLifeMemoryContract.Context {
+        VexLifeMemoryContract.validateContext(
+            source,
+        )
+        require(
+            memoryTokenCap in
+                0..source.memoryTokenCap
+        ) {
+            "rebound Memory token cap exceeds the validated source context"
+        }
+        if (
+            heldReasonOverride !=
+            null
+        ) {
+            return held(
+                reasons =
+                    listOf(
+                        heldReasonOverride,
+                    ),
+                memoryTokenCap =
+                    memoryTokenCap,
+            )
+        }
+        if (
+            source.projectionState ==
+                "HELD"
+        ) {
+            return held(
+                reasons =
+                    source.reasons,
+                memoryTokenCap =
+                    memoryTokenCap,
+            )
+        }
+        require(
+            source.projectionState ==
+                "CURRENT" &&
+                source.projectionCurrentness ==
+                    "CURRENT"
+        ) {
+            "rebound Memory source must be one current or held projection"
+        }
+
+        val pages =
+            mutableListOf<VexLifeMemoryContract.Page>()
+        val tokenBounded =
+            source.tokenBoundedOutPageRefs
+                .toMutableSet()
+        for (
+            page in
+            source.pages
+        ) {
+            val candidate =
+                ProviderPacket(
+                    schemaVersion =
+                        source.schemaVersion,
+                    truthClass =
+                        source.truthClass,
+                    projectionState =
+                        source.projectionState,
+                    projectionCurrentness =
+                        source.projectionCurrentness,
+                    sourceOwnerRefs =
+                        source.sourceOwnerRefs,
+                    currentDailyStratumRef =
+                        source.currentDailyStratumRef,
+                    currentDailyStratumSha256 =
+                        source.currentDailyStratumSha256,
+                    sourceConversationHeadSha256 =
+                        source.sourceConversationHeadSha256,
+                    sourceScoreHeadSha256 =
+                        source.sourceScoreHeadSha256,
+                    sourceSemanticAuthorityHeadSha256 =
+                        source.sourceSemanticAuthorityHeadSha256,
+                    pages =
+                        pages +
+                            page,
+                    heldOrDeferredStatementRefs =
+                        source.heldOrDeferredStatementRefs,
+                    boundedOutStatementRefs =
+                        source.boundedOutStatementRefs,
+                    tokenBoundedOutPageRefs =
+                        emptyList(),
+                    reasons =
+                        source.reasons,
+                    memoryTokenCap =
+                        memoryTokenCap,
+                )
+            if (
+                DirectPromptContext.estimatedMessageTokens(
+                    memorySystemContent(
+                        candidate,
+                    ),
+                ) >
+                memoryTokenCap
+            ) {
+                tokenBounded +=
+                    page.pageRef
+            } else {
+                pages +=
+                    page
+            }
+        }
+
+        val packet =
+            ProviderPacket(
+                schemaVersion =
+                    source.schemaVersion,
+                truthClass =
+                    source.truthClass,
+                projectionState =
+                    source.projectionState,
+                projectionCurrentness =
+                    source.projectionCurrentness,
+                sourceOwnerRefs =
+                    source.sourceOwnerRefs,
+                currentDailyStratumRef =
+                    source.currentDailyStratumRef,
+                currentDailyStratumSha256 =
+                    source.currentDailyStratumSha256,
+                sourceConversationHeadSha256 =
+                    source.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 =
+                    source.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 =
+                    source.sourceSemanticAuthorityHeadSha256,
+                pages =
+                    pages,
+                heldOrDeferredStatementRefs =
+                    source.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs =
+                    source.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs =
+                    tokenBounded
+                        .toList()
+                        .sorted(),
+                reasons =
+                    source.reasons,
+                memoryTokenCap =
+                    memoryTokenCap,
+            )
+        val included =
+            pages.isNotEmpty()
+        val systemContent =
+            if (
+                included
+            ) {
+                memorySystemContent(
+                    packet,
+                )
+            } else {
+                null
+            }
+        val core =
+            VexLifeMemoryContract.PacketCore(
+                schemaVersion =
+                    packet.schemaVersion,
+                truthClass =
+                    packet.truthClass,
+                projectionState =
+                    packet.projectionState,
+                projectionCurrentness =
+                    packet.projectionCurrentness,
+                sourceOwnerRefs =
+                    packet.sourceOwnerRefs,
+                currentDailyStratumRef =
+                    packet.currentDailyStratumRef,
+                currentDailyStratumSha256 =
+                    packet.currentDailyStratumSha256,
+                sourceConversationHeadSha256 =
+                    packet.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 =
+                    packet.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 =
+                    packet.sourceSemanticAuthorityHeadSha256,
+                pages =
+                    packet.pages,
+                heldOrDeferredStatementRefs =
+                    packet.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs =
+                    packet.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs =
+                    packet.tokenBoundedOutPageRefs,
+                reasons =
+                    packet.reasons,
+                memoryTokenCap =
+                    packet.memoryTokenCap,
+                systemMessageSha256 =
+                    systemContent
+                        ?.let(
+                            ::sha256,
+                        ),
+                estimatedSystemMessageTokens =
+                    systemContent
+                        ?.let(
+                            DirectPromptContext::estimatedMessageTokens,
+                        )
+                        ?: 0,
+            )
+        val fingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    core,
+                ),
+            )
+        val refs =
+            buildList {
+                addAll(
+                    core.sourceOwnerRefs,
+                )
+                core.currentDailyStratumRef
+                    ?.let(
+                        ::add,
+                    )
+                core.pages.forEach {
+                    page ->
+                    add(
+                        page.pageRef,
+                    )
+                    add(
+                        page.statementRef,
+                    )
+                    add(
+                        page.semanticAcceptanceRef,
+                    )
+                }
+            }
+                .distinct()
+                .sorted()
+
+        return VexLifeMemoryContract.Context(
+            schemaVersion =
+                core.schemaVersion,
+            truthClass =
+                core.truthClass,
+            projectionState =
+                core.projectionState,
+            projectionCurrentness =
+                core.projectionCurrentness,
+            sourceOwnerRefs =
+                core.sourceOwnerRefs,
+            currentDailyStratumRef =
+                core.currentDailyStratumRef,
+            currentDailyStratumSha256 =
+                core.currentDailyStratumSha256,
+            sourceConversationHeadSha256 =
+                core.sourceConversationHeadSha256,
+            sourceScoreHeadSha256 =
+                core.sourceScoreHeadSha256,
+            sourceSemanticAuthorityHeadSha256 =
+                core.sourceSemanticAuthorityHeadSha256,
+            pages =
+                core.pages,
+            heldOrDeferredStatementRefs =
+                core.heldOrDeferredStatementRefs,
+            boundedOutStatementRefs =
+                core.boundedOutStatementRefs,
+            tokenBoundedOutPageRefs =
+                core.tokenBoundedOutPageRefs,
+            reasons =
+                core.reasons,
+            memoryTokenCap =
+                core.memoryTokenCap,
+            systemMessageSha256 =
+                core.systemMessageSha256,
+            estimatedSystemMessageTokens =
+                core.estimatedSystemMessageTokens,
+            memoryContextRef =
+                "memory-context.vexlife.prompt." +
+                    fingerprint.take(
+                        32,
+                    ),
+            semanticFingerprint =
+                fingerprint,
+            sourceRefs =
+                refs,
+            included =
+                included,
+        )
+            .let(
+                VexLifeMemoryContract::validateContext,
+            )
     }
 
     fun readCurrent(
@@ -347,24 +714,63 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
-                authorityPolicy = ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
+                authorityPolicy =
+                    // Daily is a consolidation snapshot, not current semantic authority. Historical
+                    // Score/authority sources may remain valid after a later Keep; currentness is
+                    // classified only after the Daily bundle and its recorded ancestry validate.
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
             )
         val daily =
             loadDaily(
                 home = home,
                 identity = identity,
-                score = score,
                 conversationStore = conversationStore,
             )
 
-        if (
-            promptFrontierCurrentness(
-                sourceConversationHeadSha256 =
+        require(
+            scoreHeadLineageContains(
+                home = home,
+                identity = identity,
+                current = score.head,
+                expectedHistoricalSha256 = daily.sourceScoreHeadSha256,
+                expectedSourceConversationHeadSha256 =
                     daily.sourceConversationHeadSha256,
-                currentConversationHeadSha256 =
-                    conversationHead.conversationHeadSha256,
-            ) ==
-            "HELD"
+            ),
+        ) {
+            "Daily Memory source Score head is not in the current Score lineage"
+        }
+        require(
+            semanticAuthorityLineageContains(
+                home = home,
+                identity = identity,
+                current = currentAuthority,
+                expectedHistoricalSha256 = daily.sourceSemanticAuthorityHeadSha256,
+            ),
+        ) {
+            "Daily Memory source semantic authority head is not in the current authority lineage"
+        }
+
+        if (
+            daily.sourceScoreHeadSha256 !=
+                score.head.string(
+                    "scoreHeadSha256",
+                ) ||
+                daily.sourceSemanticAuthorityHeadSha256 !=
+                currentAuthority.string(
+                    "semanticAuthorityHeadSha256",
+                ) ||
+                promptFrontierCurrentness(
+                    sourceConversationHeadSha256 =
+                        daily.sourceConversationHeadSha256,
+                    currentConversationHeadSha256 =
+                        conversationHead.conversationHeadSha256,
+                ) ==
+                "HELD"
         ) {
             return held(
                 reasons =
@@ -374,6 +780,12 @@ object VexLifeCurrentMemoryReader {
                 memoryTokenCap = memoryTokenCap,
             )
         }
+
+        requireCurrentDailyProjection(
+            score = score,
+            currentAuthority = currentAuthority,
+            daily = daily,
+        )
 
         return formContext(
             score = score,
@@ -590,6 +1002,847 @@ object VexLifeCurrentMemoryReader {
         )
     }
 
+    internal fun readCurrentMemoryHotPathFrontier(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentMemoryHotPathFrontier {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Memory hot path frontier requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversation =
+            DirectConversationStore(
+                home,
+            )
+                .currentHeadCoordinate()
+
+        val scoreRoot =
+            inside(
+                home,
+                "score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef,
+            )
+        val scoreHeadPath =
+            scoreRoot.resolve(
+                "head.json",
+            )
+        val scoreHead =
+            if (
+                Files.exists(
+                    scoreHeadPath,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                readObject(
+                    home = home,
+                    path = scoreHeadPath,
+                    label = "current Score head",
+                )
+                    .also {
+                        validateScoreHead(
+                            it,
+                            identity,
+                        )
+                    }
+                    .also {
+                        current ->
+                        val sha =
+                            current.string(
+                                "scoreHeadSha256",
+                            )
+                        val immutable =
+                            readObject(
+                                home = home,
+                                path =
+                                    scoreRoot.resolve(
+                                        "heads/" +
+                                            sha +
+                                            ".json",
+                                    ),
+                                label =
+                                    "immutable Score head",
+                            )
+                        validateScoreHead(
+                            immutable,
+                            identity,
+                        )
+                        require(
+                            immutable ==
+                                current,
+                        ) {
+                            "current Score head differs from its immutable receipt"
+                        }
+                    }
+            } else {
+                null
+            }
+
+        val authorityRoot =
+            "semantic-authority/score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val authorityHeadPath =
+            inside(
+                home,
+                authorityRoot +
+                    "/head.json",
+            )
+        val authorityHead =
+            if (
+                Files.exists(
+                    authorityHeadPath,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                readAddressed(
+                    home = home,
+                    path = authorityHeadPath,
+                    schemaVersion =
+                        SemanticAuthorityHeadSchema,
+                    refField =
+                        "semanticAuthorityHeadRef",
+                    hashField =
+                        "semanticAuthorityHeadSha256",
+                    prefix =
+                        "score-semantic-authority-head",
+                    label =
+                        "current semantic authority head",
+                )
+                    .also {
+                        validateAuthorityIdentity(
+                            it,
+                            identity,
+                        )
+                    }
+                    .also {
+                        current ->
+                        val sha =
+                            current.string(
+                                "semanticAuthorityHeadSha256",
+                            )
+                        val immutable =
+                            readAddressed(
+                                home = home,
+                                path =
+                                    inside(
+                                        home,
+                                        authorityRoot +
+                                            "/heads/" +
+                                            sha +
+                                            ".json",
+                                    ),
+                                schemaVersion =
+                                    SemanticAuthorityHeadSchema,
+                                refField =
+                                    "semanticAuthorityHeadRef",
+                                hashField =
+                                    "semanticAuthorityHeadSha256",
+                                prefix =
+                                    "score-semantic-authority-head",
+                                label =
+                                    "immutable semantic authority head",
+                            )
+                        validateAuthorityIdentity(
+                            immutable,
+                            identity,
+                        )
+                        require(
+                            immutable ==
+                                current,
+                        ) {
+                            "current semantic authority head differs from its immutable receipt"
+                        }
+                    }
+            } else {
+                null
+            }
+
+        val dailyRoot =
+            "daily-memory-dream/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val dailyHeadPath =
+            inside(
+                home,
+                dailyRoot +
+                    "/head.json",
+            )
+        val dailyHead =
+            if (
+                Files.exists(
+                    dailyHeadPath,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                readAddressed(
+                    home = home,
+                    path = dailyHeadPath,
+                    schemaVersion =
+                        "vextreme.daily-memory-dream-head/v1",
+                    refField =
+                        "dailyDreamHeadRef",
+                    hashField =
+                        "dailyDreamHeadSha256",
+                    prefix =
+                        "daily-dream-head",
+                    label =
+                        "current Daily Memory head",
+                )
+                    .also {
+                        current ->
+                        require(
+                            current.string(
+                                "homeRef",
+                            ) ==
+                                identity.homeRef &&
+                                current.string(
+                                    "deviceRef",
+                                ) ==
+                                identity.deviceRef &&
+                                current.string(
+                                    "companionLineageRef",
+                                ) ==
+                                identity.lineageRef &&
+                                current.string(
+                                    "threadRef",
+                                ) ==
+                                identity.threadRef &&
+                                current.string(
+                                    "contractRef",
+                                ) ==
+                                "contract.multivex.g03.daily-memory-only-dream/v1"
+                        ) {
+                            "Daily Memory head identity is invalid"
+                        }
+                        for (
+                            hash in
+                            listOf(
+                                current.string(
+                                    "sourceConversationHeadSha256",
+                                ),
+                                current.string(
+                                    "sourceScoreHeadSha256",
+                                ),
+                                current.string(
+                                    "sourceSemanticAuthorityHeadSha256",
+                                ),
+                            )
+                        ) {
+                            requireSha256(
+                                hash,
+                                "Daily Memory hot path source hash",
+                            )
+                        }
+                    }
+                    .also {
+                        current ->
+                        val sha =
+                            current.string(
+                                "dailyDreamHeadSha256",
+                            )
+                        val immutable =
+                            readAddressed(
+                                home = home,
+                                path =
+                                    inside(
+                                        home,
+                                        dailyRoot +
+                                            "/heads/" +
+                                            sha +
+                                            ".json",
+                                    ),
+                                schemaVersion =
+                                    "vextreme.daily-memory-dream-head/v1",
+                                refField =
+                                    "dailyDreamHeadRef",
+                                hashField =
+                                    "dailyDreamHeadSha256",
+                                prefix =
+                                    "daily-dream-head",
+                                label =
+                                    "immutable Daily Memory head",
+                            )
+                        require(
+                            immutable ==
+                                current,
+                        ) {
+                            "current Daily Memory head differs from its immutable receipt"
+                        }
+                    }
+            } else {
+                null
+            }
+
+        return CurrentMemoryHotPathFrontier(
+            homeRef =
+                identity.homeRef,
+            deviceRef =
+                identity.deviceRef,
+            companionLineageRef =
+                identity.lineageRef,
+            threadRef =
+                identity.threadRef,
+            conversationHeadSha256 =
+                conversation
+                    ?.conversationHeadSha256,
+            priorConversationHeadSha256 =
+                conversation
+                    ?.priorConversationHeadSha256,
+            conversationSequence =
+                conversation
+                    ?.sequence,
+            scoreHeadSha256 =
+                scoreHead
+                    ?.string(
+                        "scoreHeadSha256",
+                    ),
+            scoreSourceConversationHeadSha256 =
+                scoreHead
+                    ?.string(
+                        "sourceConversationHeadSha256",
+                    ),
+            semanticAuthorityHeadSha256 =
+                authorityHead
+                    ?.string(
+                        "semanticAuthorityHeadSha256",
+                    ),
+            dailyDreamHeadSha256 =
+                dailyHead
+                    ?.string(
+                        "dailyDreamHeadSha256",
+                    ),
+            dailySourceConversationHeadSha256 =
+                dailyHead
+                    ?.string(
+                        "sourceConversationHeadSha256",
+                    ),
+            dailySourceScoreHeadSha256 =
+                dailyHead
+                    ?.string(
+                        "sourceScoreHeadSha256",
+                    ),
+            dailySourceSemanticAuthorityHeadSha256 =
+                dailyHead
+                    ?.string(
+                        "sourceSemanticAuthorityHeadSha256",
+                    ),
+        )
+    }
+
+    internal fun readCurrentAcceptedSemanticSnapshot(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentAcceptedSemanticSnapshot {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "current accepted semantic reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val observedConversationHeadSha256 =
+            conversation.head
+                ?.conversationHeadSha256
+        val coordinates =
+            readCurrentScoreCoordinates(
+                productHome = home,
+                threadRef = threadRef,
+            )
+
+        if (
+            coordinates.scoreHeadSha256 ==
+            null
+        ) {
+            require(
+                coordinates.currentStatementRefs.isEmpty() &&
+                    coordinates.semanticAuthorityHeadSha256 ==
+                        null,
+            ) {
+                "empty Score coordinates cannot carry accepted semantic continuity"
+            }
+            return CurrentAcceptedSemanticSnapshot(
+                homeRef = identity.homeRef,
+                deviceRef = identity.deviceRef,
+                companionLineageRef = identity.lineageRef,
+                threadRef = identity.threadRef,
+                observedConversationHeadSha256 =
+                    observedConversationHeadSha256,
+                scoreHeadSha256 = null,
+                sourceScoreConversationHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                statements = emptyList(),
+            )
+        }
+
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    // Current accepted-semantic projection must tolerate the narrow transition
+                    // window where semantic authority has advanced but Score membership has not
+                    // yet caught up. Historical statement authority is still validated by
+                    // loadScore; current admission is owned by the explicit filter below.
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val currentStatements =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .sortedBy(
+                    Statement::statementRef,
+                )
+        val currentAuthority =
+            score.authority
+        val semanticAuthorityHeadSha256 =
+            currentAuthority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        if (
+            currentStatements.isNotEmpty()
+        ) {
+            requireNotNull(
+                currentAuthority,
+            ) {
+                "current Score statements require current semantic authority"
+            }
+        }
+        val acceptedContinuity =
+            currentStatements
+                .filter {
+                    statement ->
+                    statement.acceptedForContinuity &&
+                        statement.consentState in
+                            positiveConsent &&
+                        currentAuthority !=
+                            null &&
+                        authorityContains(
+                            currentAuthority,
+                            statement,
+                        )
+                }
+        require(
+            currentStatements
+                .map(
+                    Statement::statementRef,
+                ) ==
+                coordinates.currentStatementRefs &&
+                score.head.string(
+                    "scoreHeadSha256",
+                ) ==
+                    coordinates.scoreHeadSha256 &&
+                score.head.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                    coordinates.sourceConversationHeadSha256 &&
+                semanticAuthorityHeadSha256 ==
+                    coordinates.semanticAuthorityHeadSha256,
+        ) {
+            "current accepted semantic projection differs from current Score coordinates"
+        }
+
+        return CurrentAcceptedSemanticSnapshot(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            observedConversationHeadSha256 =
+                observedConversationHeadSha256,
+            scoreHeadSha256 =
+                coordinates.scoreHeadSha256,
+            sourceScoreConversationHeadSha256 =
+                coordinates.sourceConversationHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            statements =
+                acceptedContinuity.map {
+                    statement ->
+                    CurrentAcceptedStatement(
+                        statementRef = statement.statementRef,
+                        subjectRef = statement.subjectRef,
+                        semanticSubjectFingerprint =
+                            statement.semanticSubjectFingerprint,
+                        summary = statement.summary,
+                        summaryHash = statement.summaryHash,
+                        memoryRelation = statement.memoryRelation,
+                        recordedStatementState =
+                            statement.recordedState,
+                        effectiveState =
+                            statement.effectiveState,
+                        consentState = statement.consentState,
+                        semanticAcceptanceRef =
+                            statement.acceptanceRef,
+                        semanticAcceptanceSha256 =
+                            statement.acceptanceSha256,
+                        semanticAuthorityHeadSha256 =
+                            statement.semanticAuthorityHeadSha256,
+                        sourceConversationHeadSha256 =
+                            statement.sourceConversationHeadSha256,
+                    )
+                },
+        )
+    }
+
+    internal fun readConversationRecallMembrane(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): ConversationRecallMembrane {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Conversation recall membrane requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val coordinates =
+            readCurrentScoreCoordinates(
+                productHome = home,
+                threadRef = threadRef,
+            )
+
+        if (
+            coordinates.scoreHeadSha256 ==
+                null
+        ) {
+            require(
+                coordinates.semanticAuthorityHeadSha256 ==
+                    null
+            ) {
+                "empty Score coordinates cannot carry semantic recall authority"
+            }
+            return formConversationRecallMembrane(
+                scoreHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                statements = emptyList(),
+            )
+        }
+
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val semanticAuthorityHeadSha256 =
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        require(
+            score.head.string(
+                "scoreHeadSha256",
+            ) ==
+                coordinates.scoreHeadSha256 &&
+                score.head.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                coordinates.sourceConversationHeadSha256 &&
+                semanticAuthorityHeadSha256 ==
+                coordinates.semanticAuthorityHeadSha256
+        ) {
+            "Conversation recall membrane differs from current Score coordinates"
+        }
+
+        return formConversationRecallMembrane(
+            scoreHeadSha256 =
+                coordinates.scoreHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            statements =
+                score.statements.map {
+                    statement ->
+                    ConversationRecallStatementStanding(
+                        sourceEventRefs =
+                            statement.sourceBindings
+                                .map {
+                                    binding ->
+                                    binding.jsonObject.string(
+                                        "eventRef",
+                                    )
+                                }
+                                .toSet(),
+                        current =
+                            statement.current,
+                        effectiveState =
+                            statement.effectiveState,
+                        acceptedForContinuity =
+                            statement.acceptedForContinuity,
+                        consentState =
+                            statement.consentState,
+                        currentAuthorityMember =
+                            score.authority
+                                ?.let {
+                                    authority ->
+                                    authorityContains(
+                                        authority,
+                                        statement,
+                                    )
+                                }
+                                ?: false,
+                    )
+                },
+        )
+    }
+
+    internal fun formConversationRecallMembrane(
+        scoreHeadSha256: String?,
+        semanticAuthorityHeadSha256: String?,
+        statements: List<ConversationRecallStatementStanding>,
+    ): ConversationRecallMembrane {
+        scoreHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "Conversation recall Score head",
+                )
+            }
+        semanticAuthorityHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "Conversation recall semantic authority head",
+                )
+            }
+
+        val currentAdmitted =
+            mutableSetOf<String>()
+        val historicalAdmitted =
+            mutableSetOf<String>()
+        val held =
+            mutableSetOf<String>()
+
+        statements.forEach {
+            statement ->
+            require(
+                statement.sourceEventRefs.isNotEmpty() &&
+                    statement.sourceEventRefs.all(
+                        String::isNotBlank,
+                    )
+            ) {
+                "Conversation recall statement standing requires exact source event refs"
+            }
+            val admitted =
+                statement.acceptedForContinuity &&
+                    statement.consentState in
+                    positiveConsent
+            when {
+                statement.current &&
+                    admitted &&
+                    statement.currentAuthorityMember &&
+                    statement.effectiveState !=
+                    "RELEASED_OR_TOMBSTONED" ->
+                    currentAdmitted +=
+                        statement.sourceEventRefs
+
+                !statement.current &&
+                    admitted &&
+                    statement.effectiveState in
+                    setOf(
+                        "CORRECTED",
+                        "SUPERSEDED",
+                    ) ->
+                    historicalAdmitted +=
+                        statement.sourceEventRefs
+
+                else ->
+                    held +=
+                        statement.sourceEventRefs
+            }
+        }
+
+        val historical =
+            historicalAdmitted -
+                currentAdmitted
+        val blocked =
+            held -
+                currentAdmitted -
+                historicalAdmitted
+
+        return ConversationRecallMembrane(
+            bindingRef =
+                if (
+                    scoreHeadSha256 ==
+                        null &&
+                    semanticAuthorityHeadSha256 ==
+                        null
+                ) {
+                    VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef
+                } else {
+                    "lifecycle.score." +
+                        (
+                            scoreHeadSha256
+                                ?: "none"
+                            ) +
+                        "." +
+                        (
+                            semanticAuthorityHeadSha256
+                                ?: "none"
+                            )
+                },
+            blockedEventRefs =
+                blocked.toSortedSet(),
+            historicalCurrentizedEventRefs =
+                historical.toSortedSet(),
+        )
+    }
+
+    internal fun readCurrentSemanticAuthorityHead(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): JsonObject? {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "semantic authority reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+
+        return loadAuthorityOrNull(
+            home = home,
+            identity = identity,
+        )
+    }
+
+    internal fun readCurrentScoreStatementBinding(
+        productHome: Path,
+        statementRef: String,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreStatementBinding? {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score statement reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversationStore.current(),
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val statement =
+            score.statements
+                .singleOrNull {
+                    it.current &&
+                        it.statementRef ==
+                        statementRef
+                }
+                ?: return null
+
+        return CurrentScoreStatementBinding(
+            statementRef = statement.statementRef,
+            semanticSubjectFingerprint =
+                statement.semanticSubjectFingerprint,
+            memoryRelation = statement.memoryRelation,
+            semanticAcceptanceRef = statement.acceptanceRef,
+            semanticAcceptanceSha256 = statement.acceptanceSha256,
+        )
+    }
 
     internal fun readCurrentScoreAcceptance(
         productHome: Path,
@@ -2926,17 +4179,296 @@ object VexLifeCurrentMemoryReader {
         }
     }
 
+    private fun scoreHeadLineageContains(
+        home: Path,
+        identity: Identity,
+        current: JsonObject,
+        expectedHistoricalSha256: String,
+        expectedSourceConversationHeadSha256: String,
+    ): Boolean {
+        requireSha256(
+            expectedHistoricalSha256,
+            "historical Score head",
+        )
+        requireSha256(
+            expectedSourceConversationHeadSha256,
+            "historical Score source Conversation head",
+        )
+        val root =
+            "score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val visited =
+            mutableSetOf<String>()
+        var cursor =
+            current
+        while (
+            true
+        ) {
+            val currentSha =
+                cursor.string(
+                    "scoreHeadSha256",
+                )
+            require(
+                visited.add(
+                    currentSha,
+                ),
+            ) {
+                "Score head lineage contains a cycle"
+            }
+            if (
+                currentSha ==
+                expectedHistoricalSha256
+            ) {
+                require(
+                    cursor.string(
+                        "sourceConversationHeadSha256",
+                    ) ==
+                        expectedSourceConversationHeadSha256,
+                ) {
+                    "Daily Memory source Conversation head differs from its source Score head"
+                }
+                return true
+            }
+            val sequence =
+                cursor.long(
+                    "sequence",
+                )
+            val prior =
+                cursor.nullableString(
+                    "priorScoreHeadSha256",
+                )
+            if (
+                sequence ==
+                0L
+            ) {
+                require(
+                    prior ==
+                        null,
+                ) {
+                    "Score genesis head has a predecessor"
+                }
+                return false
+            }
+            val priorSha =
+                requireNotNull(
+                    prior,
+                ) {
+                    "Score non-genesis head has no predecessor"
+                }
+            requireSha256(
+                priorSha,
+                "prior Score head",
+            )
+            val previous =
+                readObject(
+                    home,
+                    inside(
+                        home,
+                        root +
+                            "/heads/" +
+                            priorSha +
+                            ".json",
+                    ),
+                    "prior Score head",
+                )
+            validateScoreHead(
+                previous,
+                identity,
+            )
+            require(
+                previous.string(
+                    "scoreHeadSha256",
+                ) ==
+                    priorSha &&
+                    previous.long(
+                        "sequence",
+                    ) ==
+                    sequence -
+                    1,
+            ) {
+                "Score head lineage is not contiguous"
+            }
+            cursor =
+                previous
+        }
+    }
+
+    private fun semanticAuthorityLineageContains(
+        home: Path,
+        identity: Identity,
+        current: JsonObject,
+        expectedHistoricalSha256: String,
+    ): Boolean {
+        requireSha256(
+            expectedHistoricalSha256,
+            "historical semantic authority head",
+        )
+        val root =
+            "semantic-authority/score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val visited =
+            mutableSetOf<String>()
+        var cursor =
+            current
+        while (
+            true
+        ) {
+            val currentSha =
+                cursor.string(
+                    "semanticAuthorityHeadSha256",
+                )
+            require(
+                visited.add(
+                    currentSha,
+                ),
+            ) {
+                "semantic authority head lineage contains a cycle"
+            }
+            if (
+                currentSha ==
+                expectedHistoricalSha256
+            ) {
+                return true
+            }
+            val sequence =
+                cursor.long(
+                    "sequence",
+                )
+            val prior =
+                cursor.nullableString(
+                    "priorSemanticAuthorityHeadSha256",
+                )
+            if (
+                sequence ==
+                0L
+            ) {
+                require(
+                    prior ==
+                        null,
+                ) {
+                    "semantic authority genesis head has a predecessor"
+                }
+                return false
+            }
+            val priorSha =
+                requireNotNull(
+                    prior,
+                ) {
+                    "semantic authority non-genesis head has no predecessor"
+                }
+            requireSha256(
+                priorSha,
+                "priorSemanticAuthorityHeadSha256",
+            )
+            val previous =
+                readAddressed(
+                    home = home,
+                    path =
+                        inside(
+                            home,
+                            root +
+                                "/heads/" +
+                                priorSha +
+                                ".json",
+                        ),
+                    schemaVersion = SemanticAuthorityHeadSchema,
+                    refField = "semanticAuthorityHeadRef",
+                    hashField = "semanticAuthorityHeadSha256",
+                    prefix = "score-semantic-authority-head",
+                    label = "prior semantic authority head",
+                )
+            validateAuthorityIdentity(
+                previous,
+                identity,
+            )
+            require(
+                previous.long(
+                    "sequence",
+                ) ==
+                    sequence -
+                    1,
+            ) {
+                "semantic authority head sequence is not contiguous"
+            }
+            cursor =
+                previous
+        }
+    }
+
+    private fun requireCurrentDailyProjection(
+        score: ScoreSnapshot,
+        currentAuthority: JsonObject,
+        daily: DailySnapshot,
+    ) {
+        val currentStatements =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .sortedBy(
+                    Statement::statementRef,
+                )
+        val active =
+            currentStatements
+                .filter {
+                    it.acceptedForContinuity &&
+                        it.consentState in
+                        positiveConsent &&
+                        authorityContains(
+                            currentAuthority,
+                            it,
+                        )
+                }
+                .map(
+                    Statement::statementRef,
+                )
+        val held =
+            currentStatements
+                .filter {
+                    !(
+                        it.acceptedForContinuity &&
+                            it.consentState in
+                            positiveConsent &&
+                            authorityContains(
+                                currentAuthority,
+                                it,
+                            )
+                    )
+                }
+                .map(
+                    Statement::statementRef,
+                )
+        val loops =
+            score.openLoops
+                .filter {
+                    it.state ==
+                        "OPEN"
+                }
+                .map(
+                    OpenLoop::ref,
+                )
+                .sorted()
+        require(
+            daily.activeStatementRefs ==
+                active &&
+                daily.heldStatementRefs ==
+                held &&
+                daily.openLoopRefs ==
+                loops,
+        ) {
+            "Daily Memory projection differs from current Score/authority"
+        }
+    }
+
     private fun loadDaily(
         home: Path,
         identity: Identity,
-        score: ScoreSnapshot,
         conversationStore: DirectConversationStore,
     ): DailySnapshot {
-        val currentAuthority =
-            requireCurrentScoreAuthority(
-                score = score,
-                label = "Daily Memory",
-            )
         val root =
             "daily-memory-dream/" +
                 identity.lineageRef +
@@ -2978,25 +4510,29 @@ object VexLifeCurrentMemoryReader {
                     "threadRef",
                 ) ==
                 identity.threadRef &&
-                sourceConversationHead ==
-                score.head.string(
-                    "sourceConversationHeadSha256",
-                ) &&
                 head.string(
-                    "sourceScoreHeadSha256",
+                    "contractRef",
                 ) ==
-                score.head.string(
-                    "scoreHeadSha256",
-                ) &&
-                head.string(
-                    "sourceSemanticAuthorityHeadSha256",
-                ) ==
-                currentAuthority.string(
-                    "semanticAuthorityHeadSha256",
-                ),
+                "contract.multivex.g03.daily-memory-only-dream/v1",
         ) {
-            "Daily Memory head is not exact to the current Score/authority source frontier"
+            "Daily Memory head identity is invalid"
         }
+        requireSha256(
+            sourceConversationHead,
+            "Daily Memory source Conversation head",
+        )
+        requireSha256(
+            head.string(
+                "sourceScoreHeadSha256",
+            ),
+            "Daily Memory source Score head",
+        )
+        requireSha256(
+            head.string(
+                "sourceSemanticAuthorityHeadSha256",
+            ),
+            "Daily Memory source semantic authority head",
+        )
         val historicalDailySource =
             conversationStore.historicalCompletedTurn(
                 sourceConversationHead,
@@ -3087,14 +4623,14 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceScoreHeadSha256",
                 ) ==
-                score.head.string(
-                    "scoreHeadSha256",
+                head.string(
+                    "sourceScoreHeadSha256",
                 ) &&
                 stratum.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                currentAuthority.string(
-                    "semanticAuthorityHeadSha256",
+                head.string(
+                    "sourceSemanticAuthorityHeadSha256",
                 ) &&
                 !stratum.boolean(
                     "trainingRan",
@@ -3192,8 +4728,8 @@ object VexLifeCurrentMemoryReader {
             )
 
         val authoritySha =
-            currentAuthority.string(
-                "semanticAuthorityHeadSha256",
+            head.string(
+                "sourceSemanticAuthorityHeadSha256",
             )
         for (
             receipt in
@@ -3296,8 +4832,8 @@ object VexLifeCurrentMemoryReader {
                     receipt.string(
                         "sourceScoreHeadSha256",
                     ) ==
-                    score.head.string(
-                        "scoreHeadSha256",
+                    head.string(
+                        "sourceScoreHeadSha256",
                     ),
             ) {
                 "Daily Memory child receipt differs from its exact Daily source frontier"
@@ -3326,81 +4862,106 @@ object VexLifeCurrentMemoryReader {
             "Daily Memory bundle violated read-only/reference-only boundary"
         }
 
-        val currentStatements =
-            score.statements
-                .filter(
-                    Statement::current,
-                )
-                .sortedBy(
-                    Statement::statementRef,
-                )
         val active =
-            currentStatements
-                .filter {
-                    it.acceptedForContinuity &&
-                        it.consentState in
-                        positiveConsent &&
-                        authorityContains(
-                            currentAuthority,
-                            it,
-                        )
-                }
-                .map(
-                    Statement::statementRef,
-                )
-        val held =
-            currentStatements
-                .filter {
-                    !(
-                        it.acceptedForContinuity &&
-                            it.consentState in
-                            positiveConsent &&
-                            authorityContains(
-                                currentAuthority,
-                                it,
-                            )
-                    )
-                }
-                .map(
-                    Statement::statementRef,
-                )
-        val loops =
-            score.openLoops
-                .filter {
-                    it.state ==
-                        "OPEN"
-                }
-                .map(
-                    OpenLoop::ref,
-                )
-                .sorted()
-        require(
             postDream.stringList(
                 "activeContinuityStatementRefs",
-            ) ==
+            )
+        val held =
+            postDream.stringList(
+                "heldOrDeferredStatementRefs",
+            )
+        val loops =
+            postDream.stringList(
+                "openLoopRefs",
+            )
+        for (
+            refs in
+            listOf(
+                active,
+                held,
+                loops,
+            )
+        ) {
+            refs.forEach {
+                ref ->
+                require(
+                    ref.matches(
+                        Regex(
+                            "[A-Za-z0-9][A-Za-z0-9._:/-]*",
+                        ),
+                    ),
+                ) {
+                    "Daily Memory projected ref must be one portable non-empty ref"
+                }
+            }
+            require(
+                refs.distinct().size ==
+                    refs.size &&
+                    refs.sorted() ==
+                    refs,
+            ) {
+                "Daily Memory projected refs must be unique and sorted"
+            }
+        }
+        require(
+            active.toSet()
+                .intersect(
+                    held.toSet(),
+                )
+                .isEmpty(),
+        ) {
+            "Daily Memory active and held statement refs overlap"
+        }
+
+        val consolidationActive =
+            consolidation.objectList(
+                "carriedCurrentScoreBindings",
+            )
+                .map {
+                    it.string(
+                        "statementRef",
+                    )
+                }
+        val consolidationHeld =
+            consolidation.objectList(
+                "heldOrDeferredScoreBindings",
+            )
+                .map {
+                    it.string(
+                        "statementRef",
+                    )
+                }
+        val consolidationLoops =
+            consolidation.objectList(
+                "openLoopCarryForwardBindings",
+            )
+                .map {
+                    it.string(
+                        "openLoopRef",
+                    )
+                }
+        require(
+            consolidationActive ==
                 active &&
-                postDream.stringList(
-                    "heldOrDeferredStatementRefs",
-                ) ==
+                consolidationHeld ==
                 held &&
-                postDream.stringList(
-                    "openLoopRefs",
-                ) ==
+                consolidationLoops ==
                 loops,
         ) {
-            "post-Dream Memory projection differs from current Score/authority"
+            "Daily Memory consolidation bindings differ from post-Dream projection"
         }
 
         return DailySnapshot(
             stratum = stratum,
             sourceConversationHeadSha256 = sourceConversationHead,
             sourceScoreHeadSha256 =
-                score.head.string(
-                    "scoreHeadSha256",
+                head.string(
+                    "sourceScoreHeadSha256",
                 ),
             sourceSemanticAuthorityHeadSha256 = authoritySha,
             activeStatementRefs = active,
             heldStatementRefs = held,
+            openLoopRefs = loops,
         )
     }
 

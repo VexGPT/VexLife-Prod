@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -18,12 +21,20 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexContractJson
+import vexlife.model.heretic.HereticCompanionRepresentation
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 /**
@@ -42,9 +53,6 @@ import vexlife.model.heretic.HereticRuntimeState
  * human disclosure, or presentation.
  */
 object DirectCompanionConnection {
-    const val OutputTokenLimit =
-        16_000
-
     const val RuntimeObservationSchema =
         "vexlife-prod.model-runtime-observation/v1"
 
@@ -56,6 +64,18 @@ object DirectCompanionConnection {
     // consumption after the stream has been established.
     private const val RequestTimeoutMs =
         120_000L
+
+    /**
+     * The warmup stream must remain nonterminal long enough for the client to close it after MLX has
+     * materialized the system segment. mlx-lm 0.32.0 replaces cached prefixes when a trimmable
+     * terminal assistant cache is inserted, so a one-token completed warmup destroys the prefix it
+     * was meant to preserve.
+     */
+    private const val SystemPrefixPrefillStreamTokenCeiling =
+        256
+
+    private const val SystemPrefixPrefillProviderFraming =
+        "Count upward from 1 and continue until the caller closes this provider warmup stream."
 
     private val JsonCodec =
         Json {
@@ -77,11 +97,94 @@ object DirectCompanionConnection {
         val code: FailureCode,
         message: String,
         cause: Throwable? = null,
+        /** What the stage cost and why it stopped, when the provider answered at all. */
+        val measurement: StageMeasurement? = null,
     ) : IllegalStateException(
         message,
         cause,
     )
 
+    enum class StageStop(
+        val wire: String,
+    ) {
+        COMPLETED("COMPLETED"),
+        OUTPUT_LIMIT_DURING_REASONING("OUTPUT_LIMIT_DURING_REASONING"),
+        OUTPUT_LIMIT_DURING_ANSWER("OUTPUT_LIMIT_DURING_ANSWER"),
+        STREAM_CLOSED_BEFORE_DONE("STREAM_CLOSED_BEFORE_DONE"),
+        ENDED_WITHOUT_ANSWER("ENDED_WITHOUT_ANSWER"),
+    }
+
+    data class StageMeasurement(
+        val stop: StageStop,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
+        val reasoningCharacters: Int,
+        val answerCharacters: Int,
+        val controlHeaderInReasoning: Boolean,
+        val controlHeaderInAnswer: Boolean,
+    ) {
+        val prefillTokens: Int?
+            get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+
+        fun refs(): Map<String, String> = buildMap {
+            put("stop", stop.wire)
+            finishReason?.let { put("finishReason", it) }
+            promptTokens?.let { put("promptTokens", it.toString()) }
+            cachedPromptTokens?.let { put("cachedPromptTokens", it.toString()) }
+            prefillTokens?.let { put("prefillTokens", it.toString()) }
+            completionTokens?.let { put("completionTokens", it.toString()) }
+            firstTokenMillis?.let { put("firstTokenMs", it.toString()) }
+            firstAnswerMillis?.let { put("firstAnswerMs", it.toString()) }
+            put("totalMs", totalMillis.toString())
+            put("reasoningChars", reasoningCharacters.toString())
+            put("answerChars", answerCharacters.toString())
+            put("controlHeaderInReasoning", controlHeaderInReasoning.toString())
+            put("controlHeaderInAnswer", controlHeaderInAnswer.toString())
+        }
+    }
+
+    private val ControlHeaders =
+        listOf(
+            VexLifeCapabilityRequest.RequestHeader,
+            DirectConversationSourceReturn.RequestHeader,
+        )
+
+    private fun containsControlHeader(text: CharSequence): Boolean =
+        ControlHeaders.any { text.contains(it) }
+
+    private data class Usage(
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+    )
+
+    private fun usageOrNull(element: JsonElement?): Usage? {
+        val usage = element as? JsonObject ?: return null
+        fun count(value: JsonElement?): Int? =
+            (value as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
+        return Usage(
+            promptTokens = count(usage["prompt_tokens"]),
+            cachedPromptTokens =
+                count((usage["prompt_tokens_details"] as? JsonObject)?.get("cached_tokens")),
+            completionTokens = count(usage["completion_tokens"]),
+        )
+    }
+
+    private fun stopFor(done: Boolean, finishReason: String?, answered: Boolean): StageStop =
+        when {
+            !done -> StageStop.STREAM_CLOSED_BEFORE_DONE
+            finishReason == "length" && !answered -> StageStop.OUTPUT_LIMIT_DURING_REASONING
+            finishReason == "length" -> StageStop.OUTPUT_LIMIT_DURING_ANSWER
+            !answered -> StageStop.ENDED_WITHOUT_ANSWER
+            else -> StageStop.COMPLETED
+        }
+
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     private data class RequestPayload(
         val model: String,
@@ -92,18 +195,54 @@ object DirectCompanionConnection {
             mapOf(
                 "include_usage" to true,
             ),
-        // Exact certified generation_config.json sampling projection:
-        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
-        val temperature: Double = 1.0,
-        val top_p: Double = 0.95,
-        val top_k: Int = 20,
-        val chat_template_kwargs: Map<String, Boolean>,
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
+        /**
+         * Provider-execution metadata only. Stock mlx-lm ignores this unknown top-level field.
+         * The exact Product adapter may consume it to place one cache boundary without changing
+         * [messages] or template kwargs.
+         */
+        @SerialName("vexlife_prompt_cache_boundary_message_count")
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val vexlifePromptCacheBoundaryMessageCount: Int? = null,
+    )
+
+    /**
+     * Provider-framing-only request shape for stable-prefix prefill.
+     *
+     * The trailing user framing is an mlx-lm transport boundary, not a semantic human message.
+     * Keep it outside [CompanionProviderMessage] so it can never enter ordinary Conversation/prompt
+     * ownership or be mistaken for something the person said.
+     */
+    @Serializable
+    private data class SystemPrefixPrefillProviderMessage(
+        val role: String,
+        val content: String,
+    )
+
+    @Serializable
+    private data class SystemPrefixPrefillRequestPayload(
+        val model: String,
+        val messages: List<SystemPrefixPrefillProviderMessage>,
+        val max_tokens: Int,
+        val stream: Boolean = true,
+        val stream_options: Map<String, Boolean> =
+            mapOf(
+                "include_usage" to true,
+            ),
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
     )
 
     data class HttpCall(
         val uri: URI,
         val body: String,
         val timeoutMs: Long,
+        val cancellation: DirectCompanionCancellation? = null,
     )
 
     data class HttpResult(
@@ -161,6 +300,7 @@ object DirectCompanionConnection {
         override fun post(
             call: HttpCall,
         ): HttpResult {
+            call.cancellation?.checkpoint()
             val request =
                 request(
                     call = call,
@@ -174,6 +314,7 @@ object DirectCompanionConnection {
                     ),
                 )
 
+            call.cancellation?.checkpoint()
             return HttpResult(
                 status = response.statusCode(),
                 body = response.body(),
@@ -187,6 +328,7 @@ object DirectCompanionConnection {
             call: HttpCall,
             onLine: (String) -> Unit,
         ): StreamingHttpResult {
+            call.cancellation?.checkpoint()
             val response =
                 client.send(
                     request(
@@ -199,33 +341,50 @@ object DirectCompanionConnection {
                 MessageDigest.getInstance(
                     "SHA-256",
                 )
-
-            DigestInputStream(
-                response.body(),
-                digest,
-            )
-                .bufferedReader(
-                    StandardCharsets.UTF_8,
-                )
-                .use {
-                    reader ->
-                    while (
-                        true
-                    ) {
-                        val line =
-                            reader.readLine()
-                                ?: break
-                        if (
-                            response.statusCode() in
-                                200..299
-                        ) {
-                            onLine(
-                                line,
-                            )
+            val body =
+                response.body()
+            val cancellationRegistration =
+                call.cancellation
+                    ?.onCancel {
+                        runCatching {
+                            body.close()
                         }
                     }
-                }
 
+            try {
+                DigestInputStream(
+                    body,
+                    digest,
+                )
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .use {
+                        reader ->
+                        while (
+                            true
+                        ) {
+                            call.cancellation?.checkpoint()
+                            val line =
+                                reader.readLine()
+                                    ?: break
+                            call.cancellation?.checkpoint()
+                            if (
+                                response.statusCode() in
+                                    200..299
+                            ) {
+                                onLine(
+                                    line,
+                                )
+                            }
+                        }
+                    }
+            } finally {
+                cancellationRegistration
+                    ?.close()
+            }
+
+            call.cancellation?.checkpoint()
             return StreamingHttpResult(
                 status = response.statusCode(),
                 responseBodySha256 = hex(
@@ -324,6 +483,7 @@ object DirectCompanionConnection {
         val reasoning: ReasoningObservation,
         val finishReason: String?,
         val assistantRoleObserved: Boolean,
+        val measurement: StageMeasurement,
     )
 
     @Serializable
@@ -360,6 +520,7 @@ object DirectCompanionConnection {
         val modelWeightEffectObserved: Boolean,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     @ConsistentCopyVisibility
     data class InvocationEvidence internal constructor(
@@ -368,6 +529,11 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
+        /** Exact native function schema offered to this provider stage, without repeating its text. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolCount: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolSchemaSha256: String? = null,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -392,7 +558,319 @@ object DirectCompanionConnection {
         val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
+        /**
+         * Exact ephemeral HTTP request body submitted to the local model runtime.
+         *
+         * The durable invocation evidence retains only [InvocationEvidence.requestBodySha256].
+         * This body exists only for the live caller so a human can compare VexLife's projection
+         * with the actual provider request without creating a second prompt-history store.
+         */
+        val providerRequestBody: String,
+        /** Diagnostics only; not part of durable runtime evidence fingerprints. */
+        val measurement: StageMeasurement,
     )
+
+    /**
+     * Provider-owned prefill of one already-authored stable system prefix.
+     *
+     * Semantic prompt bytes are supplied by the caller's rightful prompt owner. This Connection
+     * adds provider-only framing after that system segment and opens a bounded stream. mlx-lm 0.32.0
+     * caches the system segment while processing the prompt, but on a normally completed request its
+     * terminal assistant cache removes cached prefixes. The Product therefore closes this warmup
+     * after the first nonterminal provider event: prompt processing has completed, the system cache
+     * exists, and terminal assistant-cache replacement has not happened yet.
+     *
+     * No generated text is returned or persisted.
+     */
+    internal sealed interface SystemPrefixPrefillResult {
+        data class Performed(
+            val runtimeReceiptRef: String,
+            val modelRef: String,
+            val systemMessageSha256: String,
+            val requestBodySha256: String,
+            val promptTokens: Int?,
+            val cachedPromptTokens: Int?,
+            val completionTokens: Int?,
+            val totalMillis: Long,
+        ) : SystemPrefixPrefillResult {
+            val prefillTokens: Int?
+                get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+        }
+
+        data class Held(
+            val reasonRef: String,
+        ) : SystemPrefixPrefillResult
+    }
+
+    /** Internal control flow used only to close a successful cache-preserving warmup stream. */
+    private class CachePreservingPrefillStop : RuntimeException()
+
+    private fun chatTemplateKwargs(
+        profile: HereticCompanionRepresentation.Profile,
+    ): Map<String, JsonPrimitive> =
+        buildMap {
+            put("enable_thinking", JsonPrimitive(true))
+            profile.modelIdentity
+                ?.let {
+                    put(
+                        "model_identity",
+                        JsonPrimitive(
+                            it,
+                        ),
+                    )
+                }
+            profile.generation.reasoningEffort
+                ?.let {
+                    put(
+                        "reasoning_effort",
+                        JsonPrimitive(
+                            it.wireValue,
+                        ),
+                    )
+                }
+        }
+
+    internal fun prefillStableSystemPrefix(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        systemContent: String,
+        transport: Transport = SystemTransport,
+        monotonicNanos: () -> Long = System::nanoTime,
+        cancellation: DirectCompanionCancellation? = null,
+    ): SystemPrefixPrefillResult {
+        cancellation?.checkpoint()
+        if (systemContent.isBlank()) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "EMPTY_SYSTEM_PREFIX",
+            )
+        }
+
+        val entry =
+            HereticModelCatalog.entry(
+                runtime.modelRef,
+            )
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "MODEL_NOT_PRODUCT_CATALOG",
+                )
+        requireQualifiedRuntime(
+            runtime = runtime,
+            model = entry,
+        )
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolveByRef(
+                    model = entry,
+                    realizationRef = runtime.realizationRef,
+                ),
+            ) {
+                "qualified runtime realization is not offered for stable-prefix prefill"
+            }
+        val profile =
+            entry.companionProfile
+        val nativeTools =
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = profile,
+                qualification = runtime.qualification,
+            )
+        if (
+            realization.runtimeConfigurationProfileRef !=
+                HereticRuntimeConfiguration.MlxPromptCacheProfileRef
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "RUNTIME_PROMPT_CACHE_PROFILE_NOT_MLX",
+            )
+        }
+        if (
+            profile.messageProtocol !=
+                HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT ||
+            profile.reasoningRepresentation !=
+                HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS ||
+            nativeTools
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
+            )
+        }
+
+        val streamingTransport =
+            transport as?
+                StreamingTransport
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "PROVIDER_PREFIX_STREAMING_TRANSPORT_REQUIRED",
+                )
+        val origin =
+            admittedOrigin(
+                runtime.endpoint,
+            )
+        val generation =
+            profile.generation
+        val payload =
+            SystemPrefixPrefillRequestPayload(
+                model = runtime.requestModel,
+                messages =
+                    listOf(
+                        SystemPrefixPrefillProviderMessage(
+                            role = "system",
+                            content = systemContent,
+                        ),
+                        // Provider framing only. The warmup must yield a nonterminal generation event
+                        // so the client can close after the system segment is cached but before
+                        // mlx-lm inserts its terminal assistant cache and removes cached prefixes.
+                        SystemPrefixPrefillProviderMessage(
+                            role = "user",
+                            content = SystemPrefixPrefillProviderFraming,
+                        ),
+                    ),
+                max_tokens = SystemPrefixPrefillStreamTokenCeiling,
+                temperature = generation.sampling.temperature,
+                top_p = generation.sampling.topP,
+                top_k = generation.sampling.topK,
+                chat_template_kwargs =
+                    chatTemplateKwargs(
+                        profile,
+                    ),
+            )
+        val requestBody =
+            JsonCodec.encodeToString(
+                payload,
+            )
+        val startedNanos =
+            monotonicNanos()
+        var terminalFinishReason: String? =
+            null
+        val call =
+            HttpCall(
+                uri =
+                    origin.resolve(
+                        "/v1/chat/completions",
+                    ),
+                body = requestBody,
+                timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
+            )
+
+        try {
+            val http =
+                postStreaming(
+                    transport = streamingTransport,
+                    call = call,
+                ) {
+                    line ->
+                    if (
+                        line.isBlank() ||
+                        line.startsWith(
+                            ":",
+                        )
+                    ) {
+                        return@postStreaming
+                    }
+                    if (
+                        !line.startsWith(
+                            "data:",
+                        )
+                    ) {
+                        fail(
+                            FailureCode.EndpointResponseInvalid,
+                            "stable-prefix prefill endpoint emitted a non-SSE line",
+                        )
+                    }
+                    val data =
+                        line.removePrefix(
+                            "data:",
+                        )
+                            .trimStart()
+                    if (
+                        data ==
+                            "[DONE]"
+                    ) {
+                        return@postStreaming
+                    }
+                    val event =
+                        try {
+                            Json.parseToJsonElement(
+                                data,
+                            )
+                                .jsonObject
+                        } catch (
+                            error: Exception,
+                        ) {
+                            fail(
+                                FailureCode.EndpointResponseInvalid,
+                                "stable-prefix prefill endpoint emitted invalid SSE JSON",
+                                error,
+                            )
+                        }
+                    val choice =
+                        (event[
+                            "choices"
+                        ] as? JsonArray)
+                            ?.firstOrNull() as?
+                            JsonObject
+                            ?: return@postStreaming
+                    val finishReason =
+                        stringOrNull(
+                            choice[
+                                "finish_reason"
+                            ],
+                        )
+                    if (
+                        finishReason !=
+                            null
+                    ) {
+                        terminalFinishReason =
+                            finishReason
+                        return@postStreaming
+                    }
+
+                    // In mlx-lm 0.32.0 a nonterminal generation event can occur only after prompt
+                    // processing. The system-segment cache is therefore present now. Stop the HTTP
+                    // stream before a terminal assistant cache can replace that prefix.
+                    throw CachePreservingPrefillStop()
+                }
+            validateHttp(
+                status = http.status,
+                redirectLocation = http.redirectLocation,
+            )
+        } catch (
+            _: CachePreservingPrefillStop,
+        ) {
+            cancellation?.checkpoint()
+            return SystemPrefixPrefillResult.Performed(
+                runtimeReceiptRef = runtime.runtimeReceiptRef,
+                modelRef = runtime.modelRef,
+                systemMessageSha256 =
+                    sha256(
+                        systemContent,
+                    ),
+                requestBodySha256 =
+                    sha256(
+                        requestBody,
+                    ),
+                // The client deliberately closes before mlx-lm emits terminal usage. The first real
+                // human turn is the rightful measurement of whether this preserved prefix is reused.
+                promptTokens = null,
+                cachedPromptTokens = null,
+                completionTokens = null,
+                totalMillis =
+                    (
+                        monotonicNanos() -
+                            startedNanos
+                    ) /
+                        1_000_000,
+            )
+        }
+
+        return SystemPrefixPrefillResult.Held(
+            reasonRef =
+                if (
+                    terminalFinishReason !=
+                        null
+                ) {
+                    "PROVIDER_PREFIX_STREAM_TERMINATED_BEFORE_CACHE_PRESERVATION"
+                } else {
+                    "PROVIDER_PREFIX_STREAM_ENDED_BEFORE_CACHE_PRESERVATION"
+                },
+        )
+    }
 
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
@@ -402,9 +880,35 @@ object DirectCompanionConnection {
         now: () -> Instant = {
             Instant.now()
         },
+        /** Monotonic provider-stage timing source. */
+        monotonicNanos: () -> Long = System::nanoTime,
+        /**
+         * The capabilities this stage may request, as the turn's current frame reports them.
+         * Provider-native carriage belongs here; admission and effects remain with VexLifeCapabilityBridge.
+         */
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        model: HereticModelCatalog.Entry? = null,
+        /**
+         * Exclusive provider-message boundary after Product-owned append-only Conversation history.
+         *
+         * Unsupported provider/runtime representations ignore this optimization and run normally.
+         */
+        conversationCacheBoundaryMessageCount: Int? = null,
+        cancellation: DirectCompanionCancellation? = null,
     ): Result {
+        cancellation?.checkpoint()
+        val entry =
+            model
+                ?: requireNotNull(
+                    HereticModelCatalog.entry(
+                        runtime.modelRef,
+                    ),
+                ) {
+                    "qualified runtime model is not offered by the current Product"
+                }
         requireQualifiedRuntime(
-            runtime,
+            runtime = runtime,
+            model = entry,
         )
         require(
             messages.isNotEmpty(),
@@ -420,20 +924,126 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
-        val requestBody =
-            JsonCodec.encodeToString(
-                RequestPayload(
-                    model = runtime.requestModel,
-                    messages = messages,
-                    max_tokens = OutputTokenLimit,
-                    stream = true,
-                    chat_template_kwargs =
-                        mapOf(
-                            "enable_thinking" to
-                                true,
-                        ),
-                ),
+        val profile =
+            entry.companionProfile
+        val harmony =
+            profile.messageProtocol ==
+                HereticCompanionRepresentation.MessageProtocol.HARMONY
+        val generation =
+            profile.generation
+        val nativeTools =
+            HereticCompanionRepresentation.providerNativeToolsActive(
+                profile = profile,
+                qualification = runtime.qualification,
             )
+        val providerMessages =
+            if (
+                profile.coalesceLeadingSystemMessages
+            ) {
+                leadingSystemAsOne(
+                    messages,
+                )
+            } else {
+                messages
+            }
+        val cacheBoundaryMessageCount =
+            conversationCacheBoundaryMessageCount
+                ?.let {
+                    boundary ->
+                    val realization =
+                        HereticRuntimeRealization.resolveByRef(
+                            model = entry,
+                            realizationRef = runtime.realizationRef,
+                        )
+                    val admitted =
+                        realization
+                            ?.runtimeConfigurationProfileRef ==
+                            HereticRuntimeConfiguration.MlxPromptCacheProfileRef &&
+                            profile.messageProtocol ==
+                            HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT &&
+                            profile.reasoningRepresentation ==
+                            HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS &&
+                            !nativeTools &&
+                            !profile.coalesceLeadingSystemMessages
+                    if (
+                        !admitted
+                    ) {
+                        null
+                    } else {
+                        require(
+                            boundary in
+                                1 until
+                                providerMessages.size,
+                        ) {
+                            "Conversation cache boundary must end before the provider request tail"
+                        }
+                        boundary
+                    }
+                }
+        val payload =
+            RequestPayload(
+                model = runtime.requestModel,
+                messages =
+                    providerMessages,
+                max_tokens =
+                    VexLifeCompanionAttentionBudget
+                        .forRuntime(
+                            runtimeContextWindowTokens =
+                                runtime.contextWindowTokens,
+                            productOutputTokenCeiling =
+                                generation.productMaxOutputTokens,
+                        )
+                        .reservedOutputTokens,
+                stream = true,
+                temperature = generation.sampling.temperature,
+                top_p = generation.sampling.topP,
+                top_k = generation.sampling.topK,
+                chat_template_kwargs =
+                    chatTemplateKwargs(
+                        profile,
+                    ),
+                vexlifePromptCacheBoundaryMessageCount =
+                    cacheBoundaryMessageCount,
+            )
+        val providerTools =
+            if (nativeTools) {
+                ProviderCapabilityTools.tools(
+                    capabilityOffer,
+                )
+            } else {
+                emptyList()
+            }
+        val providerToolSchemaSha256 =
+            providerTools
+                .takeIf {
+                    it.isNotEmpty()
+                }
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val requestBody =
+            when {
+                nativeTools && harmony ->
+                    harmonyRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                nativeTools ->
+                    openAiNativeRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                else ->
+                    JsonCodec.encodeToString(
+                        payload,
+                    )
+            }
         val requestBodySha256 =
             sha256(
                 requestBody,
@@ -444,6 +1054,7 @@ object DirectCompanionConnection {
                 uri = uri,
                 body = requestBody,
                 timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
             )
         val completion =
             if (
@@ -454,12 +1065,31 @@ object DirectCompanionConnection {
                     transport = transport,
                     call = call,
                     progressObserver = progressObserver,
+                    harmony = harmony,
+                    nativeOpenAiTools = nativeTools && !harmony,
+                    capabilityOffer = capabilityOffer,
+                    monotonicNanos = monotonicNanos,
                 )
             } else {
                 invokeBulk(
                     transport = transport,
                     call = call,
-                )
+                    nativeOpenAiTools = nativeTools && !harmony,
+                    capabilityOffer = capabilityOffer,
+                    monotonicNanos = monotonicNanos,
+                ).let {
+                    if (
+                        profile.reasoningRepresentation ==
+                            HereticCompanionRepresentation.ReasoningRepresentation.HARMONY_CHANNELS
+                    ) {
+                        harmonized(
+                            completion = it,
+                            capabilityOffer = capabilityOffer,
+                        )
+                    } else {
+                        it
+                    }
+                }
             }
 
         val content =
@@ -561,6 +1191,8 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
+                providerTools.size.toString(),
+                providerToolSchemaSha256 ?: "",
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -574,6 +1206,8 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
+                providerToolCount = providerTools.size,
+                providerToolSchemaSha256 = providerToolSchemaSha256,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
@@ -596,13 +1230,19 @@ object DirectCompanionConnection {
             sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
+            providerRequestBody = requestBody,
+            measurement = completion.measurement,
         )
     }
 
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        nativeOpenAiTools: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
         val http =
             post(
                 transport,
@@ -651,18 +1291,86 @@ object DirectCompanionConnection {
                     FailureCode.EndpointResponseInvalid,
                     "local Companion response has no assistant message",
                 )
-        val content =
+        val finishReason =
+            stringOrNull(
+                choice[
+                    "finish_reason"
+                ],
+            )
+        val reasoning =
+            reasoningObservation(
+                message,
+            )
+        val answer =
             stringOrNull(
                 message[
                     "content"
                 ],
             )
-                ?.takeIf(
-                    String::isNotEmpty,
+                .orEmpty()
+        val nativeControl =
+            if (nativeOpenAiTools) {
+                ProviderCapabilityTools.controlFromToolCalls(
+                    toolCalls = message["tool_calls"],
+                    offered = capabilityOffer,
                 )
-                ?: fail(
+            } else {
+                null
+            }
+        val providerContent =
+            when {
+                nativeControl != null && answer.isEmpty() -> nativeControl
+                answer.isNotEmpty() -> answer
+                else -> ""
+            }
+        val usage =
+            usageOrNull(
+                parsed[
+                    "usage"
+                ],
+            )
+        val measurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = true,
+                        finishReason = finishReason,
+                        answered = providerContent.isNotEmpty(),
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = null,
+                firstAnswerMillis = null,
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.trace.characterCount,
+                answerCharacters = providerContent.codePointCount(0, providerContent.length),
+                controlHeaderInReasoning =
+                    reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
+                controlHeaderInAnswer = containsControlHeader(providerContent),
+            )
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "local Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement,
+            )
+        }
+        val content =
+            providerContent.takeIf(
+                String::isNotEmpty,
+            )
+                ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
-                    "local Companion response content is empty",
+                    "local Companion response content/tool call is empty",
+                    measurement = measurement,
                 )
 
         return ProviderCompletion(
@@ -677,15 +1385,8 @@ object DirectCompanionConnection {
                         "model"
                     ],
                 ),
-            reasoning = reasoningObservation(
-                message,
-            ),
-            finishReason =
-                stringOrNull(
-                    choice[
-                        "finish_reason"
-                    ],
-                ),
+            reasoning = reasoning,
+            finishReason = finishReason,
             assistantRoleObserved =
                 stringOrNull(
                     message[
@@ -693,6 +1394,7 @@ object DirectCompanionConnection {
                     ],
                 ) ==
                     "assistant",
+            measurement = measurement,
         )
     }
 
@@ -700,11 +1402,64 @@ object DirectCompanionConnection {
         transport: StreamingTransport,
         call: HttpCall,
         progressObserver: ProgressObserver?,
+        harmony: Boolean = false,
+        nativeOpenAiTools: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
+        var firstTokenNanos: Long? = null
+        var firstAnswerNanos: Long? = null
+        var usage: Usage? = null
         val content =
             StringBuilder()
         val reasoning =
             StringBuilder()
+        val splitter = if (harmony) HarmonyResponseSplitter() else null
+        val toolCall = HarmonyToolCall()
+        var nativeToolControl: String? = null
+
+        fun appendReasoning(delta: String) {
+            if (firstTokenNanos == null) {
+                firstTokenNanos = monotonicNanos()
+            }
+            reasoning.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Reasoning,
+                    delta = delta,
+                    accumulatedCharacters = reasoning.codePointCount(),
+                )
+            )
+        }
+
+        fun appendContent(delta: String) {
+            if (firstAnswerNanos == null) {
+                val at = monotonicNanos()
+                firstAnswerNanos = at
+                if (firstTokenNanos == null) {
+                    firstTokenNanos = at
+                }
+            }
+            content.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Content,
+                    delta = delta,
+                    accumulatedCharacters = content.codePointCount(),
+                )
+            )
+        }
+
+        fun route(pieces: List<HarmonyResponseSplitter.Piece>) =
+            pieces.forEach {
+                when (it.kind) {
+                    HarmonyResponseSplitter.Kind.Thinking -> appendReasoning(it.text)
+                    HarmonyResponseSplitter.Kind.Answer -> appendContent(it.text)
+                    HarmonyResponseSplitter.Kind.ToolCall ->
+                        if (!toolCall.accept(it)) appendReasoning(it.text)
+                }
+            }
         var reportedModel: String? =
             null
         var finishReason: String? =
@@ -749,6 +1504,7 @@ object DirectCompanionConnection {
                 ) {
                     done =
                         true
+                    splitter?.let { route(it.finish()) }
                     return@postStreaming
                 }
 
@@ -776,6 +1532,14 @@ object DirectCompanionConnection {
                     ?.let {
                         reportedModel =
                             it
+                    }
+                usageOrNull(
+                    event[
+                        "usage"
+                    ],
+                )
+                    ?.let {
+                        usage = it
                     }
                 val choice =
                     (event[
@@ -847,18 +1611,20 @@ object DirectCompanionConnection {
                     reasoningDelta !=
                         null
                 ) {
-                    reasoning.append(
-                        reasoningDelta,
+                    appendReasoning(reasoningDelta)
+                }
+
+                if (nativeOpenAiTools) {
+                    ProviderCapabilityTools.controlFromToolCalls(
+                        toolCalls = delta["tool_calls"],
+                        offered = capabilityOffer,
                     )
-                    progressObserver
-                        ?.observe(
-                            Progress(
-                                kind = ProgressKind.Reasoning,
-                                delta = reasoningDelta,
-                                accumulatedCharacters =
-                                    reasoning.codePointCount(),
-                            ),
-                        )
+                        ?.let { control ->
+                            nativeToolControl = nativeToolControl ?: control
+                            if (firstTokenNanos == null) {
+                                firstTokenNanos = monotonicNanos()
+                            }
+                        }
                 }
 
                 stringOrNull(
@@ -871,18 +1637,8 @@ object DirectCompanionConnection {
                     )
                     ?.let {
                         contentDelta ->
-                        content.append(
-                            contentDelta,
-                        )
-                        progressObserver
-                            ?.observe(
-                                Progress(
-                                    kind = ProgressKind.Content,
-                                    delta = contentDelta,
-                                    accumulatedCharacters =
-                                        content.codePointCount(),
-                                ),
-                            )
+                        if (splitter == null) appendContent(contentDelta)
+                        else route(splitter.accept(contentDelta))
                     }
             }
 
@@ -890,20 +1646,90 @@ object DirectCompanionConnection {
             status = http.status,
             redirectLocation = http.redirectLocation,
         )
+
+        fun millisSinceStart(nanos: Long?): Long? =
+            nanos?.let {
+                (it - startedNanos) /
+                    1_000_000
+            }
+
+        fun measurement(
+            answered: Boolean = content.isNotEmpty(),
+        ): StageMeasurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = done,
+                        finishReason = finishReason,
+                        answered = answered,
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = millisSinceStart(firstTokenNanos),
+                firstAnswerMillis = millisSinceStart(firstAnswerNanos),
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.codePointCount(),
+                answerCharacters = content.codePointCount(),
+                controlHeaderInReasoning = containsControlHeader(reasoning),
+                controlHeaderInAnswer = containsControlHeader(content),
+            )
+
         if (
             !done
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion endpoint closed before [DONE]",
+                measurement = measurement(),
             )
+        }
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeToolControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement(answered = false),
+            )
+        }
+        toolCall.recipient?.let {
+            recipient ->
+            if (
+                content.isEmpty()
+            ) {
+                content.append(
+                    HarmonyCapabilityTools.control(
+                        recipient = recipient,
+                        arguments = toolCall.arguments(),
+                        offered = capabilityOffer,
+                    ),
+                )
+            } else {
+                appendReasoning(
+                    "\n$recipient ${toolCall.arguments()}",
+                )
+            }
+        }
+        nativeToolControl?.let { control ->
+            if (content.isEmpty()) {
+                content.append(control)
+            } else {
+                appendReasoning("\n$control")
+            }
         }
         if (
             content.isEmpty()
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion response content is empty",
+                measurement = measurement(answered = false),
             )
         }
 
@@ -931,6 +1757,10 @@ object DirectCompanionConnection {
                         )
                     }
             }
+        val stageMeasurement =
+            measurement(
+                answered = true,
+            )
 
         return ProviderCompletion(
             httpStatus = http.status,
@@ -945,6 +1775,135 @@ object DirectCompanionConnection {
                 ),
             finishReason = finishReason,
             assistantRoleObserved = assistantRoleObserved,
+            measurement = stageMeasurement,
+        )
+    }
+
+    /**
+     * The harmony chat template keeps only the first system message (as its developer message)
+     * and silently drops later ones; the leading system messages are sent as one so none of
+     * what Vex is given is lost.
+     */
+    private class HarmonyToolCall {
+        var recipient: String? = null
+            private set
+        private val text = StringBuilder()
+        fun accept(
+            piece: HarmonyResponseSplitter.Piece,
+        ): Boolean {
+            val to = piece.recipient ?: return false
+            if (recipient != null && recipient != to) return false
+            recipient = to
+            text.append(piece.text)
+            return true
+        }
+        fun arguments(): String = text.toString().trim()
+    }
+
+    private fun openAiNativeRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                ProviderCapabilityTools.messages(payload.messages),
+            )
+        ProviderCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
+    }
+
+    private fun harmonyRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                HarmonyCapabilityTools.messages(payload.messages),
+            )
+        HarmonyCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
+    }
+
+    private fun leadingSystemAsOne(
+        messages: List<CompanionProviderMessage>,
+    ): List<CompanionProviderMessage> {
+        val leading = messages.takeWhile { it.role == "system" }
+        if (leading.size <= 1) return messages
+        return listOf(
+            leading.first().copy(content = leading.joinToString("\n\n") { it.content })
+        ) + messages.drop(leading.size)
+    }
+
+    /** A whole (non-streamed) harmony reply, split the same way as a streamed one. */
+    private fun harmonized(
+        completion: ProviderCompletion,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): ProviderCompletion {
+        val splitter = HarmonyResponseSplitter()
+        val pieces = splitter.accept(completion.content) + splitter.finish()
+        val toolCall = HarmonyToolCall()
+        val heldAsThinking =
+            pieces.filter {
+                it.kind == HarmonyResponseSplitter.Kind.ToolCall &&
+                    !toolCall.accept(it)
+            }
+        val spoken =
+            pieces
+                .filter { it.kind == HarmonyResponseSplitter.Kind.Answer }
+                .joinToString("") { it.text }
+        val answer =
+            toolCall.recipient
+                ?.takeIf { spoken.isEmpty() }
+                ?.let {
+                    HarmonyCapabilityTools.control(
+                        recipient = it,
+                        arguments = toolCall.arguments(),
+                        offered = capabilityOffer,
+                    )
+                }
+                ?: spoken
+        val thinking =
+            (
+                pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Thinking } +
+                    heldAsThinking
+            )
+                .joinToString("") { it.text } +
+                toolCall.recipient
+                    ?.takeIf { spoken.isNotEmpty() }
+                    ?.let { "\n$it ${toolCall.arguments()}" }
+                    .orEmpty()
+        if (thinking.isEmpty() && answer == completion.content) return completion
+        if (answer.isEmpty()) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "harmony response carried no final answer",
+            )
+        }
+        return completion.copy(
+            content = answer,
+            reasoning =
+                reasoningObservation(
+                    JsonObject(
+                        buildMap {
+                            put("content", JsonPrimitive(answer))
+                            if (thinking.isNotEmpty()) put("reasoning", JsonPrimitive(thinking))
+                        }
+                    )
+                ),
         )
     }
 
@@ -956,6 +1915,16 @@ object DirectCompanionConnection {
             transport.post(
                 call,
             )
+        } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
         } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
@@ -975,6 +1944,7 @@ object DirectCompanionConnection {
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion endpoint invocation failed",
@@ -993,6 +1963,16 @@ object DirectCompanionConnection {
                 onLine,
             )
         } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
+        } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
             fail(
@@ -1009,12 +1989,17 @@ object DirectCompanionConnection {
                 error,
             )
         } catch (
+            stop: CachePreservingPrefillStop,
+        ) {
+            throw stop
+        } catch (
             error: ConnectionException,
         ) {
             throw error
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion streaming invocation failed",
@@ -1057,6 +2042,7 @@ object DirectCompanionConnection {
 
     private fun requireQualifiedRuntime(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        model: HereticModelCatalog.Entry,
     ) {
         if (
             runtime.runtimeState !=
@@ -1067,17 +2053,27 @@ object DirectCompanionConnection {
                 "direct Companion Connection requires one qualified Heretic runtime",
             )
         }
-        val identity = vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.identity
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolveByRef(
+                    model = model,
+                    realizationRef = runtime.realizationRef,
+                ),
+            ) {
+                "qualified runtime realization is not offered for this Heretic model"
+            }
         require(
-            identity != null &&
-                runtime.modelProfileRef ==
-                identity.modelProfileRef &&
-                runtime.endpoint ==
-                identity.endpoint &&
-                runtime.requestModel ==
-                identity.requestModel,
+            runtime.modelRef == model.modelRef &&
+                runtime.realizationRef == realization.realizationRef &&
+                runtime.modelProfileRef == realization.modelProfileRef &&
+                runtime.artifactRef == realization.artifact.artifactRef &&
+                runtime.artifactContentSetSha256 == realization.artifact.contentSetSha256 &&
+                runtime.runtimeAdapterRef == realization.runtime.runtimeAdapterRef &&
+                runtime.runtimeClass == realization.runtime.runtimeClass &&
+                runtime.endpoint == realization.runtime.endpoint &&
+                runtime.requestModel == realization.runtime.requestModel,
         ) {
-            "qualified runtime evidence no longer matches one offered Heretic model identity"
+            "qualified runtime evidence no longer matches its exact Heretic runtime realization"
         }
     }
 

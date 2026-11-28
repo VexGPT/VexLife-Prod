@@ -51,6 +51,46 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
+    fun witnessedLegacyServiceRecoveryIsExplicitAndDoesNotAuthorizeAcquisition() {
+        val state =
+            VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                desiredSourceSha = sourceSha,
+                priorServiceSourceSha = "b".repeat(40),
+                priorServicePid = 4242L,
+            )
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+        val effect =
+            VexLifeProdEntryFamily.Semantics.resolve(
+                    state,
+                    VexLifeProdEntryFamily.RecoverStaleService,
+                )
+                ?.effect as VexLifeProdEntryFamily.RetireStaleService
+
+        assertEquals(
+            VexLifeProdEntryFamily.ControlRecoverStaleService,
+            display.primaryControlRef,
+        )
+        assertEquals(
+            "setup.button.retire-old-service-continue",
+            display.primaryLabel?.key,
+        )
+        assertEquals(
+            "b".repeat(40),
+            effect.priorServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            effect.priorServicePid,
+        )
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                state,
+                VexLifeProdEntryFamily.ConvergeDesired,
+            )
+        )
+    }
+
+    @Test
     fun HomeFormationIsDistinctFromProductAcquisition() {
         val state = VexLifeProdEntryFamily.HomeFormationRequired(sourceSha)
         val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
@@ -108,6 +148,11 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
             VexLifeProdEntryFamily.RepairRequired(sourceSha),
             VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha),
+            VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                desiredSourceSha = sourceSha,
+                priorServiceSourceSha = "b".repeat(40),
+                priorServicePid = 4242L,
+            ),
             VexLifeProdEntryFamily.StartRequired(sourceSha, priorServiceSourceSha = null),
             VexLifeProdEntryFamily.HomeFormationRequired(sourceSha),
             VexLifeProdEntryFamily.HomeHeld(
@@ -138,6 +183,7 @@ class VexLifeProdEntryFamilyTest {
         listOf(
             VexLifeProdEntryFamily.OpenCurrent,
             VexLifeProdEntryFamily.ConvergeDesired,
+            VexLifeProdEntryFamily.RecoverStaleService,
             VexLifeProdEntryFamily.Start,
             VexLifeProdEntryFamily.FormHome,
             VexLifeProdEntryFamily.SetUp,

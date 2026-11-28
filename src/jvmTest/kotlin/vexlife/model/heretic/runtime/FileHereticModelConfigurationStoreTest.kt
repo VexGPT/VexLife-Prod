@@ -7,6 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
@@ -79,7 +80,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                "HERETIC_SELECTED_PENDING",
+                FileHereticModelConfigurationStore.TransitionState.SelectedPending,
                 selected.state,
             )
             assertTrue(
@@ -96,7 +97,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                "HERETIC_ALREADY_SELECTED_PENDING",
+                FileHereticModelConfigurationStore.TransitionState.AlreadySelectedPending,
                 selectedAgain.state,
             )
             assertFalse(
@@ -110,7 +111,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                "HERETIC_BOUND_TO_QUALIFIED_RUNTIME",
+                FileHereticModelConfigurationStore.TransitionState.BoundToQualifiedRuntime,
                 bound.state,
             )
             assertTrue(
@@ -129,7 +130,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                "HERETIC_ALREADY_BOUND",
+                FileHereticModelConfigurationStore.TransitionState.AlreadyBound,
                 rebound.state,
             )
             assertFalse(
@@ -203,12 +204,160 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME",
+                FileHereticModelConfigurationStore.TransitionState.ReboundToQualifiedRuntime,
                 rebound.state,
             )
             assertEquals(
                 HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 rebound.value.runtimeReceiptPath,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun unsupportedPersistedModelDefaultsToCurrentRecommendedModelWithoutNeedingTheOldModel() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-selection-convergence-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val unsupported =
+                current.copy(
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                    modelProfileRef = "model-profile.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactRef = "artifact.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactContentSetSha256 = "b".repeat(64),
+                )
+            Files.writeString(
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                ),
+                VexContractJson.encode(
+                    unsupported,
+                ),
+            )
+
+            val transition =
+                store.ensureSupportedSelection(
+                    fixture.manifest,
+                    totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
+                )
+
+            assertEquals(
+                FileHereticModelConfigurationStore.TransitionState.DefaultedUnsupportedSelectionPending,
+                transition.state,
+            )
+            assertTrue(transition.writePerformed)
+            assertEquals(
+                vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B,
+                HereticModelConfiguration.selected(
+                    transition.value,
+                ),
+            )
+            assertFalse(transition.value.automaticFallback)
+            assertFalse(transition.value.automaticDownload)
+            assertFalse(transition.value.automaticActivation)
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun unsupportedSelectionFromAnotherHomeScopeCannotAutoDefault() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-selection-foreign-scope-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val foreign =
+                current.copy(
+                    homeRef = "vex-home.device.vexlife.foreign",
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                )
+            val path =
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                )
+            Files.writeString(
+                path,
+                VexContractJson.encode(
+                    foreign,
+                ),
+            )
+            val before =
+                Files.readString(
+                    path,
+                )
+
+            val failure =
+                assertFailsWith<IllegalArgumentException> {
+                    store.ensureSupportedSelection(
+                        fixture.manifest,
+                        totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
+                    )
+                }
+
+            assertEquals(
+                "Heretic model configuration Home identity drift",
+                failure.message,
+            )
+            assertEquals(
+                before,
+                Files.readString(
+                    path,
+                ),
             )
         } finally {
             parent
@@ -226,14 +375,14 @@ class FileHereticModelConfigurationStoreTest {
             val store = FileHereticModelConfigurationStore(home)
             store.selectHeretic(fixture.manifest)
             store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
-            assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B, store.selectedModel(fixture.manifest))
+            assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B, store.selectedModel(fixture.manifest))
 
-            val nine = vexlife.model.heretic.HereticModelCatalog.Candidate9B
+            val nine = vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B
             val switched = store.selectModel(fixture.manifest, nine)
-            assertEquals("HERETIC_MODEL_SWITCHED_PENDING", switched.state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.ModelSwitchedPending, switched.state)
             assertEquals(HereticModelConfiguration.State.EstablishmentPending, switched.value.state)
             assertEquals(nine, store.selectedModel(fixture.manifest))
-            assertEquals("HERETIC_ALREADY_SELECTED_PENDING", store.selectModel(fixture.manifest, nine).state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.AlreadySelectedPending, store.selectModel(fixture.manifest, nine).state)
 
             // The 27B runtime that was serving this Home cannot bind it now that it chose 9B.
             assertFailsWith<IllegalArgumentException> {
@@ -261,7 +410,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
             assertEquals(HereticModelConfiguration.State.BoundProductModel, bound.value.state)
             assertEquals(nine.modelRef, bound.value.modelRef)
-            assertEquals("HERETIC_ALREADY_BOUND", store.selectModel(fixture.manifest, nine).state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.AlreadyBound, store.selectModel(fixture.manifest, nine).state)
         } finally {
             parent.toFile().deleteRecursively()
         }

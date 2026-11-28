@@ -3,6 +3,9 @@ package vexlife.companion
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 
@@ -89,6 +92,10 @@ object DirectConversationSourceReturn {
         val scannedCompletedTurnCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
         val effectsPerformed: Boolean,
+        val sourceLifecycleBindingRef: String? =
+            null,
+        val historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     )
 
     @Serializable
@@ -178,6 +185,9 @@ object DirectConversationSourceReturn {
             content =
                 listOf(
                     ProtocolHeader,
+                    "HOST SOURCE-RETURN TRUTH: NOT_PERFORMED. This protocol makes one internal source-return request available; receiving or reasoning about the protocol does not mean the lookup ran.",
+                    "Do not tell the human that you searched, retrieved, reopened, reconstructed, or recalled older Conversation through Source Return unless a later $ContextHeader block is actually present in your current input.",
+                    "Reasoning about, planning, naming, or describing a source-return request does not perform it.",
                     "If exact older Conversation source that is not already present is necessary to answer the human faithfully, do not guess and do not answer yet.",
                     "Instead emit one source-return control in final assistant content. Do not merely describe it or leave it only in reasoning.",
                     "Never quote or explain the request header in a human answer; emitting that exact header on its own line means you are choosing the internal source-return control.",
@@ -188,6 +198,8 @@ object DirectConversationSourceReturn {
                     RequestHeader,
                     "{\"schemaVersion\":\"$RequestSchema\",\"queryTerms\":[\"distinctive exact phrase or term\"],\"speakerScope\":\"ANY\"}",
                     "Use 1-$MaximumQueryTerms concise distinctive query terms. Product will search only this canonical local Conversation.",
+                    "Conversation Source Return never reads files attached to the current request or Local Sources. If current context names those resources, use their rightful capability instead.",
+                    "Product-authored protocol/context blocks are routing and execution context, not documents the human asked you to review.",
                     "If current context is sufficient, answer the human normally and do not emit the request header.",
                     "Only one source-return request is available in this human turn. A returned-source follow-up must answer from available source or preserve uncertainty; it must not request source again.",
                 )
@@ -265,22 +277,163 @@ object DirectConversationSourceReturn {
             "Conversation source-return request header is not exact"
         }
         val json =
-            control.substring(
-                separator +
-                    1,
+            extractRequestObject(
+                control.substring(
+                    separator +
+                        1,
+                ),
             )
-        require(
-            json.isNotBlank() &&
-                json ==
-                json.trim(),
-        ) {
-            "Conversation source-return request requires exactly one JSON payload without trailing prose"
-        }
+
+        val objectValue =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    json,
+                )
+                .jsonObject
+        val requestJson =
+            if (
+                "schemaVersion" in
+                objectValue
+            ) {
+                json
+            } else {
+                // The exact v1 control header already fixes the wire relationship. Some local
+                // providers omit the redundant body schemaVersion while preserving the bounded
+                // query/speaker meaning. Normalize only that carriage omission here; durable
+                // Request decoding remains strict because Request itself still requires the field.
+                VexContractJson.compactEncode(
+                    JsonObject(
+                        objectValue +
+                            (
+                                "schemaVersion" to
+                                    JsonPrimitive(
+                                        RequestSchema,
+                                    )
+                                ),
+                    ),
+                )
+            }
 
         return requireRequest(
             VexContractJson.decode<Request>(
-                json,
+                requestJson,
             ),
+        )
+    }
+
+    /**
+     * Provider representation is not the source-return Request itself. The model is still instructed
+     * to emit exactly one bare JSON object, but a Markdown fence or explanatory tail must not turn a
+     * semantically exact, bounded read-only control into a failed human turn.
+     *
+     * Admission stays strict: the first payload value must be one complete JSON object, its exact
+     * Request schema is decoded by VexContractJson, and a second source-return header is rejected
+     * before this boundary. The exact v1 header may supply only a missing redundant body
+     * schemaVersion at this provider-carriage boundary; durable Request evidence remains strict.
+     */
+    private fun extractRequestObject(
+        value: String,
+    ): String {
+        var payload =
+            value.trim()
+
+        payload =
+            when {
+                payload.startsWith(
+                    "```json\n",
+                ) ->
+                    payload.removePrefix(
+                        "```json\n",
+                    )
+
+                payload.startsWith(
+                    "```\n",
+                ) ->
+                    payload.removePrefix(
+                        "```\n",
+                    )
+
+                else ->
+                    payload
+            }
+
+        require(
+            payload.startsWith(
+                "{",
+            ),
+        ) {
+            "Conversation source-return request requires one JSON object after the request header"
+        }
+
+        var depth =
+            0
+        var quoted =
+            false
+        var escaped =
+            false
+
+        payload.forEachIndexed {
+            index,
+            character,
+            ->
+            if (
+                quoted
+            ) {
+                when {
+                    escaped ->
+                        escaped =
+                            false
+
+                    character ==
+                        '\\' ->
+                        escaped =
+                            true
+
+                    character ==
+                        '"' ->
+                        quoted =
+                            false
+                }
+
+                return@forEachIndexed
+            }
+
+            when (
+                character
+            ) {
+                '"' ->
+                    quoted =
+                        true
+
+                '{' ->
+                    depth +=
+                        1
+
+                '}' -> {
+                    depth -=
+                        1
+                    require(
+                        depth >=
+                            0,
+                    ) {
+                        "Conversation source-return request JSON object is structurally invalid"
+                    }
+                    if (
+                        depth ==
+                            0
+                    ) {
+                        return payload.substring(
+                            0,
+                            index +
+                                1,
+                        )
+                    }
+                }
+            }
+        }
+
+        throw IllegalArgumentException(
+            "Conversation source-return request has no complete JSON object",
         )
     }
 
@@ -289,11 +442,29 @@ object DirectConversationSourceReturn {
         request: Request,
         excludedEventRefs: Set<String> =
             emptySet(),
+        sourceLifecycleBindingRef: String? =
+            null,
+        historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     ): Discovery {
         val admitted =
             requireRequest(
                 request,
             )
+        require(
+            sourceLifecycleBindingRef ==
+                null ||
+                sourceLifecycleBindingRef.isNotBlank()
+        ) {
+            "Conversation source-return lifecycle binding must be absent or non-empty"
+        }
+        require(
+            historicalCurrentizedEventRefs.isEmpty() ||
+                sourceLifecycleBindingRef !=
+                null
+        ) {
+            "historical-currentized source refs require one exact lifecycle binding"
+        }
         val snapshot =
             conversationOwner.current()
         val events =
@@ -491,6 +662,10 @@ object DirectConversationSourceReturn {
                     2,
             wholeHistoryEventEnumerationPerformed = true,
             effectsPerformed = false,
+            sourceLifecycleBindingRef =
+                sourceLifecycleBindingRef,
+            historicalCurrentizedEventRefs =
+                historicalCurrentizedEventRefs,
         )
     }
 
@@ -648,9 +823,9 @@ object DirectConversationSourceReturn {
         )
     }
 
-    fun formAttemptTrace(
+    internal fun formAttemptTrace(
         initialPrompt: DirectPromptContext.Receipt,
-        inference: DirectCompanionConnection.Result,
+        inference: CompanionInferenceConnection.Result,
         discovery: Discovery,
         projection: Projection,
     ): AttemptTrace {
@@ -677,20 +852,19 @@ object DirectConversationSourceReturn {
                 projection.discoveredMatchCount &&
                 !projection.effectAuthorityGranted &&
                 !projection.effectsPerformed &&
-                inference.runtimeObservation.contentSha256 ==
+                inference.observation.contentSha256 ==
                 sha256(
                     inference.content,
                 ) &&
-                inference.invocationEvidence.runtimeObservationRef ==
-                inference.runtimeObservation.observationRef &&
-                inference.invocationEvidence.runtimeObservationFingerprint ==
-                inference.runtimeObservation.semanticFingerprint &&
+                inference.invocationEvidence.observationRef ==
+                inference.observation.observationRef &&
+                inference.invocationEvidence.observationFingerprint ==
+                inference.observation.semanticFingerprint &&
                 inference.invocationEvidence.responseBodySha256 ==
-                inference.runtimeObservation.responseBodySha256 &&
+                inference.observation.responseBodySha256 &&
                 inference.invocationEvidence.actualHttpCall &&
-                inference.invocationEvidence.loopbackOnly &&
-                !inference.runtimeObservation.rawProviderResponsePersisted &&
-                !inference.runtimeObservation.reasoningTrace.rawPersisted,
+                !inference.observation.rawProviderResponsePersisted &&
+                !inference.observation.rawReasoningPersisted,
         ) {
             "Conversation source-return attempt evidence is not bound to one exact internal inference and source return"
         }
@@ -705,11 +879,11 @@ object DirectConversationSourceReturn {
                 initialPrompt.semanticFingerprint,
             request = request,
             modelOutputSha256 =
-                inference.runtimeObservation.contentSha256,
+                inference.observation.contentSha256,
             runtimeObservationRef =
-                inference.runtimeObservation.observationRef,
+                inference.observation.observationRef,
             runtimeObservationFingerprint =
-                inference.runtimeObservation.semanticFingerprint,
+                inference.observation.semanticFingerprint,
             invocationRef =
                 inference.invocationEvidence.invocationRef,
             invocationFingerprint =
@@ -829,10 +1003,58 @@ object DirectConversationSourceReturn {
                 effectAuthorityGranted = false,
                 effectsPerformed = false,
             )
-        return listOf(
+        val hostTruth =
+            when (
+                state
+            ) {
+                Returned ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_AND_RETURNED. Product performed the requested canonical Conversation lookup and the exact returned source is included in this block."
+
+                NoMatch ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_NO_MATCH. Product performed the requested canonical Conversation lookup, but no matching source was returned."
+
+                HeldTokenBudget ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_HELD_TOKEN_BUDGET. Product performed the requested canonical Conversation lookup, but no source content was returned because the discovered source did not fit the admitted prompt allowance."
+
+                else ->
+                    error(
+                        "Conversation source-return provider state is not recognized",
+                    )
+            }
+        val historicalCurrentizedReturned =
+            matches
+                .flatMap {
+                    match ->
+                    listOf(
+                        match.requestEvent.eventRef,
+                        match.responseEvent.eventRef,
+                    )
+                }
+                .filter {
+                    it in
+                        discovery.historicalCurrentizedEventRefs
+                }
+                .distinct()
+        val lifecycleTruth =
+            discovery.sourceLifecycleBindingRef
+                ?.let {
+                    if (
+                        historicalCurrentizedReturned.isNotEmpty()
+                    ) {
+                        "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                            historicalCurrentizedReturned.joinToString(",") +
+                            ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+                    } else {
+                        "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
+                    }
+                }
+        return listOfNotNull(
             ContextHeader,
-            "This is exact canonical local Conversation source returned because Vex explicitly requested older source. It is not Memory, semantic acceptance, or a profile of the human.",
-            "Answer the current human from the returned exact source and other current context. If the return is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
+            hostTruth,
+            lifecycleTruth,
+            "This block is the Product's source-return execution evidence for this human turn. Protocol availability, reasoning, a planned request, or a narrated control is not equivalent to this result.",
+            "Returned Conversation source is not Memory, semantic acceptance, or a profile of the human.",
+            "Answer the current human from only the exact source actually present here and other current context. If the state is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
             "Do not emit another source-return request in this human turn.",
             VexContractJson.compactEncode(
                 packet,

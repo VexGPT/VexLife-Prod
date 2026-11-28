@@ -64,17 +64,10 @@ case "$CHANNEL" in
 esac
 
 cd "$ROOT"
-./gradlew --no-daemon jvmTest checkVexLifeStrings
-./gradlew --no-daemon -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
+bash "$ROOT/tools/release/prove-mac-candidate.sh" "$APP_VERSION"
 
 SERVICE_DIR="$ROOT/build/vexlife-prod-service-image/archives/$SOURCE_SHA"
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
-
-test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
-test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
-test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
-(cd "$APP_DIR" && shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256")
-/usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" >/dev/null
 
 if [ "$CHANNEL" = "preview" ]; then
   TAG="private-service-image-$SOURCE_SHA"
@@ -117,5 +110,9 @@ else
 
   gh release create "v$VERSION"     "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json     "$SERVICE_DIR"/*.command "$SERVICE_DIR"/*.sha256     --repo "$REPOSITORY" --target "$SOURCE_SHA" --title "VexLife $VERSION"     --notes-file "$NOTES" --latest
 fi
+
+# Release existence and the public download catalog are one human-facing publication outcome.
+# Form/publish the Pages projection only after GitHub has accepted the exact release.
+VEXLIFE_REPOSITORY="$REPOSITORY" bash "$ROOT/tools/site/publish-gh-pages.sh"
 
 printf 'VEXLIFE_RELEASE_PUBLISHED\t%s\t%s\t%s\n' "$CHANNEL" "$SOURCE_SHA" "${VERSION:-preview}"

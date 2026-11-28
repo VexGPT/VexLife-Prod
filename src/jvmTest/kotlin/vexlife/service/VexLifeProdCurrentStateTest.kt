@@ -72,7 +72,7 @@ class VexLifeProdCurrentStateTest {
                         },
                         observeArtifacts = { _, _ ->
                             HereticArtifactMaterialization.PresenceObservation(
-                                state = "COMPLETE_BY_SIZE_NOT_HASHED",
+                                state = HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed,
                                 modelPath = home.resolve("models/heretic/test").toString(),
                                 providerRevision = "a".repeat(40),
                                 contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,

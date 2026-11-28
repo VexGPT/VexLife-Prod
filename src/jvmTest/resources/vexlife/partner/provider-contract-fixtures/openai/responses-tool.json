@@ -1,0 +1,22 @@
+{
+  "response": {
+    "id": "resp_tool_fixture",
+    "status": "completed",
+    "output": [
+      {
+        "type": "function_call",
+        "id": "fc_fixture",
+        "call_id": "call_fixture",
+        "name": "memory_search",
+        "arguments": "{\"terms\":[\"provider continuity\"]}"
+      }
+    ]
+  },
+  "continuationInput": [
+    {
+      "type": "function_call_output",
+      "call_id": "call_fixture",
+      "output": "{\"state\":\"RETURNED\",\"summary\":\"bounded fixture result\"}"
+    }
+  ]
+}

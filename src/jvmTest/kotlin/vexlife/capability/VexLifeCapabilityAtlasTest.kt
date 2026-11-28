@@ -19,13 +19,24 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.context.working-continuity",
         )
 
+    private val effectCapabilityRefs =
+        listOf(
+            VexLifeWorkspaceEffectDefinitions.WriteRef,
+            VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
+        )
+
     private val reachCapabilityRefs =
         listOf(
             "capability.vexlife.atlas.describe",
+            "capability.vexlife.attachment.read",
+            "capability.vexlife.continuity.revisit",
             "capability.vexlife.conversation.source-return",
             "capability.vexlife.home.read",
+            "capability.vexlife.local-sources.read",
             "capability.vexlife.memory.recall",
             "capability.vexlife.repository.read",
+            "capability.vexlife.self.context",
             "capability.vexlife.web.read",
         )
 
@@ -182,7 +193,7 @@ class VexLifeCapabilityAtlasTest {
             registry.effectAuthorityGranted,
         )
         assertEquals(
-            (allCapabilityRefs + reachCapabilityRefs).sorted(),
+            (allCapabilityRefs + reachCapabilityRefs + effectCapabilityRefs).sorted(),
             registry.definitions
                 .map {
                     it.capabilityRef
@@ -190,13 +201,41 @@ class VexLifeCapabilityAtlasTest {
         )
         // Every registered capability names an owner that exists in this source tree.
         assertTrue(registry.definitions.all { java.nio.file.Files.exists(java.nio.file.Path.of(it.sourcePath)) })
-        // Context capabilities carry no envelope actions; reach capabilities other than the
-        // Conversation source return (which keeps its own request form) all do.
-        assertTrue(registry.definitions.filter { it.capabilityRef in allCapabilityRefs }.all { it.actions.isEmpty() })
+        // Context already resident in the prompt has no callable action. Every reach route has
+        // an explicit action schema, including Conversation Source Return.
         assertTrue(
             registry.definitions
-                .filter { it.capabilityRef in reachCapabilityRefs && !it.capabilityRef.endsWith("source-return") }
-                .all { it.actions.isNotEmpty() && it.effectClass != "WRITE" },
+                .filter { it.capabilityRef in allCapabilityRefs }
+                .all { it.actions.isEmpty() },
+        )
+        assertTrue(
+            registry.definitions
+                .filter { it.capabilityRef in reachCapabilityRefs }
+                .all { it.actions.isNotEmpty() && !it.effectClass.contains("WRITE") },
+        )
+        val workspaceWrite =
+            registry.definitions.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals(
+            "RECOVERY_GUARDED_LOCAL_WRITE",
+            workspaceWrite.effectClass,
+        )
+        assertEquals(
+            listOf("write"),
+            workspaceWrite.actions.map { it.action },
+        )
+        assertTrue(
+            VexLifeWorkspaceEffectDefinitions.WriteRef !in
+                VexLifeReachDefinitions.ProviderToolCapabilityRefs,
+            "W1 registers the effect meaning but W2 must earn ordinary-turn availability",
+        )
+        assertEquals(
+            VexLifeReachDefinitions.ProviderToolCapabilityRefs.sorted(),
+            registry.definitions
+                .filter { it.capabilityRef in VexLifeReachDefinitions.ProviderToolCapabilityRefs }
+                .map { it.capabilityRef }
+                .sorted(),
         )
         assertTrue(
             registry.definitions.all {
@@ -266,6 +305,48 @@ class VexLifeCapabilityAtlasTest {
         assertFalse(
             frame.coverage.truncated,
         )
+    }
+
+    @Test
+    fun effectCapabilityAvailabilityStillDoesNotGrantEffectAuthority() {
+        val frame =
+            VexLifeCapabilityAtlas.formFrame(
+                input(
+                    grants = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    relevant = listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+                    resources =
+                        listOf(
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = VexLifeWorkspaceEffectDefinitions.ResourceRef,
+                                state = VexLifeCapabilityAtlas.ResourceState.AVAILABLE,
+                                sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                            )
+                        ),
+                    tokenBudget = 1_600,
+                )
+                    .copy(
+                        permissionFacts =
+                            listOf(
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef = VexLifeWorkspaceEffectDefinitions.PermissionRef,
+                                    state = VexLifeCapabilityAtlas.PermissionState.GRANTED,
+                                    sourceRefs = listOf("grant.vexlife-prod.workspace.test"),
+                                )
+                            )
+                    )
+            )
+
+        assertEquals(
+            listOf(VexLifeWorkspaceEffectDefinitions.WriteRef),
+            frame.availableCapabilityRefs,
+        )
+        val workspace =
+            frame.capabilityEntries.single {
+                it.capabilityRef == VexLifeWorkspaceEffectDefinitions.WriteRef
+            }
+        assertEquals("RECOVERY_GUARDED_LOCAL_WRITE", workspace.effectClass)
+        assertFalse(workspace.effectAuthorityGranted)
+        assertFalse(frame.effectAuthorityGranted)
     }
 
     @Test

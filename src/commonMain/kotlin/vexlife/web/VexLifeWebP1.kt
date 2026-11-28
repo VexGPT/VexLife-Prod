@@ -81,8 +81,63 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
+        val ConversationCancelCapability =
+            VexWeb.CapabilityRef.of(
+                "conversation.cancel",
+            )
+
+        val AttachmentDraftCapability =
+            VexWeb.CapabilityRef.of(
+                "attachment.draft",
+            )
+
+        val LocalSourcesCapability =
+            VexWeb.CapabilityRef.of(
+                "local-sources.manage",
+            )
+
+        val WorkspaceEffectsCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-effects.manage",
+            )
+
+        val WorkspaceChecksCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-checks.manage",
+            )
+
+        val WorkspaceRunsCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-runs.manage",
+            )
+
+        const val ColorModeToggleAction = "color-mode.toggle"
+        const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
+
+        /** Browser-session presentation choices; neither mutates durable Product state. */
+        const val ContextProcessRetentionChangeAction = "context-process.retention.change"
+        const val CompanionModeChangeAction = "companion.mode.change"
+
+        const val SpeechEnabledToggleAction = "speech.enabled.toggle"
+        const val SpeechVoiceChangeAction = "speech.voice.change"
+        const val SpeechReadThoughtsChangeAction = "speech.read-thoughts.change"
+        const val SpeechRateChangeAction = "speech.rate.change"
+        const val SpeechPreviousAction = "speech.previous"
+        const val SpeechPlayPauseAction = "speech.play-pause"
+        const val SpeechStopAction = "speech.stop"
+        const val SpeechNextAction = "speech.next"
+        const val SpeechChooseStartAction = "speech.start-here.toggle"
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
+        val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
+
+        /** Context Profile Controls all dispatch through the existing typed local service route. */
+        val ContextProfileUseCapability = VexWeb.CapabilityRef.of("context-profile.use")
+        val ContextProfileSaveCapability = VexWeb.CapabilityRef.of("context-profile.save")
+        val ContextProfileSaveAsCapability = VexWeb.CapabilityRef.of("context-profile.save-as")
+        val ContextProfileRestoreCapability = VexWeb.CapabilityRef.of("context-profile.restore-product-default")
+        val ContextProfileImportCapability = VexWeb.CapabilityRef.of("context-profile.import")
 
         /** Private mode: a conversation that isn't kept, apart from notes both agree to keep. */
         val ConversationPrivateCapability = VexWeb.CapabilityRef.of("conversation.private")
@@ -118,9 +173,23 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.Brand,
         )
 
+    val BrowserQueryError =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserQueryError,
+        )
+
     val BrowserQuery =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.BrowserQuery,
+            element = VexLifeWorkspaceBlueprint.BrowserQuery,
+            children =
+                listOf(
+                    BrowserQueryError,
+                ),
+        )
+
+    val BrowserReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserReload,
         )
 
     val AppSelector =
@@ -165,9 +234,8 @@ object VexLifeWebP1 {
         )
 
     /**
-     * Speech: Vex read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. Presentation over
-     * the Conversation timeline; it reads projections and decides nothing. Natural (Kokoro) voices run
-     * on this machine after a one-time download; system voices are limited to on-device ones.
+     * Speech FAB opens the Product-owned Speech presentation. The read-aloud controls inside retain
+     * their current runtime behavior and are addressed separately below.
      */
     val Speech =
         VexWebAuthoring.element(
@@ -178,11 +246,11 @@ object VexLifeWebP1 {
             interactions = setOf(VexWeb.Interaction.Activate),
             binding =
                 VexWebAuthoring.localInteraction(
-                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.ConversationTimeline)
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.SpeechPanel)
                 ),
         )
 
-    /** The language Vex replies in (and Speech reads in), kept as a Home setting. */
+    /** Opens the language panel; the two choices inside it each bind their own Home setting. */
     val Language =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Language,
@@ -190,7 +258,199 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Chrome,
             presentation = VexWeb.Presentation.Surface,
             interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.LanguagePanel),
+                ),
+        )
+
+    /** The Spiral's Theme action changes only Product presentation mode. */
+    val Theme =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Theme,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.presentationAction(Refs.ColorModeToggleAction),
+        )
+
+    /** The Spiral's Support action opens the Product-authored external support destination. */
+    val Support =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Support,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.externalNavigation(Refs.SupportHref),
+        )
+
+    /** The visible Spiral trigger opens/closes the Quick Actions collection itself. */
+    val QuickActionsTrigger =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.QuickActionsTrigger,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.QuickActions),
+                ),
+        )
+
+    /** The language Vex replies in (Speech reads in it, dictation hears it), kept in the Home. */
+    val ReplyLanguageChoice =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ReplyLanguageChoice,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
             binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
+        )
+
+    /** The language VexLife's own screens are written in, kept in the Home. */
+    val ScreenLanguageChoice =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ScreenLanguageChoice,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ScreenLanguageCapability),
+        )
+
+    val LanguagePanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.LanguagePanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            children = listOf(ReplyLanguageChoice, ScreenLanguageChoice),
+        )
+
+    private fun speechAction(
+        element: vexlife.blueprint.VexUiElementRef,
+        actionRef: String,
+        interaction: VexWeb.Interaction,
+    ): VexWeb.Element =
+        VexWebAuthoring.element(
+            element = element,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Transient,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(interaction),
+            binding = VexWebAuthoring.localAction(actionRef),
+        )
+
+    val SpeechEnabled =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechEnabled,
+            Refs.SpeechEnabledToggleAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechVoice =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechVoice,
+            Refs.SpeechVoiceChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechReadThoughts =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechReadThoughts,
+            Refs.SpeechReadThoughtsChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechRate =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechRate,
+            Refs.SpeechRateChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechPrevious =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPrevious,
+            Refs.SpeechPreviousAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechPlayPause =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPlayPause,
+            Refs.SpeechPlayPauseAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechStop =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechStop,
+            Refs.SpeechStopAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechNext =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechNext,
+            Refs.SpeechNextAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechChooseStart =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechChooseStart,
+            Refs.SpeechChooseStartAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechPanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SpeechPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            children =
+                listOf(
+                    SpeechEnabled,
+                    SpeechVoice,
+                    SpeechReadThoughts,
+                    SpeechRate,
+                    SpeechPrevious,
+                    SpeechPlayPause,
+                    SpeechStop,
+                    SpeechNext,
+                    SpeechChooseStart,
+                ),
+        )
+
+    /** Release communication is Product meaning; this Control only opens its bounded projection. */
+    val ReleaseAlerts =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ReleaseAlerts,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel),
+                ),
+        )
+
+    val ReleaseAlertsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ReleaseAlertsList,
+        )
+
+    val ReleaseAlertsPanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            children = listOf(ReleaseAlertsList),
         )
 
     val QuickActions =
@@ -202,6 +462,10 @@ object VexLifeWebP1 {
                     VisionQuickAccess,
                     Speech,
                     Language,
+                    Theme,
+                    ReleaseAlerts,
+                    Support,
+                    QuickActionsTrigger,
                 ),
         )
 
@@ -211,6 +475,9 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     QuickActions,
+                    ReleaseAlertsPanel,
+                    LanguagePanel,
+                    SpeechPanel,
                 ),
         )
 
@@ -223,6 +490,7 @@ object VexLifeWebP1 {
                 listOf(
                     Brand,
                     BrowserQuery,
+                    BrowserReload,
                     AppSelector,
                     Utilities,
                 ),
@@ -250,6 +518,284 @@ object VexLifeWebP1 {
             children = listOf(ArchivesTimeline),
         )
 
+    val VexContextProfileBadge =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileBadge,
+        )
+
+    val VexContextProfileSummary =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileSummary,
+        )
+
+    val VexContextProfileName =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileName,
+        )
+
+    val VexContextProfileFoundationMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationMode,
+        )
+
+    val VexContextProfileFoundationText =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationText,
+        )
+
+    private fun contextProfileControl(
+        element: vexlife.blueprint.VexUiElementRef,
+        capability: VexWeb.CapabilityRef,
+    ) =
+        VexWebAuthoring.element(
+            element = element,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(capability),
+        )
+
+    val VexContextProfileUse =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileUse,
+            Refs.ContextProfileUseCapability,
+        )
+
+    val VexContextProfileSave =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileSave,
+            Refs.ContextProfileSaveCapability,
+        )
+
+    val VexContextProfileSaveAs =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileSaveAs,
+            Refs.ContextProfileSaveAsCapability,
+        )
+
+    val VexContextProfileRestore =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileRestore,
+            Refs.ContextProfileRestoreCapability,
+        )
+
+    val VexContextProfilePortability =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfilePortability,
+        )
+
+    val VexContextProfileImport =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileImport,
+            Refs.ContextProfileImportCapability,
+        )
+
+    val VexContextProfileHome =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileHome,
+        )
+
+    val VexContextProfile =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextProfile,
+            children =
+                listOf(
+                    VexContextProfileSummary,
+                    VexContextProfileUse,
+                    VexContextProfileName,
+                    VexContextProfileFoundationMode,
+                    VexContextProfileFoundationText,
+                    VexContextProfileSave,
+                    VexContextProfileSaveAs,
+                    VexContextProfileRestore,
+                    VexContextProfilePortability,
+                    VexContextProfileImport,
+                    VexContextProfileHome,
+                ),
+        )
+
+    val VexContextChanges =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextChanges,
+        )
+
+    val VexContextLabsStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsStatus,
+        )
+
+    val VexContextLabsTest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsTest,
+        )
+
+    val VexContextLabsSaveSupported =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported,
+        )
+
+    val VexContextLabsRestore =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsRestore,
+        )
+
+    val VexContextLabsReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsReload,
+        )
+
+    val VexContextLabsClear =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsClear,
+        )
+
+    val VexContextLabsInputBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsInputBudget,
+        )
+
+    val VexContextLabsMemoryMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode,
+        )
+
+    val VexContextLabsMemoryBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget,
+        )
+
+    val VexContextLabsNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsNote,
+        )
+
+    val VexContextLabsFields =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsFields,
+        )
+
+    val VexContextLabsLastRequest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsLastRequest,
+        )
+
+    val VexContextLabs =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextLabs,
+            children =
+                listOf(
+                    VexContextLabsStatus,
+                    VexContextLabsTest,
+                    VexContextLabsSaveSupported,
+                    VexContextLabsRestore,
+                    VexContextLabsReload,
+                    VexContextLabsClear,
+                    VexContextLabsInputBudget,
+                    VexContextLabsMemoryMode,
+                    VexContextLabsMemoryBudget,
+                    VexContextLabsNote,
+                    VexContextLabsFields,
+                    VexContextLabsLastRequest,
+                ),
+        )
+
+    val VexContextInputFoundation =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputFoundation,
+        )
+    val VexContextInputMemory =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputMemory,
+        )
+    val VexContextInputContinuity =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputContinuity,
+        )
+    val VexContextInputConversation =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputConversation,
+        )
+    val VexContextInputBrowser =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputBrowser,
+        )
+    val VexContextInputRequest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputRequest,
+        )
+    val VexContextInputComponents =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputComponents,
+        )
+
+    val VexContextInput =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextInput,
+            children =
+                listOf(
+                    VexContextInputFoundation,
+                    VexContextInputMemory,
+                    VexContextInputContinuity,
+                    VexContextInputConversation,
+                    VexContextInputBrowser,
+                    VexContextInputRequest,
+                    VexContextInputComponents,
+                ),
+        )
+
+    val VexContextProcessRetention =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VexContextProcessRetention,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.ContextProcessRetentionChangeAction,
+                ),
+        )
+
+    val VexContextProcess =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextProcess,
+            children =
+                listOf(
+                    VexContextProcessRetention,
+                ),
+        )
+
+    val VexContextOutput =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextOutput,
+        )
+
+    val VexContextAfter =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextAfter,
+        )
+
+    val VexContext =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContext,
+            placement = VexWeb.Placement.FillAvailable,
+            children =
+                listOf(
+                    VexContextProfileBadge,
+                    VexContextProfile,
+                    VexContextChanges,
+                    VexContextLabs,
+                    VexContextInput,
+                    VexContextProcess,
+                    VexContextOutput,
+                    VexContextAfter,
+                ),
+        )
+
     val Browser =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Browser,
@@ -260,6 +806,7 @@ object VexLifeWebP1 {
                     SourceTemplateFamily,
                     BrowserViewport,
                     Archives,
+                    VexContext,
                 ),
         )
 
@@ -289,9 +836,18 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
+    val ContextReceiptView =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextReceiptView,
+        )
+
     val ContextReceipt =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextReceipt,
+            element = VexLifeWorkspaceBlueprint.ContextReceipt,
+            children =
+                listOf(
+                    ContextReceiptView,
+                ),
         )
 
     val ContextShare =
@@ -311,13 +867,71 @@ object VexLifeWebP1 {
         )
 
     val Stop =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Stop,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ConversationCancelCapability),
+        )
+
+    val ContextInspectorClose =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.Stop,
+            VexLifeWorkspaceBlueprint.ContextInspectorClose,
         )
 
     val ContextInspector =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextInspector,
+            element = VexLifeWorkspaceBlueprint.ContextInspector,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Modal,
+            children =
+                listOf(
+                    ContextInspectorClose,
+                ),
+        )
+
+    /**
+     * VoiceInput drafts into the existing Composer. It owns no Send and no Vex perception channel.
+     */
+    val VoiceInput =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VoiceInput,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Composer,
+                    ),
+                ),
+        )
+
+    val Attach =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Attach,
+            placement = VexWeb.Placement.Leading,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.AttachmentDraftCapability,
+                ),
+        )
+
+    val ComposerAttachments =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ComposerAttachments,
         )
 
     val Send =
@@ -343,12 +957,39 @@ object VexLifeWebP1 {
                 listOf(
                     ContextReceipt,
                     ContextShare,
+                    ComposerAttachments,
+                    Attach,
+                    VoiceInput,
                     Send,
                     Stop,
                 ),
         )
 
-    val PrivateBanner = blueprintSurface(VexLifeWorkspaceBlueprint.PrivateBanner)
+    val PrivateNoteKeep =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteKeep,
+        )
+
+    val PrivateNoteDecline =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteDecline,
+        )
+
+    val PrivateNotePropose =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNotePropose,
+        )
+
+    val PrivateBanner =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.PrivateBanner,
+            children =
+                listOf(
+                    PrivateNoteKeep,
+                    PrivateNoteDecline,
+                    PrivateNotePropose,
+                ),
+        )
 
     val Conversation =
         blueprintSurface(
@@ -423,6 +1064,140 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalSourcesList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalSourcesList,
+        )
+
+    val LocalSourcesAdd =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourcesAdd,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.LocalSourcesCapability,
+                ),
+        )
+
+    val LocalSourceAllowChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
+    val LocalSourceStopChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
+
+    val LocalSourceAllowChecks =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowChecks,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceChecksCapability,
+                ),
+        )
+
+    val LocalSourceStopChecks =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopChecks,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceChecksCapability,
+                ),
+        )
+
+    val LocalSourceAllowTests =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowTests,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceRunsCapability,
+                ),
+        )
+
+    val LocalSourceStopTests =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopTests,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceRunsCapability,
+                ),
+        )
+
+    val SettingsLocalSources =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalSources,
+            children =
+                listOf(
+                    LocalSourcesList,
+                    LocalSourcesAdd,
+                    LocalSourceAllowChanges,
+                    LocalSourceStopChanges,
+                    LocalSourceAllowChecks,
+                    LocalSourceStopChecks,
+                    LocalSourceAllowTests,
+                    LocalSourceStopTests,
+                ),
+        )
+
     val ContinuityMemory = blueprintSurface(VexLifeWorkspaceBlueprint.ContinuityMemory)
 
     val ContinuityMode =
@@ -446,12 +1221,77 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val ModelsState = blueprintSurface(VexLifeWorkspaceBlueprint.ModelsState)
+    val ModelChoice = blueprintSurface(VexLifeWorkspaceBlueprint.ModelChoice)
     val ModelsList = blueprintSurface(VexLifeWorkspaceBlueprint.ModelsList)
+    val ModelPromptCacheEntries = blueprintSurface(VexLifeWorkspaceBlueprint.ModelPromptCacheEntries)
+    val ModelUseRecommended = blueprintSurface(VexLifeWorkspaceBlueprint.ModelUseRecommended)
+    val ModelStart = blueprintSurface(VexLifeWorkspaceBlueprint.ModelStart)
+    val ModelConfiguration =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.ModelConfiguration,
+            children =
+                listOf(
+                    ModelPromptCacheEntries,
+                    ModelUseRecommended,
+                    ModelStart,
+                ),
+        )
 
     val SettingsModels =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SettingsModels,
-            children = listOf(ModelsList),
+            children =
+                listOf(
+                    ModelsState,
+                    ModelChoice,
+                    ModelsList,
+                    ModelConfiguration,
+                ),
+        )
+
+    val LocalAsrSelection =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSelection,
+        )
+
+    val LocalAsrModelsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrModelsList,
+        )
+
+    val LocalAsrSpokenLanguage =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
+        )
+
+    val LocalAsrComposerOutput =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrComposerOutput,
+        )
+
+    val LocalAsrStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStatus,
+        )
+
+    val LocalAsrStorageNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStorageNote,
+        )
+
+    val SettingsLocalAsr =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalAsr,
+            children =
+                listOf(
+                    LocalAsrSelection,
+                    LocalAsrModelsList,
+                    LocalAsrSpokenLanguage,
+                    LocalAsrComposerOutput,
+                    LocalAsrStatus,
+                    LocalAsrStorageNote,
+                ),
         )
 
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
@@ -480,8 +1320,10 @@ object VexLifeWebP1 {
                     SettingsResources,
                     ThoughtVisibility,
                     SettingsHome,
+                    SettingsLocalSources,
                     SettingsContinuity,
                     SettingsModels,
+                    SettingsLocalAsr,
                     SettingsDiagnostics,
                 ),
         )
@@ -489,6 +1331,22 @@ object VexLifeWebP1 {
     val CompanionStatus =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.CompanionStatus,
+        )
+
+    val CompanionMode =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.CompanionMode,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.CompanionModeChangeAction,
+                ),
         )
 
     val Vision =
@@ -543,6 +1401,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     CompanionStatus,
+                    CompanionMode,
                     PrivateMode,
                     Vision,
                     CompanionViewSwitch,

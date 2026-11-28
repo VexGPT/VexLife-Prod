@@ -12,7 +12,7 @@ class VexLifeWebP1ThoughtVisibilityTest {
 
         assertTrue(
             bundle.html.contains(
-                "Viewable thoughts",
+                "workspace.label.thought-visibility",
             ),
         )
         assertFalse(
@@ -30,6 +30,45 @@ class VexLifeWebP1ThoughtVisibilityTest {
             bundle.javascript.contains(
                 "humanReasoningByResponse: new Map()",
             ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "message.messageRef ?? message.eventRef ?? ''",
+            ),
+            "the existing completed thought renderer should accept Private's existing presentation-local event identity",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();",
+            ) &&
+                bundle.javascript.contains(
+                    "state.humanReasoningByResponse.set(vexKey, reasoning);",
+                ),
+            "Private reasoning should enter the existing ephemeral reasoning presentation map",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const pruneInactiveEphemeralReasoning = (activePrefix) =>",
+            ) &&
+                bundle.javascript.contains(
+                    "key.startsWith('private.') || key.startsWith('vex-labs.')",
+                ) &&
+                bundle.javascript.contains(
+                    "if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;",
+                ) &&
+                bundle.javascript.contains(
+                    "state.reasoningViewports.delete('response.' + key);",
+                ),
+            "the shared Conversation surface must retire only inactive ephemeral reasoning while preserving the active Private or Vex Labs surface",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "privateThoughtNode",
+            ) ||
+                bundle.javascript.contains(
+                    "privateReasoningByResponse",
+                ),
+            "Private must reuse the existing thought renderer and reasoning map rather than fork them",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -100,19 +139,36 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "reconnecting Vex…",
+                "workspace.status.conversation-reconnecting-vex",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "thinking…",
+                "workspace.status.conversation-thinking",
             ),
         )
+        val completionRefresh =
+            bundle.javascript
+                .substringAfter(
+                    "Canonical Conversation/Context own completion.",
+                )
+                .substringBefore(
+                    "state.pending = null;",
+                )
         assertTrue(
-            bundle.javascript.contains(
-                "await Promise.all([loadConversation(false), loadContext()])",
-            ),
-            "completed streamed content must remain visible until canonical Conversation refresh completes",
+            completionRefresh.contains(
+                "loadConversation(false),",
+            ) &&
+                completionRefresh.contains(
+                    "loadConversationTurn(),",
+                ) &&
+                completionRefresh.contains(
+                    "loadAttachmentDraft(false),",
+                ) &&
+                completionRefresh.contains(
+                    "loadContext()",
+                ),
+            "completed streamed content must remain visible until canonical Conversation, turn, attachment draft and Context refresh complete",
         )
         assertTrue(
             bundle.javascript.contains(

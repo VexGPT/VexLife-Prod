@@ -3,15 +3,21 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
+import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.logging.VexLogger
 import vexlife.conversation.DirectConversationStore
+import vexlife.continuity.VexLifeBgeM3ArtifactMaterialization
+import vexlife.continuity.VexLifeBgeM3MacPythonEnvironment
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
@@ -20,6 +26,7 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
 import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
 import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
+import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.platform.python.ManagedPython
 
 /**
@@ -48,6 +55,10 @@ object VexLifeProdLocalSetup {
         val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val endpoint: String,
         val requestModel: String,
+        val promptCacheEntryLimit: Int? = null,
+        val visualEnvironmentDisposition: String = "NOT_REQUESTED",
+        val semanticArtifactDisposition: String = "NOT_REQUESTED",
+        val semanticEnvironmentDisposition: String = "NOT_REQUESTED",
     )
 
     /**
@@ -67,7 +78,21 @@ object VexLifeProdLocalSetup {
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
-    ) {
+        private val releaseRuntime: () -> Unit,
+    ) :
+        VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+                promptCacheEntryLimit = result.promptCacheEntryLimit,
+            )
+
+        private val closed =
+            AtomicBoolean(
+                false,
+            )
         /**
          * New-turn runtime admission.
          *
@@ -75,8 +100,8 @@ object VexLifeProdLocalSetup {
          * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
          * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
-        fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? = null
+        override fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)?,
         ): HereticModelConfiguration.QualifiedRuntimeEvidence {
             val current =
                 try {
@@ -157,15 +182,56 @@ object VexLifeProdLocalSetup {
          * runtime receipt/process is still current, but it may not replace the runtime underneath
          * a turn that already began.
          */
-        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
+
+        /**
+         * Release the exact runtime represented by this Session.
+         *
+         * The captured release capability comes from the rightful runtime owner: Product-owned
+         * Heretic runtime custody or the exact predecessor-compatibility owner. A successful close
+         * is idempotent; a failed release remains retryable because the Session must not claim
+         * terminal cleanup before the owner verifies the runtime is no longer live.
+         */
+        override fun releaseSustainedRuntime() {
+            close()
+        }
+
+        override fun close() {
+            if (
+                closed.get()
+            ) {
+                return
+            }
+
+            synchronized(
+                closed,
+            ) {
+                if (
+                    closed.get()
+                ) {
+                    return
+                }
+                releaseRuntime()
+                closed.set(
+                    true,
+                )
+            }
+        }
     }
+
+    private data class RuntimeAvailabilityResolution(
+        val availability: HereticRuntimeAvailability.State.Qualified,
+        val disposition: String,
+        val productOwnedReceipt: HereticPersistentRuntime.Receipt? = null,
+    )
 
     private data class Established(
         val result: Result,
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness,
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
+        val releaseRuntime: () -> Unit,
     )
 
     internal data class Hooks(
@@ -230,6 +296,52 @@ object VexLifeProdLocalSetup {
                     allowCreation = allowCreation,
                 )
             },
+        /**
+         * Optional visual prerequisite is acquired only inside explicit setup acquisition.
+         *
+         * Model switching remains reuse/start only. Ordinary Send never calls this owner.
+         */
+        val ensureVisualEnvironment:
+            (
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+            ) -> VexLifeVisualPythonEnvironment.Result? =
+            { managedPython, productHome ->
+                VexLifeVisualPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = true,
+                )
+            },
+        /**
+         * Long-horizon semantic retrieval prerequisites are setup effects, never ordinary Send
+         * effects. Missing BGE bytes/environment may be formed only while setup already holds
+         * acquisition authority.
+         */
+        val ensureSemanticArtifacts:
+            (
+                productHome: Path,
+                allowAcquisition: Boolean,
+            ) -> VexLifeBgeM3ArtifactMaterialization.Result =
+            { productHome, allowAcquisition ->
+                VexLifeBgeM3ArtifactMaterialization.ensure(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                )
+            },
+        val ensureSemanticEnvironment:
+            (
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+                allowCreation: Boolean,
+            ) -> VexLifeBgeM3MacPythonEnvironment.Result? =
+            { managedPython, productHome, allowCreation ->
+                VexLifeBgeM3MacPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = allowCreation,
+                )
+            },
         val observeStableRuntime:
             (
                 productHome: Path,
@@ -240,6 +352,36 @@ object VexLifeProdLocalSetup {
                     productHome = productHome,
                     binding = binding,
                     platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
+        val retireStableRuntime:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+                observation: StableVexLifeHereticRuntimeCompatibility.Observation,
+            ) -> StableVexLifeHereticRuntimeCompatibility.Retirement =
+            { productHome, binding, observation ->
+                StableVexLifeHereticRuntimeCompatibility.retirePriorExact(
+                    productHome = productHome,
+                    binding = binding,
+                    expected = observation,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
+        val captureStableRuntimeRelease:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+            ) -> (() -> Unit)? =
+            { productHome, binding ->
+                val platform =
+                    MacHereticRuntimePlatform(
+                        productHome = productHome,
+                    )
+                StableVexLifeHereticRuntimeCompatibility.capturedRelease(
+                    productHome = productHome,
+                    binding = binding,
+                    platform = platform,
                 )
             },
         val observeCurrentProductRuntime:
@@ -437,21 +579,22 @@ object VexLifeProdLocalSetup {
 
         val modelConfiguration = FileHereticModelConfigurationStore(canonicalHome)
 
-        // A Home that has not chosen a model yet starts with the largest offered model that fits
-        // this Mac; a Home that chose keeps its choice (a bound 27B Home stays exactly as it was).
+        // A persisted selection is preference/history, not a requirement that an obsolete model
+        // must still exist. Converge it onto one model this Product can serve now before any
+        // materialization/runtime requirement is formed.
         val selected =
-            when (modelConfiguration.read(home.manifest)) {
-                is FileHereticModelConfigurationStore.Snapshot.Unconfigured ->
-                    modelConfiguration.selectModel(
-                        home.manifest,
-                        HereticModelCatalog.recommendedFor(host.observation.totalMemoryBytes),
-                    )
-                is FileHereticModelConfigurationStore.Snapshot.Heretic ->
-                    modelConfiguration.selectHeretic(home.manifest)
-            }
-        // The Home's own choice decides which catalog model is materialized and run. A Home that
-        // never chose is given the certified default, exactly as before the catalog existed.
-        val model = HereticModelConfiguration.selected(selected.value)
+            modelConfiguration.ensureSupportedSelection(
+                manifest = home.manifest,
+                totalMemoryBytes = host.observation.totalMemoryBytes,
+            )
+        // The Home's own choice decides which current offering is materialized and run. A Home
+        // import remains a first-class choice across Product restarts; a Home that never chose
+        // still receives the Product's ordinary recommended catalog model.
+        val model =
+            HereticModelOfferings.requireEntry(
+                canonicalHome,
+                selected.value.modelRef,
+            )
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
@@ -467,14 +610,146 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        val visualEnvironmentDisposition =
+            if (
+                allowAcquisition
+            ) {
+                try {
+                    hooks.ensureVisualEnvironment(
+                        managedPython,
+                        Path.of(
+                            home.productHome,
+                        ),
+                    )
+                        ?.state
+                        ?: "HELD_NOT_AVAILABLE"
+                } catch (
+                    error: Throwable,
+                ) {
+                    VexLogger.record(
+                        VexLogger.Fact.VisualRuntimePreparationHeld,
+                        refs =
+                            mapOf(
+                                "visualState" to
+                                    "HELD_PREPARATION_FAILED",
+                            ),
+                        detail =
+                            error.javaClass.simpleName +
+                                ": " +
+                                (
+                                    error.message
+                                        ?: ""
+                                ),
+                    )
+                    "HELD_PREPARATION_FAILED"
+                }
+            } else {
+                "NOT_REQUESTED"
+            }
+
+        var semanticArtifactDisposition =
+            "NOT_REQUESTED"
+        var semanticEnvironmentDisposition =
+            "NOT_REQUESTED"
+
+        if (
+            allowAcquisition
+        ) {
+            try {
+                val semanticArtifacts =
+                    hooks.ensureSemanticArtifacts(
+                        Path.of(
+                            home.productHome,
+                        ),
+                        true,
+                    )
+                semanticArtifactDisposition =
+                    semanticArtifacts.observation.state.name
+
+                semanticEnvironmentDisposition =
+                    hooks.ensureSemanticEnvironment(
+                        managedPython,
+                        Path.of(
+                            home.productHome,
+                        ),
+                        true,
+                    )
+                        ?.state
+                        ?: "HELD_NOT_AVAILABLE"
+            } catch (
+                _: Throwable,
+            ) {
+                if (
+                    semanticArtifactDisposition ==
+                    "NOT_REQUESTED"
+                ) {
+                    semanticArtifactDisposition =
+                        "HELD_PREPARATION_FAILED"
+                }
+                semanticEnvironmentDisposition =
+                    "HELD_PREPARATION_FAILED"
+            }
+        }
+
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            ) {
+                "selected Home offering has no exact Mac runtime realization"
+            }
+        val runtimeConfiguration =
+            FileHereticRuntimeConfigurationStore(
+                canonicalHome,
+            )
+                .requireEffective(
+                    model = model,
+                    realization = realization,
+                )
         val binding =
             HereticPersistentRuntime.bind(
                 authorityRef = RuntimeAuthorityRef,
                 materialization = materialized,
                 environment = environment,
+                promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
+                model = model,
             )
 
-        val borrowedStableRuntime = hooks.observeStableRuntime(canonicalHome, binding)
+        val observedStableRuntime =
+            hooks.observeStableRuntime(
+                canonicalHome,
+                binding,
+            )
+        var migratedStablePredecessor = false
+        val borrowedStableRuntime =
+            if (
+                observedStableRuntime !=
+                    null &&
+                observedStableRuntime.launchContract !=
+                    HereticPersistentRuntime.ServerLaunchContract.CURRENT &&
+                allowRuntimeStart
+            ) {
+                hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
+                val retirement =
+                    hooks.retireStableRuntime(
+                        canonicalHome,
+                        binding,
+                        observedStableRuntime,
+                    )
+                require(
+                    retirement.exactOwnershipVerified &&
+                        retirement.verifiedNotLive &&
+                        retirement.receiptDeleted,
+                ) {
+                    "stable VexLife Heretic predecessor was not exactly retired before Product runtime start"
+                }
+                migratedStablePredecessor = true
+                null
+            } else {
+                observedStableRuntime
+            }
 
         val availabilityAct =
             requireNotNull(
@@ -504,7 +779,7 @@ object VexLifeProdLocalSetup {
                 "Heretic runtime availability did not resolve one lawful relationship"
             }
 
-        val availabilityAndDisposition =
+        val runtimeResolution =
             when (val admitted = availabilityAct.admittedState) {
                 is HereticRuntimeAvailability.State.Qualified -> {
                     require(
@@ -515,24 +790,46 @@ object VexLifeProdLocalSetup {
                         "borrowed stable Heretic runtime availability must not request a product-owned effect"
                     }
 
-                    admitted to "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
+                    RuntimeAvailabilityResolution(
+                        availability = admitted,
+                        disposition = "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME",
+                    )
                 }
 
                 null -> {
-                    val productRuntimeStore = FileHereticRuntimeReceiptStore(canonicalHome)
+                    val productRuntimeStore =
+                        FileHereticRuntimeReceiptStore(
+                            canonicalHome,
+                        )
 
                     when (availabilityAct.effect) {
                         HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
                             hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
                             val runtime =
-                                hooks.startRuntime(canonicalHome, binding, productRuntimeStore)
-
-                            HereticRuntimeAvailability.interpretProductOwnedQualified(
-                                HereticPersistentRuntime.configurationEvidence(
-                                    binding = binding,
-                                    receipt = runtime.receipt,
+                                hooks.startRuntime(
+                                    canonicalHome,
+                                    binding,
+                                    productRuntimeStore,
                                 )
-                            ) to runtime.disposition
+                            RuntimeAvailabilityResolution(
+                                availability =
+                                    HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                        HereticPersistentRuntime.configurationEvidence(
+                                            binding = binding,
+                                            receipt = runtime.receipt,
+                                        ),
+                                    ),
+                                disposition =
+                                    if (
+                                        migratedStablePredecessor
+                                    ) {
+                                        "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_" +
+                                            runtime.disposition
+                                    } else {
+                                        runtime.disposition
+                                    },
+                                productOwnedReceipt = runtime.receipt,
+                            )
                         }
 
                         HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
@@ -542,14 +839,25 @@ object VexLifeProdLocalSetup {
                                     binding,
                                     productRuntimeStore,
                                 )
-
-                            HereticRuntimeAvailability.interpretProductOwnedQualified(evidence) to
-                                "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+                            RuntimeAvailabilityResolution(
+                                availability =
+                                    HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                        evidence,
+                                    ),
+                                disposition =
+                                    "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME",
+                                productOwnedReceipt =
+                                    requireNotNull(
+                                        productRuntimeStore.read(),
+                                    ) {
+                                        "current Product-owned Heretic runtime lost its exact receipt during session formation"
+                                    },
+                            )
                         }
 
                         null ->
                             error(
-                                "unresolved Heretic runtime availability lacks one product-owned effect"
+                                "unresolved Heretic runtime availability lacks one product-owned effect",
                             )
                     }
                 }
@@ -558,8 +866,8 @@ object VexLifeProdLocalSetup {
                     error("Heretic runtime availability admitted a non-qualified terminal state")
             }
 
-        val availability = availabilityAndDisposition.first
-        val runtimeDisposition = availabilityAndDisposition.second
+        val availability = runtimeResolution.availability
+        val runtimeDisposition = runtimeResolution.disposition
         val qualifiedRuntimeEvidence = availability.evidence
         val runtimeReceiptPath = availability.runtimeReceiptPath
 
@@ -613,6 +921,31 @@ object VexLifeProdLocalSetup {
                 HereticRuntimeAvailability.Source.BorrowedStableVexLife -> null
             }
 
+        val releaseRuntime =
+            when (availability.source) {
+                HereticRuntimeAvailability.Source.VexLifeProdOwned ->
+                    capturedProductRuntimeRelease(
+                        productHome = canonicalHome,
+                        binding = binding,
+                        receipt =
+                            requireNotNull(
+                                runtimeResolution.productOwnedReceipt,
+                            ) {
+                                "qualified Product-owned Heretic runtime lacks exact release custody"
+                            },
+                    )
+
+                HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
+                    requireNotNull(
+                        hooks.captureStableRuntimeRelease(
+                            canonicalHome,
+                            binding,
+                        ),
+                    ) {
+                        "borrowed stable VexLife Heretic runtime lost exact release custody during Session formation"
+                    }
+            }
+
         val bound =
             modelConfiguration.bindQualified(
                 manifest = home.manifest,
@@ -626,21 +959,82 @@ object VexLifeProdLocalSetup {
                     state = "LOCAL_HERETIC_FOUNDATION_READY",
                     productHome = home.productHome,
                     homeDisposition = home.state,
-                    modelSelectionDisposition = selected.state,
+                    modelSelectionDisposition = selected.state.wire,
                     managedPythonDisposition = managedPython.state,
                     artifactDisposition = materialized.state,
                     environmentDisposition = environment.state,
                     runtimeDisposition = runtimeDisposition,
-                    modelBindingDisposition = bound.state,
+                    modelBindingDisposition = bound.state.wire,
                     modelConfigurationState = bound.value.state,
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
                     endpoint = qualifiedRuntimeEvidence.endpoint,
                     requestModel = qualifiedRuntimeEvidence.requestModel,
+                    promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
+                    visualEnvironmentDisposition =
+                        visualEnvironmentDisposition,
+                    semanticArtifactDisposition =
+                        semanticArtifactDisposition,
+                    semanticEnvironmentDisposition =
+                        semanticEnvironmentDisposition,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
             generationReadiness = generationReadiness,
             recoverRuntimeEvidence = recoverRuntimeEvidence,
+            releaseRuntime = releaseRuntime,
         )
+    }
+
+    private class CapturedRuntimeReceiptStore(
+        receipt: HereticPersistentRuntime.Receipt,
+    ) : HereticPersistentRuntime.ReceiptStore {
+        private var current: HereticPersistentRuntime.Receipt? =
+            receipt
+
+        override fun read(): HereticPersistentRuntime.Receipt? =
+            current
+
+        override fun write(
+            receipt: HereticPersistentRuntime.Receipt,
+        ) {
+            current =
+                receipt
+        }
+
+        override fun delete() {
+            current =
+                null
+        }
+    }
+
+    private fun capturedProductRuntimeRelease(
+        productHome: Path,
+        binding: HereticPersistentRuntime.Binding,
+        receipt: HereticPersistentRuntime.Receipt,
+    ): () -> Unit {
+        // Construct the concrete host adapter while the admitted Home still exists. Retirement
+        // later uses its captured exact process/substrate evidence and does not rediscover ownership.
+        val platform =
+            MacHereticRuntimePlatform(
+                productHome = productHome,
+            )
+        val store =
+            CapturedRuntimeReceiptStore(
+                receipt,
+            )
+
+        return {
+            val stopped =
+                HereticPersistentRuntime.stop(
+                    binding = binding,
+                    store = store,
+                    platform = platform,
+                )
+            require(
+                stopped.verifiedNotLive,
+            ) {
+                "Product-owned Heretic runtime release was not verified"
+            }
+        }
     }
 
     private fun convergeConversationWriter(productHome: Path, hooks: Hooks) {
@@ -703,6 +1097,7 @@ object VexLifeProdLocalSetup {
             currentRuntimeEvidence = established.currentRuntimeEvidence,
             generationReadiness = established.generationReadiness,
             recoverRuntimeEvidence = established.recoverRuntimeEvidence,
+            releaseRuntime = established.releaseRuntime,
         )
     }
 
@@ -718,7 +1113,9 @@ object VexLifeProdLocalSetup {
         model: HereticModelCatalog.Entry,
     ): HereticArtifactDelivery.Acquirer {
         if (progress === VexLifeProdSetupProgress.Silent) {
-            return HereticArtifactDelivery.Acquirer()
+            return HereticArtifactDelivery.Acquirer(
+                model = model,
+            )
         }
         val presentAtStart = runCatching {
             HereticArtifactMaterialization.observePresence(productHome, model)
@@ -729,6 +1126,7 @@ object VexLifeProdLocalSetup {
         val baseBytes = presentAtStart?.presentBySizeBytes ?: 0L
         val inFlight = mutableMapOf<String, Long>()
         return HereticArtifactDelivery.Acquirer(
+            model = model,
             onProgress = { member, delivered ->
                 inFlight[member.artifactRef] = delivered.bytes
                 progress.artifactBytes(

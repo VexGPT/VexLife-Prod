@@ -12,17 +12,267 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectTurnContextStoreTest {
+    @Test
+    fun unboundNewerPromptReceiptSidecarDoesNotCreateCompatibilityMeaning() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-context-unbound-newer-receipt-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val turnRef =
+            "turn.self-development.unbound-newer-prompt-receipt"
+
+        try {
+            home(
+                productHome,
+            )
+            val evidenceDirectory =
+                productHome.resolve(
+                    "runtime/vexlife-prod/turn-evidence",
+                )
+            Files.createDirectories(
+                evidenceDirectory,
+            )
+            Files.writeString(
+                evidenceDirectory.resolve(
+                    "$turnRef.json",
+                ),
+                """
+                {
+                  "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "turnRef": "$turnRef",
+                  "evidenceRef": "evidence.vexlife-prod.turn-runtime.${"e".repeat(32)}",
+                  "promptContext": {
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                    "contextProfileRef": "profile.vexlife.context.product-default"
+                  }
+                }
+                """.trimIndent(),
+            )
+
+            assertNull(
+                DirectTurnContextStore(
+                    productHome,
+                )
+                    .inspectPromptReceiptCompatibility(
+                        turnRef,
+                    ),
+                "a sidecar that is not referenced by canonical Context must not create Product compatibility meaning",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalV8PromptReceiptRemainsReadableAfterV9Currentization() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-context-historical-v8-receipt-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val turnRef =
+            "turn.self-development.historical-v8-prompt-receipt"
+        val evidenceRef =
+            "evidence.vexlife-prod.turn-runtime." +
+                "d".repeat(
+                    32,
+                )
+
+        try {
+            home(
+                productHome,
+            )
+            val conversation =
+                DirectConversationStore(
+                    productHome,
+                )
+            var contextRelativePath =
+                ""
+
+            conversation.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            turnRef,
+                        requestMessageRef =
+                            "message.self-development.human.historical-v8-prompt-receipt",
+                        content =
+                            "Preserve the immediately preceding durable prompt receipt generation.",
+                    )
+                val response =
+                    appendResponse(
+                        request =
+                            request,
+                        responseMessageRef =
+                            "message.self-development.companion.historical-v8-prompt-receipt",
+                        content =
+                            "Historical prompt receipt compatibility.",
+                        model =
+                            "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.historical-v8-prompt-receipt",
+                        invocationEvidenceRef =
+                            "evidence.historical-v8-prompt-receipt",
+                    )
+                val formed =
+                    CanonicalLivedContextFixture.write(
+                        productHome =
+                            productHome,
+                        request =
+                            request,
+                        response =
+                            response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-18T15:20:00Z",
+                            ),
+                    )
+                contextRelativePath =
+                    formed.relativePath
+
+                val contextPath =
+                    productHome.resolve(
+                        formed.relativePath,
+                    )
+                val observed =
+                    VexContractJson.Strict
+                        .parseToJsonElement(
+                            Files.readString(
+                                contextPath,
+                            ),
+                        )
+                        .jsonObject
+                val core =
+                    JsonObject(
+                        observed
+                            .filterKeys {
+                                it !=
+                                    "serializedContextSha256"
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "contextSourceRefs"
+                                ] =
+                                    JsonArray(
+                                        listOf(
+                                            evidenceRef,
+                                            request.eventRef,
+                                            response.eventRef,
+                                        )
+                                            .map(
+                                                ::JsonPrimitive,
+                                            ),
+                                    )
+                            },
+                    )
+                val contextSha256 =
+                    sha256(
+                        VexContractJson.canonicalEncodeElement(
+                            core,
+                        ),
+                    )
+                val rebound =
+                    JsonObject(
+                        core
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "serializedContextSha256"
+                                ] =
+                                    JsonPrimitive(
+                                        contextSha256,
+                                    )
+                            },
+                    )
+                Files.writeString(
+                    contextPath,
+                    VexContractJson.canonicalEncodeElement(
+                        rebound,
+                    ),
+                )
+            }
+
+            val evidenceDirectory =
+                productHome.resolve(
+                    "runtime/vexlife-prod/turn-evidence",
+                )
+            Files.createDirectories(
+                evidenceDirectory,
+            )
+            Files.writeString(
+                evidenceDirectory.resolve(
+                    "$turnRef.json",
+                ),
+                """
+                {
+                  "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "turnRef": "$turnRef",
+                  "evidenceRef": "$evidenceRef",
+                  "promptContext": {
+                    "schemaVersion": "${DirectPromptContext.ReceiptSchemaV8}"
+                  }
+                }
+                """.trimIndent(),
+            )
+
+            val compatibility =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .inspectPromptReceiptCompatibility(
+                            turnRef,
+                        ),
+                )
+            assertEquals(
+                DirectTurnContextStore.RuntimeEvidenceSchema,
+                compatibility.runtimeEvidenceSchema,
+            )
+            assertEquals(
+                DirectPromptContext.ReceiptSchemaV8,
+                compatibility.promptReceiptSchema,
+            )
+            assertTrue(
+                compatibility.readableByCurrentSource,
+                "advancing current receipt v8 -> v9 must not make the immediately preceding durable receipt unreadable",
+            )
+            assertTrue(
+                contextRelativePath.isNotBlank(),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {
@@ -202,10 +452,17 @@ class DirectTurnContextStoreTest {
                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
                         "\n" +
                         """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
+                val initialRuntime =
+                    runtime()
                 val initialInference =
-                    DirectCompanionConnection.invoke(
-                        runtime = runtime(),
-                        messages = initialPrompt.messages,
+                    LocalHereticInference(
+                        runtime = initialRuntime,
+                        model =
+                            requireNotNull(
+                                HereticModelCatalog.entry(
+                                    initialRuntime.modelRef,
+                                ),
+                            ),
                         transport =
                             DirectCompanionConnection.Transport {
                                 DirectCompanionConnection.HttpResult(
@@ -240,6 +497,15 @@ class DirectTurnContextStoreTest {
                             )
                         },
                     )
+                        .invoke(
+                            CompanionInferenceConnection.Request(
+                                messages = initialPrompt.messages,
+                                capabilityOffer = emptyList(),
+                                conversationCacheBoundaryMessageCount = null,
+                                progressObserver = null,
+                                cancellation = null,
+                            ),
+                        )
                 val sourceRequest =
                     requireNotNull(
                         DirectConversationSourceReturn.parseRequestOrNull(
@@ -376,7 +642,7 @@ class DirectTurnContextStoreTest {
                     rereadTrace.finalPromptReceiptRef,
                 )
                 assertEquals(
-                    initialInference.runtimeObservation.observationRef,
+                    initialInference.observation.observationRef,
                     rereadTrace.attempt.runtimeObservationRef,
                 )
                 assertEquals(
@@ -800,6 +1066,7 @@ class DirectTurnContextStoreTest {
                         promptContext = prompt.receipt,
                         runtimeObservation = inference.runtimeObservation,
                         invocationEvidence = inference.invocationEvidence,
+                        providerMeasurement = inference.measurement,
                         formedAt = Instant.parse(
                             "2026-11-05T04:31:01Z",
                         ),
@@ -823,6 +1090,34 @@ class DirectTurnContextStoreTest {
                 )
                 assertFalse(
                     reread.rawReportedModelPersisted,
+                )
+                val providerMeasurement =
+                    assertNotNull(
+                        reread.providerMeasurement,
+                    )
+                assertEquals(
+                    inference.measurement.stop.wire,
+                    providerMeasurement.stop,
+                )
+                assertEquals(
+                    inference.measurement.promptTokens,
+                    providerMeasurement.promptTokens,
+                )
+                assertEquals(
+                    inference.measurement.cachedPromptTokens,
+                    providerMeasurement.cachedPromptTokens,
+                )
+                assertEquals(
+                    inference.measurement.prefillTokens,
+                    providerMeasurement.prefillTokens,
+                )
+                assertEquals(
+                    inference.measurement.firstTokenMillis,
+                    providerMeasurement.firstTokenMillis,
+                )
+                assertEquals(
+                    inference.measurement.totalMillis,
+                    providerMeasurement.totalMillis,
                 )
                 assertEquals(
                     "LOCAL_PATH_LIKE",

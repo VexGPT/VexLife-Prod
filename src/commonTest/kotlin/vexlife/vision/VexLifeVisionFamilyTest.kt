@@ -3,7 +3,6 @@ package vexlife.vision
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import vexlife.vision.VexLifeVisionFamily.HoldReason
 
 class VexLifeVisionFamilyTest {
@@ -37,19 +36,20 @@ class VexLifeVisionFamilyTest {
             family.observe(true, true, null),
             "no scope session yet",
         )
-        assertEquals(VexLifeVisionFamily.Ready, family.observe(true, true, "ENDED"))
-        assertEquals(VexLifeVisionFamily.Selecting, family.observe(true, true, "SELECTING"))
-        assertEquals(VexLifeVisionFamily.Engaged, family.observe(true, true, "ENGAGED"))
-        assertEquals(VexLifeVisionFamily.Looking, family.observe(true, true, "LOOKING"))
+        assertEquals(VexLifeVisionFamily.Ready, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("ENDED")))
+        assertEquals(VexLifeVisionFamily.Selecting, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("SELECTING")))
+        assertEquals(VexLifeVisionFamily.Engaged, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("ENGAGED")))
+        assertEquals(VexLifeVisionFamily.Looking, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("LOOKING")))
         assertEquals(
             VexLifeVisionFamily.Held(HoldReason.ScreenSafetyNotCurrent),
-            family.observe(true, true, "HELD"),
+            family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("HELD")),
         )
         assertEquals(
             VexLifeVisionFamily.Held(HoldReason.RuntimeUnreadable),
-            family.observe(true, true, "SOMETHING_NEW"),
+            family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("SOMETHING_NEW")),
             "an unknown SDK state is held, never guessed",
         )
+        assertEquals(null, VexLifeVisionFamily.ScopeState.fromWire(null), "no scope session yet")
     }
 
     @Test
@@ -89,18 +89,45 @@ class VexLifeVisionFamilyTest {
     }
 
     @Test
-    fun engagedScopeNeverClaimsCaptureAndLookIsNotOffered() {
-        val engaged = family.displayStateFor(VexLifeVisionFamily.Engaged)
-        assertTrue(engaged.detail.contains("Nothing is being captured"))
-        assertTrue(engaged.detail.contains("can't look"))
-        assertEquals(VexLifeVisionFamily.Indicator.Scope.name, engaged.indicatorRef)
-        assertNull(VexLifeVisionFamily.controlForRef("LOOK_NOW"))
-        for (state in allStates) {
-            assertTrue(
-                family.displayStateFor(state).primaryLabel?.contains("Look") != true,
-                state.toString(),
+    fun engagedScopeKeepsSemanticCopyKeyedAndLookIsNotOffered() {
+        val engaged =
+            family.displayStateFor(
+                VexLifeVisionFamily.Engaged,
             )
-        }
+
+        assertEquals(
+            "workspace.status.vision-summary",
+            engaged.label.key,
+        )
+        assertEquals(
+            "workspace.label.vision",
+            engaged.label.parts["vision"]?.key,
+        )
+        assertEquals(
+            "workspace.status.vision-engaged",
+            engaged.label.parts["state"]?.key,
+        )
+        assertEquals(
+            "workspace.status.vision-engaged",
+            engaged.stateLabel.key,
+        )
+        assertEquals(
+            "workspace.description.vision-engaged",
+            engaged.detail.key,
+        )
+        assertEquals(
+            "workspace.button.vision-release-window",
+            engaged.primaryLabel?.key,
+        )
+        assertEquals(
+            VexLifeVisionFamily.Indicator.Scope.name,
+            engaged.indicatorRef,
+        )
+        assertNull(
+            VexLifeVisionFamily.controlForRef(
+                "LOOK_NOW",
+            ),
+        )
     }
 }
 

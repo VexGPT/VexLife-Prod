@@ -44,13 +44,23 @@ class VexLifeProdPrivateServiceImageTest {
             ),
         includeVisionRuntime: Boolean =
             false,
+        includeLocalAsrProvider: Boolean =
+            false,
+        includePartnerHost: Boolean =
+            false,
         schemaVersion: String =
-            if (
-                includeVisionRuntime
-            ) {
-                VexLifeProdPrivateServiceImage.Schema
-            } else {
-                VexLifeProdPrivateServiceImage.LegacySchema
+            when {
+                includePartnerHost ->
+                    VexLifeProdPrivateServiceImage.Schema
+
+                includeLocalAsrProvider ->
+                    VexLifeProdPrivateServiceImage.LocalAsrSchema
+
+                includeVisionRuntime ->
+                    VexLifeProdPrivateServiceImage.VisionSchema
+
+                else ->
+                    VexLifeProdPrivateServiceImage.LegacySchema
             },
     ): VexLifeProdPrivateServiceImage.Manifest {
         Files.createDirectories(
@@ -107,6 +117,10 @@ class VexLifeProdPrivateServiceImageTest {
             root.resolve(
                 "lib/kotlin-stdlib.jar",
             )
+        val partnerHost =
+            root.resolve(
+                VexLifeProdPrivateServiceImage.PartnerHostExecutableRelativePath,
+            )
 
         Files.writeString(
             java,
@@ -136,6 +150,22 @@ class VexLifeProdPrivateServiceImageTest {
             dependency,
             "stdlib",
         )
+        if (
+            includePartnerHost
+        ) {
+            Files.writeString(
+                partnerHost,
+                "fake-partner-host",
+            )
+            Files.setPosixFilePermissions(
+                partnerHost,
+                setOf(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                ),
+            )
+        }
 
         Files.setPosixFilePermissions(
             java,
@@ -161,6 +191,93 @@ class VexLifeProdPrivateServiceImageTest {
                 PosixFilePermission.OWNER_EXECUTE,
             ),
         )
+
+        val localAsrProvider =
+            if (
+                includeLocalAsrProvider
+            ) {
+                val providerRoot =
+                    root.resolve(
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderRootRelativePath,
+                    )
+                val providerBin =
+                    providerRoot.resolve(
+                        "bin",
+                    )
+                Files.createDirectories(
+                    providerBin,
+                )
+                val runtimeExecutable =
+                    root.resolve(
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderExecutableRelativePath,
+                    )
+                val sourceIdentity =
+                    providerRoot.resolve(
+                        "provider-source.txt",
+                    )
+                val sourceTreeIdentity =
+                    providerRoot.resolve(
+                        "provider-tree.txt",
+                    )
+                Files.writeString(
+                    runtimeExecutable,
+                    "fake-whisper-server",
+                )
+                Files.writeString(
+                    sourceIdentity,
+                    "b".repeat(
+                        40,
+                    ) +
+                        "\n",
+                )
+                Files.writeString(
+                    sourceTreeIdentity,
+                    "c".repeat(
+                        40,
+                    ) +
+                        "\n",
+                )
+                Files.setPosixFilePermissions(
+                    runtimeExecutable,
+                    setOf(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE,
+                    ),
+                )
+                VexLifeProdPrivateServiceImage.LocalAsrProvider(
+                    providerRef =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderRef,
+                    providerVersion =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderVersion,
+                    releaseDisposition =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderReleaseDisposition,
+                    sourceRepository =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderSourceRepository,
+                    sourceCommit =
+                        "b".repeat(
+                            40,
+                        ),
+                    sourceTree =
+                        "c".repeat(
+                            40,
+                        ),
+                    providerRoot =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderRootRelativePath,
+                    providerPayloadSha256 =
+                        VexLifeProdPrivateServiceImage.payloadFingerprint(
+                            providerRoot,
+                        ),
+                    runtimeExecutable =
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderExecutableRelativePath,
+                    runtimeExecutableSha256 =
+                        sha256(
+                            runtimeExecutable,
+                        ),
+                )
+            } else {
+                null
+            }
 
         val visionRuntime =
             if (
@@ -262,6 +379,22 @@ class VexLifeProdPrivateServiceImageTest {
                 null
             }
 
+        val partnerHostDescriptor =
+            if (
+                includePartnerHost
+            ) {
+                VexLifeProdPrivateServiceImage.PartnerHost(
+                    executable =
+                        VexLifeProdPrivateServiceImage.PartnerHostExecutableRelativePath,
+                    executableSha256 =
+                        sha256(
+                            partnerHost,
+                        ),
+                )
+            } else {
+                null
+            }
+
         val artifacts =
             listOf(
                 app,
@@ -307,11 +440,14 @@ class VexLifeProdPrivateServiceImageTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.compiler",
                         "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
                 payloadSha256 = payload,
                 artifacts = artifacts,
+                partnerHost = partnerHostDescriptor,
+                localAsrProvider = localAsrProvider,
                 visionRuntime = visionRuntime,
             )
 
@@ -472,7 +608,7 @@ class VexLifeProdPrivateServiceImageTest {
                 root = root,
                 sourceSha = sourceSha,
                 schemaVersion =
-                    VexLifeProdPrivateServiceImage.Schema,
+                    VexLifeProdPrivateServiceImage.VisionSchema,
                 includeVisionRuntime = false,
             )
 
@@ -621,6 +757,284 @@ class VexLifeProdPrivateServiceImageTest {
                 schemaVersion =
                     VexLifeProdPrivateServiceImage.LegacySchema,
                 includeVisionRuntime = true,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun currentV6SchemaRequiresBundledPartnerHost() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-v6-without-partner-host-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                schemaVersion =
+                    VexLifeProdPrivateServiceImage.Schema,
+                includeLocalAsrProvider =
+                    true,
+                includePartnerHost =
+                    false,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun bundledPartnerHostIsExplicitlyObserved() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-partner-host-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                includeLocalAsrProvider =
+                    true,
+                includePartnerHost =
+                    true,
+            )
+
+            val observed =
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                )
+
+            assertTrue(
+                requireNotNull(
+                    observed.partnerHostExecutablePathOrNull,
+                )
+                    .endsWith(
+                        VexLifeProdPrivateServiceImage.PartnerHostExecutableRelativePath,
+                    ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun bundledPartnerHostTamperIsRejected() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-partner-host-tamper-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                includeLocalAsrProvider =
+                    true,
+                includePartnerHost =
+                    true,
+            )
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.PartnerHostExecutableRelativePath,
+                ),
+                "tampered-partner-host",
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun currentV5SchemaRequiresBundledLocalAsrProvider() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-v5-without-local-asr-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                schemaVersion =
+                    VexLifeProdPrivateServiceImage.LocalAsrSchema,
+                includeLocalAsrProvider =
+                    false,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun bundledLocalAsrProviderIsExplicitlyObserved() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-local-asr-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                includeLocalAsrProvider =
+                    true,
+            )
+
+            val observed =
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+
+            assertTrue(
+                requireNotNull(
+                    observed.localAsrProviderExecutablePathOrNull,
+                )
+                    .endsWith(
+                        VexLifeProdPrivateServiceImage.LocalAsrProviderExecutableRelativePath,
+                    ),
+            )
+            assertEquals(
+                "b".repeat(
+                    40,
+                ),
+                observed.localAsrProviderSourceCommitOrNull,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun bundledLocalAsrProviderTamperIsRejected() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-local-asr-tamper-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                includeLocalAsrProvider =
+                    true,
+            )
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.LocalAsrProviderExecutableRelativePath,
+                ),
+                "tampered-whisper-server",
             )
 
             assertFailsWith<IllegalArgumentException> {

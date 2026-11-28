@@ -9,8 +9,10 @@ import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -53,6 +55,109 @@ object HereticPersistentRuntime {
 
     const val OwnershipPollMs =
         50L
+
+    /**
+     * Safety-floor cache count for a Home that has not explicitly chosen another admitted value.
+     *
+     * One entry preserves the stable leading system prefix. Larger values remain explicit
+     * experimental choices until one exact provider boundary proves useful reuse without unsafe
+     * unified-memory pressure.
+     */
+    const val PromptCacheEntryLimit =
+        1
+
+    /** Exact upstream mlx-lm server source admitted by Product-owned in-memory adapters. */
+    private const val MlxServerBlobShaV0320 =
+        "9462d6e57822df160adc260d9414838179b71907"
+
+    /**
+     * Historical #555 launch contract only. Kept so an exact currently-running #555 candidate can
+     * be recognized and retired by its rightful Product owner during this successor's convergence.
+     */
+    private val FinalPromptCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "src=textwrap.dedent(inspect.getsource(s.ResponseGenerator._generate))",
+            "needle=\"and not r.end_of_prompt\"",
+            "assert src.count(needle)==1,\"VexLife provider adapter: expected cache exclusion not found exactly once\"",
+            "ns={}",
+            "exec(compile(src.replace(needle,\"and True  # VexLife preserves final pre-generation cache\"),\"<vexlife-final-prompt-cache>\",\"exec\"),s.__dict__,ns)",
+            "s.ResponseGenerator._generate=ns[\"_generate\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
+
+    /**
+     * Project the already-owned append-only Conversation boundary into mlx-lm segmentation.
+     *
+     * The request carries only an exclusive provider-message count. The adapter:
+     * - requires the exact pinned mlx-lm server source;
+     * - leaves ordinary requests unchanged when the metadata is absent/invalid;
+     * - renders the supplied message prefix with the same pinned chat template;
+     * - uses the boundary only when those tokens are an exact prefix of the full request;
+     * - keeps the system and append-only Conversation as the only intermediate cacheable segments;
+     * - leaves every model-visible prompt token unchanged.
+     *
+     * The final mutable/current/request/thinking tail is one end-of-prompt segment, so stock mlx-lm
+     * does not retain it as a user cache. With cache=2 this allows system + Conversation history to
+     * circulate forward; the default cache=1 safety floor still keeps only system.
+     */
+    private val PreCommonPrefixConversationCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "hsrc=textwrap.dedent(inspect.getsource(s.APIHandler.handle_chat_completions))",
+            "hneedle=\"return CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\"",
+            "hrep=\"request = CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\\n    request._vexlife_prompt_cache_boundary_message_count = body.get(\\\"vexlife_prompt_cache_boundary_message_count\\\")\\n    return request\"",
+            "assert hsrc.count(hneedle)==1,\"VexLife provider adapter: chat request source drift\"",
+            "hns={}",
+            "exec(compile(hsrc.replace(hneedle,hrep),\"<vexlife-conversation-cache-handler>\",\"exec\"),s.__dict__,hns)",
+            "s.APIHandler.handle_chat_completions=hns[\"handle_chat_completions\"]",
+            "tsrc=textwrap.dedent(inspect.getsource(s.ResponseGenerator._tokenize))",
+            "tneedle=\"return prompt, segments, segment_types, initial_state\"",
+            "trep=\"boundary=getattr(request,\\\"_vexlife_prompt_cache_boundary_message_count\\\",None)\\n    if boundary is not None:\\n        valid=type(boundary) is int and 0 < boundary < len(messages) and messages[boundary-1].get(\\\"role\\\") == \\\"assistant\\\" and messages[boundary].get(\\\"role\\\") == \\\"user\\\"\\n        if valid:\\n            boundary_tokens=tokenizer.apply_chat_template(messages[:boundary],add_generation_prompt=False,**template_kwargs)\\n            boundary_end=len(boundary_tokens)\\n            if boundary_tokens and 0 < sys_end < boundary_end < len(prompt) and prompt[:boundary_end] == boundary_tokens:\\n                next_segments=[]\\n                next_types=[]\\n                if sys_end > 0:\\n                    next_segments.append(prompt[:sys_end])\\n                    next_types.append(\\\"system\\\")\\n                next_segments.append(prompt[sys_end:boundary_end])\\n                next_types.append(\\\"user\\\")\\n                next_segments.append(prompt[boundary_end:])\\n                next_types.append(\\\"assistant\\\")\\n                segments=next_segments\\n                segment_types=next_types\\n    return prompt, segments, segment_types, initial_state\"",
+            "assert tsrc.count(tneedle)==1,\"VexLife provider adapter: tokenizer return source drift\"",
+            "tns={}",
+            "exec(compile(tsrc.replace(tneedle,trep),\"<vexlife-conversation-cache-tokenize>\",\"exec\"),s.__dict__,tns)",
+            "s.ResponseGenerator._tokenize=tns[\"_tokenize\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
+
+    private val ConversationPrefixCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "hsrc=textwrap.dedent(inspect.getsource(s.APIHandler.handle_chat_completions))",
+            "hneedle=\"return CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\"",
+            "hrep=\"request = CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\\n    request._vexlife_prompt_cache_boundary_message_count = body.get(\\\"vexlife_prompt_cache_boundary_message_count\\\")\\n    return request\"",
+            "assert hsrc.count(hneedle)==1,\"VexLife provider adapter: chat request source drift\"",
+            "hns={}",
+            "exec(compile(hsrc.replace(hneedle,hrep),\"<vexlife-conversation-cache-handler>\",\"exec\"),s.__dict__,hns)",
+            "s.APIHandler.handle_chat_completions=hns[\"handle_chat_completions\"]",
+            "tsrc=textwrap.dedent(inspect.getsource(s.ResponseGenerator._tokenize))",
+            "tneedle=\"return prompt, segments, segment_types, initial_state\"",
+            "trep=\"boundary=getattr(request,\\\"_vexlife_prompt_cache_boundary_message_count\\\",None)\\n    if boundary is not None:\\n        valid=type(boundary) is int and 0 < boundary < len(messages) and messages[boundary-1].get(\\\"role\\\") == \\\"assistant\\\" and messages[boundary].get(\\\"role\\\") == \\\"user\\\"\\n        if valid:\\n            prefix_messages=messages[:boundary]\\n            user_probe=tokenizer.apply_chat_template(prefix_messages+[{'role':'user','content':''}],add_generation_prompt=False,**template_kwargs)\\n            assistant_probe=tokenizer.apply_chat_template(prefix_messages+[{'role':'assistant','content':''},{'role':'user','content':''}],add_generation_prompt=False,**template_kwargs)\\n            boundary_end=0\\n            for a,b in zip(user_probe,assistant_probe):\\n                if a != b:\\n                    break\\n                boundary_end += 1\\n            if 0 < sys_end < boundary_end < len(prompt) and prompt[:boundary_end] == user_probe[:boundary_end] and prompt[:boundary_end] == assistant_probe[:boundary_end]:\\n                next_segments=[]\\n                next_types=[]\\n                next_segments.append(prompt[:sys_end])\\n                next_types.append(\\\"system\\\")\\n                next_segments.append(prompt[sys_end:boundary_end])\\n                next_types.append(\\\"user\\\")\\n                next_segments.append(prompt[boundary_end:])\\n                next_types.append(\\\"assistant\\\")\\n                segments=next_segments\\n                segment_types=next_types\\n    return prompt, segments, segment_types, initial_state\"",
+            "assert tsrc.count(tneedle)==1,\"VexLife provider adapter: tokenizer return source drift\"",
+            "tns={}",
+            "exec(compile(tsrc.replace(tneedle,trep),\"<vexlife-conversation-cache-tokenize>\",\"exec\"),s.__dict__,tns)",
+            "s.ResponseGenerator._tokenize=tns[\"_tokenize\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
 
     private val RefPattern =
         Regex(
@@ -130,6 +235,8 @@ object HereticPersistentRuntime {
         val implementationIdentity: ImplementationIdentity,
         /** The catalog model this runtime serves; its identity is what receipts must carry. */
         val model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
+        /** Exact Product-owned mlx-lm prompt-cache entry limit for this runtime launch. */
+        val promptCacheEntryLimit: Int = PromptCacheEntryLimit,
     )
 
     data class ProcessIdentity(
@@ -316,6 +423,8 @@ object HereticPersistentRuntime {
         authorityRef: String,
         materialization: HereticArtifactMaterialization.Result,
         environment: HereticPythonEnvironment.Result,
+        promptCacheEntryLimit: Int = PromptCacheEntryLimit,
+        model: HereticModelCatalog.Entry? = null,
     ): Binding {
         require(
             RefPattern.matches(
@@ -324,18 +433,23 @@ object HereticPersistentRuntime {
         ) {
             "Heretic runtime authorityRef must be one stable ref"
         }
-        val model =
-            HereticModelCatalog.Entries.firstOrNull {
-                it.identity.artifactContentSetSha256 == materialization.contentSetSha256
-            }
+        val selectedModel =
+            model
+                ?: HereticModelCatalog.Entries.firstOrNull {
+                    it.identity.artifactContentSetSha256 == materialization.contentSetSha256
+                }
         require(
             materialization.state ==
-                "HERETIC_ARTIFACTS_MATERIALIZED_EXACT" &&
-                model != null &&
+                HereticArtifactMaterialization.MaterializedExactState &&
+                selectedModel != null &&
+                materialization.contentSetSha256 ==
+                    selectedModel.identity.artifactContentSetSha256 &&
+                materialization.providerRevision ==
+                    selectedModel.providerRevision &&
                 materialization.memberCount ==
-                model.members.size,
+                    selectedModel.members.size,
         ) {
-            "Heretic runtime binding requires one exact catalog model materialization"
+            "Heretic runtime binding requires one exact selected-model materialization"
         }
         require(
             (
@@ -383,7 +497,11 @@ object HereticPersistentRuntime {
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
             implementationIdentity = currentImplementationIdentity(),
-            model = model,
+            model = selectedModel,
+            promptCacheEntryLimit =
+                HereticRuntimeConfiguration.requirePromptCacheEntries(
+                    promptCacheEntryLimit,
+                ),
         )
     }
 
@@ -412,6 +530,16 @@ object HereticPersistentRuntime {
             runtimeReceiptRef = receipt.receiptRef,
             runtimeState = receipt.state,
             modelRef = receipt.modelRef,
+            realizationRef =
+                requireNotNull(
+                    HereticRuntimeRealization.resolve(
+                        model = binding.model,
+                        target = HereticRuntimeRealization.MacArm64,
+                    ),
+                ) {
+                    "qualified Mac runtime binding has no exact realization"
+                }
+                    .realizationRef,
             modelProfileRef = receipt.modelProfileRef,
             artifactRef = receipt.artifactRef,
             artifactContentSetSha256 = receipt.artifactContentSetSha256,
@@ -520,25 +648,293 @@ object HereticPersistentRuntime {
         )
     }
 
+    enum class ServerLaunchContract {
+        /** Current Product launch: pinned mlx-lm + append-only Conversation cache-boundary adapter. */
+        CURRENT,
+
+        /**
+         * Historical Response Readiness launch from 3a215230/2289ddae/7cfefe42.
+         *
+         * This was the first Product-owned Conversation-prefix adapter: it rendered messages through
+         * the boundary directly. It is retained only so an exact Product-owned runtime receipt from
+         * that source can be retired before the current common-prefix-probe launch starts.
+         */
+        PRE_COMMON_PREFIX_CONVERSATION_CACHE,
+
+        /** Historical #555 launch: final pre-generation cache adapter; accepted only for retirement. */
+        PRE_CONVERSATION_PREFIX_CACHE,
+
+        /** Earlier Product launch: direct mlx_lm.server with Product-owned --prompt-cache-size. */
+        PRE_FINAL_PROMPT_CACHE,
+
+        /** Oldest accepted Product launch: direct mlx_lm.server before prompt-cache sizing. */
+        PRE_PROMPT_CACHE_LIMIT,
+    }
+
+    fun promptCacheEntryLimit(
+        args: List<String>,
+    ): Int? {
+        val index = args.indexOf("--prompt-cache-size")
+        if (index < 0 || index + 1 >= args.size) {
+            return null
+        }
+        return args[index + 1]
+            .toIntOrNull()
+            ?.let {
+                runCatching {
+                    HereticRuntimeConfiguration.requirePromptCacheEntries(it)
+                }.getOrNull()
+            }
+    }
+
     fun serverArgs(
         binding: Binding,
+    ): List<String> =
+        serverArgs(
+            binding = binding,
+            contract = ServerLaunchContract.CURRENT,
+        )
+
+    internal fun serverArgs(
+        binding: Binding,
+        contract: ServerLaunchContract,
     ): List<String> {
         validateBinding(
             binding,
         )
-
-        return listOf(
-            "-m",
-            "mlx_lm.server",
-            "--model",
-            binding.modelPath,
-            "--host",
-            "127.0.0.1",
-            "--port",
-            Port.toString(),
-            "--chat-template-args",
-            "{\"enable_thinking\":false}",
+        return serverArgs(
+            modelPath = binding.modelPath,
+            contract = contract,
+            promptCacheEntryLimit = binding.promptCacheEntryLimit,
         )
+    }
+
+    private fun serverArgs(
+        modelPath: String,
+        contract: ServerLaunchContract,
+        promptCacheEntryLimit: Int = PromptCacheEntryLimit,
+    ): List<String> {
+        require(
+            modelPath.isNotBlank(),
+        ) {
+            "Heretic runtime launch contract requires one model path"
+        }
+
+        val providerEntry =
+            when (contract) {
+                ServerLaunchContract.CURRENT ->
+                    listOf(
+                        "-c",
+                        ConversationPrefixCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE ->
+                    listOf(
+                        "-c",
+                        PreCommonPrefixConversationCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE ->
+                    listOf(
+                        "-c",
+                        FinalPromptCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+                ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+                ->
+                    listOf(
+                        "-m",
+                        "mlx_lm.server",
+                    )
+            }
+        val base =
+            providerEntry +
+                listOf(
+                    "--model",
+                    modelPath,
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    Port.toString(),
+                    "--chat-template-args",
+                    "{\"enable_thinking\":false}",
+                )
+        return when (contract) {
+            ServerLaunchContract.CURRENT,
+            ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE,
+            ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
+            ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+            ->
+                base +
+                    listOf(
+                        "--prompt-cache-size",
+                        HereticRuntimeConfiguration
+                            .requirePromptCacheEntries(
+                                promptCacheEntryLimit,
+                            )
+                            .toString(),
+                    )
+
+            ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT ->
+                base
+        }
+    }
+
+    /**
+     * Exact launch argv from a runtime contract this owner previously emitted. This is migration
+     * recognition only: arbitrary argv drift remains unowned and cannot authorize retirement.
+     */
+    internal fun serverLaunchContract(
+        binding: Binding,
+        args: List<String>,
+    ): ServerLaunchContract? =
+        serverLaunchContract(
+            modelPath = binding.modelPath,
+            args = args,
+        )
+
+    private fun serverLaunchContract(
+        modelPath: String,
+        args: List<String>,
+    ): ServerLaunchContract? {
+        val prePromptCache =
+            serverArgs(
+                modelPath = modelPath,
+                contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+            )
+        if (args == prePromptCache) {
+            return ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT
+        }
+
+        fun matchesSizedLaunch(
+            base: List<String>,
+        ): Boolean =
+            args.size ==
+                base.size +
+                    2 &&
+                args.dropLast(
+                    2,
+                ) ==
+                base &&
+                args[
+                    args.lastIndex -
+                        1
+                ] ==
+                "--prompt-cache-size" &&
+                args.last()
+                    .toIntOrNull()
+                    ?.let {
+                        runCatching {
+                            HereticRuntimeConfiguration.requirePromptCacheEntries(
+                                it,
+                            )
+                        }
+                            .isSuccess
+                    } ==
+                true
+
+        if (
+            matchesSizedLaunch(
+                prePromptCache,
+            )
+        ) {
+            return ServerLaunchContract.PRE_FINAL_PROMPT_CACHE
+        }
+
+        for (
+            priorContract in
+                listOf(
+                    ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE,
+                    ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
+                    ServerLaunchContract.CURRENT,
+                )
+        ) {
+            val base =
+                serverArgs(
+                    modelPath = modelPath,
+                    contract = priorContract,
+                )
+                    .dropLast(
+                        2,
+                    )
+            if (
+                matchesSizedLaunch(
+                    base,
+                )
+            ) {
+                return priorContract
+            }
+        }
+
+        return null
+    }
+
+    private fun acceptedPriorServerArgs(
+        receipt: Receipt,
+    ): List<String>? =
+        serverLaunchContract(
+            modelPath = receipt.modelPath,
+            args = receipt.runtime.args,
+        )
+            ?.let {
+                receipt.runtime.args
+            }
+
+    /**
+     * Retirement-only ownership for a Product runtime whose model is no longer offered.
+     *
+     * Serving eligibility is intentionally not part of this proof. A historical model may be
+     * ineligible to serve now while the process/lifetime it left behind remains exactly owned and
+     * therefore safely retireable. Model-specific identity is not promoted to current truth.
+     */
+    private fun receiptOwnsRetirableRuntimeLineage(
+        binding: Binding,
+        receipt: Receipt,
+        expectedArgs: List<String>,
+    ): Boolean {
+        val current =
+            binding.model.identity
+
+        return receipt.schemaVersion ==
+            ReceiptSchema &&
+            receipt.authorityRef ==
+            binding.authorityRef &&
+            receipt.runtimeAdapterRef ==
+            current.runtimeAdapterRef &&
+            receipt.runtimeClass ==
+            current.runtimeClass &&
+            receipt.transportClass ==
+            current.transportClass &&
+            receipt.hostExecutionProfileRef ==
+            current.hostExecutionProfileRef &&
+            receipt.pythonVersion ==
+            current.pythonVersion &&
+            receipt.mlxLmVersion ==
+            current.mlxLmVersion &&
+            receipt.pythonPath ==
+            binding.pythonPath &&
+            receipt.pythonEnvironmentRoot ==
+            binding.pythonEnvironmentRoot &&
+            receipt.endpoint ==
+            current.endpoint &&
+            receipt.requestModel ==
+            current.requestModel &&
+            receipt.implementationIdentity.repository ==
+            binding.implementationIdentity.repository &&
+            receipt.implementationIdentity.classResource ==
+            binding.implementationIdentity.classResource &&
+            receipt.runtime.pid >
+            0 &&
+            receipt.runtime.processGroupId >
+            0 &&
+            receipt.runtime.exactOwnedDetachedGroup &&
+            receipt.runtime.args ==
+            expectedArgs &&
+            receipt.runtime.processSubstrate.pid ==
+            receipt.runtime.pid &&
+            receipt.effects ==
+            HereticRuntimeEffectBoundary.QualifiedRuntime
     }
 
     fun startOrReuse(
@@ -576,6 +972,8 @@ object HereticPersistentRuntime {
             store.read()
         var staleImplementationRotated =
             false
+        var runtimeConfigurationRotated =
+            false
         var switchedModel =
             false
         var generationUnavailableRotated =
@@ -586,18 +984,45 @@ object HereticPersistentRuntime {
         // implementation lineage), so it is retired through the same exact-ownership path before the
         // chosen model starts. A receipt that is not provably ours still fails below.
         val priorModel =
-            prior?.let { HereticModelCatalog.entry(it.modelRef) }
+            prior?.let { receipt ->
+                if (receipt.modelRef == binding.model.modelRef) {
+                    binding.model
+                } else {
+                    HereticModelCatalog.entry(receipt.modelRef)
+                }
+            }
+
+        // A Product-owned runtime may outlive the catalog entry that selected it (for example an
+        // experimental model removed by a later/narrower build). "No longer offered" means it may
+        // not serve now; it does not erase lifecycle ownership needed to retire the exact process.
+        val unsupportedPriorArgs =
+            if (
+                prior !=
+                    null &&
+                priorModel ==
+                    null
+            ) {
+                serverLaunchContract(
+                    modelPath = prior.modelPath,
+                    args = prior.runtime.args,
+                )
+                    ?.let {
+                        prior.runtime.args
+                    }
+            } else {
+                null
+            }
         if (
             prior !=
                 null &&
-                priorModel !=
-                null &&
-                priorModel.modelRef !=
-                binding.model.modelRef &&
-                receiptBinds(
-                    binding.copy(model = priorModel, modelPath = prior.modelPath),
-                    prior,
-                    requireImplementationSha = false,
+                priorModel ==
+                    null &&
+                unsupportedPriorArgs !=
+                    null &&
+                receiptOwnsRetirableRuntimeLineage(
+                    binding = binding,
+                    receipt = prior,
+                    expectedArgs = unsupportedPriorArgs,
                 )
         ) {
             if (
@@ -607,7 +1032,86 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    prior.runtime.args,
+                    unsupportedPriorArgs,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "unsupported-model exact Heretic runtime could not be retired before current model start"
+            }
+            store.delete()
+            switchedModel =
+                true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf(
+                    "from" to prior.modelRef,
+                    "to" to binding.model.handle,
+                    "reason" to "PRIOR_MODEL_NOT_OFFERED",
+                ),
+            )
+        }
+
+        val priorModelBinding =
+            if (
+                prior !=
+                    null &&
+                    priorModel !=
+                    null
+            ) {
+                binding.copy(
+                    model = priorModel,
+                    modelPath = prior.modelPath,
+                )
+            } else {
+                null
+            }
+        val priorModelArgs =
+            if (
+                prior !=
+                    null &&
+                    priorModelBinding !=
+                    null
+            ) {
+                acceptedPriorServerArgs(
+                    receipt = prior,
+                )
+            } else {
+                null
+            }
+        if (
+            prior !=
+                null &&
+                priorModel !=
+                null &&
+                priorModelBinding !=
+                null &&
+                priorModelArgs !=
+                null &&
+                priorModel.modelRef !=
+                binding.model.modelRef &&
+                receiptBinds(
+                    binding = priorModelBinding,
+                    receipt = prior,
+                    requireImplementationSha = false,
+                    expectedArgs = priorModelArgs,
+                )
+        ) {
+            if (
+                platform.processAlive(
+                    prior.runtime.pid,
+                )
+            ) {
+                requireExactOwnedProcess(
+                    prior,
+                    priorModelArgs,
                     platform,
                 )
             }
@@ -630,19 +1134,69 @@ object HereticPersistentRuntime {
             )
         }
 
+        val acceptedPriorArgs =
+            prior?.let {
+                acceptedPriorServerArgs(
+                    receipt = it,
+                )
+            }
         if (
             !switchedModel &&
+            prior != null &&
+            acceptedPriorArgs != null &&
+            acceptedPriorArgs != args &&
+            receiptBinds(
+                binding = binding,
+                receipt = prior,
+                requireImplementationSha = true,
+                expectedArgs = acceptedPriorArgs,
+            )
+        ) {
+            if (platform.processAlive(prior.runtime.pid)) {
+                requireExactOwnedProcess(
+                    prior,
+                    acceptedPriorArgs,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "changed-config exact Heretic runtime could not be retired before configured restart"
+            }
+            store.delete()
+            runtimeConfigurationRotated = true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf(
+                    "from" to binding.model.handle,
+                    "to" to binding.model.handle,
+                    "reason" to "RUNTIME_CONFIGURATION_CHANGED",
+                ),
+            )
+        }
+        if (
+            !switchedModel &&
+            !runtimeConfigurationRotated &&
             prior !=
                 null &&
                 !receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = true,
                 ) &&
+                acceptedPriorArgs !=
+                null &&
                 receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = false,
+                    expectedArgs = acceptedPriorArgs,
                 )
         ) {
             if (
@@ -652,7 +1206,7 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    args,
+                    acceptedPriorArgs,
                     platform,
                 )
             }
@@ -672,6 +1226,7 @@ object HereticPersistentRuntime {
                 true
         } else if (
             !switchedModel &&
+                !runtimeConfigurationRotated &&
                 prior !=
                 null &&
                 !receiptBinds(
@@ -688,6 +1243,7 @@ object HereticPersistentRuntime {
         val currentPrior =
             if (
                 staleImplementationRotated ||
+                    runtimeConfigurationRotated ||
                     switchedModel
             ) {
                 null
@@ -1040,6 +1596,10 @@ object HereticPersistentRuntime {
                 ) {
                     "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
                 } else if (
+                    runtimeConfigurationRotated
+                ) {
+                    "ROTATED_RUNTIME_CONFIGURATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
                     staleImplementationRotated
                 ) {
                     "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
@@ -1151,18 +1711,20 @@ object HereticPersistentRuntime {
                 binding.pythonEnvironmentRoot,
             ).isAbsolute,
         )
+        HereticRuntimeConfiguration.requirePromptCacheEntries(
+            binding.promptCacheEntryLimit,
+        )
     }
 
     private fun receiptBinds(
         binding: Binding,
         receipt: Receipt,
         requireImplementationSha: Boolean,
-    ): Boolean {
-        val expectedArgs =
+        expectedArgs: List<String> =
             serverArgs(
                 binding,
-            )
-
+            ),
+    ): Boolean {
         val identity =
             binding.model.identity
         return receipt.schemaVersion ==

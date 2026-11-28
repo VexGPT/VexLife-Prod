@@ -1,5 +1,8 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Source-owned catalog of the local Heretic models a person can choose.
  *
@@ -22,9 +25,22 @@ package vexlife.model.heretic
  *   still owed. Selecting a candidate is a human choice, never an automatic fallback.
  */
 object HereticModelCatalog {
+    @Serializable
     enum class Standing {
+        @SerialName("CERTIFIED")
         CERTIFIED,
+
+        @SerialName("CANDIDATE")
         CANDIDATE,
+    }
+
+    @Serializable
+    enum class Origin {
+        @SerialName("PRODUCT_CATALOG")
+        PRODUCT_CATALOG,
+
+        @SerialName("HOME_IMPORTED")
+        HOME_IMPORTED,
     }
 
     data class Entry(
@@ -37,9 +53,20 @@ object HereticModelCatalog {
         val members: List<HereticArtifactCatalog.Member>,
         /** Folder under the Home; the provider revision is the folder below it. */
         val modelRootRelativePath: String,
-        /** Unified memory this model wants to run comfortably beside macOS and VexLife. */
-        val recommendedMemoryBytes: Long,
+        /** Unified memory this model wants to run comfortably beside macOS and VexLife, when established. */
+        val recommendedMemoryBytes: Long?,
+        /** Complete provider/model representation relationship; never inherited implicitly. */
+        val companionProfile: HereticCompanionRepresentation.Profile,
         val standing: Standing,
+        /** Whether this offer ships with the Product or was admitted by this Vex Home. */
+        val origin: Origin = Origin.PRODUCT_CATALOG,
+        /** Provider-published license identifier when it was available at admission time. */
+        val providerLicense: String? = null,
+        /**
+         * Whether Setup may start a Home on this model by itself. A newly added model family is
+         * the person's choice until its lived comparison has been made.
+         */
+        val autoRecommended: Boolean = true,
     ) {
         val totalBytes: Long
             get() = members.sumOf(HereticArtifactCatalog.Member::expectedBytes)
@@ -65,6 +92,15 @@ object HereticModelCatalog {
             require(modelRootRelativePath.matches(Regex("models/heretic/[a-z0-9.-]+"))) {
                 "model root must be one folder under models/heretic"
             }
+            require(recommendedMemoryBytes == null || recommendedMemoryBytes > 0L) {
+                "model memory expectation must be positive when established"
+            }
+            require(origin != Origin.PRODUCT_CATALOG || recommendedMemoryBytes != null) {
+                "Product-catalog models require an established memory expectation"
+            }
+            require(providerLicense == null || providerLicense.isNotBlank()) {
+                "provider license must be absent or non-blank"
+            }
         }
     }
 
@@ -72,6 +108,8 @@ object HereticModelCatalog {
         "hf.foresee.qwen3.8-9b-heretic-uncensored-5bit-mlx.8a3eec7d4b298cc5100a191bbb870d2fb7446bb5"
     private const val FourBSource =
         "hf.yachen4ever.qwen3.8-4b-distill-heretic-abliterated-mlx-4bit.f47bef776bcd49b552219c14c4da949c8b49e336"
+    private const val GptOss20BSource =
+        "hf.d8a.gpt-oss-20b-heretic-ara-v3-mlx-8bit.227eba2dcf295c662074309446929c4a5226d587"
 
     private fun member(
         source: String,
@@ -93,7 +131,7 @@ object HereticModelCatalog {
             licenseRef = HereticArtifactCatalog.LicenseRef,
         )
 
-    internal val NineBMembers: List<HereticArtifactCatalog.Member> =
+    private val NineBMembers: List<HereticArtifactCatalog.Member> =
         listOf(
             member(
                 NineBSource,
@@ -187,7 +225,119 @@ object HereticModelCatalog {
             ),
         )
 
-    internal val FourBMembers: List<HereticArtifactCatalog.Member> =
+    private val GptOss20BMembers: List<HereticArtifactCatalog.Member> =
+        listOf(
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.gitattributes",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.gitattributes",
+                ".gitattributes",
+                "text/plain",
+                "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930",
+                1_570L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.readme",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.readme",
+                "README.md",
+                "text/markdown",
+                "54a7967dce665d0602183614b221ebde813c1622061918b8d83ed1d021516495",
+                1_126L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.chat-template",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.chat-template",
+                "chat_template.jinja",
+                "text/plain",
+                "a4c9919cbbd4acdd51ccffe22da049264b1b73e59055fa58811a99efbd7c8146",
+                16_738L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.config",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.config",
+                "config.json",
+                "application/json",
+                "3a722e195356fd7f97c60c3667d28d667b386ab160b23eb9a0ead9a2cfc2313b",
+                34_018L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.generation-config",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.generation-config",
+                "generation_config.json",
+                "application/json",
+                "0bc1a359a9a2cbedc1c2c4345fd268f3f86c0c4b49a7d4440f4bcb8af5f240ff",
+                172L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.weights-1",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.weights-1",
+                "model-00001-of-00003.safetensors",
+                "application/octet-stream",
+                "1fa8934ab04eb75a761416407665c3ea8797191ef7c69dccb9c01256ac27594a",
+                5_303_719_858L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.weights-2",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.weights-2",
+                "model-00002-of-00003.safetensors",
+                "application/octet-stream",
+                "06e9a197c2bb6c1ce7d9398854c13b448eb3a0b1f55425a4be894150930af0a3",
+                5_281_581_915L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.weights-3",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.weights-3",
+                "model-00003-of-00003.safetensors",
+                "application/octet-stream",
+                "49a68850355f0217fe334de912b816a104e36788b7e39e6dbbd01a61263e7f77",
+                1_490_905_779L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.weights-index",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.weights-index",
+                "model.safetensors.index.json",
+                "application/json",
+                "6fa724aa7a9130561f9b97debcc06c56ba150d8fbd58fc1168f53a22d6a5490a",
+                67_046L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.special-tokens-map",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.special-tokens-map",
+                "special_tokens_map.json",
+                "application/json",
+                "8464cabd6eda239fe46ebf8ae63b46c417721784a961a022f6b59174a2cda0e2",
+                440L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.tokenizer",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.tokenizer",
+                "tokenizer.json",
+                "application/json",
+                "0614fe83cadab421296e664e1f48f4261fa8fef6e03e63bb75c20f38e37d07d3",
+                27_868_174L,
+            ),
+            member(
+                GptOss20BSource,
+                "artifact-role.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.member.tokenizer-config",
+                "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d.member.tokenizer-config",
+                "tokenizer_config.json",
+                "application/json",
+                "9279e942392b742d633c7adbb89ebe002c98399db8926a7af5125c726f404070",
+                4_200L,
+            ),
+        )
+
+    private val FourBMembers: List<HereticArtifactCatalog.Member> =
         listOf(
             member(
                 FourBSource,
@@ -292,7 +442,17 @@ object HereticModelCatalog {
 
     private const val GiB = 1024L * 1024L * 1024L
 
-    val Certified27B =
+    /**
+     * Named model definitions owned by this catalog.
+     *
+     * Identity names stay stable as qualification changes: certification/candidacy belongs to
+     * [Entry.standing], not to the model's name.
+     *
+     * To offer the next model: define one [Entry] here, then register it once in [Entries].
+     * Setup, Settings, artifact delivery/materialization and runtime selection consume [Entries];
+     * they do not need model-specific branches merely because another model is offered.
+     */
+    private val Qwen27BDefinition =
         Entry(
             identity = HereticProductIdentity.Current,
             handle = "heretic-27b",
@@ -301,15 +461,17 @@ object HereticModelCatalog {
             providerRevision = "808b82a2bd04b2bac362b5d0b7a1197aeea59e57",
             members = HereticArtifactCatalog.Members,
             modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
-            recommendedMemoryBytes = 32 * GiB,
+            recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen27B,
             standing = Standing.CERTIFIED,
         )
 
     /** Same Qwen3.8 Heretic family, 9B at 5-bit: about 6.7 GB of weights. */
-    val Candidate9B =
+    private val Qwen9BDefinition =
         Entry(
             identity =
-                providerPublished(
+                HereticModelCatalog.providerPublished(
                     modelRef = "model.vexlife-prod.heretic.qwen3.8-9b.mlx5.5901a94ba7c7",
                     modelBundleRef =
                         "model-bundle.vexlife.heretic.qwen3.8-9b.mlx5.5901a94ba7c7.001",
@@ -326,9 +488,11 @@ object HereticModelCatalog {
             humanLabel = "Heretic 9B (5-bit, MLX)",
             providerRepository = "Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX",
             providerRevision = "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
-            members = NineBMembers,
+            members = HereticModelCatalog.NineBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
-            recommendedMemoryBytes = 16 * GiB,
+            recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen9B,
             standing = Standing.CANDIDATE,
         )
 
@@ -337,10 +501,10 @@ object HereticModelCatalog {
      * 4-bit: about 3 GB of weights, for 8-16 GB Macs. A different lineage than 27B/9B, said
      * plainly.
      */
-    val Candidate4B =
+    private val Qwen4BDefinition =
         Entry(
             identity =
-                providerPublished(
+                HereticModelCatalog.providerPublished(
                     modelRef = "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
                     modelBundleRef =
                         "model-bundle.vexlife.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20.001",
@@ -355,22 +519,87 @@ object HereticModelCatalog {
                         "resolution.vexlife-prod.artifact-pin.qwen38-4b-distill-heretic-mlx4.20261114A",
                 ),
             handle = "heretic-4b",
-            humanLabel = "Heretic 4B Distill (4-bit, MLX)",
+            humanLabel = "Heretic 4B Distill",
             providerRepository = "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
             providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
-            members = FourBMembers,
+            members = HereticModelCatalog.FourBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
-            recommendedMemoryBytes = 8 * GiB,
+            recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen4B,
             standing = Standing.CANDIDATE,
         )
 
-    /** Offered models, largest first. */
-    val Entries: List<Entry> = listOf(Certified27B, Candidate9B, Candidate4B)
+    /**
+     * OpenAI gpt-oss-20b decensored by p-e-w with Heretic's Arbitrary-Rank Ablation (ARA v3; card:
+     * KL divergence 0.0554, refusals 3/100), converted to MLX (MXFP4 experts, 8-bit attention) with
+     * mlx-lm 0.29.1. A mixture of experts: 21B parameters, about 3.6B active per token, so it
+     * answers quickly for its size. Harmony response format; not started by default.
+     */
+    private val GptOss20BDefinition =
+        Entry(
+            identity =
+                HereticModelCatalog.providerPublished(
+                    modelRef = "model.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa",
+                    modelBundleRef =
+                        "model-bundle.vexlife.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa.001",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.candidate.20261115A",
+                    artifactSetRef =
+                        "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d",
+                    contentSetSha256 =
+                        "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
+                    providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
+                    custodyRef =
+                        "resolution.vexlife-prod.artifact-pin.gpt-oss-20b-heretic-ara-v3-mlx.20261115A",
+                ),
+            handle = "gpt-oss-20b",
+            humanLabel = "Heretic gpt-oss 20B (MXFP4, MLX)",
+            providerRepository = "D8A/gpt-oss-20b-heretic-ara-v3-mlx-8Bit",
+            providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
+            members = HereticModelCatalog.GptOss20BMembers,
+            modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
+            recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
+            companionProfile = HereticCompanionRepresentation.Profiles.GptOss20B,
+            standing = Standing.CANDIDATE,
+            autoRecommended = false,
+        )
+
+    /**
+     * Stable parent-bound model positions for Setup, Settings, tests and future source readers.
+     *
+     * The actual [Entry] instances are constructed by the outer catalog before this nested scope is
+     * read. That preserves `HereticModelCatalog.Models.<Model>` without creating a JVM
+     * outer/nested initialization cycle.
+     */
+    object Models {
+        val Qwen27B: Entry
+            get() = Qwen27BDefinition
+
+        val Qwen9B: Entry
+            get() = Qwen9BDefinition
+
+        val Qwen4B: Entry
+            get() = Qwen4BDefinition
+
+        val GptOss20B: Entry
+            get() = GptOss20BDefinition
+    }
+
+    /** Offered models, by the memory each wants, largest first. */
+    val Entries: List<Entry> =
+        listOf(
+            Qwen27BDefinition,
+            GptOss20BDefinition,
+            Qwen9BDefinition,
+            Qwen4BDefinition,
+        )
 
     /**
      * What a Home without a choice gets: the certified model, unchanged from before the catalog.
      */
-    val Default: Entry = Certified27B
+    val Default: Entry = Qwen27BDefinition
 
     fun entry(modelRef: String): Entry? = Entries.firstOrNull { it.modelRef == modelRef }
 
@@ -379,20 +608,34 @@ object HereticModelCatalog {
 
     fun byHandle(handle: String): Entry? = Entries.firstOrNull { it.handle == handle }
 
-    /** Whether [entry] wants no more memory than this Mac has. Unknown memory fits nothing. */
-    fun fits(entry: Entry, totalMemoryBytes: Long?): Boolean =
-        totalMemoryBytes != null && totalMemoryBytes >= entry.recommendedMemoryBytes
+    /**
+     * Whether [entry] wants no more memory than this Mac has.
+     *
+     * null is intentional: imported models do not get a made-up memory recommendation merely from
+     * download size. They stay human-selectable but never become an automatic recommendation.
+     */
+    fun fits(entry: Entry, totalMemoryBytes: Long?): Boolean? {
+        val expected = entry.recommendedMemoryBytes ?: return null
+        val observed = totalMemoryBytes ?: return null
+        return observed >= expected
+    }
 
     /**
-     * The model a Home that has not chosen yet starts with on this Mac: the largest offered model
-     * that fits its memory (the certified 27B on a Mac like Victor's), the smallest when none fits,
-     * the certified default when memory is unknown. The person can choose any offered model.
+     * The model a Home that has not chosen yet starts with on this Mac: the largest
+     * [Entry.autoRecommended] model that fits its memory (the certified 27B on a Mac like
+     * Victor's), the smallest such model when none fits, the certified default when memory is
+     * unknown. The person can choose any offered model.
      */
-    fun recommendedFor(totalMemoryBytes: Long?): Entry =
-        if (totalMemoryBytes == null) Default
-        else
-            Entries.firstOrNull { fits(it, totalMemoryBytes) }
-                ?: Entries.minBy { it.recommendedMemoryBytes }
+    fun recommendedFor(totalMemoryBytes: Long?): Entry {
+        if (totalMemoryBytes == null) return Default
+        val startable =
+            Entries.filter {
+                it.autoRecommended &&
+                    it.recommendedMemoryBytes != null
+            }
+        return startable.firstOrNull { fits(it, totalMemoryBytes) == true }
+            ?: startable.minBy { requireNotNull(it.recommendedMemoryBytes) }
+    }
 
     /**
      * A provider-published model shares the certified model's runtime relationship (adapter, class,
@@ -428,6 +671,9 @@ object HereticModelCatalog {
         require(Entries.map { it.handle }.distinct().size == Entries.size) {
             "model handles must be unique"
         }
+        require(Entries.all { it.companionProfile.profileRef.isNotBlank() }) {
+            "every offered model requires one explicit Companion provider profile"
+        }
         require(Entries.map { it.modelRootRelativePath }.distinct().size == Entries.size) {
             "model folders must be unique"
         }
@@ -443,6 +689,7 @@ object HereticModelCatalog {
             "content sets must be unique across models"
         }
         require(Default.standing == Standing.CERTIFIED) { "the default model must be certified" }
+        require(Default.autoRecommended) { "the default model must be startable by default" }
     }
 }
 

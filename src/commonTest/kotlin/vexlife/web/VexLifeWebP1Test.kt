@@ -25,9 +25,163 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            53,
+            145,
             blueprint.size,
         )
+
+        // The language quick action only opens its panel; each choice in it binds its own setting.
+        val coordinates = VexLifeWebP1.Surface.coordinates().associateBy { it.ref }
+        assertEquals(
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Language.ref).binding as VexWeb.Binding.LocalInteraction).target.ref,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ReplyLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ReplyLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ScreenLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWorkspaceBlueprint.BrowserQuery.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.BrowserQueryError.ref).containerRef,
+            "Browser query validation belongs beneath the addressed query field",
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.AttachmentDraftCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Attach.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.LocalSourcesCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
+                    VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWebP1.Refs.WorkspaceEffectsCapability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
+
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+                    VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWebP1.Refs.WorkspaceChecksCapability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
+
+        val profileCapabilities =
+            mapOf(
+                VexLifeWorkspaceBlueprint.VexContextProfileUse.ref to VexLifeWebP1.Refs.ContextProfileUseCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to VexLifeWebP1.Refs.ContextProfileSaveCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileSaveAs.ref to VexLifeWebP1.Refs.ContextProfileSaveAsCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to VexLifeWebP1.Refs.ContextProfileRestoreCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileImport.ref to VexLifeWebP1.Refs.ContextProfileImportCapability,
+            )
+        profileCapabilities.forEach { (ref, capability) ->
+            assertEquals(
+                capability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
+        assertEquals(
+            VexWeb.Interaction.Change,
+            coordinates
+                .getValue(
+                    VexLifeWorkspaceBlueprint.CompanionMode.ref,
+                )
+                .interactions
+                .single(),
+            "Companion mode is one typed presentation change",
+        )
+        assertEquals(
+            VexWeb.Interaction.Change,
+            coordinates
+                .getValue(
+                    VexLifeWorkspaceBlueprint.VexContextProcessRetention.ref,
+                )
+                .interactions
+                .single(),
+            "process retention is one typed presentation change",
+        )
+
+        assertEquals(
+            VexLifeWorkspaceBlueprint.VexContext.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextLabs.ref).containerRef,
+            "Labs is a Vex Context sibling, not canonical prompt input",
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.VexContext.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextInput.ref).containerRef,
+            "What Vex received remains a separate Vex Context sibling",
+        )
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextLabsStatus.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsTest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsRestore.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsReload.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsClear.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsInputBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsNote.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsFields.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsLastRequest.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWorkspaceBlueprint.VexContextLabs.ref,
+                coordinates.getValue(ref).containerRef,
+                ref,
+            )
+        }
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextInputFoundation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputMemory.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputContinuity.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputConversation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputBrowser.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputRequest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputComponents.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                coordinates.getValue(ref).containerRef,
+                ref,
+            )
+            assertEquals(
+                VexWeb.Binding.None,
+                coordinates.getValue(ref).binding,
+                "$ref is read-only presentation, not a Control",
+            )
+        }
         assertTrue(
             manifested.containsAll(
                 blueprint,
@@ -72,6 +226,85 @@ class VexLifeWebP1Test {
             visionQuickAccessBinding.target.ref,
         )
 
+        val speechBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Speech.ref).binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, speechBinding.target.ref)
+
+        val themeBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Theme.ref).binding as VexWeb.Binding.PresentationAction
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, themeBinding.actionRef)
+
+        val supportBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Support.ref).binding as VexWeb.Binding.ExternalNavigation
+        assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
+
+        val triggerBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, triggerBinding.target.ref)
+
+        for (panelRef in listOf(
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+        )) {
+            val panel = coordinates.getValue(panelRef)
+            assertEquals(VexWeb.Placement.Overlay, panel.placement)
+            assertEquals(VexWeb.Depth.Transient, panel.depth)
+        }
+
+        val speechActions =
+            listOf(
+                Triple(VexLifeWorkspaceBlueprint.SpeechEnabled.ref, VexLifeWebP1.Refs.SpeechEnabledToggleAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechVoice.ref, VexLifeWebP1.Refs.SpeechVoiceChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref, VexLifeWebP1.Refs.SpeechReadThoughtsChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechRate.ref, VexLifeWebP1.Refs.SpeechRateChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPrevious.ref, VexLifeWebP1.Refs.SpeechPreviousAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPlayPause.ref, VexLifeWebP1.Refs.SpeechPlayPauseAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechStop.ref, VexLifeWebP1.Refs.SpeechStopAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechNext.ref, VexLifeWebP1.Refs.SpeechNextAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechChooseStart.ref, VexLifeWebP1.Refs.SpeechChooseStartAction, VexWeb.Interaction.Activate),
+            )
+        for ((ref, actionRef, interaction) in speechActions) {
+            val coordinate = coordinates.getValue(ref)
+            assertTrue(interaction in coordinate.interactions)
+            assertEquals(actionRef, (coordinate.binding as VexWeb.Binding.LocalAction).actionRef)
+            assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, coordinate.sourceParentRef)
+        }
+
+        val releaseAlerts =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.ReleaseAlerts.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                releaseAlerts.interactions,
+        )
+        val releaseAlertsBinding =
+            releaseAlerts.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.ReleaseAlertsPanel.identity.ref,
+            releaseAlertsBinding.target.ref,
+        )
+
+        val privateMode =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.PrivateMode.ref
+                }
+        assertTrue(VexWeb.Interaction.Activate in privateMode.interactions)
+        assertTrue(privateMode.binding is VexWeb.Binding.Capability)
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationPrivateCapability,
+            (privateMode.binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+        assertEquals(VexLifeWebP1.Refs.CompanionHeader.value, privateMode.containerRef)
+
         val vision =
             VexLifeWebP1.Surface
                 .coordinates()
@@ -94,6 +327,7 @@ class VexLifeWebP1Test {
                     VexWeb.Binding.Capability
             ).capabilityRef,
         )
+        assertEquals(VexLifeWebP1.Refs.CompanionHeader.value, vision.containerRef)
 
         val viewSwitch =
             VexLifeWebP1.Surface
@@ -166,6 +400,56 @@ class VexLifeWebP1Test {
                 "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
             ),
         )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"LOCAL_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.SpeechPlayPauseAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.ColorModeToggleAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${VexLifeWebP1.Refs.SupportHref}\"",
+            ),
+        )
+
+        val runtimeArtifacts =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(runtimeArtifacts.javascript.contains("contextConversationCollapsedByEventRef"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-collapse"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-show"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.heading.context-change-reply-language-changed"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
+        assertTrue(runtimeArtifacts.javascript.contains("providerRequestsByResponse"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.label.context-model-view-one"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-final-hash"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-session"))
+        assertTrue(runtimeArtifacts.javascript.contains("memory-current-accepted-semantic"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-memory-evidence"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.status.context-held-completed-turn"))
+
+        val voiceInput =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VoiceInput.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                voiceInput.interactions,
+        )
+        val voiceInputBinding =
+            voiceInput.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            voiceInputBinding.target.ref,
+        )
 
         val send =
             VexLifeWebP1.Surface
@@ -183,6 +467,29 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Refs.ConversationSendCapability,
             (
                 send.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
+        )
+
+        val stop =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.Stop.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                stop.interactions,
+        )
+        assertTrue(
+            stop.binding is
+                VexWeb.Binding.Capability,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationCancelCapability,
+            (
+                stop.binding as
                     VexWeb.Binding.Capability
             ).capabilityRef,
         )
@@ -253,6 +560,14 @@ class VexLifeWebP1Test {
             coordinates
                 .getValue(
                     VexLifeWebP1.ContextShare.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.VoiceInput.identity.ref,
                 )
                 .containerRef,
         )
@@ -366,7 +681,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "label.textContent = expanded ? 'hide process' : 'view process';",
+                "label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');",
             ),
         )
         assertFalse(
@@ -396,7 +711,7 @@ class VexLifeWebP1Test {
             )
         val unresolved =
             javascript.indexOf(
-                "setCompanionStatus('Unavailable', 'Send outcome unresolved', '')",
+                "setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-send-unresolved'), '')",
             )
 
         assertTrue(

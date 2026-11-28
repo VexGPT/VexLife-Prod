@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -205,14 +206,13 @@ class MacHereticRuntimePlatformTest {
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
             materialization =
                 HereticArtifactMaterialization.Result(
-                    state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
                     modelPath =
                         root
                             .resolve(
                                 "model",
                             )
                             .toString(),
-                    providerRevision = "8".repeat(40),
+                    providerRevision = HereticModelCatalog.Models.Qwen27B.providerRevision,
                     contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
                     memberCount = 11,
                     totalBytes = 15_153_242_506L,
@@ -343,6 +343,26 @@ class MacHereticRuntimePlatformTest {
                 ),
             )
             assertTrue(
+                host.observedPlist.contains(
+                    "<string>-c</string>",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "9462d6e57822df160adc260d9414838179b71907",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "vexlife_prompt_cache_boundary_message_count",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<string>--prompt-cache-size</string>",
+                ),
+            )
+            assertFalse(
                 host.observedPlist.contains(
                     "<string>mlx_lm.server</string>",
                 ),

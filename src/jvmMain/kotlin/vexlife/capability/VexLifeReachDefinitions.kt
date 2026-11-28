@@ -3,6 +3,7 @@ package vexlife.capability
 import vexlife.capability.VexLifeCapabilityAtlas.Action
 import vexlife.capability.VexLifeCapabilityAtlas.Argument
 import vexlife.capability.VexLifeCapabilityAtlas.Definition
+import vexlife.capability.VexLifeCapabilityAtlas.ValueSchema
 
 /**
  * Registered request/return reach: what Vex can ask the host to read for him during a turn.
@@ -20,24 +21,94 @@ import vexlife.capability.VexLifeCapabilityAtlas.Definition
  */
 internal object VexLifeReachDefinitions {
     const val AtlasRef = "capability.vexlife.atlas.describe"
+    const val SelfContextRef = "capability.vexlife.self.context"
     const val WebRef = "capability.vexlife.web.read"
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
+    const val AttachmentRef = "capability.vexlife.attachment.read"
+    const val LocalSourceRef = "capability.vexlife.local-sources.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
+    const val RevisitRef = "capability.vexlife.continuity.revisit"
 
     const val AtlasResource = "resource.vexlife-prod.capability.registry"
+    const val SelfContextResource = "resource.vexlife-prod.self-context.current-turn"
     const val WebResource = "resource.vexlife-prod.network.public-web"
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
+    const val AttachmentResource = "resource.vexlife-prod.request-artifacts"
+    const val LocalSourceResource = "resource.vexlife-prod.local-sources.folders"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
+    const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
+
+    const val RevisitExampleArguments =
+        """{"queries":[{"terms":["launch","date"]},{"terms":["ship day"]},""" +
+            """{"corrections":true,"window":{"lastHours":5,"lastTurns":20}}]}"""
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
     private val Platforms = listOf(VexLifeCapabilityAtlas.MacPlatformRef)
 
-    private fun arg(name: String, type: String, required: Boolean, meaning: String) =
-        Argument(name = name, type = type, required = required, meaning = meaning)
+    private val StringSchema = ValueSchema("string")
+    private val IntegerSchema = ValueSchema("integer")
+    private val NumberSchema = ValueSchema("number")
+    private val BooleanSchema = ValueSchema("boolean")
+
+    private fun valueSchema(type: String): ValueSchema =
+        when {
+            type.endsWith("[]") ->
+                ValueSchema(
+                    type = "array",
+                    items = valueSchema(type.removeSuffix("[]")),
+                )
+            type == "string" -> StringSchema
+            type == "integer" -> IntegerSchema
+            type == "number" -> NumberSchema
+            type == "boolean" -> BooleanSchema
+            type == "object" -> ValueSchema("object")
+            else -> error("unsupported capability schema shorthand: $type")
+        }
+
+    private val RevisitQuerySchema =
+        ValueSchema(
+            type = "object",
+            properties =
+                mapOf(
+                    "ref" to StringSchema,
+                    "terms" to ValueSchema(type = "array", items = StringSchema),
+                    "seedRefs" to ValueSchema(type = "array", items = StringSchema),
+                    "window" to
+                        ValueSchema(
+                            type = "object",
+                            properties =
+                                mapOf(
+                                    "lastHours" to IntegerSchema,
+                                    "lastTurns" to IntegerSchema,
+                                ),
+                        ),
+                    "corrections" to BooleanSchema,
+                    "speaker" to
+                        ValueSchema(
+                            type = "string",
+                            enumValues = listOf("ANY", "HUMAN", "VEX"),
+                        ),
+                    "from" to IntegerSchema,
+                ),
+        )
+
+    private fun arg(
+        name: String,
+        type: String,
+        required: Boolean,
+        meaning: String,
+        schema: ValueSchema? = null,
+    ) =
+        Argument(
+            name = name,
+            schema = schema ?: valueSchema(type),
+            required = required,
+            meaning = meaning,
+        )
 
     val Definitions: List<Definition> =
         listOf(
@@ -74,15 +145,49 @@ internal object VexLifeReachDefinitions {
                             arguments =
                                 listOf(
                                     arg(
-                                        "capability",
+                                        "handle",
                                         "string",
                                         true,
-                                        "A handle such as web, or a capabilityRef.",
+                                        "A capability handle such as web, or a full capabilityRef.",
                                     )
                                 ),
-                            exampleArguments = """{"capability":"github"}""",
+                            exampleArguments = """{"handle":"github"}""",
                             returns =
                                 "The capability's actions with argument names, types and an example request.",
+                        ),
+                    ),
+            ),
+            Definition(
+                capabilityRef = SelfContextRef,
+                handle = "self-context",
+                purpose =
+                    "Inspect the exact prompt/body evidence this human turn already holds: prompt " +
+                        "receipt identity, component placement/currentness, Working Focus standing, " +
+                        "held detail/source coordinates and bounded provider token/cache/timing facts. " +
+                        "This reads no source content and exposes no private reasoning.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = SelfContextResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CURRENT_TURN_SELF_CONTEXT",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeSelfContext.kt",
+                priority = 2,
+                actions =
+                    listOf(
+                        Action(
+                            action = "inspect",
+                            purpose =
+                                "Read bounded evidence for what this current human turn is carrying now.",
+                            arguments = emptyList(),
+                            exampleArguments = "{}",
+                            returns =
+                                "Prompt receipt/component placement, Working Focus standing/currentness, " +
+                                    "held/source refs and bounded provider token/cache/timing measurements; " +
+                                    "never prompt/provider bodies or private reasoning.",
                         ),
                     ),
             ),
@@ -110,11 +215,36 @@ internal object VexLifeReachDefinitions {
                                 "Fetch one public http(s) URL and return its readable text and links.",
                             arguments =
                                 listOf(
-                                    arg("url", "string", true, "An absolute http or https URL.")
+                                    arg("url", "string", true, "An absolute http or https URL."),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Character offset in the extracted readable text. Omit for the beginning; use nextOffset from a truncated result to continue the same page.",
+                                    ),
                                 ),
                             exampleArguments = """{"url":"https://example.com/"}""",
                             returns =
-                                "Final URL, status, title and the page text (bounded), with links.",
+                                "Final URL, status, title and one bounded readable-text slice with returnedStart/returnedEnd and nextOffset when more of the current page remains.",
+                        ),
+                        Action(
+                            action = "find",
+                            purpose =
+                                "Observe one public page once for this human turn, then scan that same observed text for several possible phrases before spending context on a large read.",
+                            arguments =
+                                listOf(
+                                    arg("url", "string", true, "An absolute http or https URL."),
+                                    arg(
+                                        "queries",
+                                        "string[]",
+                                        true,
+                                        "1-6 words or phrases to locate together in the same observed page snapshot.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"url":"https://example.com/guide","queries":["prompt cache","cached tokens"]}""",
+                            returns =
+                                "Bounded matching excerpts with character ranges, one turn-scoped sourceRef, observedAt, total readable characters and whether the network source was incomplete.",
                         ),
                         Action(
                             action = "search",
@@ -122,7 +252,7 @@ internal object VexLifeReachDefinitions {
                                 "Search the public web and return result titles, URLs and snippets.",
                             arguments = listOf(arg("query", "string", true, "What to search for.")),
                             exampleArguments = """{"query":"mlx-lm server openai compatible"}""",
-                            returns = "Up to 10 results; fetch one to read it.",
+                            returns = "Up to 10 results; fetch or find within one result to read it.",
                         ),
                     ),
             ),
@@ -208,11 +338,17 @@ internal object VexLifeReachDefinitions {
                                         false,
                                         "Branch, tag or commit; default branch if omitted.",
                                     ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Character offset inside the exact file observation from the first read in this human turn.",
+                                    ),
                                 ),
                             exampleArguments =
                                 """{"repository":"VexGPT/VexLife-Prod","path":"README.md"}""",
                             returns =
-                                "The file text (bounded) with its size and the ref it came from.",
+                                "One bounded slice of the exact observed file with sourceRef, returnedStart/returnedEnd and nextOffset when more observed text remains.",
                         ),
                     ),
             ),
@@ -253,9 +389,198 @@ internal object VexLifeReachDefinitions {
                             action = "read",
                             purpose = "Read one text file of the Home.",
                             arguments =
-                                listOf(arg("path", "string", true, "File relative to the Home.")),
+                                listOf(
+                                    arg("path", "string", true, "File relative to the Home."),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first line for a large text file. Omit for the ordinary first-byte read.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return with startLine; 1-1000.",
+                                    ),
+                                ),
                             exampleArguments = """{"path":"config/home.json"}""",
-                            returns = "The file text (bounded) with its size.",
+                            returns =
+                                "The file text, or a bounded line window with startLine/endLine/nextLine for large files.",
+                        ),
+                    ),
+            ),
+            Definition(
+                capabilityRef = AttachmentRef,
+                handle = "attachments",
+                purpose =
+                    "Read the exact files attached to this current sent message. Files staged in " +
+                        "the Composer but not sent are not visible here.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = AttachmentResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CURRENT_REQUEST_ARTIFACTS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeAttachmentReach.kt",
+                priority = 39,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose = "List files bound to this current sent message.",
+                            arguments = emptyList(),
+                            exampleArguments = "{}",
+                            returns =
+                                "Request-local resource refs, display names, readable line counts and sizes.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose = "Read one bounded line window from one current-message file.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "resourceRef",
+                                        "string",
+                                        true,
+                                        "Request-local resource ref projected for the current request or returned by the attachments list action.",
+                                    ),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first line; 1 if omitted.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return; 1-1000, default 400.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"resourceRef":"request-resource.vexlife-prod.<current-request>.<n>","startLine":1}""",
+                            returns =
+                                "Lines startLine-endLine with nextLine when more readable text remains.",
+                        ),
+                    ),
+            ),
+            Definition(
+                capabilityRef = LocalSourceRef,
+                handle = "sources",
+                purpose =
+                    "Read folders the person explicitly added as Local Sources. Grants persist " +
+                        "across turns; every read stays inside one exact grant and changes nothing.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = LocalSourceResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "PERSON_GRANTED_LOCAL_FOLDERS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeLocalSourceReach.kt",
+                priority = 40,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose =
+                                "List granted Local Sources, or list one folder inside one exact grant.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        false,
+                                        "A source ref from sources.list. Omit to list the person's grants.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        false,
+                                        "Folder relative to the grant; the grant root if omitted.",
+                                    ),
+                                ),
+                            exampleArguments = "{}",
+                            returns =
+                                "Granted source refs and names, or bounded entries inside one grant.",
+                        ),
+                        Action(
+                            action = "find",
+                            purpose =
+                                "Find files inside one grant by relative-path text and/or text-file contents before reading them.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        true,
+                                        "Exact source ref returned by sources.list.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        false,
+                                        "Optional folder relative to the grant to search beneath.",
+                                    ),
+                                    arg(
+                                        "name",
+                                        "string",
+                                        false,
+                                        "Case-insensitive term to match in relative file paths.",
+                                    ),
+                                    arg(
+                                        "text",
+                                        "string",
+                                        false,
+                                        "Case-insensitive term to match in bounded UTF-8 text files.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.sha256.<digest>","name":"invoice","text":"total due"}""",
+                            returns =
+                                "Up to 50 bounded path/text matches plus whether the bounded search completed.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose =
+                                "Read one bounded line window from a text, ZIP, DOCX, XLSX or PPTX file inside one grant.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        true,
+                                        "Exact source ref returned by sources.list.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        true,
+                                        "File path relative to the grant.",
+                                    ),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first readable line; 1 if omitted.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return; 1-1000, default 400.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.sha256.<digest>","path":"docs/plan.docx","startLine":1}""",
+                            returns =
+                                "One bounded readable line window, format, source byte size and nextLine when more remains.",
                         ),
                     ),
             ),
@@ -287,10 +612,17 @@ internal object VexLifeReachDefinitions {
                                         "string[]",
                                         true,
                                         "1-6 distinctive words or phrases.",
-                                    )
+                                    ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Match offset from a prior result; omit for the first page.",
+                                    ),
                                 ),
                             exampleArguments = """{"terms":["birthday","Seattle"]}""",
-                            returns = "Matching pages with statement refs, state and summary.",
+                            returns =
+                                "Matching pages with statement refs, state and summary, plus totalMatches and nextOffset/frontier when more matches remain.",
                         )
                     ),
             ),
@@ -298,9 +630,9 @@ internal object VexLifeReachDefinitions {
                 capabilityRef = ConversationRef,
                 handle = "conversation",
                 purpose =
-                    "Return exact older turns of this Conversation by distinctive phrase. It has its " +
-                        "own request form, VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1, described in " +
-                        "its protocol block; once per turn.",
+                    "Return exact older turns of this Conversation by distinctive exact words. " +
+                        "This route keeps its one-source-return-per-human-turn semantics and exact " +
+                        "Conversation owner even when carried through a provider-native tool call.",
                 defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = Roles,
                 platformRefs = Platforms,
@@ -312,12 +644,146 @@ internal object VexLifeReachDefinitions {
                 sourcePath =
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
                 priority = 44,
+                actions =
+                    listOf(
+                        Action(
+                            action = "return",
+                            purpose =
+                                "Reopen up to three matching older completed turns from this exact Conversation.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queryTerms",
+                                        "string[]",
+                                        true,
+                                        "1-6 concise distinctive exact words or phrases. Any matching term may locate a turn; stronger multi-term matches rank first.",
+                                    ),
+                                    arg(
+                                        "speakerScope",
+                                        "string",
+                                        false,
+                                        "ANY (default), HUMAN, or VEX.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "ANY",
+                                                        "HUMAN",
+                                                        "VEX",
+                                                    ),
+                                            ),
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"queryTerms":["distinctive phrase"],"speakerScope":"ANY"}""",
+                            returns =
+                                "Exact matching human/Vex request-response pairs or an explicit NO_MATCH / HELD_TOKEN_BUDGET state.",
+                        ),
+                    ),
+            ),
+            Definition(
+                capabilityRef = RevisitRef,
+                handle = "continuity",
+                purpose =
+                    "Revisit older continuity in one request: several queries at once over this " +
+                        "Conversation's exact turns, my current Memory and where the work stands. " +
+                        "Exact words come back with when they were said, what is already in view " +
+                        "(turns or Memory) is named instead of repeated, the statements the work " +
+                        "names as current are resolved through Memory, and anything not returned " +
+                        "is listed with how to ask for it.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = RevisitResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CONTINUITY_OWNERS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath = "src/jvmMain/kotlin/vexlife/continuity/VexLifeContextRevisit.kt",
+                priority = 45,
+                actions =
+                    listOf(
+                        Action(
+                            action = "revisit",
+                            purpose =
+                                "Run up to 6 queries together. The terms of one query are clues " +
+                                    "that must all appear; different wordings of the same question " +
+                                    "go in separate queries, because words are matched exactly.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queries",
+                                        "object[]",
+                                        true,
+                                        "Each query object may carry terms (up to 6, all must appear), " +
+                                            "seedRefs (turn or event refs), window {lastHours, lastTurns} " +
+                                            "(either reaches), corrections: true, speaker ANY|HUMAN|VEX, " +
+                                            "or from (an offset to read on in one seeded event).",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items = RevisitQuerySchema,
+                                            ),
+                                    ),
+                                    arg(
+                                        "scopes",
+                                        "string[]",
+                                        false,
+                                        "CONVERSATION, MEMORY, WORKING_CONTINUITY; all when omitted.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items =
+                                                    ValueSchema(
+                                                        type = "string",
+                                                        enumValues =
+                                                            listOf(
+                                                                "CONVERSATION",
+                                                                "MEMORY",
+                                                                "WORKING_CONTINUITY",
+                                                            ),
+                                                    ),
+                                            ),
+                                    ),
+                                    arg(
+                                        "order",
+                                        "string",
+                                        false,
+                                        "CURRENT_FIRST (default) or CHRONOLOGICAL.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "CURRENT_FIRST",
+                                                        "CHRONOLOGICAL",
+                                                    ),
+                                            ),
+                                    ),
+                                    arg("maxTurns", "number", false, "1-12, default 6."),
+                                    arg("maxTokens", "number", false, "500-8000, default 6000."),
+                                ),
+                            exampleArguments = RevisitExampleArguments,
+                            returns =
+                                "Where the work stands, corrections in the person's own words, " +
+                                    "matching turns with every query that found them, Memory " +
+                                    "pages, what was not returned and what was searched.",
+                        )
+                    ),
             ),
         )
 
-    /** The capabilities whose requests travel in [VexLifeCapabilityRequest] envelopes. */
+    /**
+     * Capabilities whose canonical fallback requests travel through [VexLifeCapabilityRequest].
+     * Conversation source return keeps its dedicated semantic owner/control internally.
+     */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef)
+        listOf(AtlasRef, SelfContextRef, AttachmentRef, LocalSourceRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+
+    /** Every read route declared to provider-native tool-capable shipped models. */
+    val ProviderToolCapabilityRefs: List<String> =
+        EnvelopeCapabilityRefs + ConversationRef
 }
 
 // [VXG RealForever]

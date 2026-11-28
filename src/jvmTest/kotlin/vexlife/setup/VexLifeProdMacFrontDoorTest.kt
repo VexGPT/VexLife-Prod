@@ -294,8 +294,122 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun witnessedLegacyOrphanMapsToExplicitRecoveryControl() {
+        val observed =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan(
+                sourceCurrentness = currentness(prior),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+            )
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks(observed),
+            )
+        val resolved =
+            VexLifeProdMacFrontDoor.resolveTypedControlWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlRecoverStaleService,
+                hooks = hooks(observed),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            prior,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            projection.currentServicePid,
+        )
+        assertEquals(
+            "Stop old VexLife service",
+            en(projection.displayState.primaryLabel),
+        )
+        val effect =
+            requireNotNull(
+                resolved.effect as? VexLifeProdEntryFamily.RetireStaleService,
+            )
+        assertEquals(
+            prior,
+            effect.priorServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            effect.priorServicePid,
+        )
+    }
+
+    @Test
+    fun witnessedLegacyOrphanRecoveryPrecedesHostAndModelPrerequisites() {
+        val model =
+            HereticModelCatalog.Models.Qwen9B
+        val blockedSetupState =
+            currentState()
+                .copy(
+                    chipModel = null,
+                    hostEligibilityState = "UNSUPPORTED",
+                    hostEligibilityReason = "CHIP_MODEL_UNSUPPORTED",
+                    totalMemoryBytes = null,
+                    freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                    modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING",
+                    activeModelRef = model.modelRef,
+                    activeModelProfileRef = model.identity.modelProfileRef,
+                    modelMinimumMemoryBytes = model.recommendedMemoryBytes,
+                    runtimeState = "ESTABLISHMENT_PENDING",
+                    modelArtifactState = "ABSENT",
+                    modelArtifactTotalBytes = model.totalBytes,
+                    modelArtifactPresentBySizeBytes = 0L,
+                    modelArtifactMissingBytes = model.totalBytes,
+                    modelArtifactInvalidSizeBytes = 0L,
+                )
+        val orphan =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan(
+                sourceCurrentness = currentness(prior),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks =
+                    hooks(
+                        existing = orphan,
+                        runtimeEnvironmentPresent = false,
+                        current = blockedSetupState,
+                    ),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.ControlRecoverStaleService,
+            projection.displayState.primaryControlRef,
+        )
+        assertEquals(
+            prior,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            projection.currentServicePid,
+        )
+        assertEquals(
+            null,
+            projection.setupPlan,
+        )
+    }
+
+    @Test
     fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
-        val model = HereticModelCatalog.Candidate9B
+        val model = HereticModelCatalog.Models.Qwen9B
         val pendingModel =
             currentState().copy(
                 freeStorageBytes = 100L * 1024L * 1024L * 1024L,
@@ -349,11 +463,13 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(desired),
                 launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                servesSelectedHome = true,
             )
         val priorRepair =
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(prior),
                 launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                servesSelectedHome = true,
             )
 
         assertEquals(
@@ -377,6 +493,36 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun exactServiceForAnotherHomeMapsToStartInsteadOfRepairOrUnknown() {
+        val otherHomeService =
+            VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
+                receipt = receipt(desired),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+                servesSelectedHome = false,
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks(otherHomeService),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            desired,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            null,
+            projection.currentServicePid,
+        )
+    }
+
+    @Test
     fun existingHomeWithoutServiceShowsResourcePlanBeforeAcquisition() {
         val absentService = VexLifeProdMacServiceLifetime.ExistingObservation.Absent
         val projection =
@@ -396,7 +542,7 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
         val setupPlan = requireNotNull(projection.setupPlan)
         assertTrue(setupPlan.modelArtifactTotalBytes > 0)
-        assertTrue(setupPlan.modelMinimumMemoryBytes > 0)
+        assertTrue(requireNotNull(setupPlan.modelMinimumMemoryBytes) > 0)
         assertEquals(48L * 1024L * 1024L * 1024L, setupPlan.currentTotalMemoryBytes)
         assertEquals(3L * 1024L * 1024L * 1024L, setupPlan.currentFreeStorageBytes)
         assertFalse(setupPlan.effectsPerformed)
@@ -420,6 +566,57 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
         assertEquals("receipt/PID ownership is not exact", projection.serviceDetail)
         assertNull(projection.displayState.primaryControlRef)
+    }
+
+    @Test
+    fun staleServiceRecoveryRetiresOnlyThatServiceThenReobserves() {
+        var retired = 0
+        var converged = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlRecoverStaleService,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { _, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.RetireStaleService(
+                                        priorServiceSourceSha = prior,
+                                        priorServicePid = 4242L,
+                                    ),
+                            )
+                        },
+                        retireStaleService = { sourceSha, pid ->
+                            assertEquals(prior, sourceSha)
+                            assertEquals(4242L, pid)
+                            retired += 1
+                        },
+                        convergeProduct = { _, _, _, _ ->
+                            converged += 1
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateStartRequired
+                        },
+                    ),
+            )
+
+        assertEquals(1, retired)
+        assertEquals(0, converged)
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            result.semanticStateRef,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
     }
 
     @Test
@@ -574,6 +771,192 @@ class VexLifeProdMacFrontDoorTest {
             result.manifestationRef,
         )
         assertEquals(VexLifeProdEntryFamily.StateSetupRequired, result.semanticStateRef)
+    }
+
+    @Test
+    fun restartControlsTakeOverExactOlderSetupBeforeProductConvergence() {
+        for (
+            stateRef in
+                listOf(
+                    VexLifeProdEntryFamily.StateUpdateAvailable,
+                    VexLifeProdEntryFamily.StateRepairRequired,
+                    VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                )
+        ) {
+            val order =
+                mutableListOf<String>()
+
+            val result =
+                VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                    productHome = selectedHome,
+                    controlRef = VexLifeProdEntryFamily.ControlConvergeDesired,
+                    desiredSourceSha = desired,
+                    hooks =
+                        VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                            resolveControl = { _, controlRef, productHome ->
+                                assertEquals(selectedHome, productHome)
+                                VexLifeProdMacFrontDoor.ResolvedControl(
+                                    semanticStateRef = stateRef,
+                                    controlRef = controlRef,
+                                    effect =
+                                        VexLifeProdEntryFamily.ConvergeProduct(
+                                            desiredSourceSha = desired,
+                                            allowAcquisition = false,
+                                            allowRuntimeStart = true,
+                                        ),
+                                )
+                            },
+                            prepareRestartTakeover = { productHome ->
+                                assertEquals(selectedHome, productHome)
+                                order +=
+                                    "TAKEOVER"
+                            },
+                            convergeProduct = { _, _, _, productHome ->
+                                assertEquals(selectedHome, productHome)
+                                order +=
+                                    "CONVERGE"
+                            },
+                            observeSemanticStateRef = { _, _ ->
+                                VexLifeProdEntryFamily.StateCurrent
+                            },
+                        ),
+                )
+
+            assertEquals(
+                listOf(
+                    "TAKEOVER",
+                    "CONVERGE",
+                ),
+                order,
+                stateRef,
+            )
+            assertEquals(
+                VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
+                result.manifestationRef,
+            )
+        }
+    }
+
+    @Test
+    fun ordinarySetUpAndStartNeverAcquireRestartTakeoverAuthority() {
+        val cases =
+            listOf(
+                Triple(
+                    VexLifeProdEntryFamily.StateSetupRequired,
+                    VexLifeProdEntryFamily.ControlSetUp,
+                    true,
+                ),
+                Triple(
+                    VexLifeProdEntryFamily.StateStartRequired,
+                    VexLifeProdEntryFamily.ControlStart,
+                    false,
+                ),
+            )
+
+        for (
+            (stateRef, controlRef, allowAcquisition) in
+                cases
+        ) {
+            var converged =
+                0
+            val result =
+                VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                    productHome = selectedHome,
+                    controlRef = controlRef,
+                    desiredSourceSha = desired,
+                    hooks =
+                        VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                            resolveControl = { _, resolvedRef, _ ->
+                                VexLifeProdMacFrontDoor.ResolvedControl(
+                                    semanticStateRef = stateRef,
+                                    controlRef = resolvedRef,
+                                    effect =
+                                        VexLifeProdEntryFamily.ConvergeProduct(
+                                            desiredSourceSha = desired,
+                                            allowAcquisition = allowAcquisition,
+                                            allowRuntimeStart = true,
+                                        ),
+                                )
+                            },
+                            prepareRestartTakeover = {
+                                error(
+                                    "ordinary Set Up / Start must not supersede another setup"
+                                )
+                            },
+                            convergeProduct = { _, _, _, _ ->
+                                converged +=
+                                    1
+                            },
+                            observeSemanticStateRef = { _, _ ->
+                                VexLifeProdEntryFamily.StateCurrent
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                converged,
+                stateRef,
+            )
+            assertEquals(
+                VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
+                result.manifestationRef,
+            )
+        }
+    }
+
+    @Test
+    fun restartTakeoverFailureStopsBeforeProductConvergence() {
+        var converged =
+            0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlConvergeDesired,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { _, controlRef, _ ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateUpdateAvailable,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.ConvergeProduct(
+                                        desiredSourceSha = desired,
+                                        allowAcquisition = false,
+                                        allowRuntimeStart = true,
+                                    ),
+                            )
+                        },
+                        prepareRestartTakeover = {
+                            throw IllegalArgumentException(
+                                "VexLife setup lease holder is not one exact owned VexLife setup for this Home"
+                            )
+                        },
+                        convergeProduct = { _, _, _, _ ->
+                            converged +=
+                                1
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateUpdateAvailable
+                        },
+                    ),
+            )
+
+        assertEquals(
+            0,
+            converged,
+        )
+        assertTrue(
+            result.failure !=
+                null,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
     }
 
     @Test

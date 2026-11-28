@@ -51,7 +51,10 @@
       <a href="#versions">Versions</a>
       <a href="https://github.com/VexGPT/VexLife-Prod">Source</a>
     </nav>
-    <button class="control" type="button" id="theme-toggle" aria-label="Switch between dark and light">Light</button>
+    <div class="spiral-actions" id="vex-nav-actions" aria-label="Page tools">
+      <!-- Existing local Theme behavior remains the owner; the shared Spiral only activates it. -->
+      <button class="control" type="button" id="theme-toggle" aria-label="Switch between dark and light" hidden>Light</button>
+    </div>
   </div>
 </header>
 
@@ -81,10 +84,13 @@
           <label for="mac-version">Version</label>
           <select class="select" id="mac-version" disabled><option>Loading versions…</option></select>
         </div>
-        <div class="actions">
-          <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
-          <a class="btn btn-outline" id="mac-security" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension">Allow VexLife on this Mac</a>
-          <a class="btn btn-outline" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
+        <div class="mac-download-actions">
+          <div class="mac-action-path" aria-label="Mac first-download path">
+            <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
+            <span class="mac-action-arrow" id="mac-security-arrow" aria-hidden="true" hidden>→</span>
+            <a class="btn btn-outline" id="mac-security" href="x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension" title="Use this after macOS blocks VexLife on the first launch" hidden>Open Privacy &amp; Security</a>
+          </div>
+          <a class="mac-release-notes" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
         </div>
         <dl class="facts" id="mac-facts"></dl>
         <div class="next" id="mac-next" hidden></div>
@@ -105,7 +111,6 @@
 
   <section class="section" id="walkthrough" aria-labelledby="walkthrough-title">
     <p class="eyebrow">First run</p>
-      <p class="phase-note">After macOS allows VexLife to open, VexLife's own first run begins here.</p>
     <h2 class="h2" id="walkthrough-title">What setup asks, and what it leaves alone</h2>
     <p class="lede" id="walkthrough-note">Every step shows what VexLife found and what it is about to do before anything happens.</p>
     <ol class="steps" id="walkthrough-steps"></ol>
@@ -143,10 +148,62 @@
   </section>
 </main>
 
-<footer class="footer">
-  <div class="shell" id="footer-line">VexLife · <a href="https://github.com/VexGPT/VexLife-Prod">VexGPT/VexLife-Prod</a></div>
+<footer class="footer" aria-label="VexLife maintainer and project links">
+  <div class="shell footer-grid">
+    <div>
+      <p class="footer-title">VexLife · built and maintained by Victor Gong</p>
+      <p class="footer-meta" id="footer-line">Independent open-source project</p>
+    </div>
+    <nav class="footer-links" aria-label="Contact and project links">
+      <a href="mailto:vgong24@gmail.com">Contact · vgong24@gmail.com</a>
+      <a href="https://github.com/VexGPT/VexLife-Prod">Source · GitHub</a>
+      <a href="https://vgong24.github.io/Vextreme/pages/vex-support.html">Support · Vextreme</a>
+      <a href="https://www.instagram.com/victoweng/" rel="me">Instagram · @victoweng</a>
+    </nav>
+  </div>
 </footer>
 
 <script src="assets/site.js"></script>
+<script>
+  /*
+   * Vex ecosystem Spiral registration for the PUBLIC VexLife arrival/download surface.
+   *
+   * This surface truthfully owns:
+   * - its existing browser-local Foundation theme control;
+   * - navigation to canonical Vextreme Support;
+   * - navigation to the public Vextreme Terrain.
+   *
+   * Intentionally absent:
+   * - Vextreme page-language localization (this page has no Vextreme string-bundle authority);
+   * - installed-Product reply language / Speech / Vision / Vex Summon (those belong to VexLife Home/runtime).
+   *
+   * Absence is the feature gate. The shared host does not know these capability names.
+   */
+  window.VEX_SPIRAL_FEATURES = [
+    {
+      id: 'theme',
+      label: 'Light or dark',
+      title: 'Toggle theme',
+      target: '#theme-toggle'
+    },
+    {
+      id: 'support',
+      label: 'Support Vextreme and VexLife',
+      title: 'Support the creator',
+      icon: '🫴',
+      href: 'https://vgong24.github.io/Vextreme/pages/vex-support.html'
+    },
+    {
+      id: 'terrain',
+      label: 'Open Vextreme Terrain',
+      title: 'Vextreme Terrain Map',
+      icon: '🗺️',
+      href: 'https://vgong24.github.io/Vextreme/pages/terrain-map.html'
+    }
+  ];
+</script>
+<!-- Shared presentation mechanism is exact-commit pinned; VexLife owns only its registration above. -->
+<script defer src="https://cdn.jsdelivr.net/gh/vgong24/Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/widgets/vex-fab.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/vgong24/Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/components/vex-spiral-features.js"></script>
 </body>
 </html>

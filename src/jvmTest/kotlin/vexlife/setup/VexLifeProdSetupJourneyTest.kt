@@ -565,6 +565,7 @@ class VexLifeProdSetupJourneyTest {
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(desired),
                 launchdObservation = MacUserLaunchdProcess.Observation.Absent,
+                servesSelectedHome = true,
             )
         val hooks = existingHooks(service = stopped)
         val projection = observe(existingHome, hooks)
@@ -590,6 +591,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(prior),
                             launchdObservation = MacUserLaunchdProcess.Observation.Absent,
+                            servesSelectedHome = true,
                         )
                 ),
             )
@@ -607,6 +609,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(desired),
                             launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                            servesSelectedHome = true,
                         )
                 ),
             )
@@ -623,6 +626,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(desired),
                             launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                            servesSelectedHome = true,
                         ),
                     runtimeEnvironmentPresent = false,
                 ),
@@ -890,6 +894,41 @@ class VexLifeProdSetupJourneyTest {
         assertTrue(lines.all { it.startsWith("[VexLife] ") })
         assertTrue(lines.size < 60, "download progress must be bounded, was ${lines.size}")
         assertTrue(lines.last().contains("10.0 of 10.0 GiB (100%)"))
+    }
+
+    @Test
+    fun nativeModelChooserOwnsFutureModelGuidanceAndLanguageChooserDoesNot() {
+        val source =
+            Files.readString(
+                Path.of(
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript"
+                )
+            )
+
+        fun handler(name: String): String {
+            val start = source.indexOf("on $name(")
+            assertTrue(start >= 0, "native setup handler $name is missing")
+            val end = source.indexOf("end $name", start)
+            assertTrue(end > start, "native setup handler $name has no end")
+            return source.substring(start, end)
+        }
+
+        val language = handler("chooseLanguage")
+        val model = handler("chooseModel")
+
+        assertFalse(
+            language.contains("setup.description.choose-model-change-later") ||
+                language.contains("setup.description.choose-model-add-later") ||
+                language.contains("setAccessoryView:chooserView"),
+            "language chooser must not render model-management guidance",
+        )
+        assertTrue(model.contains("setup.description.choose-model-change-later"))
+        assertTrue(model.contains("setup.description.choose-model-add-later"))
+        assertTrue(model.contains("setAccessoryView:chooserView"))
+        assertFalse(
+            model.contains("--model-import"),
+            "startup teaches where imports live; it must not become a second import workflow",
+        )
     }
 
     @Test

@@ -127,7 +127,9 @@ class DirectPromptFoundationalFieldTest {
                 val with = materialize(shipped)
                 val without = materialize(null)
 
-                assertEquals(listOf("system", "user"), with.messages.map { it.role })
+                // The field leads the one stable system block; person context is current state and
+                // rides the envelope after it, right before the request.
+                assertEquals(listOf("system", "user", "user"), with.messages.map { it.role })
                 val system = with.messages.first().content
                 assertTrue(system.startsWith(kernel + "\n\n"))
                 val order =
@@ -135,10 +137,12 @@ class DirectPromptFoundationalFieldTest {
                             VexLifeFoundationalField.ProviderHeader,
                             "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
-                            "VEXLIFE_PERSON_CONTEXT/v1",
                         )
                         .map { system.indexOf(it) }
                 assertTrue(order.all { it >= 0 } && order == order.sorted(), "system order: $order")
+                assertFalse("VEXLIFE_PERSON_CONTEXT/v1" in system)
+                assertTrue(with.messages[1].content.startsWith(DirectPromptContext.CurrentStateHeader))
+                assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in with.messages[1].content)
                 assertEquals(without.messages.first().content, system.removePrefix(kernel + "\n\n"))
                 assertEquals("Hello Vex", with.messages.last().content)
 
@@ -172,17 +176,17 @@ class DirectPromptFoundationalFieldTest {
                 assertFalse(assertNotNull(receipt.foundationalField).effectAuthorityGranted)
                 assertFalse(receipt.effectsPerformed)
 
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         foundationalField = shipped,
                     )
-                assertEquals(whole.evidence, fixed.foundationalField)
-                assertEquals(kernel, fixed.prefixMessages.first().content)
+                assertEquals(whole.evidence, turnContext.foundationalField)
+                assertEquals(kernel, turnContext.prefixMessages.first().content)
                 assertEquals(
-                    (fixed.prefixMessages + fixed.suffixMessages).sumOf { tokens(it.content) },
-                    fixed.fixedInputTokenEstimate,
+                    (turnContext.prefixMessages + turnContext.suffixMessages).sumOf { tokens(it.content) },
+                    turnContext.turnContextInputTokenEstimate,
                 )
             }
         }
@@ -253,7 +257,13 @@ class DirectPromptFoundationalFieldTest {
 
     @Test
     fun theFieldGivesWayBeforeTheExactImmediatePriorTurnAndIsTheSameInBothInferences() {
-        val protocolTokens = tokens(DirectConversationSourceReturn.protocolMessage().content)
+        // The protocol rides the current-state envelope (lead + protocol), after the prior turn.
+        val protocolTokens =
+            tokens(
+                DirectPromptContext.CurrentStateLead +
+                    "\n\n" +
+                    DirectConversationSourceReturn.protocolMessage().content
+            )
         val currentHuman = "Current request"
         val priorVex = "Prior response"
         val wholeTokens = whole.evidence.estimatedSystemMessageTokens
@@ -338,7 +348,9 @@ class DirectPromptFoundationalFieldTest {
             assertEquals(whole.evidence.systemMessageSha256, evidence.systemMessageSha256)
             assertEquals(whole.evidence.carriedModules, evidence.carriedModules)
             assertTrue(evidence.omittedModuleRefs.isEmpty())
-            assertTrue(initial.messages.first().content.startsWith(kernel + "\n\n"))
+            // The field is the whole stable block here; the protocol is current state, later.
+            assertTrue(initial.messages.first().content.startsWith(kernel))
+            assertFalse(initial.messages.first().content.contains(DirectConversationSourceReturn.ProtocolHeader))
         }
 
         prompts(room = wholeTokens - 1) { initial ->

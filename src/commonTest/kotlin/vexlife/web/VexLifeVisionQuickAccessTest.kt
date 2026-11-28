@@ -7,7 +7,7 @@ import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeVisionQuickAccessTest {
     @Test
-    fun visionQuickAccessIsPresentInTheGlobalUtilityRowWithoutFabricatingLookNow() {
+    fun visionQuickAccessIsReusedInsideProductSpiralWithoutFabricatingLookNow() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts.generate()
 
@@ -17,24 +17,49 @@ class VexLifeVisionQuickAccessTest {
             ),
         )
         assertTrue(
-            bundle.javascript.contains(
-                "{ key: 'vision', label: 'Vision'",
+            bundle.html.contains(
+                "id=\"quick-actions\" data-vex-aria-label=\"workspace.nav.quick-actions\" aria-label=\"workspace.nav.quick-actions\" data-open=\"false\"",
             ),
+            "the Product-authored Spiral should own its initial closed manifestation",
         )
         assertTrue(
+            bundle.css.contains(
+                ".quick-actions[data-open=\"false\"] > .quick-action-item { display: none; }",
+            ),
+            "closed Spiral presentation should hide its authored quick-action items without deleting their source coordinates",
+        )
+        assertFalse(
+            bundle.html.contains(
+                "id=\"vision-quick-access-source\" hidden",
+            ),
+            "VisionQuickAccess should remain authored; Spiral OPEN/CLOSED state owns its manifestation",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "configureSourceQuickAction(",
+            ) &&
+                bundle.javascript.contains(
+                    "'vision-quick-access-source'",
+                ),
+            "the renderer should reuse the authored VisionQuickAccess control",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.visionControl?.click();",
+            ),
+            "VisionQuickAccess should realize its authored LocalInteraction through the existing Vision control",
+        )
+        assertFalse(
             bundle.javascript.contains(
                 "action.key === 'vision'",
             ),
+            "the removed parallel renderer dispatcher must not return",
         )
-        assertTrue(
+        assertFalse(
             bundle.javascript.contains(
-                "action.key === 'vision'",
+                "const QUICK_ACTIONS = [",
             ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "void activateVision();",
-            ),
+            "the renderer must not recreate a second quick-action registry",
         )
         // Vision copy and its one lawful Control come from VexLifeVisionFamily via the service; the
         // renderer only shows state.vision.display and never offers Look Now while LOOK is held.

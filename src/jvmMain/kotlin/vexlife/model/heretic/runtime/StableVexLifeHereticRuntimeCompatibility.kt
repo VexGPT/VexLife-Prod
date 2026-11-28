@@ -8,6 +8,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -109,7 +110,22 @@ object StableVexLifeHereticRuntimeCompatibility {
         val evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val receiptRelativePath: String,
         val pid: Long,
+        val launchContract: HereticPersistentRuntime.ServerLaunchContract =
+            HereticPersistentRuntime.ServerLaunchContract.CURRENT,
     )
+
+    const val RetiredPriorLaunchContractState =
+        "RETIRED_STABLE_PRIOR_LAUNCH_CONTRACT"
+
+    data class Retirement(
+        val launchContract: HereticPersistentRuntime.ServerLaunchContract,
+        val exactOwnershipVerified: Boolean,
+        val verifiedNotLive: Boolean,
+        val receiptDeleted: Boolean,
+    ) {
+        val state: String
+            get() = RetiredPriorLaunchContractState
+    }
 
     private val RefPattern =
         Regex(
@@ -172,17 +188,49 @@ object StableVexLifeHereticRuntimeCompatibility {
         binding: HereticPersistentRuntime.Binding,
         platform: HereticPersistentRuntime.Platform,
         launchdHost: MacUserLaunchdProcess.Host,
+    ): Observation? =
+        observeReceiptRelationship(
+            receipt = receipt,
+            binding = binding,
+            platform = platform,
+            launchdHost = launchdHost,
+            requireEnvironmentCurrent = true,
+        )
+
+    private fun observeRetirementReceipt(
+        receipt: Receipt,
+        binding: HereticPersistentRuntime.Binding,
+        platform: HereticPersistentRuntime.Platform,
+        launchdHost: MacUserLaunchdProcess.Host,
+    ): Observation? =
+        observeReceiptRelationship(
+            receipt = receipt,
+            binding = binding,
+            platform = platform,
+            launchdHost = launchdHost,
+            requireEnvironmentCurrent = false,
+        )
+
+    private fun observeReceiptRelationship(
+        receipt: Receipt,
+        binding: HereticPersistentRuntime.Binding,
+        platform: HereticPersistentRuntime.Platform,
+        launchdHost: MacUserLaunchdProcess.Host,
+        requireEnvironmentCurrent: Boolean,
     ): Observation? {
         require(
             platform.platform ==
                 "darwin" &&
                 platform.architecture ==
                 "arm64" &&
-                platform.environmentCurrent(
-                    binding,
+                (
+                    !requireEnvironmentCurrent ||
+                        platform.environmentCurrent(
+                            binding,
+                        )
                 ),
         ) {
-            "stable VexLife Heretic runtime compatibility requires the exact current darwin/arm64 environment"
+            "stable VexLife Heretic runtime compatibility requires the admitted darwin/arm64 relationship"
         }
         require(
             receipt.schemaVersion ==
@@ -241,18 +289,23 @@ object StableVexLifeHereticRuntimeCompatibility {
             "stable VexLife Heretic runtime receipt is not compatible with the certified New Beginnings runtime relationship"
         }
 
+        val launchContract =
+            requireNotNull(
+                HereticPersistentRuntime.serverLaunchContract(
+                    binding = binding,
+                    args = receipt.runtime.args,
+                ),
+            ) {
+                "stable VexLife Heretic runtime receipt launch contract is not admitted by this Product"
+            }
         val expectedArgs =
-            HereticPersistentRuntime.serverArgs(
-                binding,
-            )
+            receipt.runtime.args
         require(
             receipt.runtime.pid >
                 0 &&
                 receipt.runtime.processGroupId >
                 0 &&
-                receipt.runtime.exactOwnedDetachedGroup &&
-                receipt.runtime.args ==
-                expectedArgs,
+                receipt.runtime.exactOwnedDetachedGroup,
         ) {
             "stable VexLife Heretic runtime receipt process identity is invalid"
         }
@@ -328,6 +381,16 @@ object StableVexLifeHereticRuntimeCompatibility {
                     runtimeReceiptRef = receipt.receiptRef,
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = receipt.modelRef,
+                    realizationRef =
+                        requireNotNull(
+                            HereticRuntimeRealization.resolve(
+                                model = binding.model,
+                                target = HereticRuntimeRealization.MacArm64,
+                            ),
+                        ) {
+                            "stable Mac runtime binding has no exact realization"
+                        }
+                            .realizationRef,
                     modelProfileRef = receipt.modelProfileRef,
                     artifactRef = receipt.artifactRef,
                     artifactContentSetSha256 = receipt.artifactContentSetSha256,
@@ -340,6 +403,223 @@ object StableVexLifeHereticRuntimeCompatibility {
             receiptRelativePath =
                 HereticProductIdentity.StableRuntimeReceiptRelativePath,
             pid = receipt.runtime.pid,
+            launchContract = launchContract,
+        )
+    }
+
+    /**
+     * Capture exact predecessor-runtime release authority while the Home still exists.
+     *
+     * The returned effect re-proves the same receipt/process/launchd relationship immediately
+     * before retirement and does not need the Home receipt to remain on disk. This is used only by
+     * a sustained Product service that was admitted while the predecessor ownership was exact.
+     */
+    fun capturedRelease(
+        productHome: Path,
+        binding: HereticPersistentRuntime.Binding,
+        platform: HereticPersistentRuntime.Platform,
+        launchdHost: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+    ): (() -> Unit)? {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val receipt =
+            VexDurableContractFile.read<Receipt>(
+                ownedRoot = home,
+                path =
+                    VexOwnedPath.resolveInside(
+                        home,
+                        HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                    ),
+            )
+                ?: return null
+        val observed =
+            observeReceipt(
+                receipt = receipt,
+                binding = binding,
+                platform = platform,
+                launchdHost = launchdHost,
+            )
+                ?: return null
+
+        return {
+            val retired =
+                retireCapturedExact(
+                    receipt = receipt,
+                    binding = binding,
+                    expected = observed,
+                    platform = platform,
+                    launchdHost = launchdHost,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "captured stable VexLife Heretic runtime release was not exact"
+            }
+        }
+    }
+
+    /**
+     * Upgrade/downgrade bridge for a source-known stable predecessor launch contract.
+     *
+     * The stable receipt is re-read and re-proved under the contract that formed it. Only an
+     * exact-owned live process with a recognized prior argv contract may be retired. Unknown argv,
+     * foreign scope, missing substrate evidence, or changed PID stays fail-closed.
+     */
+    fun retirePriorExact(
+        productHome: Path,
+        binding: HereticPersistentRuntime.Binding,
+        expected: Observation,
+        platform: HereticPersistentRuntime.Platform,
+        launchdHost: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+    ): Retirement {
+        require(
+            expected.launchContract !=
+                HereticPersistentRuntime.ServerLaunchContract.CURRENT,
+        ) {
+            "current stable Heretic launch contract does not require migration"
+        }
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val receiptPath =
+            VexOwnedPath.resolveInside(
+                home,
+                HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            )
+        val receipt =
+            requireNotNull(
+                VexDurableContractFile.read<Receipt>(
+                    ownedRoot = home,
+                    path = receiptPath,
+                ),
+            ) {
+                "stable VexLife Heretic runtime receipt disappeared before migration"
+            }
+        val current =
+            requireNotNull(
+                observeRetirementReceipt(
+                    receipt = receipt,
+                    binding = binding,
+                    platform = platform,
+                    launchdHost = launchdHost,
+                ),
+            ) {
+                "stable VexLife Heretic runtime disappeared before exact migration"
+            }
+        require(
+            current.receiptRelativePath ==
+                expected.receiptRelativePath &&
+                current.pid ==
+                expected.pid &&
+                current.evidence.runtimeReceiptRef ==
+                expected.evidence.runtimeReceiptRef &&
+                current.launchContract ==
+                expected.launchContract,
+        ) {
+            "stable VexLife Heretic runtime changed before exact migration"
+        }
+
+        val retired =
+            retireCapturedExact(
+                receipt = receipt,
+                binding = binding,
+                expected = current,
+                platform = platform,
+                launchdHost = launchdHost,
+            )
+        val deleted =
+            VexDurableContractFile.delete(
+                ownedRoot = home,
+                path = receiptPath,
+            )
+        require(
+            deleted,
+        ) {
+            "stable VexLife Heretic predecessor receipt remained after verified retirement"
+        }
+
+        return retired.copy(
+            receiptDeleted = true,
+        )
+    }
+
+    private fun retireCapturedExact(
+        receipt: Receipt,
+        binding: HereticPersistentRuntime.Binding,
+        expected: Observation,
+        platform: HereticPersistentRuntime.Platform,
+        launchdHost: MacUserLaunchdProcess.Host,
+    ): Retirement {
+        val current =
+            requireNotNull(
+                observeRetirementReceipt(
+                    receipt = receipt,
+                    binding = binding,
+                    platform = platform,
+                    launchdHost = launchdHost,
+                ),
+            ) {
+                "captured stable VexLife Heretic runtime disappeared before exact retirement"
+            }
+        require(
+            current.pid ==
+                expected.pid &&
+                current.evidence.runtimeReceiptRef ==
+                expected.evidence.runtimeReceiptRef &&
+                current.launchContract ==
+                expected.launchContract,
+        ) {
+            "captured stable VexLife Heretic runtime changed before exact retirement"
+        }
+
+        val substrate =
+            requireNotNull(
+                receipt.runtime.processSubstrate,
+            ) {
+                "stable VexLife Heretic runtime lacks exact process-substrate ownership evidence"
+            }
+        val productEraReceipt =
+            MacUserLaunchdProcess.Receipt(
+                schemaVersion = MacUserLaunchdProcess.Schema,
+                substrateRef = substrate.substrateRef,
+                label = substrate.label,
+                domainTarget = substrate.domainTarget,
+                plistPath = substrate.plistPath,
+                programPath = substrate.programPath,
+                programArguments = substrate.programArguments,
+                workingDirectory = substrate.workingDirectory,
+                stdoutPath = substrate.stdoutPath,
+                stderrPath = substrate.stderrPath,
+                environment = emptyMap(),
+                keepAlive = substrate.keepAlive,
+                pid = substrate.pid,
+            )
+        val retired =
+            MacUserLaunchdProcess.retire(
+                receipt = productEraReceipt,
+                host = launchdHost,
+                expectedPid = receipt.runtime.pid,
+            )
+        require(
+            retired.exactOwnershipVerified &&
+                retired.verifiedNotLive,
+        ) {
+            "stable VexLife Heretic predecessor runtime retirement was not exact"
+        }
+
+        return Retirement(
+            launchContract = expected.launchContract,
+            exactOwnershipVerified = true,
+            verifiedNotLive = true,
+            receiptDeleted = false,
         )
     }
 

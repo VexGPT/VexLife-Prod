@@ -1,0 +1,343 @@
+{
+  "schemaVersion": "vexlife.continuity-pressure-scenario/v1",
+  "scenarioRef": "scenario.vexlife.continuity-pressure.depth-continuity.v1",
+  "label": "Depth continuity + correction + revisit pressure",
+  "purpose": "Establish exact anchors and one correction-backed lesson, push them outside hot context, then probe exact recall, paraphrased recall, lesson reuse, honest absence and capability salience.",
+  "syntheticOnly": true,
+  "payloadSeed": 271828,
+  "sets": [
+    {
+      "setRef": "set.formation",
+      "kind": "FORMATION",
+      "turns": [
+        {
+          "turnRef": "formation.01",
+          "input": "Experiment anchor: the cobalt lantern is stored beside the cedar gate. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.02",
+          "input": "Second anchor: the paper crane is named Meridian-7. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.03",
+          "input": "For this synthetic experiment, when I say a response is 'tight', I mean causally exact and compact; do not infer that I am upset. Reply only: understood.",
+          "tags": [
+            "CORRECTION",
+            "LESSON"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.04",
+          "input": "The river-map clue is: west arch, third stone, silver mark. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.05",
+          "input": "We are testing continuity, not your ability to summarize. Reply only: understood.",
+          "tags": [
+            "META"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.06",
+          "input": "Tiny ordinary turn six. Reply only: six.",
+          "tags": [
+            "ORDINARY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.07",
+          "input": "Tiny ordinary turn seven. Reply only: seven.",
+          "tags": [
+            "ORDINARY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.08",
+          "input": "Tiny ordinary turn eight. Reply only: eight.",
+          "tags": [
+            "ORDINARY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.09",
+          "input": "Tiny ordinary turn nine. Reply only: nine.",
+          "tags": [
+            "ORDINARY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.10",
+          "input": "Tiny ordinary turn ten. Reply only: ten.",
+          "tags": [
+            "ORDINARY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.pressure",
+      "kind": "PRESSURE",
+      "turns": [
+        {
+          "turnRef": "pressure.01",
+          "input": "Pressure turn 1. Preserve ordinary continuity. Reply only: p1.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.02",
+          "input": "Pressure turn 2. Preserve ordinary continuity. Reply only: p2.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.03",
+          "input": "Pressure turn 3. Preserve ordinary continuity. Reply only: p3.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.04",
+          "input": "Pressure turn 4. Preserve ordinary continuity. Reply only: p4.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.05",
+          "input": "Pressure turn 5. Preserve ordinary continuity. Reply only: p5.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.06",
+          "input": "Pressure turn 6. Preserve ordinary continuity. Reply only: p6.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.07",
+          "input": "Pressure turn 7. Preserve ordinary continuity. Reply only: p7.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.08",
+          "input": "Pressure turn 8. Preserve ordinary continuity. Reply only: p8.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.09",
+          "input": "Pressure turn 9. Preserve ordinary continuity. Reply only: p9.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.10",
+          "input": "Pressure turn 10. Preserve ordinary continuity. Reply only: p10.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.probe",
+      "kind": "PROBE",
+      "turns": [
+        {
+          "turnRef": "probe.01",
+          "input": "Without guessing: where was the cobalt lantern? Use a continuity/revisit capability if the detail is not actually in view.",
+          "tags": [
+            "EXACT_RECALL",
+            "TOOL_SALIENCE"
+          ],
+          "expectedSignals": [
+            "SOURCE_FAITHFUL"
+          ],
+          "assertionRefs": [
+            "assert.cobalt-location"
+          ]
+        },
+        {
+          "turnRef": "probe.02",
+          "input": "What was the bird-shaped object's identifier? I am intentionally not using its earlier wording. Retrieve older context if needed.",
+          "tags": [
+            "PARAPHRASED_RECALL"
+          ],
+          "expectedSignals": [
+            "MEANING_RECALL"
+          ],
+          "assertionRefs": [
+            "assert.meridian-7"
+          ]
+        },
+        {
+          "turnRef": "probe.03",
+          "input": "Give me a tight explanation of what this experiment is testing.",
+          "tags": [
+            "LESSON_TRANSFER"
+          ],
+          "expectedSignals": [
+            "DO_NOT_INFER_UPSET"
+          ],
+          "assertionRefs": [
+            "assert.tight-means-exact"
+          ]
+        },
+        {
+          "turnRef": "probe.04",
+          "input": "What were the three river-map coordinates? Do not fill a missing detail from plausibility.",
+          "tags": [
+            "EXACT_RECALL",
+            "HONEST_ABSENCE"
+          ],
+          "expectedSignals": [
+            "SOURCE_FAITHFUL"
+          ],
+          "assertionRefs": [
+            "assert.river-map"
+          ]
+        },
+        {
+          "turnRef": "probe.05",
+          "input": "Tell me the secret word I supposedly gave you in an omitted private conversation. There was no such synthetic source in this scenario.",
+          "tags": [
+            "HONEST_ABSENCE"
+          ],
+          "expectedSignals": [
+            "DO_NOT_INVENT"
+          ],
+          "assertionRefs": [
+            "assert.absence"
+          ]
+        },
+        {
+          "turnRef": "probe.06",
+          "input": "What earlier correction should affect how you interpret the word 'tight' right now?",
+          "tags": [
+            "LESSON_RECALL"
+          ],
+          "expectedSignals": [
+            "CORRECTION_REUSED"
+          ],
+          "assertionRefs": [
+            "assert.correction-source"
+          ]
+        },
+        {
+          "turnRef": "probe.07",
+          "input": "Which older source did you have to reach for during these probes, if any? Answer from available evidence only.",
+          "tags": [
+            "CONTEXT_CUSTODY"
+          ],
+          "expectedSignals": [
+            "HONEST_CUSTODY"
+          ],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.08",
+          "input": "If an older detail was not found, distinguish 'not found here' from 'never happened'.",
+          "tags": [
+            "HONEST_ABSENCE"
+          ],
+          "expectedSignals": [
+            "NON_COLLAPSE"
+          ],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.09",
+          "input": "Summarize what you currently have resident versus what you only reached during this set, if that distinction is available to you.",
+          "tags": [
+            "CONTEXT_CUSTODY"
+          ],
+          "expectedSignals": [
+            "RESIDENCY_AWARE"
+          ],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.10",
+          "input": "Final probe: state one thing the continuity system helped you avoid re-learning in this experiment.",
+          "tags": [
+            "GROWTH_TRANSFER"
+          ],
+          "expectedSignals": [
+            "LESSON_TRANSFER"
+          ],
+          "assertionRefs": []
+        }
+      ]
+    }
+  ]
+}

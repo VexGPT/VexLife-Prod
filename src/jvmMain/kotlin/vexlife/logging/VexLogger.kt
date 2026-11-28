@@ -39,10 +39,13 @@ object VexLogger {
         Entry("entry"),
         Setup("setup"),
         Person("person"),
+        Models("models"),
         ServiceLifetime("service-lifetime"),
         Service("service"),
         HereticRuntime("heretic-runtime"),
+        LocalAsr("local-asr"),
         Conversation("conversation"),
+        Prompt("prompt"),
         Browser("browser"),
         Presentation("presentation"),
         Diagnostics("diagnostics"),
@@ -86,21 +89,53 @@ object VexLogger {
         RuntimeQualified(Owner.HereticRuntime),
         RuntimeModelSwitched(Owner.HereticRuntime),
 
+        // Request-scoped visual interpretation runtime. Refs only; never pixels/prompt/output text.
+        VisualInferenceStarted(Owner.HereticRuntime),
+        VisualInferenceCompleted(Owner.HereticRuntime),
+        VisualInferenceFailed(Owner.HereticRuntime),
+
+        // Optional visual runtime prerequisite; failure holds visual capability, never text setup.
+        VisualRuntimePreparationHeld(Owner.Setup),
+
         // Settings → Models: the person's model Controls and the file effects they caused.
-        ModelControlAccepted(Owner.Setup),
-        ModelDownloadStarted(Owner.Setup),
-        ModelDownloadCompleted(Owner.Setup),
-        ModelDownloadFailed(Owner.Setup),
-        ModelFilesRemoved(Owner.Setup),
+        ModelControlAccepted(Owner.Models),
+        ModelDownloadStarted(Owner.Models),
+        ModelDownloadCompleted(Owner.Models),
+        ModelDownloadFailed(Owner.Models),
+        ModelFilesRemoved(Owner.Models),
         RuntimeProcessNoLongerLive(Owner.HereticRuntime),
         RuntimeProcessLive(Owner.HereticRuntime),
+
+        // Local speech-to-text provider. Facts carry stable provider/model coordinates, never audio/text.
+        LocalAsrSelectionSaved(Owner.Person),
+        LocalAsrSpokenLanguageSaved(Owner.Person),
+        LocalAsrComposerOutputSaved(Owner.Person),
+        LocalAsrModelDownloadStarted(Owner.LocalAsr),
+        LocalAsrModelDownloadCompleted(Owner.LocalAsr),
+        LocalAsrModelDownloadFailed(Owner.LocalAsr),
+        LocalAsrModelFilesRemoved(Owner.LocalAsr),
+        LocalAsrProviderDownloadStarted(Owner.LocalAsr),
+        LocalAsrProviderDownloadCompleted(Owner.LocalAsr),
+        LocalAsrProviderDownloadFailed(Owner.LocalAsr),
+        LocalAsrInferenceStarted(Owner.LocalAsr),
+        LocalAsrInferenceCompleted(Owner.LocalAsr),
+        LocalAsrInferenceFailed(Owner.LocalAsr),
 
         // Conversation
         SendAccepted(Owner.Conversation),
         ProviderInvocationRequested(Owner.Conversation),
+        ProviderStageObserved(Owner.Conversation),
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
+        // Working Continuity stewardship after a completed turn: not derivable from TURN_COMPLETED,
+        // and its failure never fails the Send, so it is otherwise invisible.
+        WorkingContinuityCommitted(Owner.Conversation),
+        WorkingContinuityCommitFailed(Owner.Conversation),
+
+        // Prompt admission: numeric/structural facts only, never prompt text or reasoning.
+        PromptAdmissionHeld(Owner.Prompt),
+        PromptPreparationObserved(Owner.Prompt),
 
         // Capability bridge: a request Vex made, and what its owner returned.
         CapabilityRequestObserved(Owner.Capability),
@@ -113,8 +148,16 @@ object VexLogger {
         BrowserContextReady(Owner.Browser),
         BrowserContextFailed(Owner.Browser),
         BrowserContextInvalidated(Owner.Browser),
+        VoiceInputLanguageAvailabilityObserved(Owner.Browser),
+        VoiceInputLanguageInstallObserved(Owner.Browser),
+        VoiceInputMicrophoneRequested(Owner.Browser),
+        VoiceInputMicrophoneGranted(Owner.Browser),
+        VoiceInputAudioCaptureStarted(Owner.Browser),
+        VoiceInputRecognitionStarted(Owner.Browser),
+        VoiceInputFailureObserved(Owner.Browser),
         PresentationArrived(Owner.Presentation),
         SendOutcomeUnresolvedShown(Owner.Presentation),
+        VoiceInputControlEmitted(Owner.Presentation),
 
         // Diagnostics (the Logger's own downstream projections)
         DebugHistoryCleared(Owner.Diagnostics),

@@ -3,7 +3,9 @@ package vexlife.service
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import vexlife.local.VexLifeProdLocalSetup
+import vexlife.home.VexLifeProdHomeFiles
+import vexlife.local.VexLifeProdRuntimeSession
+import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 
@@ -21,15 +23,58 @@ object VexLifeProdServiceProcess {
             "[0-9a-f]{40,64}",
         )
 
+    private const val HomeRetentionPollMs =
+        2_000L
+
+    private const val HomeLossConfirmations =
+        3
+
+    private const val ServiceCloseRetryMs =
+        5_000L
+
+    internal data class HomeIdentity(
+        val homePath: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+    )
+
+    internal class HomeRetention {
+        private var consecutiveLosses =
+            0
+
+        fun observe(
+            current: Boolean,
+        ): Boolean {
+            if (
+                current
+            ) {
+                consecutiveLosses =
+                    0
+                return false
+            }
+
+            consecutiveLosses +=
+                1
+            return consecutiveLosses >=
+                HomeLossConfirmations
+        }
+    }
+
     data class Arguments(
         val sourceSha: String,
         val productHome: Path,
     )
 
+    internal data class RuntimeExecutablePaths(
+        val visionRuntimeExecutablePathOrNull: String?,
+        val partnerHostExecutablePathOrNull: String?,
+    )
+
     internal data class Hooks(
-        val resolveVisionRuntimeExecutablePath: (
+        val resolveRuntimeExecutablePaths: (
             sourceSha: String,
-        ) -> String? = {
+        ) -> RuntimeExecutablePaths = {
             sourceSha ->
             VexLifeProdPrivateServiceImage
                 .observe(
@@ -41,34 +86,50 @@ object VexLifeProdServiceProcess {
                             .normalize(),
                     expectedSourceSha = sourceSha,
                 )
-                .visionRuntimeExecutablePathOrNull
+                .let {
+                    observation ->
+                    RuntimeExecutablePaths(
+                        visionRuntimeExecutablePathOrNull =
+                            observation.visionRuntimeExecutablePathOrNull,
+                        partnerHostExecutablePathOrNull =
+                            observation.partnerHostExecutablePathOrNull,
+                    )
+                }
         },
         val establishSession: (
             productHome: Path,
             allowAcquisition: Boolean,
-        ) -> VexLifeProdLocalSetup.Session = {
+        ) -> VexLifeProdRuntimeSession = {
             productHome,
             allowAcquisition,
             ->
-            VexLifeProdLocalSetup.establishSession(
-                productHome = productHome,
-                allowAcquisition = allowAcquisition,
+            require(
+                !allowAcquisition,
+            ) {
+                "long-lived Product service process never grants runtime acquisition authority"
+            }
+            VexLifeProdRuntimeSessionFactory.establishForServiceProcess(
+                productHome,
             )
         },
         val startService: (
             sourceSha: String,
-            session: VexLifeProdLocalSetup.Session,
+            session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String?,
         ) -> AutoCloseable = {
             sourceSha,
             session,
             visionRuntimeExecutablePathOrNull,
+            partnerHostExecutablePathOrNull,
             ->
             VexLifeProdLocalService.start(
                 sourceSha = sourceSha,
                 session = session,
                 visionRuntimeExecutablePathOrNull =
                     visionRuntimeExecutablePathOrNull,
+                partnerHostExecutablePathOrNull =
+                    partnerHostExecutablePathOrNull,
             )
         },
         val reportReady: (
@@ -82,8 +143,13 @@ object VexLifeProdServiceProcess {
                     VexLifeProdServiceContract.Origin,
             )
         },
+        val observeHomeIdentity: (
+            Path,
+        ) -> HomeIdentity? =
+            ::observeHomeIdentity,
         val awaitTermination: (
             AutoCloseable,
+            () -> Boolean,
         ) -> Unit = ::awaitProcessTermination,
     )
 
@@ -146,22 +212,41 @@ object VexLifeProdServiceProcess {
             mapOf("pid" to ProcessHandle.current().pid().toString()),
         )
 
-        val visionRuntimeExecutablePathOrNull =
-            hooks.resolveVisionRuntimeExecutablePath(
+        val retainedHomeIdentity =
+            requireNotNull(
+                hooks.observeHomeIdentity(
+                    arguments.productHome,
+                ),
+            ) {
+                "VexLife-Prod service requires one exact current Home identity at admission"
+            }
+
+        val runtimeExecutablePaths =
+            hooks.resolveRuntimeExecutablePaths(
                 arguments.sourceSha,
             )
 
+        val session =
+            try {
+                hooks.establishSession(
+                    arguments.productHome,
+                    false,
+                )
+            } catch (error: Throwable) {
+                VexLogger.record(
+                    VexLogger.Fact.ServiceStartFailed,
+                    detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                )
+                throw error
+            }
+
         val service =
             try {
-                val session =
-                    hooks.establishSession(
-                        arguments.productHome,
-                        false,
-                    )
                 hooks.startService(
                     arguments.sourceSha,
                     session,
-                    visionRuntimeExecutablePathOrNull,
+                    runtimeExecutablePaths.visionRuntimeExecutablePathOrNull,
+                    runtimeExecutablePaths.partnerHostExecutablePathOrNull,
                 )
             } catch (error: Throwable) {
                 VexLogger.record(
@@ -178,11 +263,37 @@ object VexLifeProdServiceProcess {
 
         hooks.awaitTermination(
             service,
+            {
+                hooks.observeHomeIdentity(
+                    arguments.productHome,
+                ) ==
+                    retainedHomeIdentity
+            },
         )
     }
 
-    private fun awaitProcessTermination(
+    private fun observeHomeIdentity(
+        productHome: Path,
+    ): HomeIdentity? =
+        runCatching {
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                )
+            }
+            .getOrNull()
+            ?.let {
+                current ->
+                HomeIdentity(
+                    homePath = current.productHome,
+                    homeRef = current.manifest.homeRef,
+                    deviceRef = current.manifest.currentDeviceRef,
+                    companionLineageRef = current.manifest.currentCompanionLineageRef,
+                )
+            }
+
+    internal fun awaitProcessTermination(
         service: AutoCloseable,
+        homeCurrent: () -> Boolean,
     ) {
         val latch =
             CountDownLatch(
@@ -192,41 +303,155 @@ object VexLifeProdServiceProcess {
             AtomicBoolean(
                 false,
             )
+        val closeFence =
+            Any()
 
         fun closeOnce() {
             if (
-                closed.compareAndSet(
-                    false,
+                closed.get()
+            ) {
+                return
+            }
+
+            synchronized(
+                closeFence,
+            ) {
+                if (
+                    closed.get()
+                ) {
+                    return
+                }
+                service.close()
+                closed.set(
                     true,
                 )
+            }
+        }
+
+        fun closeUntilSuccess(
+            interruptible: Boolean,
+        ): Boolean {
+            while (
+                !closed.get()
             ) {
-                runCatching {
-                    service.close()
+                try {
+                    closeOnce()
+                    return true
+                } catch (
+                    error: Throwable,
+                ) {
+                    System.err.println(
+                        "VEXLIFE_PROD_SERVICE_STOP_RETRY\t" +
+                            error.javaClass.simpleName +
+                            "\t" +
+                            (error.message ?: ""),
+                    )
+                    try {
+                        Thread.sleep(
+                            ServiceCloseRetryMs,
+                        )
+                    } catch (
+                        _: InterruptedException,
+                    ) {
+                        if (
+                            interruptible
+                        ) {
+                            Thread
+                                .currentThread()
+                                .interrupt()
+                            return false
+                        }
+                    }
                 }
             }
+            return true
         }
 
         val shutdownHook =
             Thread(
                 {
-                    // Observed: this JVM is being terminated (launchd bootout, SIGTERM, logout).
-                    // A process killed outright leaves no such record; that absence is evidence too.
-                    VexLogger.record(VexLogger.Fact.ServiceProcessTerminating)
-                    closeOnce()
-                    latch.countDown()
+                    VexLogger.record(
+                        VexLogger.Fact.ServiceProcessTerminating,
+                    )
+                    if (
+                        closeUntilSuccess(
+                            interruptible = false,
+                        )
+                    ) {
+                        latch.countDown()
+                    }
                 },
                 "vexlife-prod-service-shutdown",
             )
+
+        val homeRetention =
+            Thread(
+                {
+                    val retention =
+                        HomeRetention()
+                    while (
+                        !Thread
+                            .currentThread()
+                            .isInterrupted
+                    ) {
+                        val current =
+                            runCatching(
+                                homeCurrent,
+                            )
+                                .getOrDefault(
+                                    false,
+                                )
+                        if (
+                            retention.observe(
+                                current,
+                            )
+                        ) {
+                            // Stop exposing Product effects as soon as the exact admitted Home is
+                            // no longer current. VexLifeProdLocalService.close() closes the current
+                            // runtime Session (including a post-start model switch) through the
+                            // rightful platform owner. Keep this JVM alive until that exact close
+                            // succeeds so Home loss cannot erase the last retirement capability.
+                            if (
+                                closeUntilSuccess(
+                                    interruptible = true,
+                                )
+                            ) {
+                                latch.countDown()
+                            }
+                            return@Thread
+                        }
+
+                        try {
+                            Thread.sleep(
+                                HomeRetentionPollMs,
+                            )
+                        } catch (
+                            _: InterruptedException,
+                        ) {
+                            Thread
+                                .currentThread()
+                                .interrupt()
+                        }
+                    }
+                },
+                "vexlife-prod-home-retention",
+            )
+                .also {
+                    it.isDaemon =
+                        true
+                }
 
         Runtime
             .getRuntime()
             .addShutdownHook(
                 shutdownHook,
             )
+        homeRetention.start()
 
         try {
             latch.await()
         } finally {
+            homeRetention.interrupt()
             try {
                 Runtime
                     .getRuntime()
@@ -241,6 +466,7 @@ object VexLifeProdServiceProcess {
             closeOnce()
         }
     }
+
 }
 
 fun main(

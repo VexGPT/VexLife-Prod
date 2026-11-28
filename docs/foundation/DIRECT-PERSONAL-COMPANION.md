@@ -62,16 +62,21 @@ VexLifeCurrentMemoryReader
 current qualified runtime evidence
         ↓
 DirectPromptContext
-  foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
-  + current Memory availability truth when source-current
-  + caller-bounded selected Memory from remaining prompt capacity
-  + owner-current working-checkpoint successor when present
-  + exact prior Vex RESPONSE bridge when successor mode is current
-  + source-formed bounded self-capability frame
-  + Conversation extent: how many completed exchanges the record holds before this request
-  + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
-    that fits ordinary prompt attention
-  + conditional Conversation source-return protocol on the first inference
+  one stable system block:
+    foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
+    + current Memory availability truth when source-current
+    + caller-bounded selected Memory from remaining prompt capacity
+    + stable capability relationship guidance; provider-native tool schemas carry callable actions
+  then exact history:
+    + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
+      that fits ordinary prompt attention (after a rollover: the exact overlap tail)
+  then one current-state envelope (VexLife's, user role, VEXLIFE_CURRENT_STATE/v1):
+    + owner-current working-checkpoint successor when present
+    + this request's capability states and frame ref
+    + person context: reply language and private gaps, read fresh from their owners
+    + Conversation extent: how many completed exchanges the record holds before this request
+    + conditional Conversation source-return protocol on the first inference
+  then returned exact older source, when this inference carries it
   + optional admitted browser context
   + current request
 
@@ -231,16 +236,17 @@ therefore need to become relationally blank: it carries the exact immediately pr
 an assistant-role bridge, plus current Memory/working coordinates, the live capability frame,
 optional browser context and the current request. The prior human request is not replayed.
 
-The first inference also receives a bounded source-return protocol. If exact older Conversation
-source that is not already present is necessary, Vex may return one exact internal
-`VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1` instead of guessing or answering prematurely.
-Product then performs deterministic local discovery over canonical completed turns, reopens selected
-matches through exact Conversation-return authority, and forms one final prompt.
+Exact older Conversation Source Return remains a distinct one-return-per-human-turn relationship.
+Provider-native tool profiles receive it as the typed `conversation_return` route; a text-only
+fallback representation receives the bounded `VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1`
+protocol instead. Both representations converge on the same `DirectConversationSourceReturn`
+request owner. Product then performs deterministic local discovery over canonical completed turns,
+reopens selected matches through exact Conversation-return authority, and forms one final prompt.
 
 Final source-return allocation is:
 
 ~~~text
-fixed current-turn / successor / capability context
+verified turn / successor / capability context
 + exact requested historical Conversation source
 + exact prior Vex response bridge when successor mode is current
 -> newest exact recent Conversation from the remaining capacity
@@ -253,19 +259,48 @@ uncertainty instead of inventing recall. A returned-source final inference may n
 again in the same human turn.
 
 The self-capability frame is formed from live owner facts inside the prompt materialization path. It
-is context about what is currently available, not a second authority owner and not an executable
-tool registry.
+owns current availability only. The Capability Atlas owns the semantic action definitions, and the
+selected provider representation compiles those actions into the model's native tool schema. A tool
+being declared to the model is not proof that it is AVAILABLE in this turn; the Bridge checks the
+frame again before any source owner is read.
 
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
-the other fixed context and the exact immediate prior exchange, places it first in the system prefix,
+the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
 and records its evidence in prompt receipt v8. It does not write or shorten its words.
+
+### Current state is placed as current
+
+Who owns a value and when it changes are different questions. Person context, this request's capability states, the Conversation extent, Working Continuity
+coordinates and any text-fallback source-return protocol all change independently of the history they
+would otherwise precede, so they are placed after it, in one envelope immediately before the request,
+and say they are current at this request. Provider-native callable routes are carried by the selected
+model representation instead of being repeated inside that current-state envelope. The leading system block holds only what is stable across turns (field, Memory, the
+capability description). A setting change is therefore visible on the very next prompt, reads as
+current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
+block or the history before it.
+
+The envelope is a user-role message because the pinned Qwen chat template admits one system message,
+first only, and raises `System message must be at the beginning.` for any later system message.
+Browser context uses the same user-role host envelope with explicit "not from the person" provenance.
+Capability results follow the selected provider representation instead: provider-native profiles
+receive an assistant tool call followed by a native `tool` result, while the text-control fallback
+retains the canonical VexLife result in the user-role compatibility form.
+
+~~~text
+OWNERSHIP / ROLE != CURRENTNESS / PLACEMENT
+CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
+PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
+~~~
+
+Receipt v8 records each component as placed (`contextComponents`: stability class, placement class,
+provider message index, digest), formed in the same assembly as the provider messages.
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
 holds before the current request, and that any not shown are still in the record. The count is the
 request's canonical sequence divided by two; no history is enumerated. After a working rollover the
-statement says that only the last reply is shown. Receipt v8 records the count
+statement says that only the most recent exact turns are shown and working coordinates carry the rest. Receipt v8 records the count
 (`priorCompletedExchangeCount`), and Settings / Context shows selected events against events on record.
 
 ~~~text
@@ -275,6 +310,29 @@ OUTSIDE THE WINDOW
 A SHORT WINDOW
 != A SHORT HISTORY
 ~~~
+
+#### Computation cache boundary
+
+Prompt/KV cache is runtime computation, not continuity custody. `DirectPromptContext` owns truthful
+bounded provider materialization; Conversation, Memory, Working Continuity and the other source owners
+remain sufficient to reconstruct that materialization after cache eviction, process restart or model
+switch.
+
+~~~text
+SEMANTIC / DURABLE TRUTH
+-> may invalidate provider computation
+
+PROMPT / KV CACHE
+-> may reduce repeated computation
+-> may be discarded at any time
+
+CACHE HIT / MISS
+!= CONTINUITY SUCCESS / LOSS
+~~~
+
+The current Product does not claim that its provider message ordering is cache-optimal. Provider-stage
+measurement records prompt, cached and prefill token counts so later optimization can be judged by
+observed runtime reuse without moving semantic truth into the cache or lying about provider roles.
 
 ### `DirectCompanionConnection`
 
@@ -292,6 +350,20 @@ It cannot accept a caller-supplied endpoint or model identity.
 
 Provider observation/evidence values are publicly readable but constructor/copy authority remains
 inside the Connection.
+
+For provider-native profiles, the Connection also records request-side tool exposure without creating
+another tool registry:
+
+~~~text
+providerToolCount
+providerToolSchemaSha256
+requestBodySha256
+~~~
+
+The first two bind the exact Atlas-derived callable schema offered to that provider stage; the whole
+request hash binds the schema together with messages, generation settings and other request fields.
+A capability being mentioned in Foundation/context therefore does not substitute for evidence that
+the provider actually received its native tool declaration.
 
 ### Explicit-open human reasoning projection
 

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "vexlife-prod.local-asr-provider-input/v1",
+  "providerRef": "provider.local-asr.whispercpp",
+  "providerVersion": "v1.9.5",
+  "platform": "darwin-arm64",
+  "sourceRepository": "ggml-org/whisper.cpp",
+  "sourceCommit": "d1be6fde11ac6e0407606b4e42fe72d34add8037",
+  "sourceTree": "6fe2755682242a5c01aba65a22b3c0305d747841",
+  "cmakeVersion": "4.5.0",
+  "cmakeArchiveName": "cmake-4.5.0-macos-universal.tar.gz",
+  "cmakeArchiveUrl": "https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-macos-universal.tar.gz",
+  "cmakeArchiveSha256": "a645d69fd21e521759cc0c64e7c60462d43faf0c7214ac05f75c80f7c5037dde",
+  "serviceImageRootRelativePath": "local-asr-provider/whispercpp/v1.9.5",
+  "sourceIdentityRelativePath": "local-asr-provider/whispercpp/v1.9.5/provider-source.txt",
+  "sourceTreeIdentityRelativePath": "local-asr-provider/whispercpp/v1.9.5/provider-tree.txt",
+  "runtimeExecutableRelativePath": "local-asr-provider/whispercpp/v1.9.5/bin/whisper-server",
+  "releaseDisposition": "BUNDLED_PRIVATE_SERVICE_IMAGE"
+}
