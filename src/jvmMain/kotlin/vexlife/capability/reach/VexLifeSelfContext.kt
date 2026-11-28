@@ -17,12 +17,12 @@ import vexlife.companion.DirectWorkingFocus
  * reasoning, or source contents. Source refs are coordinates only and grant no read/effect authority.
  */
 object VexLifeSelfContext {
-    data class TurnContext(
-        val companionLineageRef: String,
-        val threadRef: String,
-        val promptReceipt: DirectPromptContext.Receipt,
-        val workingFocusObservation: DirectWorkingFocus.Observation,
-        val providerMeasurement: DirectCompanionConnection.StageMeasurement?,
+    class TurnContext internal constructor(
+        internal val companionLineageRef: String,
+        internal val threadRef: String,
+        internal val promptReceipt: DirectPromptContext.Receipt,
+        internal val workingFocusObservation: DirectWorkingFocus.Observation,
+        internal val providerMeasurement: DirectCompanionConnection.StageMeasurement?,
     )
 
     internal data class Result(
