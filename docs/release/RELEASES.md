@@ -290,14 +290,14 @@ tools/release/publish-mac-release.sh preview
 tools/release/publish-mac-release.sh stable 0.1.0
 ~~~
 
-Manual Preview and Stable publication require a clean exact current `origin/main`. Automatic
-Preview publication instead binds the exact GitHub push SHA and admits it only while that SHA remains
-an ancestor of current `origin/main`; this lets queued main commits retain their own immutable
+Manual Preview and Stable publication require a clean exact current `origin/main`. Queue-driven
+historical Preview publication instead binds one exact main SHA and admits it only while that SHA
+remains an ancestor of current `origin/main`; this lets pending main commits retain their immutable
 Preview identity. Every route runs the Product tests and forms/verifies the DMG before publication.
-Automatic Preview defers the Pages projection to the workflow so it can refresh from newest current
-main after an older queued release lands. For a stable version, `gh release create` creates the
-`vX.Y.Z` tag at that exact source automatically. Victor never manually creates/moves a tag, edits a
-version file, builds a DMG or uploads assets.
+A queue-driven historical cutoff defers the Pages projection to `publish-pending-previews.sh`, which
+refreshes once from newest current main after the queue pass. For a stable version,
+`gh release create` creates the `vX.Y.Z` tag at that exact source automatically. Victor never
+manually creates/moves a tag, edits a version file, builds a DMG or uploads assets.
 
 If the GitHub Release succeeds but the following Pages publication fails, the release already exists.
 Do **not** rebuild, move, or replay the release merely to repair its public catalog projection. Resume
