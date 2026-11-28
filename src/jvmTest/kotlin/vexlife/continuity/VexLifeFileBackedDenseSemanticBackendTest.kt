@@ -363,8 +363,87 @@ class VexLifeFileBackedDenseSemanticBackendTest {
                 )
             }
 
+            val validSnapshot =
+                Files.readString(
+                    initial.persistentSnapshotPath(),
+                )
+            val fingerprintMarker =
+                "\"requestFingerprints\":[\""
+            val fingerprintStart =
+                validSnapshot.indexOf(
+                    fingerprintMarker,
+                ) +
+                    fingerprintMarker.length
+            assertTrue(
+                fingerprintStart >=
+                    fingerprintMarker.length,
+                "persisted snapshot must contain request fingerprints",
+            )
+            val originalFingerprint =
+                validSnapshot.substring(
+                    fingerprintStart,
+                    fingerprintStart +
+                        16,
+                )
+            assertTrue(
+                originalFingerprint.matches(
+                    Regex(
+                        "[0-9a-f]{16}",
+                    ),
+                ),
+            )
+            val replacementFingerprint =
+                if (
+                    originalFingerprint ==
+                        "0".repeat(
+                            16,
+                        )
+                ) {
+                    "1".repeat(
+                        16,
+                    )
+                } else {
+                    "0".repeat(
+                        16,
+                    )
+                }
             Files.writeString(
                 initial.persistentSnapshotPath(),
+                validSnapshot.replaceRange(
+                    fingerprintStart,
+                    fingerprintStart +
+                        16,
+                    replacementFingerprint,
+                ),
+            )
+
+            val validShapeCorrupt =
+                VexLifeFileBackedDenseSemanticBackend(
+                    productHome = fixture.home,
+                    encoder =
+                        RecordingEncoder(
+                            "semantic.test.file-backed.recovery-a",
+                        ),
+                    secretSource = fixedSecret(
+                        32,
+                    ),
+                )
+            assertIs<VexLifeContinuitySourceLocator.BackendLoad.Corrupt>(
+                validShapeCorrupt.load(),
+                "valid-shaped generation mutation must fail closed on the canonical generation digest",
+            )
+            fixture.store.withWriterLease {
+                VexLifeContinuitySourceLocator.rebuild(
+                    conversationOwner = this,
+                    backend = validShapeCorrupt,
+                )
+            }
+            assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                validShapeCorrupt.load(),
+            )
+
+            Files.writeString(
+                validShapeCorrupt.persistentSnapshotPath(),
                 "{not-valid-json",
             )
             val corrupt =
