@@ -1250,16 +1250,21 @@ class VexLifeCapabilityReachTest {
 
     @Test
     fun requestSequenceDoesNotBecomeASmallFixedReachQuota() = withHome { home ->
+        val exchanges =
+            (1..17).map {
+                requestNumber ->
+                VexLifeCapabilityBridge.perform(
+                    request("""{"capability":"atlas","action":"list"}"""),
+                    admission(
+                        home,
+                        number = requestNumber,
+                        tokens = 20_000,
+                    ),
+                    estimateTokens = tokens,
+                )
+            }
         val later =
-            VexLifeCapabilityBridge.perform(
-                request("""{"capability":"atlas","action":"list"}"""),
-                admission(
-                    home,
-                    number = 17,
-                    tokens = 20_000,
-                ),
-                estimateTokens = tokens,
-            )
+            exchanges.last()
 
         assertEquals(
             VexLifeCapabilityBridge.ResultState.RETURNED,
@@ -1283,9 +1288,9 @@ class VexLifeCapabilityReachTest {
 
         val trace =
             VexLifeCapabilityBridge.trace(
-                listOf(
-                    later.entry,
-                )
+                exchanges.map {
+                    it.entry
+                }
             )
         assertEquals(
             VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
