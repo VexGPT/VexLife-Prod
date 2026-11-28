@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 CHANNEL="${1:-}"
 VERSION="${2:-}"
+SOURCE_CUTOFF="${3:-}"
 REPOSITORY="${VEXLIFE_REPOSITORY:-VexGPT/VexLife-Prod}"
 
 command -v gh >/dev/null || { echo "GitHub CLI (gh) is required." >&2; exit 1; }
@@ -31,12 +32,36 @@ STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
 git -C "$ROOT" fetch --quiet origin main
 SOURCE_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 REMOTE_MAIN="$(git -C "$ROOT" rev-parse refs/remotes/origin/main)"
-[ "$SOURCE_SHA" = "$REMOTE_MAIN" ] || {
-  echo "Public releases are cut from exact current origin/main." >&2
-  echo "HEAD=$SOURCE_SHA" >&2
-  echo "origin/main=$REMOTE_MAIN" >&2
-  exit 1
-}
+
+if [ -n "$SOURCE_CUTOFF" ]; then
+  [ "$CHANNEL" = "preview" ] || {
+    echo "An explicit source cutoff is only admitted for Preview publication." >&2
+    exit 1
+  }
+  [[ "$SOURCE_CUTOFF" =~ ^[0-9a-f]{40}$ ]] || {
+    echo "Preview source cutoff must be one exact 40-character Git commit." >&2
+    exit 1
+  }
+  [ "$SOURCE_SHA" = "$SOURCE_CUTOFF" ] || {
+    echo "Preview source cutoff does not match the checked-out source." >&2
+    echo "HEAD=$SOURCE_SHA" >&2
+    echo "cutoff=$SOURCE_CUTOFF" >&2
+    exit 1
+  }
+  git -C "$ROOT" merge-base --is-ancestor "$SOURCE_SHA" "$REMOTE_MAIN" || {
+    echo "Preview source cutoff is not an ancestor of current origin/main." >&2
+    echo "cutoff=$SOURCE_SHA" >&2
+    echo "origin/main=$REMOTE_MAIN" >&2
+    exit 1
+  }
+else
+  [ "$SOURCE_SHA" = "$REMOTE_MAIN" ] || {
+    echo "Public releases are cut from exact current origin/main." >&2
+    echo "HEAD=$SOURCE_SHA" >&2
+    echo "origin/main=$REMOTE_MAIN" >&2
+    exit 1
+  }
+fi
 
 case "$CHANNEL" in
   preview)
@@ -129,7 +154,13 @@ else
 fi
 
 # Release existence and the public download catalog are one human-facing publication outcome.
-# Form/publish the Pages projection only after GitHub has accepted the exact release.
-VEXLIFE_REPOSITORY="$REPOSITORY" bash "$ROOT/tools/site/publish-gh-pages.sh"
+# A manually selected current-main release owns both effects here. An automatic per-main-commit
+# Preview may finish after a newer main commit exists, so its caller refreshes Pages from current
+# main after this exact immutable release has been accepted.
+if [ -z "$SOURCE_CUTOFF" ]; then
+  VEXLIFE_REPOSITORY="$REPOSITORY" bash "$ROOT/tools/site/publish-gh-pages.sh"
+else
+  printf 'VEXLIFE_RELEASE_CATALOG_REFRESH_DEFERRED\t%s\t%s\n' "$SOURCE_SHA" "$REMOTE_MAIN"
+fi
 
 printf 'VEXLIFE_RELEASE_PUBLISHED\t%s\t%s\t%s\t%s\n' "$CHANNEL" "$SOURCE_SHA" "${VERSION:-preview}" "$DMG_NAME"
