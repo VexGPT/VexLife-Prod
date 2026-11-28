@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 APP_VERSION="${1:-0.0.0}"
+DISTRIBUTION_CHANNEL="${2:-candidate}"
 
 proof_fail() {
   printf 'VEXLIFE_MAC_CANDIDATE_PROOF_FAILED\t%s\n' "$1" >&2
@@ -40,10 +41,28 @@ case "$(uname -m)" in
 esac
 
 [[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-  echo "usage: bash tools/release/prove-mac-candidate.sh [major.minor.patch]" >&2
+  echo "usage: bash tools/release/prove-mac-candidate.sh [major.minor.patch] [candidate|preview|stable]" >&2
   echo "default candidate version is 0.0.0" >&2
   exit 1
 }
+case "$DISTRIBUTION_CHANNEL" in
+  candidate|preview)
+    [ "$APP_VERSION" = "0.0.0" ] || {
+      echo "$DISTRIBUTION_CHANNEL proof must use app version 0.0.0; source SHA is its release identity." >&2
+      exit 1
+    }
+    ;;
+  stable)
+    [ "$APP_VERSION" != "0.0.0" ] || {
+      echo "stable proof requires one semantic app version." >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "distribution channel must be candidate, preview, or stable." >&2
+    exit 1
+    ;;
+esac
 
 STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
 [ -z "$STATUS" ] || {
@@ -69,12 +88,30 @@ GRADLE_MEMORY_ARGS=(
 )
 
 ./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" jvmTest checkVexLifeStrings
-./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
+./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" \
+  -PvexlifeAppVersion="$APP_VERSION" \
+  -PvexlifeDistributionChannel="$DISTRIBUTION_CHANNEL" \
+  archiveVexLifeProdMacApplication
 
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
 APP="$APP_DIR/VexLife.app"
-DMG="$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
-DMG_SUM="$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+SOURCE_SHORT="${SOURCE_SHA:0:7}"
+case "$DISTRIBUTION_CHANNEL" in
+  candidate)
+    DMG_NAME="VexLife-Candidate-$SOURCE_SHORT-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife Candidate $SOURCE_SHORT"
+    ;;
+  preview)
+    DMG_NAME="VexLife-Preview-$SOURCE_SHORT-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife Preview $SOURCE_SHORT"
+    ;;
+  stable)
+    DMG_NAME="VexLife-$APP_VERSION-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife $APP_VERSION"
+    ;;
+esac
+DMG="$APP_DIR/$DMG_NAME"
+DMG_SUM="$DMG.sha256"
 RECEIPT="$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
 
 for path in "$APP/Contents/Info.plist" "$DMG" "$DMG_SUM" "$RECEIPT"; do
@@ -86,7 +123,7 @@ done
 
 (
   cd "$APP_DIR"
-  shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256"
+  shasum -a 256 -c "$DMG_NAME.sha256"
 )
 
 /usr/bin/hdiutil verify "$DMG" >/dev/null
@@ -112,6 +149,13 @@ trap cleanup EXIT HUP INT TERM
 
 /usr/bin/hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT" >/dev/null
 mounted=1
+
+MOUNTED_VOLUME_NAME="$(
+  /usr/sbin/diskutil info -plist "$MOUNT" |
+    /usr/bin/plutil -extract VolumeName raw -o - -
+)"
+[ "$MOUNTED_VOLUME_NAME" = "$EXPECTED_VOLUME_NAME" ] ||
+  proof_fail "MOUNTED_DISTRIBUTION_VOLUME_IDENTITY"
 
 MOUNTED_APP="$MOUNT/VexLife.app"
 MOUNTED_INFO="$MOUNTED_APP/Contents/Info.plist"
@@ -164,5 +208,7 @@ trap - EXIT HUP INT TERM
 
 DMG_SHA="$(/usr/bin/shasum -a 256 "$DMG" | /usr/bin/awk '{print $1}')"
 
+printf 'VEXLIFE_MAC_DISTRIBUTION_IDENTITY\t%s\t%s\t%s\n' \
+  "$DISTRIBUTION_CHANNEL" "$DMG_NAME" "$EXPECTED_VOLUME_NAME"
 printf 'VEXLIFE_MAC_CANDIDATE_PROVED\t%s\t%s\t%s\t%s\n'   "$SOURCE_SHA"   "$APP_VERSION"   "$DMG"   "$DMG_SHA"
 printf 'VEXLIFE_MAC_CANDIDATE_RECEIPT\t%s\n' "$RECEIPT"
