@@ -3857,6 +3857,23 @@ class DirectPromptContextTest {
                         "If a historical claim conflicts with visible prior Conversation",
                     )
                     assertContains(
+                        stable,
+                        "not by a small fixed request quota",
+                    )
+                    assertContains(
+                        stable,
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn.",
+                    )
+                    assertContains(
+                        stable,
+                        "Stop when evidence is sufficient or materially similar reads stop changing the decision.",
+                    )
+                    assertFalse(
+                        stable.contains(
+                            "Up to 4 requests per turn",
+                        ),
+                    )
+                    assertContains(
                         current,
                         "Same granted Local Source, separate current hands:",
                     )
