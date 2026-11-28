@@ -23,6 +23,8 @@ class VexLifeProdVersioningTest {
         Files.readString(root.resolve(".github/workflows/release.yml"))
     private val pendingPreviewPublisher =
         Files.readString(root.resolve("tools/release/publish-pending-previews.sh"))
+    private val pagesFormer =
+        Files.readString(root.resolve("tools/site/form-pages-site.sh"))
 
     @Test
     fun distributionIdentityIsVersionedWhileInstalledProductIdentityRemainsCanonical() {
@@ -111,6 +113,15 @@ class VexLifeProdVersioningTest {
         )
         assertContains(releaseDocs, "MAIN SHA IDENTITY = DURABLE PREVIEW VERSION")
         assertContains(releaseDocs, "no Local Workspace dependency")
+    }
+
+    @Test
+    fun pagesFormationOwnsTheBoundedJvmMemoryProfileUsedByReleaseProof() {
+        assertContains(pagesFormer, "-Dorg.gradle.jvmargs=-Xmx4g")
+        assertContains(pagesFormer, "-Dkotlin.daemon.jvm.options=-Xmx4g")
+        assertContains(pagesFormer, "generateVexLifeSiteData")
+        assertContains(candidateProof, "-Dorg.gradle.jvmargs=-Xmx4g")
+        assertContains(candidateProof, "-Dkotlin.daemon.jvm.options=-Xmx4g")
     }
 
     @Test
