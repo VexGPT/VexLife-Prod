@@ -1908,7 +1908,11 @@ object DirectCompanionTurn {
                     capabilityRequestAdmission =
                         capabilityRequestAdmission,
                     capabilityOffer =
-                        if (providerNativeTools) {
+                        if (
+                            providerNativeTools &&
+                            capabilityRequestAdmission ==
+                            CapabilityRequestAdmission.ADMITTED
+                        ) {
                             offeredCapabilities(
                                 base.materialization.receipt.capabilityFrameSnapshot,
                             )
