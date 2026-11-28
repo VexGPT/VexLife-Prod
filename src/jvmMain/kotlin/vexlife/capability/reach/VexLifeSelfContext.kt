@@ -16,7 +16,7 @@ import vexlife.companion.DirectWorkingFocus
  * It deliberately does not return prompt/provider bodies, human content, Memory bodies, raw
  * reasoning, or source contents. Source refs are coordinates only and grant no read/effect authority.
  */
-internal object VexLifeSelfContext {
+object VexLifeSelfContext {
     data class TurnContext(
         val companionLineageRef: String,
         val threadRef: String,
@@ -25,7 +25,7 @@ internal object VexLifeSelfContext {
         val providerMeasurement: DirectCompanionConnection.StageMeasurement?,
     )
 
-    data class Result(
+    internal data class Result(
         val text: String,
         val workingFocusCurrentness: String,
         val effectsPerformed: Boolean = false,
@@ -37,7 +37,7 @@ internal object VexLifeSelfContext {
         }
     }
 
-    fun inspect(
+    internal fun inspect(
         productHome: Path,
         context: TurnContext,
     ): Result {
