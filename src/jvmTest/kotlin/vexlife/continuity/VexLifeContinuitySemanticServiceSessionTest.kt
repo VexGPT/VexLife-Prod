@@ -82,7 +82,7 @@ class VexLifeContinuitySemanticServiceSessionTest {
                 session.state,
             )
             val backend =
-                assertIs<VexLifeContinuitySourceLocator.SemanticIndexedBackend>(
+                assertIs<VexLifeFileBackedDenseSemanticBackend>(
                     session.backend,
                 )
             assertEquals(
