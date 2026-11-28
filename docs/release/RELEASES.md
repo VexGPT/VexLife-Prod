@@ -12,7 +12,7 @@ stable version records that Victor accepted a lived feature threshold.
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
 | Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
-| Preview | An intentional downloadable snapshot of current `main` for sharing/testing. Ordinary merges do not publish one. | `release` workflow, run by hand with channel = `preview` | `private-service-image-<sha>` prerelease |
+| Preview | An immutable downloadable snapshot of each admitted `main` commit for sharing/testing. | automatic `release` workflow on every push to `main`; manual Preview remains available | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
 ## [VexLife Prod versioning]
@@ -157,8 +157,9 @@ For stable runs, the workflow supplies the requested semantic version as
 `0.0.0` internally, distribution channel `preview`, and remains release-identified by its exact
 source SHA/release tag. Candidate proof defaults to distribution channel `candidate` and likewise
 uses the exact source SHA. The bundle embeds the exact expected source SHA in every channel.
-Ordinary merges to `main` do not publish anything. Victor or a continuing instance chooses when a
-source threshold is worth publishing.
+Every new commit admitted to `main` now automatically publishes one source-identified Preview.
+The Preview version is the exact Git source SHA, not an automatically invented semantic version.
+Stable `v<major>.<minor>.<patch>` remains an intentional lived/accepted threshold chosen explicitly.
 
 ## One Mac candidate-proof process
 
@@ -226,8 +227,39 @@ EXACT SOURCE CHANGE != PERMISSION TO CHANGE PACKAGING TOPOLOGY
 
 ## One release process; executor chosen by current constraints
 
-There is no required calendar schedule. A release is an intentional cutoff, and the release meaning
-does not change based on who executes it.
+There is no required calendar schedule. Preview publication follows source integration; Stable
+publication remains an intentional accepted threshold. The release meaning does not change based on
+who executes it.
+
+### Automatic Product cycle
+
+Every new `main` commit is an immutable Preview version:
+
+~~~text
+merge / admitted push to main
+-> exact push SHA
+-> release workflow on macOS
+-> publish-mac-release.sh preview "" <exact-push-sha>
+-> prove exact source / tests / app / DMG
+-> Preview tag private-service-image-<sha>
+-> VexLife-Preview-<sha7>-macOS-AppleSilicon.dmg
+-> refresh Pages from newest current main
+
+later main commits do not erase an older queued Preview:
+exact push SHA remains publishable only while it is an ancestor of current main
+~~~
+
+The exact SHA is the automatic Preview version. This avoids fabricating SemVer meaning for every
+merge while still giving every admitted Product state a downloadable, source-bound distribution.
+A rewrite that removes the push SHA from current `main` ancestry fails closed rather than publishing
+a detached history.
+
+Stable remains separate:
+
+~~~text
+Preview  = automatic source version for every main commit
+Stable   = explicit SemVer after lived acceptance
+~~~
 
 The source-owned Mac publication process is:
 
@@ -282,8 +314,9 @@ observe partial publication, diagnose the initial Pages caller-working-directory
 only that held projection, and continue without making Victor interpret logs or manually reconstruct
 the release state.
 
-Ordinary merges to `main` publish nothing. A shareable preview or stable version exists only when
-one of these executors intentionally runs the release process.
+Every admitted `main` commit automatically schedules its Preview through the hosted release
+executor. The direct VexLocalBridge route remains the bounded recovery/manual publication surface.
+Stable publication still requires an explicit semantic version and is never inferred from a merge.
 
 Versions follow semver while VexLife is before 1.0:
 
