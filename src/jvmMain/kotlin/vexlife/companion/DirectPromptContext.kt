@@ -3115,6 +3115,16 @@ object DirectPromptContext {
         // live tail -> the person's request. The pinned chat template admits one system message,
         // first only ("System message must be at the beginning."), so current state is a host
         // envelope in the user role, the role browser context and capability results already use.
+        val sourceReturnProtocolSection =
+            sourceReturnProtocol
+                ?.let {
+                    protocol ->
+                    Section(
+                        ComponentRefs.SourceReturnProtocol,
+                        ComponentStability.MUTABLE_CURRENT,
+                        protocol.content,
+                    )
+                }
         val baseCurrentSections =
             buildList {
                 workingContinuity?.let {
@@ -3165,9 +3175,10 @@ object DirectPromptContext {
                 conversationExtent?.let {
                     add(Section(ComponentRefs.ConversationExtent, ComponentStability.MUTABLE_CURRENT, it.systemContent))
                 }
-                sourceReturnProtocol?.let {
-                    add(Section(ComponentRefs.SourceReturnProtocol, ComponentStability.MUTABLE_CURRENT, it.content))
-                }
+                sourceReturnProtocolSection
+                    ?.let(
+                        ::add,
+                    )
             }
         val systemParts =
             listOfNotNull(
@@ -3331,20 +3342,30 @@ object DirectPromptContext {
                         ),
                 )
             }
+        val workingFocusSection =
+            workingFocusProjection
+                ?.contentOrNull
+                ?.let {
+                    content ->
+                    Section(
+                        ComponentRefs.WorkingFocus,
+                        ComponentStability.MUTABLE_CURRENT,
+                        content,
+                        workingFocusProjection.sourceRefs,
+                    )
+                }
+        // Source Return is the recovery hand for exact older Conversation source. Keep its exact
+        // bytes and authority unchanged, but make it the final host-owned current-state section so
+        // mutable Working Focus cannot sit between the recovery instruction and the live request.
         val currentSections =
-            baseCurrentSections +
+            baseCurrentSections
+                .filterNot {
+                    it.componentRef ==
+                        ComponentRefs.SourceReturnProtocol
+                } +
                 listOfNotNull(
-                    workingFocusProjection
-                        ?.contentOrNull
-                        ?.let {
-                            content ->
-                            Section(
-                                ComponentRefs.WorkingFocus,
-                                ComponentStability.MUTABLE_CURRENT,
-                                content,
-                                workingFocusProjection.sourceRefs,
-                            )
-                        },
+                    workingFocusSection,
+                    sourceReturnProtocolSection,
                 )
         val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
         val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
