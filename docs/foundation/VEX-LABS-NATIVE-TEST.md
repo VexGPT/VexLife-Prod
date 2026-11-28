@@ -48,14 +48,15 @@ conversation can therefore supply another source/controller instead of cloning t
 
 ~~~text
 real canonical Home
-  ├─ current Conversation snapshot ──────┐
-  ├─ current accepted Memory (read-only) │
-  ├─ current Context Profile             │
-  └─ current qualified native runtime    │
-                                         ↓
-                              disposable shadow Home
-                                + scratch Conversation
-                                + temporary Lab choices
+  ├─ Product Foundation / current settings ─┐
+  ├─ current accepted Memory (read-only)     │ explicit opt-in only
+  ├─ current Context Profile                 │
+  ├─ current qualified native runtime        │
+  └─ canonical Conversation snapshot         │ explicit opt-in only
+                                             ↓
+                                  disposable shadow Home
+                                    + fresh scratch Conversation
+                                    + temporary Lab choices
                                          ↓
                               DirectPromptContext
                                          ↓
@@ -85,6 +86,12 @@ The Product asserts that the real Conversation head has not changed after each L
 Memory is used, it also asserts that the observed real Memory fingerprint did not change.
 
 Scratch data is deleted when the Lab is cleared/reloaded or the service closes.
+
+Canonical Home identity and scratch Conversation content are separate currentness questions. The Lab
+re-observes the canonical Home identity on each projection/control/send; if that identity changes, the
+disposable scratch is re-formed. Ordinary canonical Conversation growth does not silently enter an
+existing Lab. Importing current Conversation remains an explicit **Reload current conversation**
+choice.
 
 ## Current Lab choices
 
@@ -168,20 +175,40 @@ visible. Labs says why they are read-only/held instead of hiding them or inventi
 Current first-slice presets:
 
 ~~~text
-CURRENT_SNAPSHOT
+EMPTY  (default)
+  fresh scratch Conversation
+  canonical Conversation content is not copied into the Lab
+  real archives remain unchanged
+
+CURRENT_SNAPSHOT  (explicit opt-in)
   exact canonical Conversation/context copied into the disposable shadow
   real currentness is checked before/after the copy
-
-EMPTY
-  clear the scratch Lab Conversation
-  real archives remain unchanged
 ~~~
 
-**Reload current conversation** discards the current scratch lineage and forms a new exact snapshot
-from the canonical Conversation.
+A fresh Vex Labs context starts from Product Foundation/current host identity plus an empty disposable
+Conversation and no durable Memory content. Historical Product Conversation and current accepted
+Memory are not part of the Lab baseline merely because they exist in canonical Home.
 
-**Restore defaults** restores the Lab's Product/context defaults, current Memory mode, and a fresh
-current-Conversation snapshot. It does not erase saved profiles or Memory.
+**Reload current conversation** is the explicit human action that discards the current scratch lineage
+and forms a new exact snapshot from the canonical Conversation.
+
+**Restore defaults** restores the Lab's Product/context defaults, **no-Memory** mode, and an empty
+scratch Conversation. It does not erase saved profiles or Memory. **Use current Memory** remains an
+explicit Lab experiment control.
+
+~~~text
+LAB DEFAULT
+= PRODUCT FOUNDATION + FRESH LAB CONVERSATION
++ NO DURABLE MEMORY CONTENT
+
+LAB DEFAULT
+!= CANONICAL CONVERSATION SNAPSHOT
+!= CURRENT MEMORY
+
+CURRENT_SNAPSHOT / USE CURRENT MEMORY
+= EXPLICIT IMPORTS FOR A TEST
+!= LAB IDENTITY
+~~~
 
 ## Capability boundary
 
