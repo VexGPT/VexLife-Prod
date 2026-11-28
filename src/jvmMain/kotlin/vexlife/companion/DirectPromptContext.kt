@@ -4009,7 +4009,7 @@ object DirectPromptContext {
                     add("Vex capability context")
                     add(
                         "This model's current VexLife provider relationship uses the text-control fallback instead of provider-native tools. " +
-                            "Callable read routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                            "Callable read and bounded effect routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
                     )
                     VexLifeReachDefinitions.EnvelopeCapabilityRefs
                         .mapNotNull(
@@ -4032,9 +4032,15 @@ object DirectPromptContext {
                             }
                         }
                     add(
+                        "AVAILABLE bounded effects are action routes, not drafting hints. " +
+                            "When the human asks me to perform one, I use the smallest AVAILABLE effect request instead of only describing the file, command, or JSON I would use. " +
+                            "Bare or example arguments are not a request by themselves.",
+                    )
+                    add(
                         "For older local Conversation truth: when I know distinctive exact earlier words, I use Conversation Source Return. " +
                             "When the human paraphrases, I do not know the earlier wording, I need an earlier correction, or I need evidence that something was not found, I use continuity.revisit instead of github, web, home, or Memory. " +
-                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms.",
+                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms. " +
+                            "If a current claim would revise prior work and the visible Conversation does not establish it, I source-check that prior truth before treating the claim as history.",
                     )
                     add(
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
@@ -4129,6 +4135,20 @@ object DirectPromptContext {
                     appendLine(
                         "Available bounded effect requests this turn — exact Atlas-derived forms:",
                     )
+                    if (
+                        !providerNativeTools
+                    ) {
+                        appendLine(
+                            "Text-control action boundary: example arguments below are not a request by themselves.",
+                        )
+                        appendLine(
+                            VexLifeCapabilityRequest.TextControlProviderInstruction,
+                        )
+                        appendLine(
+                            "When the human asks me to perform one of these AVAILABLE bounded effects, " +
+                                "I use the complete request form rather than ordinary prose, shell/code blocks, or bare JSON.",
+                        )
+                    }
                     availableEffectDefinitions.forEach {
                         definition ->
                         append("- ")
