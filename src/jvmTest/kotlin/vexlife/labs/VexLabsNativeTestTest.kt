@@ -488,6 +488,8 @@ class VexLabsNativeTestTest {
         )
         CanonicalVexLifeHomeFixture.form(
             replacementHome,
+            deviceSuffix = "00000000-0000-0000-0000-000000000101",
+            lineageSuffix = "00000000-0000-0000-0000-000000000102",
         )
         val conversation =
             DirectConversationStore(
@@ -913,6 +915,22 @@ class VexLabsNativeTestTest {
             )
                 .use {
                     labs ->
+                    val seeded =
+                        labs.control(
+                            VexLifeProdServiceContract.VexLabsControlRequest(
+                                controlRef =
+                                    VexLabsNativeTest.ControlReloadCurrentConversation,
+                            ),
+                        )
+                    assertEquals(
+                        "CURRENT_SNAPSHOT",
+                        seeded.projection.conversationPreset,
+                    )
+                    assertEquals(
+                        2,
+                        seeded.projection.scratchConversationMessageCount,
+                    )
+
                     var requested =
                         1
                     var held =
