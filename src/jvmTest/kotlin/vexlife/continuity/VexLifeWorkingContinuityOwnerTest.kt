@@ -1371,7 +1371,9 @@ class VexLifeWorkingContinuityOwnerTest {
                 .toFile()
                 .deleteRecursively()
         }
-    }    @Test
+    }
+
+    @Test
     fun currentCycleAdvancesInPlaceAndClearsWithoutBecomingACycleLedger() {
         val home =
             Files.createTempDirectory(
