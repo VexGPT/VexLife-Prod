@@ -74,7 +74,6 @@ object VexLifeCapabilityBridge {
         FAILED,
         INVALID_REQUEST,
         NOT_AVAILABLE,
-        LIMIT_REACHED,
         HELD_TOKEN_BUDGET,
     }
 
@@ -230,8 +229,6 @@ object VexLifeCapabilityBridge {
         val schemaVersion: String,
         val truthClass: String,
         val entries: List<TraceEntry>,
-        /** Null means normal reach is not governed by a small fixed capability-call quota. */
-        val maximumRequestsPerTurn: Int?,
         val reachBoundary: String,
         val exchangeAllowanceTokens: Int,
         val rawResultContentPersisted: Boolean,
@@ -241,7 +238,6 @@ object VexLifeCapabilityBridge {
             require(
                 schemaVersion == TraceSchema &&
                     entries.isNotEmpty() &&
-                    maximumRequestsPerTurn == null &&
                     reachBoundary == ReachBoundaryExchangeHeadroom
             ) {
                 "capability exchange trace is invalid"
@@ -283,7 +279,6 @@ object VexLifeCapabilityBridge {
             schemaVersion = TraceSchema,
             truthClass = "REQUEST_RETURN_CAPABILITY_EXCHANGES_OF_ONE_HUMAN_TURN",
             entries = entries,
-            maximumRequestsPerTurn = null,
             reachBoundary = ReachBoundaryExchangeHeadroom,
             exchangeAllowanceTokens = ExchangeAllowanceTokens,
             rawResultContentPersisted = false,
