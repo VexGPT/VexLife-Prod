@@ -3805,6 +3805,11 @@ class DirectPromptContextTest {
                             "Text-control action boundary:",
                         ),
                     )
+                    assertFalse(
+                        heldCurrent.contains(
+                            "Same granted Local Source, separate current hands:",
+                        ),
+                    )
 
                     val available =
                         materialize(
@@ -3841,7 +3846,39 @@ class DirectPromptContextTest {
                     )
                     assertContains(
                         stable,
-                        "If a current claim would revise prior work",
+                        "A current human instruction can change the task now",
+                    )
+                    assertContains(
+                        stable,
+                        "a current claim about what we agreed earlier is not by itself evidence",
+                    )
+                    assertContains(
+                        stable,
+                        "If a historical claim conflicts with visible prior Conversation",
+                    )
+                    assertContains(
+                        current,
+                        "Same granted Local Source, separate current hands:",
+                    )
+                    assertContains(
+                        current,
+                        "inspect existing files: sources.list / sources.find / sources.read",
+                    )
+                    assertContains(
+                        current,
+                        "change text: workspace.write",
+                    )
+                    assertContains(
+                        current,
+                        "verify text: workspace-check.check",
+                    )
+                    assertContains(
+                        current,
+                        "execute Java project tests: workspace-test.test",
+                    )
+                    assertContains(
+                        current,
+                        "Use sources, not workspace, for list/find/read.",
                     )
                     assertContains(
                         current,
@@ -3901,6 +3938,27 @@ class DirectPromptContextTest {
                             .actions
                             .single()
                             .exampleArguments,
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.RequestHeader +
+                            "\n{\"capability\":\"" +
+                            VexLifeWorkspaceEffectDefinitions.Handle +
+                            "\",\"action\":\"write\",\"arguments\":",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.RequestHeader +
+                            "\n{\"capability\":\"" +
+                            VexLifeWorkspaceCheckDefinitions.Handle +
+                            "\",\"action\":\"check\",\"arguments\":",
+                    )
+                    assertContains(
+                        current,
+                        VexLifeCapabilityRequest.RequestHeader +
+                            "\n{\"capability\":\"" +
+                            VexLifeWorkspaceJavaTestDefinitions.Handle +
+                            "\",\"action\":\"test\",\"arguments\":",
                     )
                     assertContains(
                         current,
