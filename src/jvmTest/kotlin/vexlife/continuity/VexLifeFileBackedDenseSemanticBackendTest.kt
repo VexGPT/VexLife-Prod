@@ -212,11 +212,15 @@ class VexLifeFileBackedDenseSemanticBackendTest {
                 )
                     .single()
 
+            var expectedConversationHeadSha256: String? =
+                null
             fixture.store.withWriterLease {
                 val current =
                     requireNotNull(
                         immediatePriorCompletedTurn(),
                     )
+                expectedConversationHeadSha256 =
+                    current.head.conversationHeadSha256
                 val catchUp =
                     VexLifeContinuitySourceLocator.catchUpCommittedTurn(
                         committedHead = current.head,
@@ -231,6 +235,10 @@ class VexLifeFileBackedDenseSemanticBackendTest {
                 assertEquals(
                     1,
                     catchUp.completedTurnCount,
+                )
+                assertEquals(
+                    expectedConversationHeadSha256,
+                    catchUp.sourceConversationHeadSha256,
                 )
                 assertFalse(
                     catchUp.wholeHistoryEventEnumerationPerformed,
@@ -273,7 +281,7 @@ class VexLifeFileBackedDenseSemanticBackendTest {
                 ready.generation.completedTurnCount,
             )
             assertEquals(
-                firstTurn.second.eventHash,
+                expectedConversationHeadSha256,
                 ready.generation.sourceConversationHeadSha256,
             )
         }
