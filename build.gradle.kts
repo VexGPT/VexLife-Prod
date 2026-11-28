@@ -4200,3 +4200,63 @@ tasks.register<JavaExec>("vexBody20BTest") {
     }
 }
 
+/**
+ * [vexbody 20b test] explicit Product-owned GPT-OSS artifact acquisition.
+ *
+ * Test scope only. This invokes the existing Models DOWNLOAD_MODEL Control and proves the durable
+ * selected model remains Qwen 4B. It does not start or switch the inference runtime.
+ */
+tasks.register<JavaExec>("vexBody20BArtifactAcquire") {
+    group = "verification"
+    description = "Acquire the exact GPT-OSS 20B artifact through Product Models while preserving selected Qwen 4B."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.harness.VexBody20BArtifactAcquireKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val resultDir =
+            (project.findProperty("vexlifeVexBody20BArtifactResultDir") as String?)
+                ?.let(
+                    ::file,
+                )
+                ?: layout
+                    .buildDirectory
+                    .dir(
+                        "vexbody-20b-test/acquisition-a003",
+                    )
+                    .get()
+                    .asFile
+
+        setArgs(
+            listOf(
+                resultDir.absolutePath,
+            ),
+        )
+    }
+}
+
+// [VXG RealForever]
+
