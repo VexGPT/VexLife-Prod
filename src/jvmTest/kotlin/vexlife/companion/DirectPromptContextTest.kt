@@ -3942,21 +3942,21 @@ class DirectPromptContextTest {
                     assertContains(
                         current,
                         VexLifeCapabilityRequest.RequestHeader +
-                            "\n{\"capability\":\"" +
+                            "\n    {\"capability\":\"" +
                             VexLifeWorkspaceEffectDefinitions.Handle +
                             "\",\"action\":\"write\",\"arguments\":",
                     )
                     assertContains(
                         current,
                         VexLifeCapabilityRequest.RequestHeader +
-                            "\n{\"capability\":\"" +
+                            "\n    {\"capability\":\"" +
                             VexLifeWorkspaceCheckDefinitions.Handle +
                             "\",\"action\":\"check\",\"arguments\":",
                     )
                     assertContains(
                         current,
                         VexLifeCapabilityRequest.RequestHeader +
-                            "\n{\"capability\":\"" +
+                            "\n    {\"capability\":\"" +
                             VexLifeWorkspaceJavaTestDefinitions.Handle +
                             "\",\"action\":\"test\",\"arguments\":",
                     )
