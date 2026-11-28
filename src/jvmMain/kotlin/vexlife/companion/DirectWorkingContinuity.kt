@@ -583,7 +583,7 @@ object DirectWorkingContinuity {
         return formation
     }
 
-    fun checkpointCapabilityCycle(
+    internal fun checkpointCapabilityCycle(
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
         workingFocusObservation: DirectWorkingFocus.Observation,
