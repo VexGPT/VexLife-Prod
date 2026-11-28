@@ -19,6 +19,7 @@ import vexlife.capability.reach.VexLifeHtmlText
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
+import vexlife.contract.VexContractJson
 import vexlife.memory.VexLifeMemoryContextFixture
 
 /**
@@ -1249,18 +1250,127 @@ class VexLifeCapabilityReachTest {
         }
 
     @Test
-    fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
-        val over =
+    fun historicalFixedQuotaTraceRemainsReadableWithoutBecomingCurrentReachLaw() = withHome { home ->
+        val exchange =
             VexLifeCapabilityBridge.perform(
                 request("""{"capability":"atlas","action":"list"}"""),
-                admission(home, number = VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1),
+                admission(
+                    home,
+                    number = 1,
+                ),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.ResultState.LIMIT_REACHED, over.entry.state)
-        assertTrue(over.resultMessage.content.contains("No requests are left this turn"))
-        assertTrue(over.resultMessage.content.contains("Do not send another capability request"))
-        assertTrue(over.resultMessage.content.contains("share what you currently understand"))
-        assertTrue(over.resultMessage.content.contains("continue in a fresh turn"))
+        val current =
+            VexLifeCapabilityBridge.trace(
+                listOf(
+                    exchange.entry,
+                ),
+            )
+        val historicalJson =
+            VexContractJson.compactEncode(
+                current,
+            )
+                .replace(
+                    VexLifeCapabilityBridge.TraceSchema,
+                    VexLifeCapabilityBridge.TraceSchemaV1,
+                )
+                .replace(
+                    "\"reachBoundary\":\"EXCHANGE_HEADROOM\"",
+                    "\"maximumRequestsPerTurn\":4",
+                )
+                .replace(
+                    "\"state\":\"RETURNED\"",
+                    "\"state\":\"LIMIT_REACHED\"",
+                )
+
+        val historical =
+            VexContractJson.decode<VexLifeCapabilityBridge.Trace>(
+                historicalJson,
+            )
+
+        assertEquals(
+            VexLifeCapabilityBridge.TraceSchemaV1,
+            historical.schemaVersion,
+        )
+        assertEquals(
+            4,
+            historical.maximumRequestsPerTurn,
+        )
+        assertNull(
+            historical.reachBoundary,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
+            historical.entries.single().state,
+        )
+
+        val currentRoundTrip =
+            VexContractJson.decode<VexLifeCapabilityBridge.Trace>(
+                VexContractJson.compactEncode(
+                    current,
+                ),
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.TraceSchema,
+            currentRoundTrip.schemaVersion,
+        )
+        assertNull(
+            currentRoundTrip.maximumRequestsPerTurn,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
+            currentRoundTrip.reachBoundary,
+        )
+    }
+
+    @Test
+    fun requestSequenceDoesNotBecomeASmallFixedReachQuota() = withHome { home ->
+        val exchanges =
+            (1..17).map {
+                requestNumber ->
+                VexLifeCapabilityBridge.perform(
+                    request("""{"capability":"atlas","action":"list"}"""),
+                    admission(
+                        home,
+                        number = requestNumber,
+                        tokens = 20_000,
+                    ),
+                    estimateTokens = tokens,
+                )
+            }
+        val later =
+            exchanges.last()
+
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            later.entry.state,
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"request\":\"17\""
+            )
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"reachBoundary\":\"EXCHANGE_HEADROOM\""
+            )
+        )
+        assertFalse(
+            later.resultMessage.content.contains(
+                "17 of"
+            )
+        )
+
+        val trace =
+            VexLifeCapabilityBridge.trace(
+                exchanges.map {
+                    it.entry
+                }
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
+            trace.reachBoundary,
+        )
     }
 }
 

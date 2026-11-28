@@ -3115,6 +3115,16 @@ object DirectPromptContext {
         // live tail -> the person's request. The pinned chat template admits one system message,
         // first only ("System message must be at the beginning."), so current state is a host
         // envelope in the user role, the role browser context and capability results already use.
+        val sourceReturnProtocolSection =
+            sourceReturnProtocol
+                ?.let {
+                    protocol ->
+                    Section(
+                        ComponentRefs.SourceReturnProtocol,
+                        ComponentStability.MUTABLE_CURRENT,
+                        protocol.content,
+                    )
+                }
         val baseCurrentSections =
             buildList {
                 workingContinuity?.let {
@@ -3165,9 +3175,10 @@ object DirectPromptContext {
                 conversationExtent?.let {
                     add(Section(ComponentRefs.ConversationExtent, ComponentStability.MUTABLE_CURRENT, it.systemContent))
                 }
-                sourceReturnProtocol?.let {
-                    add(Section(ComponentRefs.SourceReturnProtocol, ComponentStability.MUTABLE_CURRENT, it.content))
-                }
+                sourceReturnProtocolSection
+                    ?.let(
+                        ::add,
+                    )
             }
         val systemParts =
             listOfNotNull(
@@ -3331,20 +3342,30 @@ object DirectPromptContext {
                         ),
                 )
             }
+        val workingFocusSection =
+            workingFocusProjection
+                ?.contentOrNull
+                ?.let {
+                    content ->
+                    Section(
+                        ComponentRefs.WorkingFocus,
+                        ComponentStability.MUTABLE_CURRENT,
+                        content,
+                        workingFocusProjection.sourceRefs,
+                    )
+                }
+        // Source Return is the recovery hand for exact older Conversation source. Keep its exact
+        // bytes and authority unchanged, but make it the final host-owned current-state section so
+        // mutable Working Focus cannot sit between the recovery instruction and the live request.
         val currentSections =
-            baseCurrentSections +
+            baseCurrentSections
+                .filterNot {
+                    it.componentRef ==
+                        ComponentRefs.SourceReturnProtocol
+                } +
                 listOfNotNull(
-                    workingFocusProjection
-                        ?.contentOrNull
-                        ?.let {
-                            content ->
-                            Section(
-                                ComponentRefs.WorkingFocus,
-                                ComponentStability.MUTABLE_CURRENT,
-                                content,
-                                workingFocusProjection.sourceRefs,
-                            )
-                        },
+                    workingFocusSection,
+                    sourceReturnProtocolSection,
                 )
         val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
         val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
@@ -4001,6 +4022,10 @@ object DirectPromptContext {
                     "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
                         "Use one read route at a time because what returns may change which route is needed next. " +
                         "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
+                    "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                        "Reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                        "Stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     "Exact older Conversation also has its source-return relationship for this turn. " +
                         "Current-message attachments, persistent Local Sources, Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
                 )
@@ -4055,6 +4080,12 @@ object DirectPromptContext {
                     )
                     add(
                         "When current context already answers the human, I simply answer. I use one read route at a time because what returns may change which route is needed next.",
+                    )
+                    add(
+                        "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                            "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                            "I reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                            "I stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     )
                 }
             }

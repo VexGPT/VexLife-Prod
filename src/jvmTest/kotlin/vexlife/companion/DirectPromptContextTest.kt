@@ -3857,6 +3857,23 @@ class DirectPromptContextTest {
                         "If a historical claim conflicts with visible prior Conversation",
                     )
                     assertContains(
+                        stable,
+                        "not by a small fixed request quota",
+                    )
+                    assertContains(
+                        stable,
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn.",
+                    )
+                    assertContains(
+                        stable,
+                        "I stop when evidence is sufficient or materially similar reads stop changing the decision.",
+                    )
+                    assertFalse(
+                        stable.contains(
+                            "Up to 4 requests per turn",
+                        ),
+                    )
+                    assertContains(
                         current,
                         "Same granted Local Source, separate current hands:",
                     )
@@ -4272,6 +4289,172 @@ class DirectPromptContextTest {
                 }
         } finally {
             parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun sourceReturnRecoveryHandFollowsWorkingFocusImmediatelyBeforeLiveRequest() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-source-return-after-working-focus-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    productHome,
+                    lineageSuffix = "source-return-order",
+                )
+            val owner =
+                VexLifeWorkingFocusOwner(
+                    productHome,
+                )
+            owner.setCurrent(
+                workingFocusDraft(
+                    lineageRef =
+                        formed.installation.companionLineageRef,
+                    detail =
+                        "Current working material must remain visible without covering the recovery hand.",
+                ),
+            )
+            val observation =
+                DirectWorkingFocus.observeCurrent(
+                    productHome = productHome,
+                    lineageRef =
+                        formed.installation.companionLineageRef,
+                    threadRef =
+                        DirectConversationIdentity.ThreadRef,
+                )
+            val runtime =
+                runtimeEvidence()
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.source-return.order",
+                            requestMessageRef =
+                                "message.self-development.human.source-return.order",
+                            content =
+                                "Reopen exact older Conversation source if this request needs it.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            workingFocusObservation = observation,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtime,
+                            sourceReturnProtocolEnabled = true,
+                            sourceReturnDiscovery = null,
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = false,
+                            providerNativeTools = false,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+
+                    val currentState =
+                        materialized.messages[
+                            materialized.messages.size -
+                                2
+                        ]
+                    assertEquals(
+                        "user",
+                        currentState.role,
+                    )
+                    assertTrue(
+                        currentState.content.startsWith(
+                            DirectPromptContext.CurrentStateHeader,
+                        ),
+                    )
+                    val workingFocusIndex =
+                        currentState.content.indexOf(
+                            "VEXLIFE_WORKING_FOCUS/v1",
+                        )
+                    val sourceReturnIndex =
+                        currentState.content.indexOf(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        )
+                    assertTrue(
+                        workingFocusIndex >=
+                            0,
+                    )
+                    assertTrue(
+                        sourceReturnIndex >
+                            workingFocusIndex,
+                        "Source Return must remain closer to the live request than mutable Working Focus",
+                    )
+                    assertEquals(
+                        request.content,
+                        materialized.messages.last()
+                            .content,
+                    )
+
+                    val workingFocusComponent =
+                        materialized.receipt.contextComponents.single {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.WorkingFocus
+                        }
+                    val sourceReturnComponent =
+                        materialized.receipt.contextComponents.single {
+                            it.componentRef ==
+                                DirectPromptContext.ComponentRefs.SourceReturnProtocol
+                        }
+                    assertEquals(
+                        workingFocusComponent.providerMessageIndex,
+                        sourceReturnComponent.providerMessageIndex,
+                    )
+                    assertTrue(
+                        sourceReturnComponent.logicalOrder >
+                            workingFocusComponent.logicalOrder,
+                    )
+                    assertTrue(
+                        materialized.receipt.sourceReturnProtocolEnabled,
+                    )
+
+                    DirectPromptContext.reverifyContinuity(
+                        materialization = materialized,
+                        conversationOwner = this,
+                        prior = null,
+                        currentRequest = request,
+                        memoryAvailabilityContext = null,
+                        memoryContextAtCap = null,
+                        workingContinuityContext = null,
+                        workingFocusObservation = observation,
+                        browserContext = null,
+                        personContext = null,
+                        runtimeEvidence = runtime,
+                        sourceReturnProtocolEnabled = true,
+                        sourceReturnDiscovery = null,
+                        foundationalField =
+                            VexLifeFoundationalFieldFixture.shipped,
+                        contextProfile = null,
+                        conversationExtentIncluded = true,
+                        capabilityRequestsAdmitted = false,
+                        providerNativeTools = false,
+                        experimentEffectiveInputTokenBudget = null,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 
