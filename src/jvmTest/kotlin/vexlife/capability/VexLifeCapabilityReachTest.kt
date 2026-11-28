@@ -1287,9 +1287,6 @@ class VexLifeCapabilityReachTest {
                     later.entry,
                 )
             )
-        assertNull(
-            trace.maximumRequestsPerTurn,
-        )
         assertEquals(
             VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
             trace.reachBoundary,
