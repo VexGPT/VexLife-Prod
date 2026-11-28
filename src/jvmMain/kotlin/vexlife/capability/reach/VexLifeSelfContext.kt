@@ -27,7 +27,6 @@ internal object VexLifeSelfContext {
 
     data class Result(
         val text: String,
-        val sourceRefs: List<String>,
         val workingFocusCurrentness: String,
         val effectsPerformed: Boolean = false,
     ) {
@@ -133,17 +132,6 @@ internal object VexLifeSelfContext {
 
         return Result(
             text = text,
-            sourceRefs =
-                (
-                    listOf(
-                        receipt.receiptRef,
-                    ) +
-                        focus
-                            ?.sourceRefs
-                            .orEmpty()
-                )
-                    .distinct()
-                    .sorted(),
             workingFocusCurrentness = focusCurrentness,
         )
     }
