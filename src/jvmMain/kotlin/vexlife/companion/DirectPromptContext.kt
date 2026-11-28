@@ -223,6 +223,7 @@ object DirectPromptContext {
     private data class VerifiedTurnContext(
         val memoryAvailability: VerifiedMemory?,
         val workingContinuity: VerifiedWorkingContinuity?,
+        val workingCycleRecoveryProjection: DirectWorkingContinuity.CycleRecoveryProjection?,
         val workingFocusObservation: DirectWorkingFocus.Observation?,
         val workingFocusProjection: DirectWorkingFocus.Projection?,
         val browserContextSha256: String?,
@@ -311,6 +312,7 @@ object DirectPromptContext {
         const val Memory = Prefix + "memory-current-context"
         const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
+        const val WorkingCycleRecovery = Prefix + "working-cycle-recovery"
         const val WorkingFocus = Prefix + "working-focus-current"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
@@ -2074,6 +2076,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -2133,6 +2136,8 @@ object DirectPromptContext {
                     memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2558,6 +2563,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -2599,6 +2605,8 @@ object DirectPromptContext {
                     memoryContextAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
                 workingFocusObservation =
                     workingFocusObservation,
                 browserContext = browserContext,
@@ -2896,6 +2904,7 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
         workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
@@ -3005,6 +3014,27 @@ object DirectPromptContext {
                 prior = prior,
                 currentRequest = currentRequest,
             )
+
+        val workingCycleRecoveryProjection =
+            workingCycleRecovery
+                ?.also {
+                    recovery ->
+                    require(
+                        recovery.currentRequestEventRef ==
+                            currentRequest.eventRef &&
+                            recovery.currentRequestEventSha256 ==
+                            currentRequest.eventHash &&
+                            recovery.cycle.lineageRef ==
+                            currentRequest.companionLineageRef &&
+                            recovery.cycle.threadRef ==
+                            currentRequest.threadRef
+                    ) {
+                        "working cycle recovery does not bind the exact current request/lineage"
+                    }
+                }
+                ?.let(
+                    DirectWorkingContinuity::projectCycleRecovery,
+                )
 
         if (
             prior ==
@@ -3124,6 +3154,16 @@ object DirectPromptContext {
                             ComponentStability.MUTABLE_CURRENT,
                             it.systemContent,
                             listOf(it.context.successorContextRef),
+                        ),
+                    )
+                }
+                workingCycleRecoveryProjection?.let {
+                    add(
+                        Section(
+                            ComponentRefs.WorkingCycleRecovery,
+                            ComponentStability.MUTABLE_CURRENT,
+                            it.content,
+                            it.sourceRefs,
                         ),
                     )
                 }
@@ -3390,6 +3430,8 @@ object DirectPromptContext {
         return VerifiedTurnContext(
             memoryAvailability = memoryAvailability,
             workingContinuity = workingContinuity,
+            workingCycleRecoveryProjection =
+                workingCycleRecoveryProjection,
             workingFocusObservation = workingFocusObservation,
             workingFocusProjection = workingFocusProjection,
             browserContextSha256 = browserContextSha256,
