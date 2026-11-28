@@ -714,90 +714,115 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
-    fun exhaustedReachMayCloseAsAHumanContinuationInsteadOfFailingTheTurn() = withHome { home ->
+    fun moreThanFourUsefulRequestsMayCompleteInOneTurn() = withHome { home ->
         var calls = 0
         val listControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
                 """{"capability":"atlas","action":"list"}"""
-        val continuation =
-            "I understand the current shape, but I still need outside truth to finish confidently. " +
-                "Send another message and I can continue from here with a fresh reach budget."
+        val answer =
+            "I have enough returned evidence now to answer the person."
 
         val result =
             DirectCompanionTurn.performWithHooks(
                 setup = setup(home),
                 intent =
                     DirectCompanionTurn.Intent(
-                        idempotencyKey = "send.reach.limit-human-continuation.001",
-                        content = "Keep looking until you can answer confidently.",
+                        idempotencyKey = "send.reach.health-more-than-four.001",
+                        content = "Keep reading while another result can materially improve the answer.",
                     ),
                 hooks =
                     DirectCompanionTurn.Hooks(
-                        transport = { call ->
-                            calls++
-                            if (calls <= VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1) {
-                                reply(listControl)
+                        transport = {
+                            calls +=
+                                1
+                            if (
+                                calls <=
+                                6
+                            ) {
+                                reply(
+                                    listControl,
+                                )
                             } else {
-                                val returned = messages(call).last()
-                                assertEquals("tool", returned.first)
-                                assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
-                                assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
-                                assertTrue(returned.second.contains("Do not send another capability request"))
-                                assertTrue(returned.second.contains("share what you currently understand"))
-                                assertTrue(returned.second.contains("continue in a fresh turn"))
-                                reply(continuation)
+                                reply(
+                                    answer,
+                                )
                             }
-                        }
+                        },
                     ),
             )
 
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
-        assertEquals("TURN_COMPLETED", result.state)
-        assertEquals(continuation, result.content)
         assertEquals(
-            VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1,
-            result.capabilityUses.size,
+            7,
+            calls,
         )
         assertEquals(
-            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
-            result.capabilityUses.last().state,
+            "TURN_COMPLETED",
+            result.state,
+        )
+        assertEquals(
+            answer,
+            result.content,
+        )
+        assertEquals(
+            6,
+            result.capabilityUses.size,
+        )
+        assertTrue(
+            result.capabilityUses.all {
+                it.state ==
+                    VexLifeCapabilityBridge.ResultState.RETURNED
+            },
         )
     }
 
     @Test
-    fun requestsAreBoundedPerTurnAndOneTooManyEndsTheTurnVisibly() = withHome { home ->
-        var calls = 0
+    fun realExchangeHeadroomHoldsFurtherReachInsteadOfASmallRequestCount() = withHome { home ->
+        var calls =
+            0
         val listControl =
             VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
                 """{"capability":"atlas","action":"list"}"""
+
         val failure =
             assertFailsWith<DirectCompanionTurn.TurnException> {
                 DirectCompanionTurn.performWithHooks(
-                    setup = setup(home),
+                    setup =
+                        setup(
+                            home,
+                        ),
                     intent =
                         DirectCompanionTurn.Intent(
-                            idempotencyKey = "send.reach.limit.001",
-                            content = "Keep looking",
+                            idempotencyKey =
+                                "send.reach.health-resource-held.001",
+                            content =
+                                "Keep requesting the same broad inventory even after the host says real exchange headroom is exhausted.",
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = {
-                                calls++
-                                reply(listControl)
-                            }
+                                calls +=
+                                    1
+                                reply(
+                                    listControl,
+                                )
+                            },
                         ),
                 )
             }
-        // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+
+        assertTrue(
+            calls >
+                5,
+            "the old four-request quota must not be the stopping condition",
+        )
         assertEquals(
-            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            "CAPABILITY_REACH_RESOURCE_HEADROOM_HELD",
             failure.failureCode,
         )
         assertEquals(
-            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            "CAPABILITY_REACH_RESOURCE_HEADROOM_HELD",
             assertNotNull(
                 failure.failureReceipt,
             )
