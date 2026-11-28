@@ -25,6 +25,7 @@ import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.continuity.VexLifeWorkingFocus
 import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.logging.VexLogger
@@ -1272,6 +1273,306 @@ class DirectCompanionCapabilityTurnTest {
         }
     }
 
+
+    @Test
+    fun freshSendResumesUnfinishedCycleWithoutReplayingFailedConversationBranch() {
+        val home =
+            productHome()
+
+        try {
+            val baseline =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.working-cycle-recovery.baseline",
+                            content =
+                                "Establish the last valid completed Conversation head.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = {
+                                reply(
+                                    "Baseline complete.",
+                                )
+                            },
+                        ),
+                )
+            assertEquals(
+                "TURN_COMPLETED",
+                baseline.state,
+            )
+
+            var failedCalls =
+                0
+            val listControl =
+                VexLifeCapabilityRequest.RequestHeader +
+                    "\n" +
+                    """{"capability":"atlas","action":"list"}"""
+            val failedHumanRequest =
+                "Inspect what is available and continue the unfinished work."
+
+            val failed =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.working-cycle-recovery.failed",
+                                content =
+                                    failedHumanRequest,
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = {
+                                    failedCalls +=
+                                        1
+                                    if (
+                                        failedCalls ==
+                                            1
+                                    ) {
+                                        reply(
+                                            listControl,
+                                        )
+                                    } else {
+                                        error(
+                                            "forced provider stop after returned capability evidence",
+                                        )
+                                    }
+                                },
+                            ),
+                    )
+                }
+            assertEquals(
+                2,
+                failedCalls,
+            )
+            assertFalse(
+                failed.retrySameSendAttemptAllowed,
+            )
+            assertEquals(
+                "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT",
+                failed.exactNextSafeRoute,
+            )
+
+            val manifest =
+                assertNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest
+            val cycleOwner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val failedCycle =
+                assertNotNull(
+                    cycleOwner.readCurrentCycle(
+                        lineageRef =
+                            manifest.currentCompanionLineageRef,
+                        threadRef =
+                            DirectConversationIdentity.ThreadRef,
+                    ),
+                )
+            assertEquals(
+                "atlas",
+                failedCycle.capabilityHandleOrNull,
+            )
+            assertEquals(
+                "list",
+                failedCycle.capabilityActionOrNull,
+            )
+            assertEquals(
+                "send.working-cycle-recovery.failed",
+                failedCycle.requestMessageRefOrNull,
+            )
+
+            var replayCalls =
+                0
+            val replay =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.working-cycle-recovery.failed",
+                                content =
+                                    failedHumanRequest,
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = {
+                                    replayCalls +=
+                                        1
+                                    error(
+                                        "same failed Send must not invoke provider",
+                                    )
+                                },
+                            ),
+                    )
+                }
+            assertEquals(
+                "FAILED_SEND_ATTEMPT_REQUIRES_NEW_SEND_ATTEMPT",
+                replay.failureCode,
+            )
+            assertEquals(
+                0,
+                replayCalls,
+            )
+
+            var freshCall:
+                DirectCompanionConnection.HttpCall? =
+                null
+            val freshHumanRequest =
+                "Continue from the unfinished work, but use my instruction here as the foreground."
+            val resumed =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.working-cycle-recovery.fresh",
+                            content =
+                                freshHumanRequest,
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = {
+                                call ->
+                                freshCall =
+                                    call
+                                reply(
+                                    "Continued from the current instruction.",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                resumed.state,
+            )
+            val providerMessages =
+                messages(
+                    assertNotNull(
+                        freshCall,
+                    ),
+                )
+            val providerText =
+                providerMessages
+                    .joinToString(
+                        "\n",
+                    ) {
+                        it.second
+                    }
+            assertTrue(
+                providerText.contains(
+                    "VEXLIFE_WORKING_CYCLE_RECOVERY/v1",
+                ),
+            )
+            assertTrue(
+                providerText.contains(
+                    "currentHumanRequestIsForeground=true",
+                ),
+            )
+            assertTrue(
+                providerText.contains(
+                    "sameFailedSendReplayAllowed=false",
+                ),
+            )
+            assertTrue(
+                providerText.contains(
+                    "capability=atlas",
+                ),
+            )
+            assertTrue(
+                providerText.contains(
+                    "action=list",
+                ),
+            )
+            assertTrue(
+                providerText.contains(
+                    failedHumanRequest,
+                ),
+                "bounded exact prior failed human request should be carried as recovery context",
+            )
+            assertTrue(
+                providerMessages.any {
+                    it.first ==
+                        "user" &&
+                        it.second ==
+                        freshHumanRequest
+                },
+                "fresh human request must remain its own foreground provider message",
+            )
+            assertNull(
+                cycleOwner.readCurrentCycle(
+                    lineageRef =
+                        manifest.currentCompanionLineageRef,
+                    threadRef =
+                        DirectConversationIdentity.ThreadRef,
+                ),
+                "successful resumed turn must consume and clear the prior unfinished cycle",
+            )
+
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        current()
+                    }
+            assertTrue(
+                snapshot.canonicalEvents.any {
+                    it.content ==
+                        freshHumanRequest
+                },
+            )
+            assertFalse(
+                snapshot.canonicalEvents.any {
+                    it.content ==
+                        failedHumanRequest
+                },
+                "abandoned failed human request must not become canonical history merely because a fresh Send resumed its work",
+            )
+            assertTrue(
+                snapshot.abandonedAttempts.any {
+                    it.requestEvent.content ==
+                        failedHumanRequest
+                },
+                "failed request remains durable off-head evidence",
+            )
+            assertEquals(
+                baseline.currentConversationHeadSha256,
+                snapshot.completedHeads[
+                    snapshot.completedHeads.lastIndex -
+                        1
+                ]
+                    .conversationHeadSha256,
+                "fresh completed turn must branch from the last valid completed head",
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
 }
 
