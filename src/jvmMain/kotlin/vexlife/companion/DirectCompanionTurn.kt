@@ -1029,7 +1029,7 @@ object DirectCompanionTurn {
                     val workingCycleRecovery =
                         resolveCycleRecovery(
                             productHome = productHome,
-                            conversationOwner = this,
+                            conversationStore = conversation,
                             prior = prior,
                             currentRequest = request,
                             workingFocusObservation =
@@ -3483,7 +3483,7 @@ object DirectCompanionTurn {
 
     private fun resolveCycleRecovery(
         productHome: Path,
-        conversationOwner: DirectConversationStore.Locked,
+        conversationStore: DirectConversationStore,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
         workingFocusObservation: DirectWorkingFocus.Observation,
@@ -3536,7 +3536,7 @@ object DirectCompanionTurn {
                 }
         val failedRequest =
             requireNotNull(
-                conversationOwner
+                conversationStore
                     .requestEventForMessageRef(
                         requestMessageRef,
                     )
