@@ -1,6 +1,6 @@
 {
     "schemaVersion": "vexlife-prod.site-data/v1",
-    "sourceSha": "d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+    "sourceSha": "6b4db35fc94b9a3dcfb24882c9bf0f0fb530605b",
     "mac": {
         "chip": "Apple silicon (M1 or later)",
         "minimumMemoryBytes": 8589934592
@@ -38,7 +38,7 @@
         },
         {
             "handle": "heretic-4b",
-            "label": "Heretic 4B Distill (4-bit, MLX)",
+            "label": "Heretic 4B Distill",
             "downloadBytes": 3054412642,
             "recommendedMemoryBytes": 8589934592,
             "standing": "CANDIDATE",
