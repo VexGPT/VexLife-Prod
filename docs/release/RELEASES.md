@@ -268,11 +268,14 @@ tools/release/publish-mac-release.sh preview
 tools/release/publish-mac-release.sh stable 0.1.0
 ~~~
 
-It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG,
-publishes the GitHub Release, then republishes the source-owned VexLife Pages projection so the
-download/version catalog observes that exact newly published release. For a stable version,
-`gh release create` creates the `vX.Y.Z` tag at that exact source automatically. Victor never
-manually creates/moves a tag, edits a version file, builds a DMG or uploads assets.
+Manual Preview and Stable publication require a clean exact current `origin/main`. Automatic
+Preview publication instead binds the exact GitHub push SHA and admits it only while that SHA remains
+an ancestor of current `origin/main`; this lets queued main commits retain their own immutable
+Preview identity. Every route runs the Product tests and forms/verifies the DMG before publication.
+Automatic Preview defers the Pages projection to the workflow so it can refresh from newest current
+main after an older queued release lands. For a stable version, `gh release create` creates the
+`vX.Y.Z` tag at that exact source automatically. Victor never manually creates/moves a tag, edits a
+version file, builds a DMG or uploads assets.
 
 If the GitHub Release succeeds but the following Pages publication fails, the release already exists.
 Do **not** rebuild, move, or replay the release merely to repair its public catalog projection. Resume
@@ -294,9 +297,9 @@ Two executors may lawfully invoke that same source-owned process:
 - **VexRelay / VexLocalBridge proof — pre-publication evidence when needed.** Relay may prove the
   exact source/build/artifact candidate through its admitted repository/host proof contracts without
   claiming that proof itself published the release.
-- **GitHub Actions — optional hosted route.** **Actions → release → Run workflow** is a thin
-  `workflow_dispatch` wrapper around the same source-owned script. Choose `preview`, or choose
-  `stable` and enter a version such as `0.1.0`.
+- **GitHub Actions — automatic Preview + manual release route.** Every push to `main` invokes the
+  same source-owned script as an exact-SHA Preview. **Actions → release → Run workflow** remains the
+  manual surface for an explicit Preview or Stable `0.x.y` cutoff.
 
 The similar human carriage is deliberate:
 
