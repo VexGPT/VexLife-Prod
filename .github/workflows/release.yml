@@ -2,6 +2,9 @@
 # VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly instead.
 name: release
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       channel:
@@ -34,4 +37,16 @@ jobs:
       - name: Publish the exact VexLife cutoff
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash tools/release/publish-mac-release.sh "${{ inputs.channel }}" "${{ inputs.version }}"
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            bash tools/release/publish-mac-release.sh preview "" "$GITHUB_SHA"
+
+            # The Preview is bound to the push SHA. The catalog, however, should always project
+            # the newest current main after queued releases finish.
+            git fetch --quiet origin main
+            git checkout --quiet --detach refs/remotes/origin/main
+            VEXLIFE_REPOSITORY="VexGPT/VexLife-Prod" bash tools/site/publish-gh-pages.sh
+          else
+            bash tools/release/publish-mac-release.sh "${{ inputs.channel }}" "${{ inputs.version }}"
+          fi
