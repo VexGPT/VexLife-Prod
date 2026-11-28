@@ -1,0 +1,88 @@
+# Proof-only Windows parity for the exact current VexBody candidate.
+# Product/source bytes are inherited unchanged; this file owns only hosted proof.
+name: windows-vexbody-current-parity
+
+on:
+  pull_request:
+    paths:
+      - 'src/commonMain/**'
+      - 'src/jvmMain/**'
+      - 'src/commonTest/**'
+      - 'src/jvmTest/**'
+      - 'tools/windows-preview/**'
+      - 'build.gradle.kts'
+      - '.github/workflows/windows-vexbody-current-parity.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-vexbody-current-parity-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  current-windows-parity:
+    runs-on: windows-latest
+    timeout-minutes: 55
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configure current-scale Kotlin compiler heap
+        shell: pwsh
+        run: |
+          $GradleUserHome = Join-Path $env:RUNNER_TEMP 'vexlife-gradle'
+          New-Item -ItemType Directory -Path $GradleUserHome -Force | Out-Null
+          @'
+          org.gradle.jvmargs=-Xmx4g
+          kotlin.compiler.execution.strategy=in-process
+          '@ | Set-Content -LiteralPath (Join-Path $GradleUserHome 'gradle.properties') -Encoding utf8
+          "GRADLE_USER_HOME=$GradleUserHome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prove shared VexBody + Windows realization together
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest `
+            --tests "vexlife.platform.VexLifePlatformRealizationTest" `
+            --tests "vexlife.platform.VexLifeJvmPlatformTargetTest" `
+            --tests "vexlife.platform.windows.VexLifeProdWindowsPreviewTest" `
+            --tests "vexlife.platform.windows.VexLifeProdWindowsRuntimeSessionTest" `
+            --tests "vexlife.platform.windows.VexLifeProdWindowsSetupTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsHereticRuntimeTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsHostObservationTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsReadinessTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsRuntimeMaterializationTest" `
+            --tests "vexlife.capability.VexLifeCapabilityAtlasTest" `
+            --tests "vexlife.capability.VexLifeCapabilityReachTest" `
+            --tests "vexlife.capability.VexLifeWorkspaceBridgeTest" `
+            --tests "vexlife.companion.DirectConversationSourceReturnTest" `
+            --tests "vexlife.companion.DirectCompanionCapabilityTurnTest" `
+            --tests "vexlife.companion.DirectPromptContextTest"
+
+      - name: Form exact current Windows VexLife.exe preview
+        shell: pwsh
+        run: |
+          $Out = Join-Path $env:RUNNER_TEMP 'vexlife-windows-preview'
+          New-Item -ItemType Directory -Path $Out -Force | Out-Null
+          .\tools\windows-preview\FORM-WINDOWS-PREVIEW.ps1 -OutputDirectory $Out
+          $Zip = Get-ChildItem -LiteralPath $Out -Filter 'VexLife-Windows-x64-preview-*.zip' | Select-Object -First 1
+          if (-not $Zip) { throw 'WINDOWS_PREVIEW_ZIP_NOT_FORMED' }
+          $Sha = (Get-FileHash -LiteralPath $Zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "WINDOWS_PARITY_PREVIEW=$($Zip.Name)"
+          Write-Host "WINDOWS_PARITY_PREVIEW_SHA256=$Sha"
+
+      - name: Retain exact Windows preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexlife-windows-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/vexlife-windows-preview/VexLife-Windows-x64-preview-*.zip
+            ${{ runner.temp }}/vexlife-windows-preview/VexLife-Windows-preview-diagnostic-*.log
+          if-no-files-found: error
