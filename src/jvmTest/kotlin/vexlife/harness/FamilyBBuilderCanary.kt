@@ -35,6 +35,7 @@ import vexlife.continuity.VexLifeContinuitySemanticServiceSession
 import vexlife.continuity.VexLifeFileBackedDenseSemanticBackend
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHomeFiles
@@ -182,16 +183,34 @@ object FamilyBBuilderCanary {
                 )
                 .toAbsolutePath()
                 .normalize()
-        require(
-            VexLifeProdHomeFiles.observeExisting(
+        val runtimeHomeState =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    runtimeHome,
+                ),
+            ) {
+                "Family-B live runtime Home is absent: " + runtimeHome
+            }
+
+        // The campaign requires an already-selected 4B Home. Read that choice before setup, because
+        // setup is an effectful convergence owner and may otherwise replace an absent/stale choice
+        // with the Mac's ordinary recommended model before this observer gets to check it.
+        val selectedRuntimeModel =
+            FileHereticModelConfigurationStore(
                 runtimeHome,
-            ) !=
-                null,
+            )
+                .selectedModel(
+                    runtimeHomeState.manifest,
+                )
+        require(
+            selectedRuntimeModel.modelRef ==
+                HereticModelCatalog.Models.Qwen4B.modelRef
         ) {
-            "Family-B live runtime Home is absent: " + runtimeHome
+            "shared body campaign requires exact selected Qwen 4B before runtime establishment"
         }
 
-        // Borrow the selected model runtime only. All durable canary state remains in the scratch Home.
+        // Borrow the already-selected model runtime only. All durable canary state remains in the
+        // scratch Home. Re-check runtime identity after establishment in case host state moved.
         val runtimeSession =
             VexLifeProdLocalSetup.establishSession(
                 productHome = runtimeHome,
@@ -204,7 +223,7 @@ object FamilyBBuilderCanary {
             runtimeEvidence.modelRef ==
                 HereticModelCatalog.Models.Qwen4B.modelRef
         ) {
-            "shared body campaign requires exact selected Qwen 4B"
+            "shared body campaign runtime moved away from exact selected Qwen 4B"
         }
         require(
             runtimeEvidence.qualification.vexReachQualificationRef ==
