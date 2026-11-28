@@ -3,6 +3,30 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 APP_VERSION="${1:-0.0.0}"
+DISTRIBUTION_CHANNEL="${2:-candidate}"
+
+proof_fail() {
+  printf 'VEXLIFE_MAC_CANDIDATE_PROOF_FAILED\t%s\n' "$1" >&2
+  exit 1
+}
+
+require_nonempty() {
+  local label="$1"
+  local path="$2"
+  [ -s "$path" ] || proof_fail "$label"
+}
+
+require_executable() {
+  local label="$1"
+  local path="$2"
+  [ -x "$path" ] || proof_fail "$label"
+}
+
+require_absent() {
+  local label="$1"
+  local path="$2"
+  [ ! -e "$path" ] || proof_fail "$label"
+}
 
 [ "$(uname -s)" = "Darwin" ] || {
   echo "VexLife Mac candidate proof must run on macOS." >&2
@@ -17,10 +41,28 @@ case "$(uname -m)" in
 esac
 
 [[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-  echo "usage: bash tools/release/prove-mac-candidate.sh [major.minor.patch]" >&2
+  echo "usage: bash tools/release/prove-mac-candidate.sh [major.minor.patch] [candidate|preview|stable]" >&2
   echo "default candidate version is 0.0.0" >&2
   exit 1
 }
+case "$DISTRIBUTION_CHANNEL" in
+  candidate|preview)
+    [ "$APP_VERSION" = "0.0.0" ] || {
+      echo "$DISTRIBUTION_CHANNEL proof must use app version 0.0.0; source SHA is its release identity." >&2
+      exit 1
+    }
+    ;;
+  stable)
+    [ "$APP_VERSION" != "0.0.0" ] || {
+      echo "stable proof requires one semantic app version." >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "distribution channel must be candidate, preview, or stable." >&2
+    exit 1
+    ;;
+esac
 
 STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
 [ -z "$STATUS" ] || {
@@ -46,12 +88,30 @@ GRADLE_MEMORY_ARGS=(
 )
 
 ./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" jvmTest checkVexLifeStrings
-./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
+./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" \
+  -PvexlifeAppVersion="$APP_VERSION" \
+  -PvexlifeDistributionChannel="$DISTRIBUTION_CHANNEL" \
+  archiveVexLifeProdMacApplication
 
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
 APP="$APP_DIR/VexLife.app"
-DMG="$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
-DMG_SUM="$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+SOURCE_SHORT="${SOURCE_SHA:0:7}"
+case "$DISTRIBUTION_CHANNEL" in
+  candidate)
+    DMG_NAME="VexLife-Candidate-$SOURCE_SHORT-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife Candidate $SOURCE_SHORT"
+    ;;
+  preview)
+    DMG_NAME="VexLife-Preview-$SOURCE_SHORT-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife Preview $SOURCE_SHORT"
+    ;;
+  stable)
+    DMG_NAME="VexLife-$APP_VERSION-macOS-AppleSilicon.dmg"
+    EXPECTED_VOLUME_NAME="VexLife $APP_VERSION"
+    ;;
+esac
+DMG="$APP_DIR/$DMG_NAME"
+DMG_SUM="$DMG.sha256"
 RECEIPT="$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
 
 for path in "$APP/Contents/Info.plist" "$DMG" "$DMG_SUM" "$RECEIPT"; do
@@ -63,7 +123,7 @@ done
 
 (
   cd "$APP_DIR"
-  shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256"
+  shasum -a 256 -c "$DMG_NAME.sha256"
 )
 
 /usr/bin/hdiutil verify "$DMG" >/dev/null
@@ -76,6 +136,21 @@ EXPECTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o 
   echo "observed=$EXPECTED_SOURCE" >&2
   exit 1
 }
+
+EXPECTED_DISTRIBUTION_IDENTITY="$DISTRIBUTION_CHANNEL:$SOURCE_SHA"
+if [ "$DISTRIBUTION_CHANNEL" = "stable" ]; then
+  EXPECTED_DISTRIBUTION_IDENTITY="stable:$APP_VERSION@$SOURCE_SHA"
+fi
+OBSERVED_DISTRIBUTION_CHANNEL="$(
+  /usr/bin/plutil -extract VexLifeProdDistributionChannel raw -o - "$APP/Contents/Info.plist"
+)"
+OBSERVED_DISTRIBUTION_IDENTITY="$(
+  /usr/bin/plutil -extract VexLifeProdDistributionIdentity raw -o - "$APP/Contents/Info.plist"
+)"
+[ "$OBSERVED_DISTRIBUTION_CHANNEL" = "$DISTRIBUTION_CHANNEL" ] ||
+  proof_fail "APP_DISTRIBUTION_CHANNEL"
+[ "$OBSERVED_DISTRIBUTION_IDENTITY" = "$EXPECTED_DISTRIBUTION_IDENTITY" ] ||
+  proof_fail "APP_DISTRIBUTION_IDENTITY"
 
 MOUNT="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/vexlife-mac-candidate-proof.XXXXXX")"
 mounted=0
@@ -90,6 +165,13 @@ trap cleanup EXIT HUP INT TERM
 /usr/bin/hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT" >/dev/null
 mounted=1
 
+MOUNTED_VOLUME_NAME="$(
+  /usr/sbin/diskutil info -plist "$MOUNT" |
+    /usr/bin/plutil -extract VolumeName raw -o - -
+)"
+[ "$MOUNTED_VOLUME_NAME" = "$EXPECTED_VOLUME_NAME" ] ||
+  proof_fail "MOUNTED_DISTRIBUTION_VOLUME_IDENTITY"
+
 MOUNTED_APP="$MOUNT/VexLife.app"
 MOUNTED_INFO="$MOUNTED_APP/Contents/Info.plist"
 [ -f "$MOUNTED_INFO" ] || {
@@ -97,8 +179,9 @@ MOUNTED_INFO="$MOUNTED_APP/Contents/Info.plist"
   exit 1
 }
 
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_APP_IDENTITY\n'
 /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNTED_INFO" | /usr/bin/grep -Fx 'applet'
-test -s "$MOUNTED_APP/Contents/Resources/applet.icns"
+require_nonempty "MOUNTED_APPLET_ICON" "$MOUNTED_APP/Contents/Resources/applet.icns"
 
 MOUNTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o - "$MOUNTED_INFO")"
 [ "$MOUNTED_SOURCE" = "$SOURCE_SHA" ] || {
@@ -107,24 +190,28 @@ MOUNTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o -
 }
 
 PROVIDER="$MOUNTED_APP/Contents/Resources/private-service-image/local-asr-provider/whispercpp/v1.9.5"
-test -x "$PROVIDER/bin/whisper-server"
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_PROVIDER\n'
+require_executable "MOUNTED_WHISPER_SERVER_EXECUTABLE" "$PROVIDER/bin/whisper-server"
 /usr/bin/grep -Fx 'd1be6fde11ac6e0407606b4e42fe72d34add8037' "$PROVIDER/provider-source.txt"
 /usr/bin/grep -Fx '6fe2755682242a5c01aba65a22b3c0305d747841' "$PROVIDER/provider-tree.txt"
 /usr/bin/grep -F -- '-Dvexlife.privateServiceImageRoot="$ROOT"'   "$MOUNTED_APP/Contents/Resources/private-service-image/bin/vexlife-prod-service"
-DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null
+DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null || proof_fail "MOUNTED_WHISPER_SERVER_HELP"
 
-test ! -e "$MOUNTED_APP/Contents/Resources/Assets.car"
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_ICON_OVERRIDE_ABSENCE\n'
+require_absent "MOUNTED_ASSETS_CAR_ABSENT" "$MOUNTED_APP/Contents/Resources/Assets.car"
 if /usr/bin/plutil -extract CFBundleIconName raw -o - "$MOUNTED_INFO" >/dev/null 2>&1; then
   echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
   exit 1
 fi
 
-test ! -e "$MOUNT/Open Privacy & Security.webloc"
-test ! -e "$MOUNT/.fseventsd"
-test ! -e "$MOUNT/.Spotlight-V100"
-test ! -e "$MOUNT/.Trashes"
-test -s "$MOUNT/.VolumeIcon.icns"
-/usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_VOLUME_HYGIENE\n'
+require_absent "MOUNTED_PRIVACY_WEBLOC_ABSENT" "$MOUNT/Open Privacy & Security.webloc"
+require_absent "MOUNTED_FSEVENTSD_ABSENT" "$MOUNT/.fseventsd"
+require_absent "MOUNTED_SPOTLIGHT_ABSENT" "$MOUNT/.Spotlight-V100"
+require_absent "MOUNTED_TRASHES_ABSENT" "$MOUNT/.Trashes"
+require_nonempty "MOUNTED_VOLUME_ICON" "$MOUNT/.VolumeIcon.icns"
+/usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null ||
+  proof_fail "MOUNTED_VOLUME_FINDERINFO"
 
 /usr/bin/hdiutil detach "$MOUNT" >/dev/null
 mounted=0
@@ -136,5 +223,7 @@ trap - EXIT HUP INT TERM
 
 DMG_SHA="$(/usr/bin/shasum -a 256 "$DMG" | /usr/bin/awk '{print $1}')"
 
+printf 'VEXLIFE_MAC_DISTRIBUTION_IDENTITY\t%s\t%s\t%s\n' \
+  "$DISTRIBUTION_CHANNEL" "$DMG_NAME" "$EXPECTED_VOLUME_NAME"
 printf 'VEXLIFE_MAC_CANDIDATE_PROVED\t%s\t%s\t%s\t%s\n'   "$SOURCE_SHA"   "$APP_VERSION"   "$DMG"   "$DMG_SHA"
 printf 'VEXLIFE_MAC_CANDIDATE_RECEIPT\t%s\n' "$RECEIPT"

@@ -22,7 +22,9 @@
       "private-mode": "VexLifePrivateModeFamily (state and control refs)",
       "context-profile": "VexLifeContextProfileFamily (state and control refs)",
       "local-sources": "VexLifeLocalSourcesFamily (control refs)",
-      "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)"
+      "workspace-effects": "VexLifeWorkspaceEffectsFamily (explicit Allow/Revoke stronger change authority)",
+      "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)",
+      "workspace-runs": "VexLifeWorkspaceRunsFamily (explicit Allow/Revoke bounded project-test authority)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -2307,37 +2309,37 @@
   "workspace.label.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "Keep recent conversation ready"
+        "text": "Follow-up readiness"
       },
       "ar": {
-        "text": "إبقاء المحادثة الأخيرة جاهزة"
+        "text": "جاهزية الردود اللاحقة"
       },
       "de": {
-        "text": "Letzte Unterhaltung bereithalten"
+        "text": "Bereitschaft für Folgeantworten"
       },
       "es": {
-        "text": "Mantener lista la conversación reciente"
+        "text": "Preparación para respuestas siguientes"
       },
       "fr": {
-        "text": "Garder la conversation récente prête"
+        "text": "Préparation des réponses suivantes"
       },
       "hi": {
-        "text": "हाल की बातचीत तैयार रखें"
+        "text": "अगले जवाबों की तैयारी"
       },
       "ja": {
-        "text": "最近の会話をすぐ使える状態にする"
+        "text": "フォローアップの準備"
       },
       "ko": {
-        "text": "최근 대화를 바로 쓸 수 있게 유지"
+        "text": "후속 응답 준비"
       },
       "pt": {
-        "text": "Manter a conversa recente pronta"
+        "text": "Preparação para respostas seguintes"
       },
       "zh": {
-        "text": "让最近的对话保持就绪"
+        "text": "后续回复就绪"
       },
       "zh-Hant": {
-        "text": "讓最近的對話保持就緒"
+        "text": "後續回覆就緒"
       }
     },
     "surfaces": [
@@ -2347,37 +2349,37 @@
   "workspace.description.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "Vex can keep some of the recent conversation ready between replies. Keeping more ready may reduce waiting on follow-up replies, but it uses more memory. Standard is recommended."
+        "text": "Vex can keep recent conversation processing ready between replies. Keeping more ready may reduce repeated work and make follow-ups start faster, but it uses more memory. Vex manages the cache itself; this setting only chooses the tradeoff. Changes take effect after restarting the selected model; Conversation and Memory are not rewritten."
       },
       "ar": {
-        "text": "يمكن لـ Vex إبقاء جزء من المحادثة الأخيرة جاهزًا بين الردود. إبقاء المزيد جاهزًا قد يقلل انتظار الردود التالية، لكنه يستخدم ذاكرة أكبر. يُوصى بالإعداد القياسي."
+        "text": "يمكن لـ Vex إبقاء معالجة جزء من المحادثة الأخيرة جاهزة بين الردود. إبقاء المزيد جاهزًا قد يقلل العمل المتكرر ويجعل الردود اللاحقة تبدأ أسرع، لكنه يستخدم ذاكرة أكبر. يدير Vex التخزين المؤقت بنفسه؛ هذا الإعداد يختار فقط هذا التوازن. تسري التغييرات بعد إعادة تشغيل النموذج المحدد؛ ولا تتم إعادة كتابة Conversation أو Memory."
       },
       "de": {
-        "text": "Vex kann Teile der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann Wartezeit bei Folgeantworten verringern, benötigt aber mehr Speicher. Standard wird empfohlen."
+        "text": "Vex kann die Verarbeitung der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann wiederholte Arbeit verringern und Folgeantworten schneller starten lassen, benötigt aber mehr Speicher. Vex verwaltet den Cache selbst; diese Einstellung wählt nur den Kompromiss. Änderungen gelten nach dem Neustart des ausgewählten Modells; Conversation und Memory werden nicht neu geschrieben."
       },
       "es": {
-        "text": "Vex puede mantener parte de la conversación reciente lista entre respuestas. Mantener más preparada puede reducir la espera en respuestas siguientes, pero usa más memoria. Se recomienda Estándar."
+        "text": "Vex puede mantener preparado el procesamiento de la conversación reciente entre respuestas. Mantener más listo puede reducir trabajo repetido y hacer que las respuestas siguientes comiencen antes, pero usa más memoria. Vex administra la caché por sí mismo; este ajuste solo elige ese equilibrio. Los cambios se aplican después de reiniciar el modelo seleccionado; Conversation y Memory no se reescriben."
       },
       "fr": {
-        "text": "Vex peut garder une partie de la conversation récente prête entre les réponses. En garder davantage peut réduire l’attente pour les réponses suivantes, mais utilise plus de mémoire. Standard est recommandé."
+        "text": "Vex peut garder prêt le traitement de la conversation récente entre les réponses. En garder davantage prêt peut réduire le travail répété et accélérer le démarrage des réponses suivantes, mais utilise plus de mémoire. Vex gère lui-même le cache ; ce réglage choisit seulement ce compromis. Les changements s’appliquent après le redémarrage du modèle sélectionné ; Conversation et Memory ne sont pas réécrites."
       },
       "hi": {
-        "text": "Vex जवाबों के बीच हाल की बातचीत का कुछ हिस्सा तैयार रख सकता है। अधिक हिस्सा तैयार रखने से अगले जवाब का इंतज़ार कम हो सकता है, लेकिन अधिक मेमोरी लगेगी। Standard की सलाह दी जाती है।"
+        "text": "Vex जवाबों के बीच हाल की बातचीत की प्रोसेसिंग को तैयार रख सकता है। ज़्यादा तैयार रखने से दोहराया जाने वाला काम कम हो सकता है और अगले जवाब जल्दी शुरू हो सकते हैं, लेकिन अधिक मेमोरी लगेगी। कैश को Vex खुद संभालता है; यह सेटिंग सिर्फ इस संतुलन को चुनती है। बदलाव चुने हुए मॉडल को फिर से शुरू करने के बाद लागू होते हैं; Conversation और Memory दोबारा नहीं लिखे जाते।"
       },
       "ja": {
-        "text": "Vex は返信の間、最近の会話の一部をすぐ使える状態に保てます。多く保つほど次の返信の待ち時間が減る可能性がありますが、より多くのメモリを使います。Standard を推奨します。"
+        "text": "Vex は返信の間、最近の会話の処理を準備済みにしておけます。より多く保持すると、繰り返し処理を減らしてフォローアップの開始を速くできる可能性がありますが、より多くのメモリを使います。キャッシュ自体は Vex が管理し、この設定はそのバランスだけを選びます。変更は選択したモデルを再起動した後に反映され、Conversation と Memory は書き換えられません。"
       },
       "ko": {
-        "text": "Vex는 답변 사이에 최근 대화 일부를 바로 사용할 수 있게 유지할 수 있습니다. 더 많이 유지하면 후속 답변 대기 시간이 줄 수 있지만 메모리를 더 사용합니다. Standard를 권장합니다."
+        "text": "Vex는 답변 사이에 최근 대화의 처리 상태를 준비해 둘 수 있습니다. 더 많이 준비해 두면 반복 작업을 줄이고 후속 답변을 더 빨리 시작할 수 있지만 메모리를 더 사용합니다. 캐시는 Vex가 직접 관리하며, 이 설정은 그 균형만 선택합니다. 변경 사항은 선택한 모델을 다시 시작한 뒤 적용되며 Conversation과 Memory는 다시 쓰지 않습니다."
       },
       "pt": {
-        "text": "O Vex pode manter parte da conversa recente pronta entre respostas. Manter mais conteúdo pronto pode reduzir a espera nas respostas seguintes, mas usa mais memória. Recomenda-se Standard."
+        "text": "O Vex pode manter pronto o processamento da conversa recente entre respostas. Manter mais conteúdo pronto pode reduzir trabalho repetido e fazer as respostas seguintes começarem mais rápido, mas usa mais memória. O Vex gerencia o cache por conta própria; esta configuração apenas escolhe esse equilíbrio. As alterações entram em vigor após reiniciar o modelo selecionado; Conversation e Memory não são reescritas."
       },
       "zh": {
-        "text": "Vex 可以在两次回复之间让最近对话的一部分保持就绪。保留得越多，后续回复的等待时间可能越短，但会占用更多内存。建议使用 Standard。"
+        "text": "Vex 可以在两次回复之间保留最近对话的处理状态。保留更多内容可能减少重复处理，让后续回复更快开始，但会占用更多内存。缓存本身由 Vex 管理；此设置只选择这种取舍。更改会在重启所选模型后生效；Conversation 和 Memory 不会被重写。"
       },
       "zh-Hant": {
-        "text": "Vex 可以在兩次回覆之間讓最近對話的一部分保持就緒。保留得越多，後續回覆的等待時間可能越短，但會佔用更多記憶體。建議使用 Standard。"
+        "text": "Vex 可以在兩次回覆之間保留最近對話的處理狀態。保留更多內容可能減少重複處理，讓後續回覆更快開始，但會佔用更多記憶體。快取本身由 Vex 管理；此設定只選擇這種取捨。變更會在重新啟動所選模型後生效；Conversation 和 Memory 不會被重寫。"
       }
     },
     "surfaces": [
@@ -2676,37 +2678,37 @@
   "workspace.description.model-cache-recommendation-27b": {
     "strings": {
       "en": {
-        "text": "1 is the current lived safety floor for 27B after the earlier many-cache memory failure; it is not claimed as the fastest setting."
+        "text": "Lower memory use is the current lived safety setting for 27B after the earlier many-cache memory failure. It is not claimed to be the fastest."
       },
       "ar": {
-        "text": "القيمة 1 هي حد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد إدخالات التخزين المؤقت؛ ولا يُدّعى أنها الإعداد الأسرع."
+        "text": "استخدام ذاكرة أقل هو إعداد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد ذاكرات التخزين المؤقت. ولا يُدّعى أنه الإعداد الأسرع."
       },
       "de": {
-        "text": "1 ist der derzeit im Betrieb bestätigte Sicherheitswert für 27B nach dem früheren Speicherproblem mit vielen Caches; dies wird nicht als schnellste Einstellung behauptet."
+        "text": "Weniger Speicher zu nutzen ist nach dem früheren Speicherfehler mit vielen Caches derzeit die im Betrieb bestätigte Sicherheitseinstellung für 27B. Sie wird nicht als schnellste Einstellung bezeichnet."
       },
       "es": {
-        "text": "1 es el límite de seguridad actual comprobado en uso real para 27B tras el problema anterior de memoria con muchas cachés; no se afirma que sea la configuración más rápida."
+        "text": "Menor uso de memoria es la configuración de seguridad actualmente validada en uso real para 27B tras el problema anterior de memoria con muchas cachés. No se afirma que sea la más rápida."
       },
       "fr": {
-        "text": "1 est la limite de sécurité actuellement validée en usage réel pour 27B après le précédent problème de mémoire lié à de nombreux caches ; ce réglage n’est pas présenté comme le plus rapide."
+        "text": "L’utilisation de moins de mémoire est actuellement le réglage de sécurité validé en usage réel pour 27B après l’ancien problème de mémoire lié à de nombreux caches. Il n’est pas présenté comme le réglage le plus rapide."
       },
       "hi": {
-        "text": "1, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वर्तमान में वास्तविक उपयोग से प्रमाणित सुरक्षा सीमा है; इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
+        "text": "कम मेमोरी उपयोग, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वास्तविक उपयोग में प्रमाणित मौजूदा सुरक्षित सेटिंग है। इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
       },
       "ja": {
-        "text": "1 は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全値です。最速の設定であるとは主張していません。"
+        "text": "「メモリ使用量を抑える」は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全設定です。最速の設定であるとは主張していません。"
       },
       "ko": {
-        "text": "1은 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재 안전값입니다. 가장 빠른 설정이라고 주장하는 값은 아닙니다."
+        "text": "'메모리 사용 줄이기'는 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재의 안전 설정입니다. 가장 빠른 설정이라고 주장하지는 않습니다."
       },
       "pt": {
-        "text": "1 é o limite de segurança atual comprovado em uso real para o 27B após o problema anterior de memória com muitos caches; não é apresentado como a configuração mais rápida."
+        "text": "Menor uso de memória é a configuração de segurança atualmente validada em uso real para o 27B após o problema anterior de memória com muitos caches. Não é apresentada como a configuração mais rápida."
       },
       "zh": {
-        "text": "1 是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全值；并不表示它是最快的设置。"
+        "text": "“较低内存占用”是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全设置；并不表示它是最快的设置。"
       },
       "zh-Hant": {
-        "text": "1 是 27B 在此前多快取記憶體問題之後經實際執行驗證的目前安全值；並不表示它是最快的設定。"
+        "text": "「較低記憶體占用」是 27B 在此前多快取記憶體問題之後經實際執行驗證的目前安全設定；並不表示它是最快的設定。"
       }
     },
     "surfaces": [
@@ -2716,37 +2718,37 @@
   "workspace.description.model-cache-recommendation-4b": {
     "strings": {
       "en": {
-        "text": "Standard is recommended right now. Higher levels are still experimental because the highest setting previously caused a long repetitive response and heavy memory use."
+        "text": "More conversation ready is now recommended for 4B follow-ups. Lived testing showed much less repeated processing and a much faster next response, while Lower memory use remains available. Most conversation ready is still experimental because it previously caused a long repetitive response and heavy memory use."
       },
       "ar": {
-        "text": "يُنصح حاليًا بالإعداد القياسي. لا تزال المستويات الأعلى تجريبية لأن أعلى إعداد تسبب سابقًا في استجابة تكرارية طويلة واستخدام مرتفع للذاكرة."
+        "text": "يوصى الآن بـ «إبقاء المزيد من المحادثة جاهزًا» للردود اللاحقة على 4B. أظهر الاختبار الفعلي انخفاضًا كبيرًا في المعالجة المتكررة وبدءًا أسرع بكثير للرد التالي، مع بقاء خيار «استخدام أقل للذاكرة» متاحًا. لا يزال «إبقاء أكبر قدر من المحادثة جاهزًا» تجريبيًا لأنه تسبب سابقًا في استجابة طويلة متكررة واستخدام مرتفع للذاكرة."
       },
       "de": {
-        "text": "Standard wird derzeit empfohlen. Höhere Stufen bleiben experimentell, weil die höchste Einstellung zuvor zu einer langen Wiederholungsschleife und hoher Speichernutzung führte."
+        "text": "Für Folgeantworten mit 4B wird jetzt „Mehr Unterhaltung bereithalten“ empfohlen. Im Praxistest gab es deutlich weniger wiederholte Verarbeitung und die nächste Antwort startete viel schneller; „Weniger Speicher nutzen“ bleibt weiterhin verfügbar. „Möglichst viel Unterhaltung bereithalten“ bleibt experimentell, weil es zuvor zu einer langen repetitiven Antwort und hoher Speichernutzung führte."
       },
       "es": {
-        "text": "Se recomienda Estándar por ahora. Los niveles superiores siguen siendo experimentales porque la configuración más alta produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
+        "text": "Ahora se recomienda «Mantener más conversación lista» para las respuestas siguientes con 4B. En pruebas reales redujo mucho el procesamiento repetido y la siguiente respuesta comenzó mucho más rápido, mientras que «Menor uso de memoria» sigue disponible. «Mantener la mayor parte de la conversación lista» continúa siendo experimental porque antes produjo una respuesta larga y repetitiva y un uso elevado de memoria."
       },
       "fr": {
-        "text": "Standard est recommandé pour le moment. Les niveaux supérieurs restent expérimentaux, car le réglage le plus élevé a précédemment provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
+        "text": "« Garder plus de conversation prête » est désormais recommandé pour les réponses suivantes avec 4B. Lors des tests réels, cela a nettement réduit le traitement répété et accéléré fortement le démarrage de la réponse suivante, tandis que « Moins de mémoire » reste disponible. « Garder le plus de conversation prête » reste expérimental, car il a auparavant provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
       },
       "hi": {
-        "text": "अभी Standard की सलाह दी जाती है। ऊँचे स्तर अभी भी प्रयोगात्मक हैं क्योंकि सबसे ऊँची सेटिंग ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
+        "text": "4B के अगले जवाबों के लिए अब “ज़्यादा बातचीत तैयार रखें” की सलाह दी जाती है। वास्तविक परीक्षण में इससे दोहराई जाने वाली प्रोसेसिंग बहुत कम हुई और अगला जवाब काफी जल्दी शुरू हुआ, जबकि “कम मेमोरी उपयोग” का विकल्प उपलब्ध रहता है। “सबसे ज़्यादा बातचीत तैयार रखें” अभी भी प्रयोगात्मक है क्योंकि पहले इससे लंबा दोहराव वाला जवाब और अधिक मेमोरी उपयोग हुआ था।"
       },
       "ja": {
-        "text": "現在は Standard を推奨します。高い設定はまだ実験段階です。以前、最大設定で長い反復応答と大きなメモリ使用が発生しました。"
+        "text": "4B のフォローアップでは、現在「会話をより多く準備」を推奨します。実運用テストでは繰り返し処理が大幅に減り、次の応答がかなり速く開始しました。「メモリ使用量を抑える」も引き続き選べます。「会話を最大限準備」は、以前に長い反復応答と大きなメモリ使用が発生したため、引き続き実験的です。"
       },
       "ko": {
-        "text": "현재는 Standard를 권장합니다. 높은 단계는 아직 실험적입니다. 이전에 가장 높은 설정에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
+        "text": "4B 후속 응답에는 이제 '더 많은 대화 준비'를 권장합니다. 실제 테스트에서 반복 처리가 크게 줄고 다음 응답이 훨씬 빨리 시작되었으며, '메모리 사용 줄이기' 옵션도 계속 사용할 수 있습니다. '가장 많은 대화 준비'는 이전에 긴 반복 응답과 높은 메모리 사용이 발생했기 때문에 여전히 실험적입니다."
       },
       "pt": {
-        "text": "Standard é recomendado por enquanto. Os níveis mais altos continuam experimentais porque a configuração máxima anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
+        "text": "Agora, «Manter mais conversa pronta» é recomendado para respostas seguintes com 4B. Nos testes reais, isso reduziu bastante o processamento repetido e fez a próxima resposta começar muito mais rápido, enquanto «Menor uso de memória» continua disponível. «Manter o máximo de conversa pronta» continua experimental porque anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
       },
       "zh": {
-        "text": "目前建议使用 Standard。更高档位仍属实验性，因为最高设置此前曾导致长时间重复回复和较高的内存占用。"
+        "text": "现在建议 4B 的后续回复使用“让更多对话保持就绪”。实际测试表明，它显著减少了重复处理，并让下一次回复快得多地开始；“较低内存占用”仍然可选。“让最多对话保持就绪”仍属实验性，因为它此前曾导致长时间重复回复和较高的内存占用。"
       },
       "zh-Hant": {
-        "text": "目前建議使用 Standard。更高檔位仍屬實驗性，因為最高設定此前曾導致長時間重複回覆和較高的記憶體佔用。"
+        "text": "現在建議 4B 的後續回覆使用「讓更多對話保持就緒」。實際測試表明，它大幅減少了重複處理，並讓下一次回覆快得多地開始；「較低記憶體占用」仍然可選。「讓最多對話保持就緒」仍屬實驗性，因為它此前曾導致長時間重複回覆和較高的記憶體占用。"
       }
     },
     "surfaces": [
@@ -2756,37 +2758,37 @@
   "workspace.description.model-cache-recommendation-untuned": {
     "strings": {
       "en": {
-        "text": "1 keeps the current safety floor for this model until a model-specific cache recommendation is lived-tested."
+        "text": "Lower memory use remains the safety setting for this model until a model-specific follow-up/memory recommendation is lived-tested."
       },
       "ar": {
-        "text": "تحافظ القيمة 1 على حد الأمان الحالي لهذا النموذج إلى أن يتم اختبار توصية تخزين مؤقت خاصة به عمليًا."
+        "text": "يبقى استخدام ذاكرة أقل هو إعداد الأمان لهذا النموذج إلى أن يتم اختبار توصية خاصة بهذا النموذج لسرعة الردود اللاحقة واستخدام الذاكرة عمليًا."
       },
       "de": {
-        "text": "1 behält für dieses Modell den aktuellen Sicherheitswert bei, bis eine modellspezifische Cache-Empfehlung im Betrieb getestet wurde."
+        "text": "Weniger Speicher zu nutzen bleibt die Sicherheitseinstellung für dieses Modell, bis eine modellspezifische Empfehlung für Folgeantworten und Speicher im Betrieb getestet wurde."
       },
       "es": {
-        "text": "1 mantiene el límite de seguridad actual de este modelo hasta que se pruebe en uso real una recomendación de caché específica para él."
+        "text": "Menor uso de memoria sigue siendo la configuración de seguridad de este modelo hasta que se pruebe en uso real una recomendación específica para este modelo sobre respuestas siguientes y memoria."
       },
       "fr": {
-        "text": "1 conserve la limite de sécurité actuelle pour ce modèle jusqu’à ce qu’une recommandation de cache propre à ce modèle soit validée en usage réel."
+        "text": "L’utilisation de moins de mémoire reste le réglage de sécurité pour ce modèle jusqu’à ce qu’une recommandation propre à ce modèle sur les réponses suivantes et la mémoire soit validée en usage réel."
       },
       "hi": {
-        "text": "1 इस मॉडल के लिए वर्तमान सुरक्षा सीमा बनाए रखता है, जब तक मॉडल-विशिष्ट कैश अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
+        "text": "कम मेमोरी उपयोग इस मॉडल के लिए सुरक्षित सेटिंग बनी रहती है, जब तक इस मॉडल के लिए अगले जवाबों और मेमोरी की खास अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
       },
       "ja": {
-        "text": "このモデル固有のキャッシュ推奨値が実運用で確認されるまでは、1 を現在の安全値として維持します。"
+        "text": "このモデル固有のフォローアップ性能とメモリに関する推奨値が実運用で確認されるまでは、「メモリ使用量を抑える」が安全設定として維持されます。"
       },
       "ko": {
-        "text": "이 모델에 맞는 캐시 권장값이 실제 사용으로 검증될 때까지 1을 현재 안전값으로 유지합니다."
+        "text": "이 모델에 맞는 후속 응답/메모리 권장값이 실제 사용으로 검증될 때까지 '메모리 사용 줄이기'가 안전 설정으로 유지됩니다."
       },
       "pt": {
-        "text": "1 mantém o limite de segurança atual deste modelo até que uma recomendação específica de cache seja testada em uso real."
+        "text": "Menor uso de memória continua sendo a configuração de segurança deste modelo até que uma recomendação específica do modelo para respostas seguintes e memória seja testada em uso real."
       },
       "zh": {
-        "text": "在获得该模型专属缓存建议的实际运行验证之前，1 将继续作为当前安全值。"
+        "text": "在获得该模型专属的后续回复/内存建议并通过实际运行验证之前，“较低内存占用”将继续作为该模型的安全设置。"
       },
       "zh-Hant": {
-        "text": "在獲得該模型專屬快取建議的實際執行驗證之前，1 將繼續作為目前安全值。"
+        "text": "在獲得該模型專屬的後續回覆／記憶體建議並通過實際執行驗證之前，「較低記憶體占用」將繼續作為該模型的安全設定。"
       }
     },
     "surfaces": [
@@ -3120,37 +3122,37 @@
   "workspace.label.model-cache-level-1": {
     "strings": {
       "en": {
-        "text": "Standard"
+        "text": "Lower memory use"
       },
       "ar": {
-        "text": "قياسي"
+        "text": "استخدام أقل للذاكرة"
       },
       "de": {
-        "text": "Standard"
+        "text": "Weniger Speicher nutzen"
       },
       "es": {
-        "text": "Estándar"
+        "text": "Menor uso de memoria"
       },
       "fr": {
-        "text": "Standard"
+        "text": "Moins de mémoire"
       },
       "hi": {
-        "text": "Standard"
+        "text": "कम मेमोरी उपयोग"
       },
       "ja": {
-        "text": "Standard"
+        "text": "メモリ使用量を抑える"
       },
       "ko": {
-        "text": "Standard"
+        "text": "메모리 사용 줄이기"
       },
       "pt": {
-        "text": "Standard"
+        "text": "Menor uso de memória"
       },
       "zh": {
-        "text": "Standard"
+        "text": "较低内存占用"
       },
       "zh-Hant": {
-        "text": "Standard"
+        "text": "較低記憶體占用"
       }
     },
     "surfaces": [
@@ -3160,37 +3162,37 @@
   "workspace.label.model-cache-level-2": {
     "strings": {
       "en": {
-        "text": "More recent conversation ready"
+        "text": "More conversation ready"
       },
       "ar": {
-        "text": "إبقاء المزيد من المحادثة الأخيرة جاهزًا"
+        "text": "إبقاء المزيد من المحادثة جاهزًا"
       },
       "de": {
-        "text": "Mehr der letzten Unterhaltung bereithalten"
+        "text": "Mehr Unterhaltung bereithalten"
       },
       "es": {
-        "text": "Mantener lista más conversación reciente"
+        "text": "Mantener más conversación lista"
       },
       "fr": {
-        "text": "Garder davantage de conversation récente prête"
+        "text": "Garder plus de conversation prête"
       },
       "hi": {
-        "text": "हाल की बातचीत का अधिक हिस्सा तैयार रखें"
+        "text": "ज़्यादा बातचीत तैयार रखें"
       },
       "ja": {
-        "text": "最近の会話をより多く準備"
+        "text": "会話をより多く準備"
       },
       "ko": {
-        "text": "최근 대화를 더 많이 준비"
+        "text": "더 많은 대화 준비"
       },
       "pt": {
-        "text": "Manter mais da conversa recente pronta"
+        "text": "Manter mais conversa pronta"
       },
       "zh": {
-        "text": "让更多最近对话保持就绪"
+        "text": "让更多对话保持就绪"
       },
       "zh-Hant": {
-        "text": "讓更多最近對話保持就緒"
+        "text": "讓更多對話保持就緒"
       }
     },
     "surfaces": [
@@ -3200,37 +3202,37 @@
   "workspace.label.model-cache-level-3": {
     "strings": {
       "en": {
-        "text": "Most recent conversation ready"
+        "text": "Most conversation ready"
       },
       "ar": {
-        "text": "إبقاء أكبر قدر من المحادثة الأخيرة جاهزًا"
+        "text": "إبقاء أكبر قدر من المحادثة جاهزًا"
       },
       "de": {
-        "text": "Möglichst viel der letzten Unterhaltung bereithalten"
+        "text": "Möglichst viel Unterhaltung bereithalten"
       },
       "es": {
-        "text": "Mantener lista la mayor parte de la conversación reciente"
+        "text": "Mantener la mayor parte de la conversación lista"
       },
       "fr": {
-        "text": "Garder le plus de conversation récente prête"
+        "text": "Garder le plus de conversation prête"
       },
       "hi": {
-        "text": "हाल की बातचीत का सबसे अधिक हिस्सा तैयार रखें"
+        "text": "सबसे ज़्यादा बातचीत तैयार रखें"
       },
       "ja": {
-        "text": "最近の会話を最大限準備"
+        "text": "会話を最大限準備"
       },
       "ko": {
-        "text": "최근 대화를 가장 많이 준비"
+        "text": "가장 많은 대화 준비"
       },
       "pt": {
-        "text": "Manter o máximo da conversa recente pronta"
+        "text": "Manter o máximo de conversa pronta"
       },
       "zh": {
-        "text": "让最多的最近对话保持就绪"
+        "text": "让最多对话保持就绪"
       },
       "zh-Hant": {
-        "text": "讓最多的最近對話保持就緒"
+        "text": "讓最多對話保持就緒"
       }
     },
     "surfaces": [
@@ -6005,6 +6007,252 @@
     ],
     "dataKey": "conversation-turn:state:ACTIVE"
   },
+  "workspace.heading.first-local-start": {
+    "strings": {
+      "en": {
+        "text": "Starting Vex locally"
+      },
+      "ja": {
+        "text": "Vex をローカルで起動しています"
+      },
+      "zh": {
+        "text": "正在本地启动 Vex"
+      },
+      "zh-Hant": {
+        "text": "正在本機啟動 Vex"
+      },
+      "ko": {
+        "text": "Vex를 로컬에서 시작하는 중"
+      },
+      "fr": {
+        "text": "Démarrage local de Vex"
+      },
+      "de": {
+        "text": "Vex wird lokal gestartet"
+      },
+      "es": {
+        "text": "Iniciando Vex localmente"
+      },
+      "pt": {
+        "text": "Iniciando o Vex localmente"
+      },
+      "ar": {
+        "text": "جارٍ تشغيل Vex محليًا"
+      },
+      "hi": {
+        "text": "Vex को स्थानीय रूप से शुरू किया जा रहा है"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
+  "workspace.description.first-local-start-ready-to-send": {
+    "strings": {
+      "en": {
+        "text": "You can send now. The first local reply may take a little longer. This startup step doesn’t happen on every message."
+      },
+      "ja": {
+        "text": "今すぐ送信できます。最初のローカル返信には少し時間がかかることがあります。この起動手順はメッセージごとには繰り返されません。"
+      },
+      "zh": {
+        "text": "你现在就可以发送。第一条本地回复可能会多花一点时间。这个启动步骤不会在每条消息上重复。"
+      },
+      "zh-Hant": {
+        "text": "你現在就可以傳送。第一則本機回覆可能會多花一點時間。這個啟動步驟不會在每則訊息上重複。"
+      },
+      "ko": {
+        "text": "지금 보내도 됩니다. 첫 로컬 답변은 조금 더 오래 걸릴 수 있습니다. 이 시작 단계는 메시지마다 반복되지 않습니다."
+      },
+      "fr": {
+        "text": "Vous pouvez envoyer maintenant. La première réponse locale peut prendre un peu plus de temps. Cette étape de démarrage ne se répète pas à chaque message."
+      },
+      "de": {
+        "text": "Du kannst jetzt senden. Die erste lokale Antwort kann etwas länger dauern. Dieser Startschritt wiederholt sich nicht bei jeder Nachricht."
+      },
+      "es": {
+        "text": "Puedes enviar ahora. La primera respuesta local puede tardar un poco más. Este paso de inicio no se repite con cada mensaje."
+      },
+      "pt": {
+        "text": "Você já pode enviar. A primeira resposta local pode demorar um pouco mais. Esta etapa de inicialização não se repete a cada mensagem."
+      },
+      "ar": {
+        "text": "يمكنك الإرسال الآن. قد يستغرق الرد المحلي الأول وقتًا أطول قليلًا. لا تتكرر خطوة التشغيل هذه مع كل رسالة."
+      },
+      "hi": {
+        "text": "आप अभी भेज सकते हैं। पहला स्थानीय जवाब थोड़ा अधिक समय ले सकता है। यह स्टार्टअप चरण हर संदेश पर दोहराया नहीं जाता।"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
+  "workspace.description.first-local-start-sent": {
+    "strings": {
+      "en": {
+        "text": "Your message is in. Vex is finishing local startup before answering. This startup step doesn’t happen on every message."
+      },
+      "ja": {
+        "text": "メッセージは届いています。Vex は返信する前にローカル起動を完了しています。この起動手順はメッセージごとには繰り返されません。"
+      },
+      "zh": {
+        "text": "你的消息已经送达。Vex 正在完成本地启动，然后就会回复。这个启动步骤不会在每条消息上重复。"
+      },
+      "zh-Hant": {
+        "text": "你的訊息已經送達。Vex 正在完成本機啟動，然後就會回覆。這個啟動步驟不會在每則訊息上重複。"
+      },
+      "ko": {
+        "text": "메시지가 전달되었습니다. Vex가 답변하기 전에 로컬 시작을 마무리하고 있습니다. 이 시작 단계는 메시지마다 반복되지 않습니다."
+      },
+      "fr": {
+        "text": "Votre message est bien parti. Vex termine son démarrage local avant de répondre. Cette étape de démarrage ne se répète pas à chaque message."
+      },
+      "de": {
+        "text": "Deine Nachricht ist angekommen. Vex schließt den lokalen Start ab, bevor es antwortet. Dieser Startschritt wiederholt sich nicht bei jeder Nachricht."
+      },
+      "es": {
+        "text": "Tu mensaje ya está enviado. Vex está terminando el inicio local antes de responder. Este paso de inicio no se repite con cada mensaje."
+      },
+      "pt": {
+        "text": "Sua mensagem foi enviada. O Vex está concluindo a inicialização local antes de responder. Esta etapa de inicialização não se repete a cada mensagem."
+      },
+      "ar": {
+        "text": "تم إرسال رسالتك. يُكمل Vex التشغيل المحلي قبل الرد. لا تتكرر خطوة التشغيل هذه مع كل رسالة."
+      },
+      "hi": {
+        "text": "आपका संदेश पहुँच गया है। जवाब देने से पहले Vex स्थानीय स्टार्टअप पूरा कर रहा है। यह स्टार्टअप चरण हर संदेश पर दोहराया नहीं जाता।"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
+  "workspace.description.follow-up-readiness-will-prepare": {
+    "strings": {
+      "en": {
+        "text": "Vex will prepare the current conversation for faster follow-ups as you continue."
+      },
+      "ar": {
+        "text": "سيُحضّر Vex المحادثة الحالية لتسريع الردود اللاحقة مع استمرارك."
+      },
+      "de": {
+        "text": "Vex bereitet die aktuelle Unterhaltung für schnellere Folgeantworten vor, während du weitermachst."
+      },
+      "es": {
+        "text": "Vex preparará la conversación actual para que las respuestas siguientes comiencen más rápido a medida que continúes."
+      },
+      "fr": {
+        "text": "Vex préparera la conversation actuelle pour accélérer le démarrage des réponses suivantes à mesure que vous continuez."
+      },
+      "hi": {
+        "text": "आपके आगे बढ़ने पर Vex मौजूदा बातचीत को अगले जवाब जल्दी शुरू करने के लिए तैयार करेगा।"
+      },
+      "ja": {
+        "text": "このまま続けると、Vex は現在の会話を準備し、フォローアップをより速く開始できるようにします。"
+      },
+      "ko": {
+        "text": "계속 대화하면 Vex가 현재 대화를 준비해 후속 응답을 더 빨리 시작할 수 있게 합니다."
+      },
+      "pt": {
+        "text": "À medida que você continuar, o Vex preparará a conversa atual para que as próximas respostas comecem mais rápido."
+      },
+      "zh": {
+        "text": "随着你继续对话，Vex 会准备当前对话，让后续回复更快开始。"
+      },
+      "zh-Hant": {
+        "text": "隨著你繼續對話，Vex 會準備目前對話，讓後續回覆更快開始。"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
+  "workspace.description.follow-up-readiness-preparing": {
+    "strings": {
+      "en": {
+        "text": "Vex is preparing the current conversation for faster follow-ups."
+      },
+      "ar": {
+        "text": "يُحضّر Vex المحادثة الحالية الآن لتسريع الردود اللاحقة."
+      },
+      "de": {
+        "text": "Vex bereitet die aktuelle Unterhaltung für schnellere Folgeantworten vor."
+      },
+      "es": {
+        "text": "Vex está preparando la conversación actual para que las respuestas siguientes comiencen más rápido."
+      },
+      "fr": {
+        "text": "Vex prépare la conversation actuelle pour accélérer le démarrage des réponses suivantes."
+      },
+      "hi": {
+        "text": "Vex मौजूदा बातचीत को अगले जवाब जल्दी शुरू करने के लिए तैयार कर रहा है।"
+      },
+      "ja": {
+        "text": "Vex は現在の会話を準備し、フォローアップをより速く開始できるようにしています。"
+      },
+      "ko": {
+        "text": "Vex가 현재 대화를 준비해 후속 응답을 더 빨리 시작할 수 있게 하고 있습니다."
+      },
+      "pt": {
+        "text": "O Vex está preparando a conversa atual para que as próximas respostas comecem mais rápido."
+      },
+      "zh": {
+        "text": "Vex 正在准备当前对话，让后续回复更快开始。"
+      },
+      "zh-Hant": {
+        "text": "Vex 正在準備目前對話，讓後續回覆更快開始。"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
+  "workspace.description.follow-up-readiness-successor-reset": {
+    "strings": {
+      "en": {
+        "text": "Vex is starting fresh follow-up preparation from the current conversation."
+      },
+      "ar": {
+        "text": "يبدأ Vex إعدادًا جديدًا للردود اللاحقة انطلاقًا من المحادثة الحالية."
+      },
+      "de": {
+        "text": "Vex beginnt die Vorbereitung für Folgeantworten neu aus der aktuellen Unterhaltung."
+      },
+      "es": {
+        "text": "Vex está iniciando de nuevo la preparación de respuestas siguientes a partir de la conversación actual."
+      },
+      "fr": {
+        "text": "Vex recommence la préparation des réponses suivantes à partir de la conversation actuelle."
+      },
+      "hi": {
+        "text": "Vex मौजूदा बातचीत से अगले जवाबों की तैयारी नए सिरे से शुरू कर रहा है।"
+      },
+      "ja": {
+        "text": "Vex は現在の会話からフォローアップの準備を新しく始めています。"
+      },
+      "ko": {
+        "text": "Vex가 현재 대화를 기준으로 후속 응답 준비를 새로 시작하고 있습니다."
+      },
+      "pt": {
+        "text": "O Vex está reiniciando a preparação das próximas respostas a partir da conversa atual."
+      },
+      "zh": {
+        "text": "Vex 正在从当前对话重新开始后续回复的准备。"
+      },
+      "zh-Hant": {
+        "text": "Vex 正在從目前對話重新開始後續回覆的準備。"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
+  },
   "workspace.button.attach": {
     "strings": {
       "en": {
@@ -6935,6 +7183,410 @@
       },
       "hi": {
         "text": "वह फ़ोल्डर पहले ही हटाया जा चुका है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-read-only": {
+    "strings": {
+      "en": {
+        "text": "Read only"
+      },
+      "ja": {
+        "text": "読み取りのみ"
+      },
+      "zh": {
+        "text": "只读"
+      },
+      "zh-Hant": {
+        "text": "唯讀"
+      },
+      "ko": {
+        "text": "읽기 전용"
+      },
+      "fr": {
+        "text": "Lecture seule"
+      },
+      "de": {
+        "text": "Nur lesen"
+      },
+      "es": {
+        "text": "Solo lectura"
+      },
+      "pt": {
+        "text": "Somente leitura"
+      },
+      "ar": {
+        "text": "قراءة فقط"
+      },
+      "hi": {
+        "text": "केवल पढ़ने योग्य"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-writable": {
+    "strings": {
+      "en": {
+        "text": "Changes allowed"
+      },
+      "ja": {
+        "text": "変更を許可"
+      },
+      "zh": {
+        "text": "允许更改"
+      },
+      "zh-Hant": {
+        "text": "允許變更"
+      },
+      "ko": {
+        "text": "변경 허용"
+      },
+      "fr": {
+        "text": "Modifications autorisées"
+      },
+      "de": {
+        "text": "Änderungen erlaubt"
+      },
+      "es": {
+        "text": "Cambios permitidos"
+      },
+      "pt": {
+        "text": "Alterações permitidas"
+      },
+      "ar": {
+        "text": "التغييرات مسموحة"
+      },
+      "hi": {
+        "text": "बदलाव की अनुमति"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-effects-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow changes"
+      },
+      "ja": {
+        "text": "変更を許可"
+      },
+      "zh": {
+        "text": "允许更改"
+      },
+      "zh-Hant": {
+        "text": "允許變更"
+      },
+      "ko": {
+        "text": "변경 허용"
+      },
+      "fr": {
+        "text": "Autoriser les modifications"
+      },
+      "de": {
+        "text": "Änderungen erlauben"
+      },
+      "es": {
+        "text": "Permitir cambios"
+      },
+      "pt": {
+        "text": "Permitir alterações"
+      },
+      "ar": {
+        "text": "السماح بالتغييرات"
+      },
+      "hi": {
+        "text": "बदलाव की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-effects:control:ALLOW_WORKSPACE_EFFECTS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-changes"
+  },
+  "workspace.button.workspace-effects-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop changes"
+      },
+      "ja": {
+        "text": "変更を停止"
+      },
+      "zh": {
+        "text": "停止更改"
+      },
+      "zh-Hant": {
+        "text": "停止變更"
+      },
+      "ko": {
+        "text": "변경 중지"
+      },
+      "fr": {
+        "text": "Arrêter les modifications"
+      },
+      "de": {
+        "text": "Änderungen stoppen"
+      },
+      "es": {
+        "text": "Detener cambios"
+      },
+      "pt": {
+        "text": "Parar alterações"
+      },
+      "ar": {
+        "text": "إيقاف التغييرات"
+      },
+      "hi": {
+        "text": "बदलाव रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-effects:control:REVOKE_WORKSPACE_EFFECTS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-changes"
+  },
+  "workspace.status.workspace-effects-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更を許可しました。"
+      },
+      "zh": {
+        "text": "已允许更改此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許變更此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경이 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten cambios en esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالتغييرات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-revoked": {
+    "strings": {
+      "en": {
+        "text": "Changes stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "変更を停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止更改。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止變更。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "변경이 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Modifications arrêtées. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Änderungen gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Cambios detenidos. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Alterações interrompidas. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف التغييرات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "बदलाव रोक दिए गए हैं। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更はすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许更改此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許變更此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경은 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont déjà autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Los cambios ya están permitidos para esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações já estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "التغييرات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव पहले से अनुमत हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Changes are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダへの変更はすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的更改已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的變更已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 변경은 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les modifications sont déjà arrêtées pour ce dossier."
+      },
+      "de": {
+        "text": "Änderungen für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Los cambios ya están detenidos para esta carpeta."
+      },
+      "pt": {
+        "text": "As alterações já estão interrompidas para esta pasta."
+      },
+      "ar": {
+        "text": "التغييرات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर में बदलाव पहले से रोके गए हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-effects-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Change access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、変更アクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予更改权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予變更權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 변경 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux modifications n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Änderungszugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de cambio porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de alteração porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية التغيير لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "बदलाव की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
       }
     },
     "surfaces": [
@@ -33875,5 +34527,1653 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.private-mode"
+  },
+  "workspace.status.sent-resource-local-copy-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Local copy unavailable"
+      },
+      "ja": {
+        "text": "ローカルコピーを利用できません"
+      },
+      "zh": {
+        "text": "本地副本不可用"
+      },
+      "zh-Hant": {
+        "text": "本機副本無法使用"
+      },
+      "ko": {
+        "text": "로컬 사본을 사용할 수 없습니다"
+      },
+      "fr": {
+        "text": "Copie locale indisponible"
+      },
+      "de": {
+        "text": "Lokale Kopie nicht verfügbar"
+      },
+      "es": {
+        "text": "Copia local no disponible"
+      },
+      "pt": {
+        "text": "Cópia local indisponível"
+      },
+      "ar": {
+        "text": "النسخة المحلية غير متاحة"
+      },
+      "hi": {
+        "text": "स्थानीय कॉपी उपलब्ध नहीं है"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.sent-resource-local-copy-invalid": {
+    "strings": {
+      "en": {
+        "text": "Local copy can't be verified"
+      },
+      "ja": {
+        "text": "ローカルコピーを確認できません"
+      },
+      "zh": {
+        "text": "无法验证本地副本"
+      },
+      "zh-Hant": {
+        "text": "無法驗證本機副本"
+      },
+      "ko": {
+        "text": "로컬 사본을 확인할 수 없습니다"
+      },
+      "fr": {
+        "text": "Impossible de vérifier la copie locale"
+      },
+      "de": {
+        "text": "Lokale Kopie kann nicht überprüft werden"
+      },
+      "es": {
+        "text": "No se puede verificar la copia local"
+      },
+      "pt": {
+        "text": "Não foi possível verificar a cópia local"
+      },
+      "ar": {
+        "text": "تعذّر التحقق من النسخة المحلية"
+      },
+      "hi": {
+        "text": "स्थानीय कॉपी सत्यापित नहीं की जा सकी"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.sent-resource-review-failed": {
+    "strings": {
+      "en": {
+        "text": "This file couldn't be reviewed right now."
+      },
+      "ja": {
+        "text": "現在、このファイルを確認できませんでした。"
+      },
+      "zh": {
+        "text": "目前无法查看此文件。"
+      },
+      "zh-Hant": {
+        "text": "目前無法檢視此檔案。"
+      },
+      "ko": {
+        "text": "지금은 이 파일을 검토할 수 없습니다."
+      },
+      "fr": {
+        "text": "Impossible de consulter ce fichier pour le moment."
+      },
+      "de": {
+        "text": "Diese Datei konnte gerade nicht überprüft werden."
+      },
+      "es": {
+        "text": "No se pudo revisar este archivo en este momento."
+      },
+      "pt": {
+        "text": "Não foi possível revisar este arquivo agora."
+      },
+      "ar": {
+        "text": "تعذّرت مراجعة هذا الملف الآن."
+      },
+      "hi": {
+        "text": "इस फ़ाइल की अभी समीक्षा नहीं की जा सकी।"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.heading.partner-api": {
+    "strings": {
+      "en": {
+        "text": "Partner APIs"
+      },
+      "ja": {
+        "text": "Partner API"
+      },
+      "zh": {
+        "text": "合作方 API"
+      },
+      "zh-Hant": {
+        "text": "合作方 API"
+      },
+      "ko": {
+        "text": "파트너 API"
+      },
+      "fr": {
+        "text": "API partenaires"
+      },
+      "de": {
+        "text": "Partner-APIs"
+      },
+      "es": {
+        "text": "API de socios"
+      },
+      "pt": {
+        "text": "APIs de parceiros"
+      },
+      "ar": {
+        "text": "واجهات API للشركاء"
+      },
+      "hi": {
+        "text": "पार्टनर API"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.partner-api": {
+    "strings": {
+      "en": {
+        "text": "Connect VexLife to a supported external model provider while Vex keeps owning your Conversation, Memory, and model choice."
+      },
+      "ja": {
+        "text": "Vex が会話、メモリ、モデル選択の所有者であり続けたまま、VexLife を対応する外部モデルプロバイダーに接続します。"
+      },
+      "zh": {
+        "text": "将 VexLife 连接到受支持的外部模型提供商，同时仍由 Vex 掌管你的对话、记忆和模型选择。"
+      },
+      "zh-Hant": {
+        "text": "將 VexLife 連接到支援的外部模型提供商，同時仍由 Vex 掌管你的對話、記憶和模型選擇。"
+      },
+      "ko": {
+        "text": "Vex가 대화, 메모리, 모델 선택의 소유권을 유지한 채 VexLife를 지원되는 외부 모델 제공자에 연결합니다."
+      },
+      "fr": {
+        "text": "Connectez VexLife à un fournisseur de modèle externe pris en charge tout en laissant Vex propriétaire de votre Conversation, de votre Mémoire et du choix du modèle."
+      },
+      "de": {
+        "text": "Verbinde VexLife mit einem unterstützten externen Modellanbieter, während Vex weiterhin deine Conversation, Memory und Modellauswahl besitzt."
+      },
+      "es": {
+        "text": "Conecta VexLife a un proveedor de modelos externo compatible mientras Vex sigue siendo el dueño de tu Conversation, Memory y elección de modelo."
+      },
+      "pt": {
+        "text": "Conecte o VexLife a um provedor de modelo externo compatível enquanto o Vex continua sendo o responsável pela sua Conversation, Memory e escolha de modelo."
+      },
+      "ar": {
+        "text": "اربط VexLife بموفّر نموذج خارجي مدعوم مع بقاء Vex مالكًا للمحادثة والذاكرة واختيار النموذج."
+      },
+      "hi": {
+        "text": "VexLife को किसी समर्थित बाहरी मॉडल प्रदाता से जोड़ें, जबकि Conversation, Memory और मॉडल चयन का स्वामित्व Vex के पास ही रहता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-provider": {
+    "strings": {
+      "en": {
+        "text": "Provider"
+      },
+      "ja": {
+        "text": "プロバイダー"
+      },
+      "zh": {
+        "text": "提供商"
+      },
+      "zh-Hant": {
+        "text": "提供商"
+      },
+      "ko": {
+        "text": "제공자"
+      },
+      "fr": {
+        "text": "Fournisseur"
+      },
+      "de": {
+        "text": "Anbieter"
+      },
+      "es": {
+        "text": "Proveedor"
+      },
+      "pt": {
+        "text": "Provedor"
+      },
+      "ar": {
+        "text": "الموفّر"
+      },
+      "hi": {
+        "text": "प्रदाता"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-key": {
+    "strings": {
+      "en": {
+        "text": "API key"
+      },
+      "ja": {
+        "text": "API キー"
+      },
+      "zh": {
+        "text": "API 密钥"
+      },
+      "zh-Hant": {
+        "text": "API 金鑰"
+      },
+      "ko": {
+        "text": "API 키"
+      },
+      "fr": {
+        "text": "Clé API"
+      },
+      "de": {
+        "text": "API-Schlüssel"
+      },
+      "es": {
+        "text": "Clave de API"
+      },
+      "pt": {
+        "text": "Chave de API"
+      },
+      "ar": {
+        "text": "مفتاح API"
+      },
+      "hi": {
+        "text": "API कुंजी"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.partner-api-workspace": {
+    "strings": {
+      "en": {
+        "text": "Anthropic workspace ID (optional)"
+      },
+      "ja": {
+        "text": "Anthropic ワークスペース ID（任意）"
+      },
+      "zh": {
+        "text": "Anthropic 工作区 ID（可选）"
+      },
+      "zh-Hant": {
+        "text": "Anthropic 工作區 ID（選填）"
+      },
+      "ko": {
+        "text": "Anthropic 워크스페이스 ID(선택)"
+      },
+      "fr": {
+        "text": "ID d’espace de travail Anthropic (facultatif)"
+      },
+      "de": {
+        "text": "Anthropic-Workspace-ID (optional)"
+      },
+      "es": {
+        "text": "ID de espacio de trabajo de Anthropic (opcional)"
+      },
+      "pt": {
+        "text": "ID do workspace da Anthropic (opcional)"
+      },
+      "ar": {
+        "text": "معرّف مساحة عمل Anthropic (اختياري)"
+      },
+      "hi": {
+        "text": "Anthropic workspace ID (वैकल्पिक)"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.partner-api-connect": {
+    "strings": {
+      "en": {
+        "text": "Connect to API"
+      },
+      "ja": {
+        "text": "API に接続"
+      },
+      "zh": {
+        "text": "连接 API"
+      },
+      "zh-Hant": {
+        "text": "連接 API"
+      },
+      "ko": {
+        "text": "API에 연결"
+      },
+      "fr": {
+        "text": "Se connecter à l’API"
+      },
+      "de": {
+        "text": "Mit API verbinden"
+      },
+      "es": {
+        "text": "Conectar a la API"
+      },
+      "pt": {
+        "text": "Conectar à API"
+      },
+      "ar": {
+        "text": "الاتصال بواجهة API"
+      },
+      "hi": {
+        "text": "API से कनेक्ट करें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-held-funding": {
+    "strings": {
+      "en": {
+        "text": "Live API testing is paused for this phase."
+      },
+      "ja": {
+        "text": "このフェーズではライブ API テストを一時停止しています。"
+      },
+      "zh": {
+        "text": "此阶段的实时 API 测试已暂停。"
+      },
+      "zh-Hant": {
+        "text": "此階段的即時 API 測試已暫停。"
+      },
+      "ko": {
+        "text": "이 단계에서는 실시간 API 테스트가 일시 중지되었습니다."
+      },
+      "fr": {
+        "text": "Les tests API en direct sont en pause pour cette phase."
+      },
+      "de": {
+        "text": "Live-API-Tests sind für diese Phase pausiert."
+      },
+      "es": {
+        "text": "Las pruebas de API en vivo están pausadas en esta fase."
+      },
+      "pt": {
+        "text": "Os testes de API ao vivo estão pausados nesta fase."
+      },
+      "ar": {
+        "text": "اختبار API المباشر متوقف مؤقتًا في هذه المرحلة."
+      },
+      "hi": {
+        "text": "इस चरण के लिए लाइव API परीक्षण रोक दिया गया है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.partner-api-held-funding": {
+    "strings": {
+      "en": {
+        "text": "The connection path is built. We’re holding live provider testing because this phase isn’t funded for paid API testing yet. Connect will unlock after that testing is funded and passes."
+      },
+      "ja": {
+        "text": "接続経路は構築済みです。このフェーズでは有料 API のライブテスト予算がまだないため、プロバイダーのライブテストを保留しています。テストの資金が確保され、合格した後に接続を有効にします。"
+      },
+      "zh": {
+        "text": "连接路径已经构建完成。由于本阶段尚无付费 API 测试资金，我们暂缓实时提供商测试。等测试获得资金并通过后，“连接”将会开放。"
+      },
+      "zh-Hant": {
+        "text": "連接路徑已經建置完成。由於本階段尚無付費 API 測試資金，我們暫緩即時提供商測試。等測試獲得資金並通過後，「連接」將會開放。"
+      },
+      "ko": {
+        "text": "연결 경로는 이미 구축되어 있습니다. 이 단계에는 유료 API 테스트 예산이 아직 없어 실시간 제공자 테스트를 보류합니다. 테스트 자금이 확보되고 통과하면 연결 기능이 열립니다."
+      },
+      "fr": {
+        "text": "Le chemin de connexion est construit. Nous suspendons les tests fournisseur en direct car cette phase n’est pas encore financée pour les tests d’API payants. La connexion sera activée une fois ces tests financés et réussis."
+      },
+      "de": {
+        "text": "Der Verbindungspfad ist gebaut. Live-Anbietertests bleiben zurückgestellt, weil diese Phase noch nicht für kostenpflichtige API-Tests finanziert ist. Connect wird freigeschaltet, sobald diese Tests finanziert und bestanden sind."
+      },
+      "es": {
+        "text": "La ruta de conexión ya está construida. Mantenemos en pausa las pruebas en vivo con proveedores porque esta fase aún no tiene financiación para pruebas de API de pago. Conectar se habilitará cuando esas pruebas estén financiadas y aprobadas."
+      },
+      "pt": {
+        "text": "O caminho de conexão já está construído. Os testes ao vivo com provedores estão em espera porque esta fase ainda não tem financiamento para testes de API pagos. A conexão será liberada quando esses testes forem financiados e aprovados."
+      },
+      "ar": {
+        "text": "مسار الاتصال مبني بالفعل. نوقف اختبار الموفّر المباشر لأن هذه المرحلة لم تُموَّل بعد لاختبارات API المدفوعة. سيُفتح الاتصال بعد تمويل تلك الاختبارات واجتيازها."
+      },
+      "hi": {
+        "text": "कनेक्शन पथ बन चुका है। इस चरण में सशुल्क API परीक्षण के लिए अभी फंडिंग नहीं है, इसलिए लाइव प्रदाता परीक्षण रोका गया है। परीक्षण के लिए फंडिंग मिलने और उसके पास होने के बाद कनेक्ट अनलॉक होगा।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-ready": {
+    "strings": {
+      "en": {
+        "text": "Live API testing is available."
+      },
+      "ja": {
+        "text": "ライブ API テストを利用できます。"
+      },
+      "zh": {
+        "text": "实时 API 测试可用。"
+      },
+      "zh-Hant": {
+        "text": "即時 API 測試可用。"
+      },
+      "ko": {
+        "text": "실시간 API 테스트를 사용할 수 있습니다."
+      },
+      "fr": {
+        "text": "Les tests API en direct sont disponibles."
+      },
+      "de": {
+        "text": "Live-API-Tests sind verfügbar."
+      },
+      "es": {
+        "text": "Las pruebas de API en vivo están disponibles."
+      },
+      "pt": {
+        "text": "Os testes de API ao vivo estão disponíveis."
+      },
+      "ar": {
+        "text": "اختبار API المباشر متاح."
+      },
+      "hi": {
+        "text": "लाइव API परीक्षण उपलब्ध है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-connected": {
+    "strings": {
+      "en": {
+        "text": "Connection stored. Choose the Partner model and press Start to qualify it before use."
+      },
+      "ja": {
+        "text": "接続を保存しました。Partner モデルを選び、使用前に Start を押して認定してください。"
+      },
+      "zh": {
+        "text": "连接已保存。请选择 Partner 模型并按“启动”，在使用前完成资格验证。"
+      },
+      "zh-Hant": {
+        "text": "連接已儲存。請選擇 Partner 模型並按「啟動」，在使用前完成資格驗證。"
+      },
+      "ko": {
+        "text": "연결이 저장되었습니다. Partner 모델을 선택하고 사용 전에 Start를 눌러 검증하세요."
+      },
+      "fr": {
+        "text": "Connexion enregistrée. Choisissez le modèle Partner et appuyez sur Démarrer pour le qualifier avant utilisation."
+      },
+      "de": {
+        "text": "Verbindung gespeichert. Wähle das Partner-Modell und drücke Start, um es vor der Nutzung zu qualifizieren."
+      },
+      "es": {
+        "text": "Conexión guardada. Elige el modelo Partner y pulsa Iniciar para cualificarlo antes de usarlo."
+      },
+      "pt": {
+        "text": "Conexão salva. Escolha o modelo Partner e pressione Iniciar para qualificá-lo antes do uso."
+      },
+      "ar": {
+        "text": "تم حفظ الاتصال. اختر نموذج Partner واضغط «بدء» لتأهيله قبل الاستخدام."
+      },
+      "hi": {
+        "text": "कनेक्शन सेव हो गया। Partner मॉडल चुनें और उपयोग से पहले उसे क्वालिफ़ाई करने के लिए Start दबाएँ।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.partner-api-unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't update this API connection."
+      },
+      "ja": {
+        "text": "VexLife はこの API 接続を更新できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法更新此 API 连接。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 無法更新此 API 連接。"
+      },
+      "ko": {
+        "text": "VexLife가 이 API 연결을 업데이트하지 못했습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu mettre à jour cette connexion API."
+      },
+      "de": {
+        "text": "VexLife konnte diese API-Verbindung nicht aktualisieren."
+      },
+      "es": {
+        "text": "VexLife no pudo actualizar esta conexión de API."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu atualizar esta conexão de API."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife تحديث اتصال API هذا."
+      },
+      "hi": {
+        "text": "VexLife इस API कनेक्शन को अपडेट नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-vex-reach": {
+    "strings": {
+      "en": {
+        "text": "Vex reach"
+      },
+      "ja": {
+        "text": "Vex のリーチ"
+      },
+      "zh": {
+        "text": "Vex 访问能力"
+      },
+      "zh-Hant": {
+        "text": "Vex 存取能力"
+      },
+      "ko": {
+        "text": "Vex 접근"
+      },
+      "fr": {
+        "text": "Accès de Vex"
+      },
+      "de": {
+        "text": "Vex-Zugriff"
+      },
+      "es": {
+        "text": "Alcance de Vex"
+      },
+      "pt": {
+        "text": "Alcance do Vex"
+      },
+      "ar": {
+        "text": "وصول Vex"
+      },
+      "hi": {
+        "text": "Vex पहुँच"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-provider-native-tools": {
+    "strings": {
+      "en": {
+        "text": "Provider-native tools"
+      },
+      "ja": {
+        "text": "プロバイダーのネイティブツール"
+      },
+      "zh": {
+        "text": "提供商原生工具"
+      },
+      "zh-Hant": {
+        "text": "提供商原生工具"
+      },
+      "ko": {
+        "text": "제공자 네이티브 도구"
+      },
+      "fr": {
+        "text": "Outils natifs du fournisseur"
+      },
+      "de": {
+        "text": "Anbieter-native Tools"
+      },
+      "es": {
+        "text": "Herramientas nativas del proveedor"
+      },
+      "pt": {
+        "text": "Ferramentas nativas do provedor"
+      },
+      "ar": {
+        "text": "أدوات الموفّر الأصلية"
+      },
+      "hi": {
+        "text": "प्रदाता-नेटिव टूल"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-reasoning-effort": {
+    "strings": {
+      "en": {
+        "text": "Reasoning effort"
+      },
+      "ja": {
+        "text": "推論の強度"
+      },
+      "zh": {
+        "text": "推理强度"
+      },
+      "zh-Hant": {
+        "text": "推理強度"
+      },
+      "ko": {
+        "text": "추론 강도"
+      },
+      "fr": {
+        "text": "Effort de raisonnement"
+      },
+      "de": {
+        "text": "Denkaufwand"
+      },
+      "es": {
+        "text": "Esfuerzo de razonamiento"
+      },
+      "pt": {
+        "text": "Esforço de raciocínio"
+      },
+      "ar": {
+        "text": "مستوى جهد الاستدلال"
+      },
+      "hi": {
+        "text": "रीज़निंग प्रयास"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-capability-visual-input": {
+    "strings": {
+      "en": {
+        "text": "Visual input"
+      },
+      "ja": {
+        "text": "画像入力"
+      },
+      "zh": {
+        "text": "视觉输入"
+      },
+      "zh-Hant": {
+        "text": "視覺輸入"
+      },
+      "ko": {
+        "text": "시각 입력"
+      },
+      "fr": {
+        "text": "Entrée visuelle"
+      },
+      "de": {
+        "text": "Visuelle Eingabe"
+      },
+      "es": {
+        "text": "Entrada visual"
+      },
+      "pt": {
+        "text": "Entrada visual"
+      },
+      "ar": {
+        "text": "إدخال مرئي"
+      },
+      "hi": {
+        "text": "विज़ुअल इनपुट"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-available": {
+    "strings": {
+      "en": {
+        "text": "Available now"
+      },
+      "ja": {
+        "text": "今利用できます"
+      },
+      "zh": {
+        "text": "当前可用"
+      },
+      "zh-Hant": {
+        "text": "目前可用"
+      },
+      "ko": {
+        "text": "지금 사용 가능"
+      },
+      "fr": {
+        "text": "Disponible maintenant"
+      },
+      "de": {
+        "text": "Jetzt verfügbar"
+      },
+      "es": {
+        "text": "Disponible ahora"
+      },
+      "pt": {
+        "text": "Disponível agora"
+      },
+      "ar": {
+        "text": "متاح الآن"
+      },
+      "hi": {
+        "text": "अभी उपलब्ध"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-held": {
+    "strings": {
+      "en": {
+        "text": "Not active now"
+      },
+      "ja": {
+        "text": "現在は有効ではありません"
+      },
+      "zh": {
+        "text": "当前未启用"
+      },
+      "zh-Hant": {
+        "text": "目前未啟用"
+      },
+      "ko": {
+        "text": "현재 활성화되지 않음"
+      },
+      "fr": {
+        "text": "Non actif actuellement"
+      },
+      "de": {
+        "text": "Derzeit nicht aktiv"
+      },
+      "es": {
+        "text": "No está activo ahora"
+      },
+      "pt": {
+        "text": "Não está ativo agora"
+      },
+      "ar": {
+        "text": "غير نشط الآن"
+      },
+      "hi": {
+        "text": "अभी सक्रिय नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-capability-not-applicable": {
+    "strings": {
+      "en": {
+        "text": "Not used by this model"
+      },
+      "ja": {
+        "text": "このモデルでは使用しません"
+      },
+      "zh": {
+        "text": "此模型不使用"
+      },
+      "zh-Hant": {
+        "text": "此模型不使用"
+      },
+      "ko": {
+        "text": "이 모델에서는 사용하지 않음"
+      },
+      "fr": {
+        "text": "Non utilisé par ce modèle"
+      },
+      "de": {
+        "text": "Von diesem Modell nicht verwendet"
+      },
+      "es": {
+        "text": "Este modelo no lo usa"
+      },
+      "pt": {
+        "text": "Este modelo não usa"
+      },
+      "ar": {
+        "text": "لا يستخدمه هذا النموذج"
+      },
+      "hi": {
+        "text": "यह मॉडल इसका उपयोग नहीं करता"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-not-allowed": {
+    "strings": {
+      "en": {
+        "text": "Checks not allowed"
+      },
+      "ja": {
+        "text": "チェックは許可されていません"
+      },
+      "zh": {
+        "text": "未允许检查"
+      },
+      "zh-Hant": {
+        "text": "未允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용 안 됨"
+      },
+      "fr": {
+        "text": "Vérifications non autorisées"
+      },
+      "de": {
+        "text": "Prüfungen nicht erlaubt"
+      },
+      "es": {
+        "text": "Comprobaciones no permitidas"
+      },
+      "pt": {
+        "text": "Verificações não permitidas"
+      },
+      "ar": {
+        "text": "الفحوصات غير مسموحة"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-allowed": {
+    "strings": {
+      "en": {
+        "text": "Checks allowed"
+      },
+      "ja": {
+        "text": "チェックを許可"
+      },
+      "zh": {
+        "text": "已允许检查"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용"
+      },
+      "fr": {
+        "text": "Vérifications autorisées"
+      },
+      "de": {
+        "text": "Prüfungen erlaubt"
+      },
+      "es": {
+        "text": "Comprobaciones permitidas"
+      },
+      "pt": {
+        "text": "Verificações permitidas"
+      },
+      "ar": {
+        "text": "الفحوصات مسموحة"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-checks-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow checks"
+      },
+      "ja": {
+        "text": "チェックを許可"
+      },
+      "zh": {
+        "text": "允许检查"
+      },
+      "zh-Hant": {
+        "text": "允許檢查"
+      },
+      "ko": {
+        "text": "검사 허용"
+      },
+      "fr": {
+        "text": "Autoriser les vérifications"
+      },
+      "de": {
+        "text": "Prüfungen erlauben"
+      },
+      "es": {
+        "text": "Permitir comprobaciones"
+      },
+      "pt": {
+        "text": "Permitir verificações"
+      },
+      "ar": {
+        "text": "السماح بالفحوصات"
+      },
+      "hi": {
+        "text": "जाँच की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-checks:control:ALLOW_WORKSPACE_CHECKS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-checks"
+  },
+  "workspace.button.workspace-checks-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop checks"
+      },
+      "ja": {
+        "text": "チェックを停止"
+      },
+      "zh": {
+        "text": "停止检查"
+      },
+      "zh-Hant": {
+        "text": "停止檢查"
+      },
+      "ko": {
+        "text": "검사 중지"
+      },
+      "fr": {
+        "text": "Arrêter les vérifications"
+      },
+      "de": {
+        "text": "Prüfungen stoppen"
+      },
+      "es": {
+        "text": "Detener comprobaciones"
+      },
+      "pt": {
+        "text": "Parar verificações"
+      },
+      "ar": {
+        "text": "إيقاف الفحوصات"
+      },
+      "hi": {
+        "text": "जाँच रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-checks:control:REVOKE_WORKSPACE_CHECKS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-checks"
+  },
+  "workspace.status.workspace-checks-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックを許可しました。"
+      },
+      "zh": {
+        "text": "已允许检查此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사가 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten comprobaciones en esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالفحوصات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-revoked": {
+    "strings": {
+      "en": {
+        "text": "Checks stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "チェックを停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止检查。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止檢查。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "검사가 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Vérifications arrêtées. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Comprobaciones detenidas. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Verificações interrompidas. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف الفحوصات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "जाँच रोक दी गई है। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックはすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许检查此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許檢查此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사는 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont déjà autorisées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Las comprobaciones ya están permitidas para esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações já estão permitidas para esta pasta."
+      },
+      "ar": {
+        "text": "الفحوصات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच पहले से अनुमत है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Checks are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのチェックはすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的检查已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的檢查已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 검사는 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les vérifications sont déjà arrêtées pour ce dossier."
+      },
+      "de": {
+        "text": "Prüfungen für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Las comprobaciones ya están detenidas para esta carpeta."
+      },
+      "pt": {
+        "text": "As verificações já estão interrompidas para esta pasta."
+      },
+      "ar": {
+        "text": "الفحوصات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर की जाँच पहले से रुकी हुई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-checks-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Check access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、チェックアクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予检查权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予檢查權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 검사 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux vérifications n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Prüfzugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de comprobación porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de verificação porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية الفحص لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "जाँच की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-not-allowed": {
+    "strings": {
+      "en": {
+        "text": "Tests not allowed"
+      },
+      "ja": {
+        "text": "テストは許可されていません"
+      },
+      "zh": {
+        "text": "未允许测试"
+      },
+      "zh-Hant": {
+        "text": "未允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용 안 됨"
+      },
+      "fr": {
+        "text": "Tests non autorisés"
+      },
+      "de": {
+        "text": "Tests nicht erlaubt"
+      },
+      "es": {
+        "text": "Pruebas no permitidas"
+      },
+      "pt": {
+        "text": "Testes não permitidos"
+      },
+      "ar": {
+        "text": "الاختبارات غير مسموحة"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति नहीं"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-allowed": {
+    "strings": {
+      "en": {
+        "text": "Tests allowed"
+      },
+      "ja": {
+        "text": "テストを許可"
+      },
+      "zh": {
+        "text": "已允许测试"
+      },
+      "zh-Hant": {
+        "text": "已允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용"
+      },
+      "fr": {
+        "text": "Tests autorisés"
+      },
+      "de": {
+        "text": "Tests erlaubt"
+      },
+      "es": {
+        "text": "Pruebas permitidas"
+      },
+      "pt": {
+        "text": "Testes permitidos"
+      },
+      "ar": {
+        "text": "الاختبارات مسموحة"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.workspace-runs-allow": {
+    "strings": {
+      "en": {
+        "text": "Allow tests"
+      },
+      "ja": {
+        "text": "テストを許可"
+      },
+      "zh": {
+        "text": "允许测试"
+      },
+      "zh-Hant": {
+        "text": "允許測試"
+      },
+      "ko": {
+        "text": "테스트 허용"
+      },
+      "fr": {
+        "text": "Autoriser les tests"
+      },
+      "de": {
+        "text": "Tests erlauben"
+      },
+      "es": {
+        "text": "Permitir pruebas"
+      },
+      "pt": {
+        "text": "Permitir testes"
+      },
+      "ar": {
+        "text": "السماح بالاختبارات"
+      },
+      "hi": {
+        "text": "परीक्षण की अनुमति दें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-runs:control:ALLOW_WORKSPACE_RUNS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.allow-tests"
+  },
+  "workspace.button.workspace-runs-revoke": {
+    "strings": {
+      "en": {
+        "text": "Stop tests"
+      },
+      "ja": {
+        "text": "テストを停止"
+      },
+      "zh": {
+        "text": "停止测试"
+      },
+      "zh-Hant": {
+        "text": "停止測試"
+      },
+      "ko": {
+        "text": "테스트 중지"
+      },
+      "fr": {
+        "text": "Arrêter les tests"
+      },
+      "de": {
+        "text": "Tests stoppen"
+      },
+      "es": {
+        "text": "Detener pruebas"
+      },
+      "pt": {
+        "text": "Parar testes"
+      },
+      "ar": {
+        "text": "إيقاف الاختبارات"
+      },
+      "hi": {
+        "text": "परीक्षण रोकें"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "workspace-runs:control:REVOKE_WORKSPACE_RUNS",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.stop-tests"
+  },
+  "workspace.status.workspace-runs-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストを許可しました。"
+      },
+      "zh": {
+        "text": "已允许测试此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許測試此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트가 허용되었습니다."
+      },
+      "fr": {
+        "text": "Les tests sont autorisés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind erlaubt."
+      },
+      "es": {
+        "text": "Se permiten pruebas en esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes estão permitidos para esta pasta."
+      },
+      "ar": {
+        "text": "تم السماح بالاختبارات لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण की अनुमति है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-revoked": {
+    "strings": {
+      "en": {
+        "text": "Tests stopped. Vex can still read this folder."
+      },
+      "ja": {
+        "text": "テストを停止しました。Vex はこのフォルダを引き続き読み取れます。"
+      },
+      "zh": {
+        "text": "已停止测试。Vex 仍可读取此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已停止測試。Vex 仍可讀取此資料夾。"
+      },
+      "ko": {
+        "text": "테스트가 중지되었습니다. Vex는 이 폴더를 계속 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Tests arrêtés. Vex peut toujours lire ce dossier."
+      },
+      "de": {
+        "text": "Tests gestoppt. Vex kann diesen Ordner weiterhin lesen."
+      },
+      "es": {
+        "text": "Pruebas detenidas. Vex todavía puede leer esta carpeta."
+      },
+      "pt": {
+        "text": "Testes interrompidos. O Vex ainda pode ler esta pasta."
+      },
+      "ar": {
+        "text": "تم إيقاف الاختبارات. لا يزال بإمكان Vex قراءة هذا المجلد."
+      },
+      "hi": {
+        "text": "परीक्षण रोक दिए गए हैं। Vex अभी भी इस फ़ोल्डर को पढ़ सकता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-source-not-current": {
+    "strings": {
+      "en": {
+        "text": "That folder is no longer a current Local Source."
+      },
+      "ja": {
+        "text": "そのフォルダは現在のローカルソースではありません。"
+      },
+      "zh": {
+        "text": "该文件夹已不再是当前本地来源。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已不再是目前的本機來源。"
+      },
+      "ko": {
+        "text": "해당 폴더는 더 이상 현재 로컬 소스가 아닙니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’est plus une source locale actuelle."
+      },
+      "de": {
+        "text": "Dieser Ordner ist keine aktuelle lokale Quelle mehr."
+      },
+      "es": {
+        "text": "Esa carpeta ya no es una fuente local actual."
+      },
+      "pt": {
+        "text": "Essa pasta não é mais uma Fonte Local atual."
+      },
+      "ar": {
+        "text": "لم يعد هذا المجلد مصدرًا محليًا حاليًا."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर अब वर्तमान Local Source नहीं है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-already-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are already allowed for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストはすでに許可されています。"
+      },
+      "zh": {
+        "text": "已允许测试此文件夹。"
+      },
+      "zh-Hant": {
+        "text": "已允許測試此資料夾。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트는 이미 허용되어 있습니다."
+      },
+      "fr": {
+        "text": "Les tests sont déjà autorisés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind bereits erlaubt."
+      },
+      "es": {
+        "text": "Las pruebas ya están permitidas para esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes já estão permitidos para esta pasta."
+      },
+      "ar": {
+        "text": "الاختبارات مسموحة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण पहले से अनुमत हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-not-granted": {
+    "strings": {
+      "en": {
+        "text": "Tests are already stopped for this folder."
+      },
+      "ja": {
+        "text": "このフォルダのテストはすでに停止されています。"
+      },
+      "zh": {
+        "text": "此文件夹的测试已停止。"
+      },
+      "zh-Hant": {
+        "text": "此資料夾的測試已停止。"
+      },
+      "ko": {
+        "text": "이 폴더의 테스트는 이미 중지되어 있습니다."
+      },
+      "fr": {
+        "text": "Les tests sont déjà arrêtés pour ce dossier."
+      },
+      "de": {
+        "text": "Tests für diesen Ordner sind bereits gestoppt."
+      },
+      "es": {
+        "text": "Las pruebas ya están detenidas para esta carpeta."
+      },
+      "pt": {
+        "text": "Os testes já estão interrompidos para esta pasta."
+      },
+      "ar": {
+        "text": "الاختبارات متوقفة بالفعل لهذا المجلد."
+      },
+      "hi": {
+        "text": "इस फ़ोल्डर के परीक्षण पहले से रुके हुए हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.workspace-runs-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Test access could not be granted because the Local Source limit is reached."
+      },
+      "ja": {
+        "text": "ローカルソースの上限に達しているため、テストアクセスを許可できませんでした。"
+      },
+      "zh": {
+        "text": "已达到本地来源上限，无法授予测试权限。"
+      },
+      "zh-Hant": {
+        "text": "已達本機來源上限，無法授予測試權限。"
+      },
+      "ko": {
+        "text": "로컬 소스 한도에 도달하여 테스트 권한을 부여할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès aux tests n’a pas pu être accordé car la limite de sources locales est atteinte."
+      },
+      "de": {
+        "text": "Testzugriff konnte nicht gewährt werden, da das Limit für lokale Quellen erreicht ist."
+      },
+      "es": {
+        "text": "No se pudo conceder acceso de prueba porque se alcanzó el límite de fuentes locales."
+      },
+      "pt": {
+        "text": "Não foi possível conceder acesso de teste porque o limite de Fontes Locais foi atingido."
+      },
+      "ar": {
+        "text": "تعذر منح صلاحية الاختبار لأن حد المصادر المحلية قد تم بلوغه."
+      },
+      "hi": {
+        "text": "परीक्षण की पहुँच नहीं दी जा सकी क्योंकि Local Source सीमा पूरी हो गई है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }

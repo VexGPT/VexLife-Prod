@@ -8,8 +8,12 @@ import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
+import vexlife.partner.VexLifePartnerProviderCatalog
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -93,6 +97,48 @@ object VexLifeWebP1RuntimeArtifacts {
             )
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
+        val partnerProviders =
+            VexLifePartnerProviderCatalog
+                .definitions()
+                .joinToString(
+                    separator = ",",
+                    prefix = "[",
+                    postfix = "]",
+                ) {
+                    provider ->
+                    val label =
+                        when (
+                            provider.providerRef
+                        ) {
+                            VexLifePartnerProviderCatalog.OpenAiRef ->
+                                "OpenAI"
+
+                            VexLifePartnerProviderCatalog.AnthropicRef ->
+                                "Anthropic"
+
+                            VexLifePartnerProviderCatalog.KimiInternationalRef ->
+                                "Kimi Open Platform"
+
+                            else ->
+                                error(
+                                    "Partner provider display label is not source-owned",
+                                )
+                        }
+                    "Object.freeze({providerRef:" +
+                        jsString(
+                            provider.providerRef,
+                        ) +
+                        ",label:" +
+                        jsString(
+                            label,
+                        ) +
+                        ",workspaceOptional:" +
+                        (
+                            provider.accountScopeSelection ==
+                                VexLifePartnerProviderCatalog.AccountScopeSelection.WORKSPACE_ID_IF_CREDENTIAL_NOT_SCOPED
+                        ) +
+                        "})"
+                }
 
         fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
 
@@ -286,12 +332,24 @@ object VexLifeWebP1RuntimeArtifacts {
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationResourceMetadataPath: ${jsString(VexLifeProdServiceContract.ConversationResourceMetadataPath)},
+                conversationResourceContentPath: ${jsString(VexLifeProdServiceContract.ConversationResourceContentPath)},
+                conversationResourceEventRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventRefHeader)},
+                conversationResourceEventHashHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventHashHeader)},
+                conversationResourceSequenceHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceSequenceHeader)},
+                conversationResourceRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceRefHeader)},
                 conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
                 attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
                 attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
                 attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
                 localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
                 localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
+                workspaceEffectsPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsPath)},
+                workspaceEffectsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlPath)},
+                workspaceChecksPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksPath)},
+                workspaceChecksControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlPath)},
+                workspaceRunsPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsPath)},
+                workspaceRunsControlPath: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlPath)},
                 attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
                 attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
@@ -326,6 +384,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsSourcesPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesPath)},
+                modelsSourcesControlPath: ${jsString(VexLifeProdServiceContract.ModelsSourcesControlPath)},
+                partnerConnectionsPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsPath)},
+                partnerConnectionsControlPath: ${jsString(VexLifeProdServiceContract.PartnerConnectionsControlPath)},
+                partnerConnectionControlHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionControlHeader)},
+                partnerConnectionProviderRefHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionProviderRefHeader)},
+                partnerConnectionWorkspaceIdHeader: ${jsString(VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader)},
+                partnerConnectionControlConnect: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Connect.wire)},
+                partnerConnectionControlReplace: ${jsString(VexLifeProdServiceContract.PartnerConnectionControl.Replace.wire)},
+                partnerConnectionHeldFunding: ${jsString(VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
@@ -334,6 +402,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
                 cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
+              const partnerProviders = Object.freeze($partnerProviders);
               const apps = Object.freeze({
                 keys: $workspaceApps,
                 sourceTemplate: ${jsString(VexLifeWorkspaceApp.SourceTemplate.key)},
@@ -409,6 +478,46 @@ object VexLifeWebP1RuntimeArtifacts {
                   refused: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED.name)},
                   notLawfulNow: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW.name)}
                 })
+              });
+              // Stronger human authority remains separate from the Local Source read grant.
+              const workspaceEffects = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceEffectsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceEffectsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChanges.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChanges.identity.ref)}
+              });
+              const workspaceChecks = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceChecksFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceChecksFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceChecksControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowChecks.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopChecks.identity.ref)}
+              });
+              const workspaceRuns = Object.freeze({
+                control: Object.freeze({
+                  allow: ${jsString(VexLifeWorkspaceRunsFamily.ControlAllow)},
+                  revoke: ${jsString(VexLifeWorkspaceRunsFamily.ControlRevoke)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.WorkspaceRunsControlOutcome.NOT_LAWFUL_NOW.name)}
+                }),
+                allowRef: ${jsString(VexLifeWebP1.LocalSourceAllowTests.identity.ref)},
+                revokeRef: ${jsString(VexLifeWebP1.LocalSourceStopTests.identity.ref)}
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
@@ -558,6 +667,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
                 jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
                 responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                responseProgressTitle: byId('response-progress-title'),
+                responseProgressDetail: byId('response-progress-detail'),
                 contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
                 ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
@@ -601,6 +712,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelImportAdd: byId('model-import-add'),
                 modelImportResult: byId('model-import-result'),
                 modelImportFacts: byId('model-import-facts'),
+                partnerApiCard: byId('partner-api-card'),
+                partnerApiState: byId('partner-api-state'),
+                partnerApiProvider: byId('partner-api-provider'),
+                partnerApiCredential: byId('partner-api-credential'),
+                partnerApiWorkspaceField: byId('partner-api-workspace-field'),
+                partnerApiWorkspace: byId('partner-api-workspace'),
+                partnerApiConnect: byId('partner-api-connect'),
+                partnerApiStatus: byId('partner-api-status'),
+                partnerApiNote: byId('partner-api-note'),
                 modelConfiguration: byRef(${jsString(VexLifeWebP1.ModelConfiguration.identity.ref)}),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
@@ -691,15 +811,24 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextConversationCollapsedByEventRef: new Map(),
                 diagnostics: null,
                 diagnosticsInFlight: false,
-                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                // Settings → Models keeps Local detail plus one provider-neutral source projection.
                 models: null,
+                modelSources: null,
                 modelsInFlight: false,
                 modelImportInFlight: false,
+                partnerConnectionAvailability: null,
+                partnerConnectionInFlight: false,
                 // Local microphone recognition is independent from the serving reasoning model.
                 localAsr: null,
                 localAsrInFlight: false,
                 localSources: null,
                 localSourcesInFlight: false,
+                workspaceEffects: null,
+                workspaceEffectsInFlight: false,
+                workspaceChecks: null,
+                workspaceChecksInFlight: false,
+                workspaceRuns: null,
+                workspaceRunsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -777,7 +906,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   admission.reason === 'IMMEDIATE_PRIOR_REQUIRED'
                     ? 'workspace.description.vex-labs-admission-immediate-prior'
                     : 'workspace.description.vex-labs-admission-current-state';
-                return t(key)
+                return workspaceText(key)
                   .replace('{requested}', requested)
                   .replace('{minimum}', minimum);
               };
@@ -914,12 +1043,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 const overlay = display.attention === voiceInput.attentionOverlay;
                 ui.voiceInput.setAttribute('aria-expanded', String(overlay));
                 const humanLabel = display.primaryLabelKey
-                  ? t(display.primaryLabelKey)
-                  : t(display.statusKey);
+                  ? workspaceText(display.primaryLabelKey)
+                  : workspaceText(display.statusKey);
                 ui.voiceInput.setAttribute('aria-label', humanLabel);
                 ui.voiceInput.title = humanLabel;
                 if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
-                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = t(display.statusKey);
+                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = workspaceText(display.statusKey);
               };
 
               const stopVoiceCapture = async () => {
@@ -1208,7 +1337,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   result.providerRef !== projection.selectedProviderRef ||
                   result.modelRef !== projection.selectedModelRef
                 ) {
-                  throw new Error(t('workspace.status.local-asr-provider-mismatch'));
+                  throw new Error(workspaceText('workspace.status.local-asr-provider-mismatch'));
                 }
                 return String(result.transcript ?? '').trim();
               };
@@ -1566,7 +1695,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.className = 'quick-action';
                 button.dataset.action = action;
                 button.dataset.bound = 'true';
-                const label = t(labelKey);
+                const label = workspaceText(labelKey);
                 button.setAttribute('aria-label', label);
                 button.title = label;
                 button.innerHTML = quickActionSvg(icon);
@@ -1584,7 +1713,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.className = 'quick-action quick-action-glyph';
                 button.dataset.action = action;
                 button.dataset.bound = 'true';
-                const label = t(labelKey);
+                const label = workspaceText(labelKey);
                 button.setAttribute('aria-label', label);
                 button.title = label;
                 button.textContent = glyph;
@@ -1603,8 +1732,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 link.href = ${jsString(VexLifeWebP1.Refs.SupportHref)};
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
-                link.setAttribute('aria-label', t('workspace.button.quick-support'));
-                link.title = t('workspace.description.quick-support');
+                link.setAttribute('aria-label', workspaceText('workspace.button.quick-support'));
+                link.title = workspaceText('workspace.description.quick-support');
                 link.textContent = '🫴';
                 return { item, link };
               };
@@ -1619,7 +1748,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.type = 'button';
                 button.className = 'quick-action quick-action-trigger quick-action-glyph';
                 button.dataset.bound = 'true';
-                button.setAttribute('aria-label', t('workspace.button.quick-actions-open'));
+                button.setAttribute('aria-label', workspaceText('workspace.button.quick-actions-open'));
                 button.setAttribute('aria-expanded', 'false');
                 button.textContent = '🌀';
                 return { item, button };
@@ -1789,7 +1918,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let value = null;
                   try { value = await response.clone().json(); } catch {}
                   if (value?.code === service.stalePresentationCode) {
-                    notify(String(value?.message ?? t('workspace.status.product-updated')) + ' ' + t('workspace.status.product-reloading'));
+                    notify(String(value?.message ?? workspaceText('workspace.status.product-updated')) + ' ' + workspaceText('workspace.status.product-reloading'));
                     window.setTimeout(() => window.location.reload(), 2500);
                   }
                 }
@@ -1800,7 +1929,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const readEventStream = async (response, onEvent) => {
                 if (!response.ok) return readJson(response);
-                if (!response.body) throw new Error(t('workspace.status.conversation-stream-body-unavailable'));
+                if (!response.body) throw new Error(workspaceText('workspace.status.conversation-stream-body-unavailable'));
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -1814,7 +1943,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!data || data === '[DONE]') return;
                   let event;
                   try { event = JSON.parse(data); }
-                  catch { throw new Error(t('workspace.status.conversation-stream-invalid-json')); }
+                  catch { throw new Error(workspaceText('workspace.status.conversation-stream-invalid-json')); }
                   onEvent(event);
                 };
 
@@ -2206,12 +2335,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     speech.settings.voice = 'system:' + fallback.voiceURI;
                     saveSpeechSettings();
                     renderSpeechVoices();
-                    notify(t('workspace.status.speech-natural-fallback'));
+                    notify(workspaceText('workspace.status.speech-natural-fallback'));
                     pumpSpeech();
                     return;
                   }
                   stopSpeech();
-                  notify(t('workspace.status.speech-stopped-unavailable'));
+                  notify(workspaceText('workspace.status.speech-stopped-unavailable'));
                 });
               };
 
@@ -2294,7 +2423,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const plan = readablePlan();
                 stopSpeech();
                 if (!plan.length) {
-                  notify(t('workspace.status.speech-nothing-to-read'));
+                  notify(workspaceText('workspace.status.speech-nothing-to-read'));
                   return;
                 }
                 let index = eventRef ? plan.findIndex((message) => message.eventRef === eventRef) : -1;
@@ -2327,8 +2456,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.speechVoice) return;
                 const choices = voiceChoices();
                 const groups = [
-                  ['natural', t('workspace.label.speech-natural-voices')],
-                  ['system', t('workspace.label.speech-system-voices')]
+                  ['natural', workspaceText('workspace.label.speech-natural-voices')],
+                  ['system', workspaceText('workspace.label.speech-system-voices')]
                 ].map(([group, label]) => {
                   const members = choices.filter((choice) => choice.group === group);
                   if (!members.length) return null;
@@ -2366,7 +2495,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.speechRate.value = String(speech.settings.rate);
                 ui.speechRateValue.textContent = speech.settings.rate.toFixed(1) + '×';
                 const playPauseLabel =
-                  t(playing ? 'workspace.button.speech-pause' : 'workspace.button.speech-play');
+                  workspaceText(playing ? 'workspace.button.speech-pause' : 'workspace.button.speech-play');
                 ui.speechPlay.setAttribute('aria-label', playPauseLabel);
                 ui.speechPlay.title = playPauseLabel;
                 ui.speechChoose.setAttribute('aria-pressed', String(speech.choosing));
@@ -2380,20 +2509,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 const natural = chosenVoice()?.group === 'natural';
                 const kokoroState = speech.kokoro.state;
                 ui.speechStatus.textContent = !usable
-                  ? t('workspace.status.speech-no-voice')
+                  ? workspaceText('workspace.status.speech-no-voice')
                   : speech.choosing
-                    ? t('workspace.status.speech-choose-start')
+                    ? workspaceText('workspace.status.speech-choose-start')
                     : natural && kokoroState === 'loading'
-                      ? t('workspace.status.speech-natural-loading')
+                      ? workspaceText('workspace.status.speech-natural-loading')
                       : natural && kokoroState === 'failed'
-                        ? t('workspace.status.speech-natural-failed')
+                        ? workspaceText('workspace.status.speech-natural-failed')
                         : busy
-                          ? t(playing ? 'workspace.status.speech-reading' : 'workspace.status.speech-paused')
+                          ? workspaceText(playing ? 'workspace.status.speech-reading' : 'workspace.status.speech-paused')
                           : speech.settings.enabled
-                            ? t(speech.settings.readThoughts
+                            ? workspaceText(speech.settings.readThoughts
                                 ? 'workspace.status.speech-thoughts-and-replies'
                                 : 'workspace.status.speech-replies')
-                            : t('workspace.status.speech-off');
+                            : workspaceText('workspace.status.speech-off');
                 markReading();
               };
 
@@ -2466,8 +2595,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
                   action.title =
-                    t('workspace.label.reply-language') + ' ' + replyName + ' · ' +
-                    t('workspace.label.screen-language') + ' ' + shownName;
+                    workspaceText('workspace.label.reply-language') + ' ' + replyName + ' · ' +
+                    workspaceText('workspace.label.screen-language') + ' ' + shownName;
                   action.setAttribute('aria-label', action.title);
                 }
                 fillChoice(ui.replyLanguage, (settings.languages ?? []).map((language) => [language.code, language.name]), reply);
@@ -2475,7 +2604,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 fillChoice(
                   ui.screenLanguage,
                   [
-                    [follow, t('workspace.label.screen-language-follow').replace('{language}', shownName)],
+                    [follow, workspaceText('workspace.label.screen-language-follow').replace('{language}', shownName)],
                     ...(settings.screenLanguages ?? []).map((language) => [language.code, language.name])
                   ],
                   settings.screenLanguage ?? follow
@@ -2513,13 +2642,13 @@ object VexLifeWebP1RuntimeArtifacts {
                       renderVoiceInput();
                     });
                     renderVexContext();
-                    notify(t('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
+                    notify(workspaceText('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
                   } else {
-                    notify(t('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
+                    notify(workspaceText('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
                   }
                 } catch (error) {
                   renderLanguage();
-                  notify(error instanceof Error ? error.message : t('workspace.status.language-change-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.language-change-failed'));
                 }
               };
 
@@ -2545,7 +2674,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderReleaseAlerts();
                   renderQuickActions();
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('release-alerts.status.action-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('release-alerts.status.action-failed'));
                 }
               };
 
@@ -2555,8 +2684,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.releaseAlertsPanel.hidden = !state.releaseAlertsOpen;
                 ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen);
                 if (!display) {
-                  ui.releaseAlertsTitle.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyHeading)});
-                  ui.releaseAlertsEmpty.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyUnavailable)});
+                  ui.releaseAlertsTitle.textContent = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyHeading)});
+                  ui.releaseAlertsEmpty.textContent = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyUnavailable)});
                   ui.releaseAlertsEmpty.hidden = false;
                   ui.releaseAlertsList.replaceChildren();
                   return;
@@ -2640,7 +2769,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   trigger.setAttribute('aria-expanded', String(state.quickActionsOpen));
                   trigger.setAttribute(
                     'aria-label',
-                    t(state.quickActionsOpen
+                    workspaceText(state.quickActionsOpen
                       ? 'workspace.button.quick-actions-close'
                       : 'workspace.button.quick-actions-open')
                   );
@@ -2652,13 +2781,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const theme = byId('theme-quick-action');
                 if (theme) {
                   theme.textContent = currentTheme() === 'dark' ? '🌙' : '☀️';
-                  theme.title = t('workspace.button.quick-theme-toggle');
-                  theme.setAttribute('aria-label', t('workspace.description.quick-theme-toggle'));
+                  theme.title = workspaceText('workspace.button.quick-theme-toggle');
+                  theme.setAttribute('aria-label', workspaceText('workspace.description.quick-theme-toggle'));
                 }
 
                 const speechButton = byId('speech-source');
                 if (speechButton) {
-                  const label = t('workspace.button.quick-speech');
+                  const label = workspaceText('workspace.button.quick-speech');
                   speechButton.dataset.bound = 'true';
                   speechButton.setAttribute('aria-label', label);
                   speechButton.title = label;
@@ -2669,7 +2798,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const languageButton = byId('language-source');
                 if (languageButton) {
-                  const label = t('workspace.button.quick-language');
+                  const label = workspaceText('workspace.button.quick-language');
                   languageButton.dataset.bound = 'true';
                   languageButton.setAttribute('aria-label', label);
                   languageButton.title = label;
@@ -2681,10 +2810,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   const display = state.vision?.display;
                   const bound = Boolean(display?.primaryControlRef);
                   const label =
-                    display ? resolveText(display.label) : t('workspace.button.vision-quick-access');
+                    display ? resolveText(display.label) : workspaceText('workspace.button.vision-quick-access');
                   const primaryLabel =
                     display?.primaryLabel ? resolveText(display.primaryLabel) : '';
-                  const working = t('workspace.status.vision-working');
+                  const working = workspaceText('workspace.status.vision-working');
                   visionButton.dataset.bound = String(bound);
                   visionButton.dataset.indicator = String(display?.indicatorRef ?? 'None');
                   visionButton.disabled = !bound || state.visionInFlight;
@@ -2696,7 +2825,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const releaseAlertsButton = byId('release-alerts-source');
                 if (releaseAlertsButton) {
-                  const label = t(${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)});
+                  const label = workspaceText(${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)});
                   releaseAlertsButton.dataset.bound = 'true';
                   releaseAlertsButton.dataset.attention =
                     String(unreadReleaseAlerts && state.quickActionsOpen);
@@ -2710,8 +2839,8 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const support = byId('support-quick-action');
                 if (support) {
-                  support.setAttribute('aria-label', t('workspace.button.quick-support'));
-                  support.title = t('workspace.description.quick-support');
+                  support.setAttribute('aria-label', workspaceText('workspace.button.quick-support'));
+                  support.title = workspaceText('workspace.description.quick-support');
                 }
 
                 renderSpeech();
@@ -2723,22 +2852,22 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderMemory = () => {
                 const display = state.memory?.display;
                 ui.vexMemoryLabel.textContent =
-                  display ? resolveText(display.label) : t('workspace.status.memory-checking');
+                  display ? resolveText(display.label) : workspaceText('workspace.status.memory-checking');
                 ui.vexMemoryDetail.textContent =
-                  display ? resolveText(display.detail) : t('workspace.description.memory-checking');
+                  display ? resolveText(display.detail) : workspaceText('workspace.description.memory-checking');
                 root.dataset.vexMemoryState = String(state.memory?.state ?? '');
               };
 
               const renderVision = () => {
                 if (!ui.visionControl) return;
                 const display = state.vision?.display;
-                const checking = t('workspace.status.vision-checking');
-                const working = t('workspace.status.vision-working');
+                const checking = workspaceText('workspace.status.vision-checking');
+                const working = workspaceText('workspace.status.vision-working');
                 const stateLabel = display ? resolveText(display.stateLabel) : checking;
                 const summary = display
                   ? resolveText(display.label)
-                  : t('workspace.status.vision-summary')
-                      .replace('{vision}', t('workspace.label.vision'))
+                  : workspaceText('workspace.status.vision-summary')
+                      .replace('{vision}', workspaceText('workspace.label.vision'))
                       .replace('{state}', checking);
                 const stateNode = ui.visionControl.querySelector('.vision-state');
                 if (stateNode) stateNode.textContent = state.visionInFlight ? working : stateLabel;
@@ -2746,13 +2875,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.visionControl.disabled = !display?.primaryControlRef || state.visionInFlight;
                 ui.visionControl.setAttribute('aria-disabled', String(ui.visionControl.disabled));
                 ui.visionControl.title = state.visionInFlight
-                  ? t('workspace.status.vision-summary')
-                      .replace('{vision}', t('workspace.label.vision'))
+                  ? workspaceText('workspace.status.vision-summary')
+                      .replace('{vision}', workspaceText('workspace.label.vision'))
                       .replace('{state}', working)
                   : summary;
                 if (ui.visionControlStatus) {
                   ui.visionControlStatus.textContent =
-                    display ? resolveText(display.detail) : t('workspace.description.vision-checking');
+                    display ? resolveText(display.detail) : workspaceText('workspace.description.vision-checking');
                 }
                 renderQuickActions();
               };
@@ -2772,21 +2901,21 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const admitPageAddress = (value) => {
                 let text = String(value ?? '').trim();
-                if (!text) throw new Error(t('workspace.status.browser-address-required'));
+                if (!text) throw new Error(workspaceText('workspace.status.browser-address-required'));
                 if (!/^[a-z][a-z0-9+.-]*:/iu.test(text)) text = 'https://' + text;
                 const page = new URL(text);
                 if (!browser.humanPageSchemes.includes(page.protocol)) {
-                  throw new Error(t('workspace.status.browser-scheme-unsupported'));
+                  throw new Error(workspaceText('workspace.status.browser-scheme-unsupported'));
                 }
                 if (page.username || page.password) {
-                  throw new Error(t('workspace.status.browser-embedded-credentials'));
+                  throw new Error(workspaceText('workspace.status.browser-embedded-credentials'));
                 }
                 const host = page.hostname.toLowerCase();
                 if (
                   browser.rejectedHumanPageHosts.includes(host) ||
                   host.endsWith(browser.rejectedHumanPageHostSuffix)
                 ) {
-                  throw new Error(t('workspace.status.browser-local-service-rejected'));
+                  throw new Error(workspaceText('workspace.status.browser-local-service-rejected'));
                 }
                 return page.href;
               };
@@ -2831,7 +2960,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.contextLoading = false;
 
                 ui.query.value = pageUrl;
-                ui.query.placeholder = t('workspace.placeholder.browser-query');
+                ui.query.placeholder = workspaceText('workspace.placeholder.browser-query');
                 ui.pageFrame.src = pageUrl;
                 ui.contextFrame.removeAttribute('src');
                 ui.viewportEmpty.hidden = true;
@@ -2841,8 +2970,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 renderFrameStatus(
                   contextFrameUrl
-                    ? t('workspace.status.browser-opening-context-available')
-                    : t('workspace.status.browser-opening-context-unavailable'),
+                    ? workspaceText('workspace.status.browser-opening-context-available')
+                    : workspaceText('workspace.status.browser-opening-context-unavailable'),
                   'Loading'
                 );
                 renderComposer();
@@ -2946,10 +3075,10 @@ object VexLifeWebP1RuntimeArtifacts {
                           : use?.handle === 'memory'
                             ? 'workspace.status.reach-memory'
                             : 'workspace.status.reach-atlas';
-                const words = t(key).replace('{target}', target);
+                const words = workspaceText(key).replace('{target}', target);
                 if (!use?.state || use.state === 'RETURNED') return words;
                 const settled = String(use.state).toLowerCase().replace(/_/gu, ' ');
-                return words + ' ' + t('workspace.label.reach-state').replace('{state}', settled);
+                return words + ' ' + workspaceText('workspace.label.reach-state').replace('{state}', settled);
               };
 
               const reachList = (uses) => {
@@ -3028,12 +3157,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const failureRouteLabel = (route) =>
                 route === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
-                  ? t('workspace.description.conversation-retry-last-completed')
+                  ? workspaceText('workspace.description.conversation-retry-last-completed')
                   : route === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'
-                    ? t('workspace.description.conversation-retry-new-send')
+                    ? workspaceText('workspace.description.conversation-retry-new-send')
                     : route
-                      ? t('workspace.description.conversation-retry-safe-route')
-                      : t('workspace.description.conversation-failure-stopped');
+                      ? workspaceText('workspace.description.conversation-retry-safe-route')
+                      : workspaceText('workspace.description.conversation-failure-stopped');
 
               const processEntryNode = (entry, viewportKey, live) => {
                 if (entry.kind === 'thought') {
@@ -3173,7 +3302,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggle.hidden = !collapseWithAnswer;
                   toggle.setAttribute('aria-expanded', String(expanded));
                   const label = toggle.querySelector('span');
-                  if (label) label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
+                  if (label) label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 }
 
                 const history = panel.querySelector('.live-process-history');
@@ -3193,7 +3322,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!uses || !uses.length) return null;
                 const line = document.createElement('p');
                 line.className = 'receipt-line reached-line';
-                line.textContent = t('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
+                line.textContent = workspaceText('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
                 return line;
               };
 
@@ -3218,7 +3347,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
+                label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
@@ -3622,6 +3751,145 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                 });
               };
+              const sentResourceHeaders = (message, resource) => {
+                const headers = new Headers();
+                headers.set(service.conversationResourceEventRefHeader, String(message.eventRef ?? ''));
+                headers.set(service.conversationResourceEventHashHeader, String(message.eventSha256 ?? ''));
+                headers.set(service.conversationResourceSequenceHeader, String(Number(message.sequence) || 0));
+                headers.set(service.conversationResourceRefHeader, String(resource.resourceRef ?? ''));
+                return headers;
+              };
+
+              const sentResourceDetail = (metadata) => {
+                if (metadata?.status) return resolveText(metadata.status);
+                if (metadata?.representation === 'STATIC_IMAGE') {
+                  const width = Number(metadata?.widthPixels ?? 0);
+                  const height = Number(metadata?.heightPixels ?? 0);
+                  return width > 0 && height > 0
+                    ? width.toLocaleString(document.documentElement.lang || undefined) +
+                        ' × ' +
+                        height.toLocaleString(document.documentElement.lang || undefined)
+                    : '';
+                }
+                return '';
+              };
+
+              const sentResourceNode = (message, resource) => {
+                const card = document.createElement('div');
+                card.className = 'sent-resource';
+                card.dataset.state = 'bound';
+
+                const summary = document.createElement('button');
+                summary.type = 'button';
+                summary.className = 'sent-resource-summary';
+                summary.title = String(resource.displayName ?? '');
+
+                const name = document.createElement('span');
+                name.className = 'sent-resource-name';
+                name.textContent = String(resource.displayName ?? '');
+
+                const detail = document.createElement('span');
+                detail.className = 'sent-resource-detail';
+                detail.hidden = true;
+
+                summary.append(name, detail);
+
+                const preview = document.createElement('div');
+                preview.className = 'sent-resource-preview';
+                preview.hidden = true;
+
+                let loaded = false;
+                summary.addEventListener('click', async () => {
+                  if (loaded) {
+                    preview.hidden = !preview.hidden;
+                    summary.setAttribute('aria-expanded', String(!preview.hidden));
+                    return;
+                  }
+
+                  card.dataset.state = 'loading';
+                  summary.setAttribute('aria-busy', 'true');
+                  detail.textContent = '';
+                  detail.hidden = true;
+                  summary.disabled = true;
+                  try {
+                    const headers = sentResourceHeaders(message, resource);
+                    const metadataResponse = await productFetch(
+                      service.conversationResourceMetadataPath,
+                      { method: 'GET', headers }
+                    );
+                    const metadata = await readJson(metadataResponse);
+                    detail.textContent = sentResourceDetail(metadata);
+                    detail.hidden = !detail.textContent;
+
+                    if (!metadata?.contentAvailable) {
+                      card.dataset.state =
+                        metadata?.originalCustody === 'INVALID' || metadata?.projectionCustody === 'INVALID'
+                          ? 'invalid'
+                          : 'missing';
+                      return;
+                    }
+
+                    const contentResponse = await productFetch(
+                      service.conversationResourceContentPath,
+                      { method: 'GET', headers }
+                    );
+                    if (!contentResponse.ok) await readJson(contentResponse);
+
+                    if (metadata.representation === 'STATIC_IMAGE') {
+                      const blob = await contentResponse.blob();
+                      const image = document.createElement('img');
+                      image.className = 'sent-resource-thumbnail';
+                      image.loading = 'lazy';
+                      image.alt = String(resource.displayName ?? '');
+                      const url = URL.createObjectURL(blob);
+                      image.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+                      image.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+                      image.src = url;
+                      preview.replaceChildren(image);
+                    } else if (metadata.representation === 'PARSED_TEXT') {
+                      const text = await contentResponse.text();
+                      const pre = document.createElement('pre');
+                      pre.className = 'sent-resource-text-preview';
+                      const maximumPreviewCharacters = 6000;
+                      pre.textContent =
+                        text.length > maximumPreviewCharacters
+                          ? text.slice(0, maximumPreviewCharacters) + '\n…'
+                          : text;
+                      preview.replaceChildren(pre);
+                    }
+
+                    loaded = preview.childNodes.length > 0;
+                    preview.hidden = !loaded;
+                    summary.setAttribute('aria-expanded', String(loaded));
+                    card.dataset.state = loaded ? 'reviewed' : 'bound';
+                  } catch (error) {
+                    card.dataset.state = 'error';
+                    detail.textContent = workspaceText(${jsString(VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey)});
+                    detail.hidden = false;
+                    notify(detail.textContent);
+                  } finally {
+                    summary.removeAttribute('aria-busy');
+                    summary.disabled = false;
+                  }
+                });
+
+                card.append(summary, preview);
+                return card;
+              };
+
+              const sentResourcesNode = (message) => {
+                const resources =
+                  Array.isArray(message?.resources)
+                    ? message.resources.filter((resource) => resource && resource.resourceRef && resource.displayName)
+                    : [];
+                if (!resources.length) return null;
+
+                const tray = document.createElement('div');
+                tray.className = 'sent-resources';
+                tray.append(...resources.map((resource) => sentResourceNode(message, resource)));
+                return tray;
+              };
+
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -3635,17 +3903,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
                 if (human) {
-                  // What the person wrote is shown exactly as written.
+                  // What the person wrote is shown exactly as written. Sent resources are a separate
+                  // projection of the durable RequestBinding and never rewrite this paragraph.
                   const paragraph = document.createElement('p');
                   paragraph.textContent = String(message.content ?? '');
                   bubble.append(paragraph);
+                  const resources = sentResourcesNode(message);
+                  if (resources) bubble.append(resources);
                 } else {
                   bubble.append(textPresentationBody(message.content));
                 }
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = t(
+                speaker.textContent = workspaceText(
                   human ? 'workspace.label.conversation-role-you' : 'workspace.label.conversation-role-vex'
                 );
 
@@ -3670,7 +3941,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 thought.className = 'thought thinking-now';
                 const who = document.createElement('span');
                 who.className = 'speaker-inline';
-                who.textContent = t('workspace.label.conversation-role-vex');
+                who.textContent = workspaceText('workspace.label.conversation-role-vex');
                 const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 mark.setAttribute('class', 'thought-mark');
                 mark.setAttribute('viewBox', '0 0 16 16');
@@ -3678,7 +3949,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
                 label.textContent =
-                  t(
+                  workspaceText(
                     state.streamPhase === 'CheckingRuntime'
                       ? 'workspace.status.conversation-checking-vex'
                       : state.streamPhase === 'Reconnecting'
@@ -3700,7 +3971,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.streamedContent) bubble.append(textPresentationBody(state.streamedContent));
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = t('workspace.label.conversation-role-vex');
+                speaker.textContent = workspaceText('workspace.label.conversation-role-vex');
 
                 item.append(index, thought, bubble, speaker);
                 return item;
@@ -3719,11 +3990,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 thought.className = 'thought';
                 const who = document.createElement('span');
                 who.className = 'speaker-inline';
-                who.textContent = 'Vex';
+                who.textContent = workspaceText('workspace.label.conversation-role-vex');
                 const mark = thoughtMark();
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
-                label.textContent = t('workspace.status.conversation-stopped-before-finishing');
+                label.textContent = workspaceText('workspace.status.conversation-stopped-before-finishing');
                 thought.append(who, mark, label);
 
                 const history =
@@ -3739,8 +4010,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const detail = document.createElement('p');
                 detail.textContent =
                   attempt.cancelledByPerson
-                    ? t('workspace.status.conversation-stopped')
-                    : t('workspace.description.conversation-failure')
+                    ? workspaceText('workspace.status.conversation-stopped')
+                    : workspaceText('workspace.description.conversation-failure')
                         .replace('{code}', String(attempt.failureCode ?? 'TURN_FAILED'))
                         .replace('{route}', failureRouteLabel(attempt.exactNextSafeRoute));
                 bubble.append(detail);
@@ -3749,13 +4020,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 retry.type = 'button';
                 retry.className = 'thought-toggle failed-attempt-retry';
                 retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
-                retry.textContent = t('workspace.button.conversation-retry');
+                retry.textContent = workspaceText('workspace.button.conversation-retry');
                 retry.disabled = state.sendInFlight;
                 bubble.append(retry);
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = 'Vex';
+                speaker.textContent = workspaceText('workspace.label.conversation-role-vex');
 
                 item.append(index, thought, bubble, speaker);
                 return item;
@@ -3807,8 +4078,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     kind: 'vex-labs',
                     exchanges: state.vexLabs?.exchanges ?? [],
                     pending: state.vexLabsPending,
-                    emptyHeading: t('workspace.heading.conversation-empty-labs'),
-                    emptyNote: t('workspace.description.conversation-empty-labs')
+                    emptyHeading: workspaceText('workspace.heading.conversation-empty-labs'),
+                    emptyNote: workspaceText('workspace.description.conversation-empty-labs')
                   });
                 }
                 if (isPrivate()) {
@@ -3816,8 +4087,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     kind: 'private',
                     exchanges: state.privateMode?.exchanges ?? [],
                     pending: state.privatePending,
-                    emptyHeading: t('workspace.heading.conversation-empty-private'),
-                    emptyNote: t('workspace.description.conversation-empty-private')
+                    emptyHeading: workspaceText('workspace.heading.conversation-empty-private'),
+                    emptyNote: workspaceText('workspace.description.conversation-empty-private')
                   });
                 }
                 return {
@@ -3832,8 +4103,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       }
                     : null,
                   failedAttempts: state.failedAttempts,
-                  emptyHeading: t('workspace.heading.conversation-empty'),
-                  emptyNote: t('workspace.description.conversation-empty')
+                  emptyHeading: workspaceText('workspace.heading.conversation-empty'),
+                  emptyNote: workspaceText('workspace.description.conversation-empty')
                 };
               };
 
@@ -3915,7 +4186,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = item.querySelector('.thinking-label');
                 if (label) {
                   label.textContent =
-                    t(
+                    workspaceText(
                       state.streamPhase === 'CheckingRuntime'
                         ? 'workspace.status.conversation-checking-vex'
                         : state.streamPhase === 'Reconnecting'
@@ -3955,8 +4226,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.ticket.hidden = !visible;
                 if (!visible) return;
                 ui.ticket.dataset.state = 'Ready';
-                ui.ticketTitle.textContent = context.title || t('workspace.label.context-receipt-included-page');
-                ui.ticketLine.textContent = t('workspace.description.context-receipt-next-turn');
+                ui.ticketTitle.textContent = context.title || workspaceText('workspace.label.context-receipt-included-page');
+                ui.ticketLine.textContent = workspaceText('workspace.description.context-receipt-next-turn');
                 ui.ticketUrl.textContent = context.pageUrl;
                 ui.ticketHash.textContent = '';
                 ui.ticketView.dataset.contextReady = 'true';
@@ -3973,31 +4244,31 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
                 const privateLabel =
-                  display ? resolveText(display.label) : t('workspace.status.private-kept');
+                  display ? resolveText(display.label) : workspaceText('workspace.status.private-kept');
                 ui.privateModeLabel.textContent = privateLabel;
-                const detail = display ? resolveText(display.detail) : t('workspace.description.private-kept');
-                const primaryLabel = display ? resolveText(display.primaryLabel) : t('workspace.button.private-begin');
+                const detail = display ? resolveText(display.detail) : workspaceText('workspace.description.private-kept');
+                const primaryLabel = display ? resolveText(display.primaryLabel) : workspaceText('workspace.button.private-begin');
                 ui.privateMode.title = detail + ' (' + primaryLabel + ')';
                 ui.privateMode.setAttribute(
                   'aria-label',
-                  t('workspace.label.conversation-persistence') + ': ' + privateLabel + '. ' + primaryLabel + '.'
+                  workspaceText('workspace.label.conversation-persistence') + ': ' + privateLabel + '. ' + primaryLabel + '.'
                 );
                 ui.privateMode.disabled = !display || state.privateInFlight;
                 root.dataset.vexPrivate = String(privateNow);
                 ui.privateBanner.hidden = !privateNow;
                 if (!privateNow) return;
                 ui.privateBannerText.textContent =
-                  display?.banner ? resolveText(display.banner) : t('workspace.description.private-banner');
+                  display?.banner ? resolveText(display.banner) : workspaceText('workspace.description.private-banner');
                 const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
                   const item = document.createElement('li');
-                  item.textContent = t('workspace.label.private-note-kept').replace('{note}', String(note));
+                  item.textContent = workspaceText('workspace.label.private-note-kept').replace('{note}', String(note));
                   return item;
                 });
                 ui.privateNotes.replaceChildren(...notes);
                 const proposal = state.privateMode?.proposedNoteOrNull;
                 ui.privateProposal.hidden = !proposal;
                 ui.privateProposalText.textContent = proposal
-                  ? t('workspace.label.private-note-proposal').replace('{note}', String(proposal))
+                  ? workspaceText('workspace.label.private-note-proposal').replace('{note}', String(proposal))
                   : '';
                 ui.privatePropose.hidden = Boolean(proposal);
                 ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
@@ -4043,11 +4314,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     controlRef,
                     requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
                   });
-                  notify(t(isPrivate()
+                  notify(workspaceText(isPrivate()
                     ? 'workspace.status.private-enabled-notice'
                     : 'workspace.status.private-disabled-notice'));
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.private-change-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-change-failed'));
                   await loadPrivate().catch(() => {});
                 }
               };
@@ -4069,7 +4340,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch (error) {
                   if (!ui.draft.value) ui.draft.value = content;
                   sizeDraft();
-                  notify(error instanceof Error ? error.message : t('workspace.status.private-send-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-send-failed'));
                 } finally {
                   state.privatePending = null;
                   renderTimeline();
@@ -4108,10 +4379,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.archivesTimeline) return;
                 const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
                 if (!messages.length) {
-                  ui.archivesSummary.textContent = t('workspace.description.archives-empty');
+                  ui.archivesSummary.textContent = workspaceText('workspace.description.archives-empty');
                   const empty = document.createElement('li');
                   empty.className = 'archives-empty';
-                  empty.textContent = t('workspace.status.archives-empty');
+                  empty.textContent = workspaceText('workspace.status.archives-empty');
                   ui.archivesTimeline.replaceChildren(empty);
                   return;
                 }
@@ -4130,7 +4401,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
                 const first = new Date(messages[0].formedAt);
                 ui.archivesSummary.textContent =
-                  t('workspace.status.archives-summary')
+                  workspaceText('workspace.status.archives-summary')
                     .replace(
                       '{date}',
                       first.toLocaleDateString(
@@ -4151,7 +4422,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                   const count = document.createElement('span');
                   const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
-                  count.textContent = t('workspace.label.archives-day-count')
+                  count.textContent = workspaceText('workspace.label.archives-day-count')
                     .replace('{count}', String(spoken));
                   heading.append(count);
                   const entries = document.createElement('ol');
@@ -4171,7 +4442,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       );
                       const who = document.createElement('span');
                       who.className = 'who';
-                      who.textContent = t('workspace.label.archives-private');
+                      who.textContent = workspaceText('workspace.label.archives-private');
                       const text = document.createElement('p');
                       const until =
                         to.toLocaleTimeString(
@@ -4181,11 +4452,11 @@ object VexLifeWebP1RuntimeArtifacts {
                       const kept =
                         (interval.keptNotes ?? [])
                           .map((note) =>
-                            t('workspace.label.archives-kept-note')
+                            workspaceText('workspace.label.archives-kept-note')
                               .replace('{note}', String(note))
                           );
                       text.textContent =
-                        t('workspace.description.archives-private-interval')
+                        workspaceText('workspace.description.archives-private-interval')
                           .replace('{time}', until)
                           .replace('{count}', String(interval.exchangeCount)) +
                         (kept.length ? '\n' + kept.join('\n') : '');
@@ -4203,7 +4474,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                     const who = document.createElement('span');
                     who.className = 'who';
-                    who.textContent = t(
+                    who.textContent = workspaceText(
                       message.role === 'human'
                         ? 'workspace.label.archives-role-you'
                         : 'workspace.label.archives-role-vex'
@@ -4274,7 +4545,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     : '';
                 return {
                   schemaVersion: 'vexlife-prod.context-profile/v1',
-                  name: String(ui.contextProfileName.value ?? '').trim() || t('workspace.label.context-profile-new-name-default'),
+                  name: String(ui.contextProfileName.value ?? '').trim() || workspaceText('workspace.label.context-profile-new-name-default'),
                   description: '',
                   foundationMode: mode,
                   foundationText
@@ -4284,12 +4555,12 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderContextProfile = () => {
                 const projection = state.contextProfiles;
                 if (!projection) {
-                  ui.contextProfileSummary.textContent = t('workspace.description.context-profile-checking');
+                  ui.contextProfileSummary.textContent = workspaceText('workspace.description.context-profile-checking');
                   return;
                 }
                 const active = projection.active;
                 const choices = [
-                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: t('workspace.label.context-profile-product-default') }, productDefault: true },
+                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: workspaceText('workspace.label.context-profile-product-default') }, productDefault: true },
                   ...(projection.saved ?? [])
                 ];
                 ui.contextProfileChoice.replaceChildren(...choices.map((profile) => {
@@ -4297,7 +4568,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   option.value = profile.profileRef;
                   option.textContent = profile.productDefault
                     ? profile.definition.name
-                    : t('workspace.label.context-profile-saved-option')
+                    : workspaceText('workspace.label.context-profile-saved-option')
                         .replace('{name}', String(profile.definition.name ?? ''))
                         .replace('{revision}', String(profile.revision ?? ''));
                   return option;
@@ -4322,8 +4593,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     active.definition.foundationMode !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                   ui.contextProfileNote.textContent =
                     active.productDefault
-                      ? t('workspace.description.context-profile-default-note')
-                      : t('workspace.description.context-profile-saved-note');
+                      ? workspaceText('workspace.description.context-profile-default-note')
+                      : workspaceText('workspace.description.context-profile-saved-note');
                 }
                 const card = ui.contextProfileName.closest('.context-profile-card');
                 if (card) card.dataset.dirty = String(state.contextProfileDirty);
@@ -4333,11 +4604,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.vexLabsFields) return;
                 const projection = state.vexLabs;
                 if (!projection) {
-                  ui.vexLabsStatus.textContent = t('workspace.status.vex-labs-loading');
+                  ui.vexLabsStatus.textContent = workspaceText('workspace.status.vex-labs-loading');
                   ui.vexLabsFields.replaceChildren(
                     Object.assign(document.createElement('p'), {
                       className: 'context-empty',
-                      textContent: t('workspace.description.vex-labs-loading-fields')
+                      textContent: workspaceText('workspace.description.vex-labs-loading-fields')
                     })
                   );
                   return;
@@ -4355,7 +4626,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   projection.currentProductConversationHeadSha256 &&
                   projection.seedConversationHeadSha256 !== projection.currentProductConversationHeadSha256;
                 ui.vexLabsStatus.textContent =
-                  t(projection.conversationPreset === 'EMPTY'
+                  workspaceText(projection.conversationPreset === 'EMPTY'
                     ? 'workspace.status.vex-labs-empty-scratch'
                     : 'workspace.status.vex-labs-current-snapshot')
                     .replace(
@@ -4365,16 +4636,16 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                 const lastAdmission = projection.lastAdmission ?? null;
                 ui.vexLabsNote.textContent = state.vexLabsInFlight
-                  ? t('workspace.description.vex-labs-running')
+                  ? workspaceText('workspace.description.vex-labs-running')
                   : lastAdmission
                     ? vexLabsAdmissionText(lastAdmission)
                   : vexLabsDraftMatchesLastTest()
-                    ? t('workspace.description.vex-labs-tested')
+                    ? workspaceText('workspace.description.vex-labs-tested')
                     : staleSnapshot
-                    ? t('workspace.description.vex-labs-stale')
+                    ? workspaceText('workspace.description.vex-labs-stale')
                     : draft.memoryMode === 'NONE'
-                      ? t('workspace.description.vex-labs-memory-off')
-                      : t('workspace.description.vex-labs-scratch-boundary');
+                      ? workspaceText('workspace.description.vex-labs-memory-off')
+                      : workspaceText('workspace.description.vex-labs-scratch-boundary');
 
                 const busy = state.vexLabsInFlight;
                 for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
@@ -4384,8 +4655,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
                   ui.vexLabsSaveSupported.title =
                     vexLabsDraftMatchesLastTest()
-                      ? t('workspace.description.vex-labs-save-supported-ready')
-                      : t('workspace.description.vex-labs-save-supported-blocked');
+                      ? workspaceText('workspace.description.vex-labs-save-supported-ready')
+                      : workspaceText('workspace.description.vex-labs-save-supported-blocked');
                 }
                 ui.vexLabsInputBudget.disabled = busy;
                 ui.vexLabsMemoryBudget.disabled = busy;
@@ -4408,7 +4679,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   const editable = field.labEditability === 'EDITABLE_LAB_ONLY';
                   const restart = field.labEditability === 'EDITABLE_PRODUCT_CONTROL_RESTART';
                   badge.dataset.state = editable ? 'edit' : field.labEditability === 'HELD' ? 'held' : 'read';
-                  badge.textContent = t(editable
+                  badge.textContent = workspaceText(editable
                     ? 'workspace.status.vex-labs-field-edit-test'
                     : restart
                       ? 'workspace.status.vex-labs-field-restart'
@@ -4425,9 +4696,9 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? draft.maximumMemoryTokens
                         : null;
                   const fieldValueText = (value) => {
-                    const words = String(value ?? t('workspace.label.vex-labs-field-not-set'));
+                    const words = String(value ?? workspaceText('workspace.label.vex-labs-field-not-set'));
                     if (!field.unit) return words;
-                    return t('workspace.label.vex-labs-field-value-unit')
+                    return workspaceText('workspace.label.vex-labs-field-value-unit')
                       .replace('{value}', words)
                       .replace('{unit}', resolveText(field.unit));
                   };
@@ -4440,9 +4711,9 @@ object VexLifeWebP1RuntimeArtifacts {
                         );
                   current.textContent =
                     testValueText === null
-                      ? t('workspace.label.vex-labs-field-current')
+                      ? workspaceText('workspace.label.vex-labs-field-current')
                           .replace('{value}', currentValue)
-                      : t('workspace.label.vex-labs-field-current-test')
+                      : workspaceText('workspace.label.vex-labs-field-current-test')
                           .replace('{value}', currentValue)
                           .replace('{test}', testValueText);
                   summary.append(title, badge, current);
@@ -4462,7 +4733,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     edit.type = 'button';
                     edit.className = 'quiet-button vex-labs-field-edit';
                     edit.dataset.fieldRef = String(field.fieldRef ?? '');
-                    edit.textContent = t('workspace.button.vex-labs-edit-test-value');
+                    edit.textContent = workspaceText('workspace.button.vex-labs-edit-test-value');
                     body.append(edit);
                   }
 
@@ -4470,20 +4741,20 @@ object VexLifeWebP1RuntimeArtifacts {
                   facts.className = 'vex-labs-field-facts';
                   const factValues = [
                     field.inheritedDefaultValue != null
-                      ? t('workspace.label.vex-labs-field-default')
+                      ? workspaceText('workspace.label.vex-labs-field-default')
                           .replace('{value}', String(field.inheritedDefaultValue))
                       : null,
                     field.recommendedValue != null
-                      ? t('workspace.label.vex-labs-field-recommended')
+                      ? workspaceText('workspace.label.vex-labs-field-recommended')
                           .replace('{value}', String(field.recommendedValue))
                       : null,
                     field.minimumValue != null || field.maximumValue != null
-                      ? t('workspace.label.vex-labs-field-range')
+                      ? workspaceText('workspace.label.vex-labs-field-range')
                           .replace('{minimum}', String(field.minimumValue ?? '…'))
                           .replace('{maximum}', String(field.maximumValue ?? '…'))
                       : null,
                     field.labObservedMinimumValue != null
-                      ? t('workspace.label.vex-labs-field-observed-floor')
+                      ? workspaceText('workspace.label.vex-labs-field-observed-floor')
                           .replace(
                             '{value}',
                             Number(field.labObservedMinimumValue)
@@ -4491,11 +4762,11 @@ object VexLifeWebP1RuntimeArtifacts {
                           )
                       : null,
                     field.ownerRef
-                      ? t('workspace.label.vex-labs-field-owner')
+                      ? workspaceText('workspace.label.vex-labs-field-owner')
                           .replace('{value}', String(field.ownerRef))
                       : null,
                     field.userApplyBoundary
-                      ? t('workspace.label.vex-labs-field-applies')
+                      ? workspaceText('workspace.label.vex-labs-field-applies')
                           .replace('{value}', String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase())
                       : null
                   ].filter(Boolean);
@@ -4508,13 +4779,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   if (field.increaseConsequence) {
                     const line = document.createElement('p');
-                    line.textContent = t('workspace.description.vex-labs-field-increase')
+                    line.textContent = workspaceText('workspace.description.vex-labs-field-increase')
                       .replace('{detail}', resolveText(field.increaseConsequence));
                     body.append(line);
                   }
                   if (field.decreaseConsequence) {
                     const line = document.createElement('p');
-                    line.textContent = t('workspace.description.vex-labs-field-decrease')
+                    line.textContent = workspaceText('workspace.description.vex-labs-field-decrease')
                       .replace('{detail}', resolveText(field.decreaseConsequence));
                     body.append(line);
                   }
@@ -4559,9 +4830,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   const contextHeldUnsupported =
                     state.context?.state === service.contextHeldUnsupportedState;
                   const heldSchema =
-                    String(state.context?.durablePromptReceiptSchema ?? t('workspace.label.context-unknown-schema'));
+                    String(state.context?.durablePromptReceiptSchema ?? workspaceText('workspace.label.context-unknown-schema'));
                   ui.vexContextTurnSummary.textContent =
-                    t(
+                    workspaceText(
                       contextHeldUnsupported
                         ? 'workspace.status.context-held-completed-turn'
                         : 'workspace.status.vex-context-no-turn'
@@ -4577,7 +4848,7 @@ object VexLifeWebP1RuntimeArtifacts {
                               { schema: heldSchema }
                             )
                           )
-                        : t('workspace.description.context-beginning')
+                        : workspaceText('workspace.description.context-beginning')
                     })
                   );
                   for (const node of [
@@ -4604,10 +4875,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const inputTokenBudget = Number(prompt.inputTokenBudget ?? 0);
                 const priorCompletedExchanges = Number(prompt.priorCompletedExchangeCount ?? 0);
                 const usedWorkingContinuity = String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT');
-                ui.vexContextTurnSummary.textContent = t('workspace.status.context-last-completed-reply');
+                ui.vexContextTurnSummary.textContent = workspaceText('workspace.status.context-last-completed-reply');
                 ui.vexContextTurnSummary.title = exactTurnRef;
                 ui.vexContextBudget.textContent =
-                  t(
+                  workspaceText(
                     usedWorkingContinuity
                       ? 'workspace.status.context-budget-condensed'
                       : priorCompletedExchanges > 0
@@ -4766,9 +5037,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
                 ui.contextFoundationStatus.textContent =
                   productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
-                    ? t('workspace.status.context-foundation-carried')
+                    ? workspaceText('workspace.status.context-foundation-carried')
                         .replace('{version}', String(productField.fieldVersion ?? ''))
-                    : t('workspace.status.context-foundation-unavailable');
+                    : workspaceText('workspace.status.context-foundation-unavailable');
                 if (productField) {
                   const omittedFoundationParts = Number(productField.omittedModuleRefs?.length ?? 0);
                   contextLine(
@@ -4832,13 +5103,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                 ui.contextMemoryStatus.textContent =
                   acceptedSemanticMemoryUsed
-                    ? t(dailyMemoryUsed
+                    ? workspaceText(dailyMemoryUsed
                         ? 'workspace.status.context-memory-daily-and-semantic'
                         : 'workspace.status.context-memory-semantic')
                     : dailyMemoryUsed
-                      ? t('workspace.status.context-memory-daily')
+                      ? workspaceText('workspace.status.context-memory-daily')
                           .replace('{count}', rememberedCount.toLocaleString(document.documentElement.lang || undefined))
-                      : t('workspace.status.context-memory-not-used');
+                      : workspaceText('workspace.status.context-memory-not-used');
                 if (anyPromptMemoryUsed) {
                   if (dailyMemoryUsed) {
                     contextLine(
@@ -4880,7 +5151,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Working continuity / rollover.
                 ui.contextContinuityBody.replaceChildren();
                 ui.contextContinuityStatus.textContent =
-                  t(prompt.workingContinuityIncluded
+                  workspaceText(prompt.workingContinuityIncluded
                     ? 'workspace.status.context-continuity-carried'
                     : 'workspace.status.context-continuity-not-needed');
                 if (prompt.workingContinuityIncluded) {
@@ -4906,10 +5177,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const selectedMessages = messages.filter((message) => selectedRefs.has(message.eventRef));
                 ui.contextConversationStatus.textContent =
                   selectedMessages.length === 0
-                    ? t('workspace.status.context-conversation-none')
+                    ? workspaceText('workspace.status.context-conversation-none')
                     : selectedMessages.length === 1
-                      ? t('workspace.status.context-conversation-one')
-                      : t('workspace.status.context-conversation-many')
+                      ? workspaceText('workspace.status.context-conversation-one')
+                      : workspaceText('workspace.status.context-conversation-many')
                           .replace('{count}', selectedMessages.length.toLocaleString(document.documentElement.lang || undefined));
                 contextLine(
                   ui.contextConversationBody,
@@ -4932,7 +5203,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   const header = document.createElement('div');
                   header.className = 'context-exact-message-head';
                   const meta = document.createElement('small');
-                  meta.textContent = t(message.role === 'human'
+                  meta.textContent = workspaceText(message.role === 'human'
                     ? 'workspace.label.context-conversation-human-exact'
                     : 'workspace.label.context-conversation-vex-exact');
                   header.append(meta);
@@ -4950,7 +5221,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     const toggle = document.createElement('button');
                     toggle.type = 'button';
                     toggle.className = 'context-message-toggle';
-                    toggle.textContent = t(collapsed
+                    toggle.textContent = workspaceText(collapsed
                       ? 'workspace.button.context-conversation-show'
                       : 'workspace.button.context-conversation-collapse');
                     toggle.setAttribute('aria-expanded', String(!collapsed));
@@ -4971,13 +5242,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 // Browser / reached context: exact historical content is intentionally not reconstructed.
                 ui.contextBrowserBody.replaceChildren();
-                ui.contextBrowserStatus.textContent = t(prompt.browserContextIncluded
+                ui.contextBrowserStatus.textContent = workspaceText(prompt.browserContextIncluded
                   ? 'workspace.status.context-browser-used'
                   : 'workspace.status.context-browser-not-used');
                 if (prompt.browserContextIncluded) {
                   contextLine(
                     ui.contextBrowserBody,
-                    prompt.browserTitle || prompt.browserPageUrl || t('workspace.label.context-browser-page'),
+                    prompt.browserTitle || prompt.browserPageUrl || workspaceText('workspace.label.context-browser-page'),
                     keyedText('workspace.label.context-browser-context')
                   );
                   contextLine(
@@ -4987,7 +5258,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       {
                         count: Number(prompt.browserContextCharacters ?? 0)
                           .toLocaleString(document.documentElement.lang || undefined),
-                        capture: prompt.browserContextCapture ?? t('workspace.label.context-browser-captured-text')
+                        capture: prompt.browserContextCapture ?? workspaceText('workspace.label.context-browser-captured-text')
                       }
                     ),
                     keyedText('workspace.label.context-browser-amount')
@@ -5017,7 +5288,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // The current request is not part of selected prior Conversation; show its exact
                 // canonical event separately so the causal stack never skips the human cause.
                 ui.contextRequestBody.replaceChildren();
-                ui.contextRequestStatus.textContent = t(latestHuman
+                ui.contextRequestStatus.textContent = workspaceText(latestHuman
                   ? 'workspace.status.context-request-exact'
                   : 'workspace.status.context-request-unavailable');
                 if (latestHuman) {
@@ -5054,17 +5325,17 @@ object VexLifeWebP1RuntimeArtifacts {
                   const exactRef = component.componentRef.replace('component.vexlife-prod.prompt.', '');
                   const name = document.createElement('span');
                   name.textContent = componentLabels[exactRef]
-                    ? t(componentLabels[exactRef])
+                    ? workspaceText(componentLabels[exactRef])
                     : exactRef.replaceAll('-', ' ');
                   name.title = component.componentRef;
                   const detail = document.createElement('span');
                   const placement =
                     placementLabels[component.placementClass]
-                      ? t(placementLabels[component.placementClass])
+                      ? workspaceText(placementLabels[component.placementClass])
                       : component.placementClass.toLowerCase().replaceAll('_', ' ');
                   const arrival =
                     exactRef === 'person-context'
-                      ? t('workspace.description.context-component-person-arrival')
+                      ? workspaceText('workspace.description.context-component-person-arrival')
                       : '';
                   detail.textContent = ' · ' + placement + arrival;
                   detail.title =
@@ -5084,10 +5355,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const modelSummary = document.createElement('summary');
                 modelSummary.textContent =
                   providerRequests.length
-                    ? t(providerRequests.length === 1
+                    ? workspaceText(providerRequests.length === 1
                         ? 'workspace.label.context-model-view-one'
                         : 'workspace.label.context-model-view-many')
-                    : t('workspace.status.context-model-view-unavailable');
+                    : workspaceText('workspace.status.context-model-view-unavailable');
                 modelView.append(modelSummary);
                 if (providerRequests.length) {
                   for (const request of providerRequests) {
@@ -5095,7 +5366,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     stage.className = 'context-model-stage';
                     const label = document.createElement('small');
                     label.textContent =
-                      t('workspace.label.context-model-stage')
+                      workspaceText('workspace.label.context-model-stage')
                         .replace('{stage}', String(request.stageIndex))
                         .replace('{sha}', String(request.requestBodySha256));
                     const pre = document.createElement('pre');
@@ -5109,16 +5380,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                   const note = document.createElement('p');
                   note.className = 'context-empty';
-                  note.textContent = t('workspace.description.context-model-view-session');
+                  note.textContent = workspaceText('workspace.description.context-model-view-session');
                   modelView.append(note);
                 } else {
                   const note = document.createElement('p');
                   note.className = 'context-empty';
                   note.textContent =
                     state.context?.finalProviderRequestBodySha256
-                      ? t('workspace.description.context-model-view-final-hash')
+                      ? workspaceText('workspace.description.context-model-view-final-hash')
                           .replace('{sha}', String(state.context.finalProviderRequestBodySha256))
-                      : t('workspace.description.context-model-view-none');
+                      : workspaceText('workspace.description.context-model-view-none');
                   modelView.append(note);
                 }
                 modelViewItem.append(modelView);
@@ -5129,7 +5400,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProcessBody.replaceChildren();
                 const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
                 ui.contextProcessStatus.textContent =
-                  t(reasoning
+                  workspaceText(reasoning
                     ? 'workspace.status.context-process-visible-session'
                     : 'workspace.status.context-process-not-kept');
                 if (reasoning) {
@@ -5137,7 +5408,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else {
                   contextLine(
                     ui.contextProcessBody,
-                    t('workspace.description.context-process-not-kept')
+                    workspaceText('workspace.description.context-process-not-kept')
                   );
                 }
                 if (reaches.length) {
@@ -5281,12 +5552,12 @@ object VexLifeWebP1RuntimeArtifacts {
               const saveVexLabsSupportedSettings = async () => {
                 const draft = ensureVexLabsDraft();
                 if (!vexLabsDraftMatchesLastTest()) {
-                  notify(t('workspace.status.vex-labs-test-before-save'));
+                  notify(workspaceText('workspace.status.vex-labs-test-before-save'));
                   return;
                 }
                 const active = currentContextProfile();
                 if (!active) {
-                  notify(t('workspace.status.vex-labs-profile-not-loaded'));
+                  notify(workspaceText('workspace.status.vex-labs-profile-not-loaded'));
                   return;
                 }
                 const definition = {
@@ -5297,8 +5568,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const saveAs = Boolean(active.productDefault);
                 if (saveAs) {
                   const name = window.prompt(
-                    t('workspace.description.vex-labs-save-name-prompt'),
-                    t('workspace.label.vex-labs-save-name-default')
+                    workspaceText('workspace.description.vex-labs-save-name-prompt'),
+                    workspaceText('workspace.label.vex-labs-save-name-default')
                       .replace(
                         '{budget}',
                         Number(draft.inputTokenBudget)
@@ -5318,11 +5589,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!result) return;
                   await loadVexLabs(true);
                   notify(
-                    t('workspace.status.vex-labs-saved-supported')
+                    workspaceText('workspace.status.vex-labs-saved-supported')
                       .replace('{name}', String(result.profiles.active.definition.name ?? ''))
                   );
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-save-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-save-failed'));
                 }
               };
 
@@ -5351,19 +5622,19 @@ object VexLifeWebP1RuntimeArtifacts {
                   const result = await readJson(response);
                   state.vexLabs = result.projection;
                   if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
-                    throw new Error(t('workspace.status.vex-labs-real-state-mutation'));
+                    throw new Error(workspaceText('workspace.status.vex-labs-real-state-mutation'));
                   }
                   if (result.state === 'HELD_CONTEXT_BUDGET') {
                     state.vexLabsLastResult = null;
                     ui.draft.value = content;
                     sizeDraft();
                     const detail = vexLabsAdmissionText(result.admission);
-                    notify(detail || t('workspace.status.vex-labs-context-budget-held'));
+                    notify(detail || workspaceText('workspace.status.vex-labs-context-budget-held'));
                   } else {
                     state.vexLabsLastResult = result;
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-turn-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-turn-failed'));
                 } finally {
                   state.vexLabsPending = null;
                   state.vexLabsInFlight = false;
@@ -5380,14 +5651,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)} &&
                   !definition.foundationText
                 ) {
-                  notify(t('workspace.status.context-profile-foundation-required'));
+                  notify(workspaceText('workspace.status.context-profile-foundation-required'));
                   return;
                 }
                 if (saveAs) {
                   const name = window.prompt(
-                    t('workspace.description.context-profile-name-prompt'),
+                    workspaceText('workspace.description.context-profile-name-prompt'),
                     definition.name === 'VexLife Default'
-                      ? t('workspace.label.context-profile-new-name-default')
+                      ? workspaceText('workspace.label.context-profile-new-name-default')
                       : definition.name
                   );
                   if (!name) return;
@@ -5404,14 +5675,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!result) return;
                   const profile = result.profiles.active;
                   notify(
-                    t('workspace.status.context-profile-saved')
+                    workspaceText('workspace.status.context-profile-saved')
                       .replace('{name}', String(profile.definition.name ?? '')) +
                     (definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
-                      ? ' ' + t('workspace.description.context-profile-saved-extension')
+                      ? ' ' + workspaceText('workspace.description.context-profile-saved-extension')
                       : '')
                   );
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.context-profile-save-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-save-failed'));
                 }
               };
 
@@ -5419,28 +5690,28 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!file) return;
                 try {
                   const portable = JSON.parse(await file.text());
-                  const name = String(portable.name ?? t('workspace.label.context-profile-imported-fallback'));
+                  const name = String(portable.name ?? workspaceText('workspace.label.context-profile-imported-fallback'));
                   const mode = String(portable.foundationMode ?? '');
                   const modeLabel =
                     mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
-                      ? t('workspace.label.context-profile-foundation-extended')
+                      ? workspaceText('workspace.label.context-profile-foundation-extended')
                       : mode === ${jsString(VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT.name)}
-                        ? t('workspace.label.context-profile-foundation-product')
+                        ? workspaceText('workspace.label.context-profile-foundation-product')
                         : mode;
                   if (!window.confirm(
-                    t('workspace.description.context-profile-import-confirm')
+                    workspaceText('workspace.description.context-profile-import-confirm')
                       .replace('{name}', name)
                       .replace('{mode}', modeLabel)
                   )) return;
                   const result = await contextProfileControl('IMPORT', { portable });
                   if (result) {
                     notify(
-                      t('workspace.status.context-profile-imported')
+                      workspaceText('workspace.status.context-profile-imported')
                         .replace('{name}', String(result.profiles.active.definition.name ?? ''))
                     );
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.context-profile-import-invalid'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-import-invalid'));
                 } finally {
                   ui.contextProfileImport.value = '';
                 }
@@ -5470,7 +5741,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     submit: sendVexLabs,
                     pageContextAllowed: false,
                     voiceAllowed: false,
-                    holdText: t(state.vexLabsInFlight
+                    holdText: workspaceText(state.vexLabsInFlight
                       ? 'workspace.description.vex-labs-controller-running'
                       : 'workspace.description.vex-labs-controller-scratch')
                   };
@@ -5482,7 +5753,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     submit: sendPrivate,
                     pageContextAllowed: false,
                     voiceAllowed: true,
-                    holdText: t(state.privateInFlight
+                    holdText: workspaceText(state.privateInFlight
                       ? 'workspace.description.private-replying'
                       : 'workspace.description.private-composer-hold')
                   };
@@ -5526,7 +5797,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const addLabel =
                   display?.addLabel
                     ? resolveText(display.addLabel)
-                    : t('workspace.button.attach');
+                    : workspaceText('workspace.button.attach');
                 ui.attach.hidden = !canonicalNow;
                 ui.attach.disabled =
                   !editable ||
@@ -5556,9 +5827,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     const total = Number(upload.total ?? 0);
                     status.textContent =
                       total > 0
-                        ? t('workspace.status.attachment-staging') + ' ' +
+                        ? workspaceText('workspace.status.attachment-staging') + ' ' +
                           Math.min(100, Math.round((loaded / total) * 100)) + '%'
-                        : t('workspace.status.attachment-staging');
+                        : workspaceText('workspace.status.attachment-staging');
                   } else {
                     status.textContent = itemDisplay?.status
                       ? resolveText(itemDisplay.status)
@@ -5576,8 +5847,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     const label = itemDisplay?.controlLabel
                       ? resolveText(itemDisplay.controlLabel)
                       : controlRef === attachmentDraft.control.cancelStage
-                        ? t('workspace.button.attachment-cancel')
-                        : t('workspace.button.attachment-remove');
+                        ? workspaceText('workspace.button.attachment-cancel')
+                        : workspaceText('workspace.button.attachment-remove');
                     button.textContent =
                       controlRef === attachmentDraft.control.cancelStage ? 'Cancel' : '×';
                     button.setAttribute('aria-label', label + ' ' + name.textContent);
@@ -5604,7 +5875,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   name.textContent = upload.name;
                   const status = document.createElement('span');
                   status.className = 'composer-attachment-status';
-                  status.textContent = t('workspace.status.attachment-staging');
+                  status.textContent = workspaceText('workspace.status.attachment-staging');
                   main.append(name, status);
                   row.append(main);
                   ui.composerAttachments.append(row);
@@ -5636,6 +5907,59 @@ object VexLifeWebP1RuntimeArtifacts {
                 const turnCancelling = Boolean(turnDisplay?.cancelling);
                 const sendLawful = turnControlRef === conversationTurn.control.send;
                 const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const firstLocalStartPending =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationPendingForNextTurn) &&
+                  !turnActive &&
+                  !turnCancelling;
+                const firstLocalStartTurn =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationForActiveTurn) &&
+                  (turnActive || turnCancelling);
+                const firstLocalStartVisible = firstLocalStartPending || firstLocalStartTurn;
+                const followUpReadiness =
+                  canonicalNow ? (state.conversationTurn?.followUpReadiness ?? null) : null;
+                const followUpState = String(followUpReadiness?.state ?? '');
+                const followUpVisible =
+                  canonicalNow &&
+                  !firstLocalStartVisible &&
+                  Boolean(followUpState) &&
+                  followUpState !== 'UNAVAILABLE';
+                ui.responseProgress.hidden = !(firstLocalStartVisible || followUpVisible);
+                if (firstLocalStartVisible) {
+                  ui.responseProgress.dataset.state = 'FirstLocalStart';
+                  ui.responseProgress.removeAttribute('data-follow-up-state');
+                  ui.responseProgressTitle.textContent = workspaceText('workspace.heading.first-local-start');
+                  ui.responseProgressDetail.textContent = workspaceText(
+                    firstLocalStartTurn
+                      ? 'workspace.description.first-local-start-sent'
+                      : 'workspace.description.first-local-start-ready-to-send'
+                  );
+                } else if (followUpVisible) {
+                  const detailKey =
+                    followUpState === 'LOWER_MEMORY_REALIZATION'
+                      ? 'workspace.label.model-cache-level-1'
+                      : followUpState === 'NOT_YET_PREPARED'
+                        ? 'workspace.description.follow-up-readiness-will-prepare'
+                        : followUpState === 'PREPARING'
+                          ? 'workspace.description.follow-up-readiness-preparing'
+                          : followUpState === 'SUCCESSOR_RESET'
+                            ? 'workspace.description.follow-up-readiness-successor-reset'
+                            : followUpState === 'FASTER_FOLLOWUPS_ENABLED'
+                              ? 'workspace.label.model-cache-level-2'
+                              : null;
+                  ui.responseProgress.dataset.state = 'FollowUpReadiness';
+                  ui.responseProgress.dataset.followUpState = followUpState;
+                  ui.responseProgressTitle.textContent =
+                    workspaceText('workspace.label.model-prompt-cache-entries');
+                  ui.responseProgressDetail.textContent =
+                    detailKey ? workspaceText(detailKey) : '';
+                } else {
+                  ui.responseProgress.removeAttribute('data-state');
+                  ui.responseProgress.removeAttribute('data-follow-up-state');
+                  ui.responseProgressTitle.textContent = '';
+                  ui.responseProgressDetail.textContent = '';
+                }
                 const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
@@ -5647,10 +5971,10 @@ object VexLifeWebP1RuntimeArtifacts {
                       : 'Unavailable';
                 ui.contextShare.setAttribute('aria-pressed', String(state.includePage && contextReady));
                 ui.contextShareLabel.textContent = state.contextLoading
-                  ? t('workspace.status.context-share-reading')
+                  ? workspaceText('workspace.status.context-share-reading')
                   : state.includePage && contextReady
-                    ? t('workspace.status.context-share-included')
-                    : t('workspace.button.context-share');
+                    ? workspaceText('workspace.status.context-share-included')
+                    : workspaceText('workspace.button.context-share');
                 ui.composerHold.textContent = turnActive
                   ? resolveText(turnDisplay.status)
                   : modelSwitching
@@ -5660,17 +5984,17 @@ object VexLifeWebP1RuntimeArtifacts {
                     : controller.holdText
                       ? controller.holdText
                     : state.contextLoading
-                    ? t('workspace.description.composer-reading-context')
+                    ? workspaceText('workspace.description.composer-reading-context')
                   : archivesOpen
-                    ? t('workspace.description.composer-archives-hidden')
+                    ? workspaceText('workspace.description.composer-archives-hidden')
                   : !canInclude
-                    ? t('workspace.description.composer-context-unavailable')
+                    ? workspaceText('workspace.description.composer-context-unavailable')
                     : contextEligible && !contextReady
-                      ? t('workspace.description.composer-context-on-demand')
+                      ? workspaceText('workspace.description.composer-context-on-demand')
                       : state.pending && !state.sendInFlight
-                        ? t('workspace.description.composer-send-unresolved')
+                        ? workspaceText('workspace.description.composer-send-unresolved')
                         : state.failedAttempts.length
-                          ? t('workspace.description.composer-send-failed-preserved')
+                          ? workspaceText('workspace.description.composer-send-failed-preserved')
                           : '';
                 // Family projection owns which Control is lawful. sendInFlight is only transport
                 // bookkeeping while the service is being re-observed.
@@ -5678,13 +6002,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.stop.hidden = !(turnActive || turnCancelling);
                 const sendLabel = sendLawful && turnDisplay?.primaryLabel
                   ? resolveText(turnDisplay.primaryLabel)
-                  : t('workspace.button.conversation-send');
+                  : workspaceText('workspace.button.conversation-send');
                 ui.send.textContent = sendLabel;
                 ui.send.setAttribute('aria-label', sendLabel);
                 ui.send.title = sendLabel;
                 const stopLabel = stopLawful && turnDisplay?.primaryLabel
                   ? resolveText(turnDisplay.primaryLabel)
-                  : t('workspace.button.conversation-stop');
+                  : workspaceText('workspace.button.conversation-stop');
                 ui.stop.textContent = stopLabel;
                 ui.stop.setAttribute('aria-label', stopLabel);
                 ui.stop.title = stopLabel;
@@ -5699,7 +6023,6 @@ object VexLifeWebP1RuntimeArtifacts {
                       !attachmentResourcesReady ||
                       (!state.pending && !ui.draft.value.trim())
                     : !ui.draft.value.trim());
-                ui.responseProgress.hidden = true;
                 renderTicket();
                 renderAttachments({ canonicalNow, sendLawful, turnActive, turnCancelling });
                 ui.contextShare.hidden = !controller.pageContextAllowed;
@@ -5717,9 +6040,9 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const formatBytes = (value) => {
-                if (value === null || value === undefined || value === '') return t('workspace.label.resources-unknown-value');
+                if (value === null || value === undefined || value === '') return workspaceText('workspace.label.resources-unknown-value');
                 const bytes = Number(value);
-                if (!Number.isFinite(bytes) || bytes < 0) return t('workspace.label.resources-unknown-value');
+                if (!Number.isFinite(bytes) || bytes < 0) return workspaceText('workspace.label.resources-unknown-value');
                 const units = ['B', 'KB', 'MB', 'GB', 'TB'];
                 let scaled = bytes;
                 let unit = 0;
@@ -5755,6 +6078,96 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   main.append(name, path);
 
+                  const currentWorkspaceGrant =
+                    (state.workspaceEffects?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const authority = document.createElement('span');
+                  authority.className = 'local-source-authority';
+                  authority.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.status.workspace-effects-writable')
+                    : workspaceText('workspace.status.workspace-effects-read-only');
+
+                  const authorityControl = document.createElement('button');
+                  authorityControl.type = 'button';
+                  authorityControl.className = 'outline-button';
+                  authorityControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  authorityControl.dataset.controlRef = currentWorkspaceGrant
+                    ? workspaceEffects.control.revoke
+                    : workspaceEffects.control.allow;
+                  authorityControl.setAttribute(
+                    'data-vex-ref',
+                    currentWorkspaceGrant ? workspaceEffects.revokeRef : workspaceEffects.allowRef
+                  );
+                  authorityControl.textContent = currentWorkspaceGrant
+                    ? workspaceText('workspace.button.workspace-effects-revoke')
+                    : workspaceText('workspace.button.workspace-effects-allow');
+                  authorityControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceEffectsInFlight ||
+                    state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const currentCheckGrant =
+                    (state.workspaceChecks?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const checkAuthority = document.createElement('span');
+                  checkAuthority.className = 'local-source-authority';
+                  checkAuthority.textContent = currentCheckGrant
+                    ? workspaceText('workspace.status.workspace-checks-allowed')
+                    : workspaceText('workspace.status.workspace-checks-not-allowed');
+
+                  const checkControl = document.createElement('button');
+                  checkControl.type = 'button';
+                  checkControl.className = 'outline-button';
+                  checkControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  checkControl.dataset.controlRef = currentCheckGrant
+                    ? workspaceChecks.control.revoke
+                    : workspaceChecks.control.allow;
+                  checkControl.setAttribute(
+                    'data-vex-ref',
+                    currentCheckGrant ? workspaceChecks.revokeRef : workspaceChecks.allowRef
+                  );
+                  checkControl.textContent = currentCheckGrant
+                    ? workspaceText('workspace.button.workspace-checks-revoke')
+                    : workspaceText('workspace.button.workspace-checks-allow');
+                  checkControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
+                  const currentRunGrant =
+                    (state.workspaceRuns?.grants ?? [])
+                      .find((candidate) => candidate.sourceRef === grant.sourceRef) ?? null;
+
+                  const runAuthority = document.createElement('span');
+                  runAuthority.className = 'local-source-authority';
+                  runAuthority.textContent = currentRunGrant
+                    ? workspaceText('workspace.status.workspace-runs-allowed')
+                    : workspaceText('workspace.status.workspace-runs-not-allowed');
+
+                  const runControl = document.createElement('button');
+                  runControl.type = 'button';
+                  runControl.className = 'outline-button';
+                  runControl.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  runControl.dataset.controlRef = currentRunGrant
+                    ? workspaceRuns.control.revoke
+                    : workspaceRuns.control.allow;
+                  runControl.setAttribute(
+                    'data-vex-ref',
+                    currentRunGrant ? workspaceRuns.revokeRef : workspaceRuns.allowRef
+                  );
+                  runControl.textContent = currentRunGrant
+                    ? workspaceText('workspace.button.workspace-runs-revoke')
+                    : workspaceText('workspace.button.workspace-runs-allow');
+                  runControl.disabled =
+                    state.localSourcesInFlight ||
+                    state.workspaceRunsInFlight ||
+                    !grant.sourceRef;
+
                   const remove = document.createElement('button');
                   remove.type = 'button';
                   remove.className = 'outline-button';
@@ -5762,24 +6175,35 @@ object VexLifeWebP1RuntimeArtifacts {
                   remove.dataset.sourceRef = String(grant.sourceRef ?? '');
                   remove.textContent = grant.removeLabel
                     ? resolveText(grant.removeLabel)
-                    : t('workspace.button.local-sources-remove');
+                    : workspaceText('workspace.button.local-sources-remove');
                   remove.disabled =
                     state.localSourcesInFlight ||
                     grant.removeControlRef !== localSources.control.remove;
 
-                  item.append(main, remove);
+                  item.append(
+                    main,
+                    authority,
+                    authorityControl,
+                    checkAuthority,
+                    checkControl,
+                    runAuthority,
+                    runControl,
+                    remove
+                  );
                   ui.localSourcesList.append(item);
                 }
 
                 const addLabel =
                   display?.addLabel
                     ? resolveText(display.addLabel)
-                    : t('workspace.button.local-sources-add');
+                    : workspaceText('workspace.button.local-sources-add');
                 ui.localSourcesAdd.textContent = addLabel;
                 ui.localSourcesAdd.setAttribute('aria-label', addLabel);
                 ui.localSourcesAdd.title = addLabel;
                 ui.localSourcesAdd.disabled =
                   state.localSourcesInFlight ||
+                  state.workspaceChecksInFlight ||
+                    state.workspaceRunsInFlight ||
                   display?.addControlRef !== localSources.control.add;
 
                 if (display?.limitStatus && !state.localSourcesInFlight) {
@@ -5799,13 +6223,137 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.localSources;
               };
 
+              const loadWorkspaceEffects = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceEffectsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceEffects = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceEffects;
+              };
+
+              const applyWorkspaceEffectsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceEffectsInFlight) return;
+                state.workspaceEffectsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceEffectsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceEffects = result.effects ?? state.workspaceEffects;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceEffects.control.allow
+                      ? workspaceText('workspace.status.workspace-effects-granted')
+                      : workspaceText('workspace.status.workspace-effects-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-effects-source-not-current');
+                } finally {
+                  state.workspaceEffectsInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
+
+              const loadWorkspaceChecks = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceChecksPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceChecks = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceChecks;
+              };
+
+              const applyWorkspaceChecksControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceChecksInFlight) return;
+                state.workspaceChecksInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceChecksControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceChecks = result.checks ?? state.workspaceChecks;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceChecks.control.allow
+                      ? workspaceText('workspace.status.workspace-checks-granted')
+                      : workspaceText('workspace.status.workspace-checks-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-checks-source-not-current');
+                } finally {
+                  state.workspaceChecksInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
+              const loadWorkspaceRuns = async (renderNow = true) => {
+                const response = await productFetch(service.workspaceRunsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.workspaceRuns = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.workspaceRuns;
+              };
+
+              const applyWorkspaceRunsControl = async (controlRef, sourceRef) => {
+                if (!controlRef || !sourceRef || state.workspaceRunsInFlight) return;
+                state.workspaceRunsInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.workspaceRunsControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.workspaceRuns = result.runs ?? state.workspaceRuns;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    controlRef === workspaceRuns.control.allow
+                      ? workspaceText('workspace.status.workspace-runs-granted')
+                      : workspaceText('workspace.status.workspace-runs-revoked');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent = key ? workspaceText(key) : fallback;
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : workspaceText('workspace.status.workspace-runs-source-not-current');
+                } finally {
+                  state.workspaceRunsInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
               const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
                 if (!controlRef || state.localSourcesInFlight) return;
                 state.localSourcesInFlight = true;
                 ui.localSourcesStatus.dataset.transient = 'false';
                 ui.localSourcesStatus.textContent =
                   controlRef === localSources.control.add
-                    ? t('workspace.status.local-sources-choosing-folder')
+                    ? workspaceText('workspace.status.local-sources-choosing-folder')
                     : '';
                 renderLocalSources();
 
@@ -5821,26 +6369,29 @@ object VexLifeWebP1RuntimeArtifacts {
                   const fallback =
                     result.outcome === localSources.outcome.realized
                       ? controlRef === localSources.control.add
-                        ? t('workspace.status.local-sources-added')
-                        : t('workspace.status.local-sources-removed')
+                        ? workspaceText('workspace.status.local-sources-added')
+                        : workspaceText('workspace.status.local-sources-removed')
                       : result.outcome === localSources.outcome.cancelled
-                        ? t('workspace.status.local-sources-cancelled')
+                        ? workspaceText('workspace.status.local-sources-cancelled')
                         : result.outcome === localSources.outcome.unavailable
-                          ? t('workspace.status.local-sources-picker-unavailable')
-                          : t('workspace.status.local-sources-refused-not-granted');
+                          ? workspaceText('workspace.status.local-sources-picker-unavailable')
+                          : workspaceText('workspace.status.local-sources-refused-not-granted');
                   ui.localSourcesStatus.dataset.transient = 'true';
                   ui.localSourcesStatus.textContent =
                     key
-                      ? t(key)
+                      ? workspaceText(key)
                       : String(result.message ?? fallback);
                 } catch (error) {
                   ui.localSourcesStatus.dataset.transient = 'true';
                   ui.localSourcesStatus.textContent =
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.local-sources-picker-unavailable');
+                      : workspaceText('workspace.status.local-sources-picker-unavailable');
                 } finally {
                   state.localSourcesInFlight = false;
+                  await loadWorkspaceEffects(false).catch(() => {});
+                  await loadWorkspaceChecks(false).catch(() => {});
+                  await loadWorkspaceRuns(false).catch(() => {});
                   renderLocalSources();
                 }
               };
@@ -5858,12 +6409,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.contextWindow,
                     [[ui.contextCore, coreShare], [ui.contextUsed, reservedShare]],
                     hard > 0
-                      ? t('workspace.label.settings-context-meter')
+                      ? workspaceText('workspace.label.settings-context-meter')
                           .replace('{used}', used.toLocaleString(document.documentElement.lang || undefined))
                           .replace('{reserved}', reserved.toLocaleString(document.documentElement.lang || undefined))
                           .replace('{remaining}', Math.max(0, hard - used - reserved).toLocaleString(document.documentElement.lang || undefined))
-                      : t('workspace.status.settings-context-measured'),
-                    t('workspace.description.settings-context-current'),
+                      : workspaceText('workspace.status.settings-context-measured'),
+                    workspaceText('workspace.description.settings-context-current'),
                     hard > 0
                   );
                   const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
@@ -5874,38 +6425,38 @@ object VexLifeWebP1RuntimeArtifacts {
                   const fieldLeftOut = field && Array.isArray(field.omittedModuleRefs) ? field.omittedModuleRefs.length : 0;
                   const recordExchanges = prompt.priorCompletedExchangeCount ?? null;
                   const contextNotes = [
-                    t('workspace.description.settings-context-selected-events')
+                    workspaceText('workspace.description.settings-context-selected-events')
                       .replace('{count}', priorCount.toLocaleString(document.documentElement.lang || undefined)),
                     recordExchanges === null
                       ? null
-                      : t('workspace.description.settings-context-record-events')
+                      : workspaceText('workspace.description.settings-context-record-events')
                           .replace(
                             '{count}',
                             (Number(recordExchanges) * 2).toLocaleString(document.documentElement.lang || undefined)
                           ),
-                    t('workspace.description.settings-context-whole-history')
+                    workspaceText('workspace.description.settings-context-whole-history')
                       .replace(
                         '{value}',
-                        t(prompt.wholeHistoryEventEnumerationPerformed
+                        workspaceText(prompt.wholeHistoryEventEnumerationPerformed
                           ? 'workspace.label.settings-context-yes'
                           : 'workspace.label.settings-context-no')
                       ),
                     prompt.replyLanguageName
-                      ? t('workspace.description.settings-context-reply-language')
+                      ? workspaceText('workspace.description.settings-context-reply-language')
                           .replace('{language}', String(prompt.replyLanguageName))
                       : null,
                     gaps
-                      ? t('workspace.description.settings-context-private-gaps')
+                      ? workspaceText('workspace.description.settings-context-private-gaps')
                           .replace('{count}', gaps.toLocaleString(document.documentElement.lang || undefined))
                       : null,
                     field
                       ? field.state === 'HELD'
-                        ? t('workspace.description.settings-context-foundation-held')
+                        ? workspaceText('workspace.description.settings-context-foundation-held')
                             .replace(
                               '{reason}',
                               String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase()
                             )
-                        : t('workspace.description.settings-context-foundation-carried')
+                        : workspaceText('workspace.description.settings-context-foundation-carried')
                             .replace('{version}', String(field.fieldVersion ?? ''))
                             .replace('{parts}', fieldParts.toLocaleString(document.documentElement.lang || undefined))
                             .replace('{omitted}', fieldLeftOut.toLocaleString(document.documentElement.lang || undefined))
@@ -5918,19 +6469,19 @@ object VexLifeWebP1RuntimeArtifacts {
                   ].filter(Boolean);
                   ui.contextNote.textContent = contextNotes.join(' ');
                   ui.memoryNote.textContent = prompt.memoryIncluded
-                    ? t('workspace.description.settings-memory-included')
+                    ? workspaceText('workspace.description.settings-memory-included')
                         .replace('{count}', memoryCount.toLocaleString(document.documentElement.lang || undefined))
-                    : t('workspace.description.settings-memory-none');
+                    : workspaceText('workspace.description.settings-memory-none');
                 } else {
                   setMeter(
                     ui.contextWindow,
                     [[ui.contextCore, 0], [ui.contextUsed, 0]],
-                    t('workspace.status.settings-context-no-receipt'),
-                    t('workspace.description.settings-context-no-receipt'),
+                    workspaceText('workspace.status.settings-context-no-receipt'),
+                    workspaceText('workspace.description.settings-context-no-receipt'),
                     false
                   );
-                  ui.contextNote.textContent = t('workspace.description.settings-context-awaiting-turn');
-                  ui.memoryNote.textContent = t('workspace.description.settings-memory-awaiting-turn');
+                  ui.contextNote.textContent = workspaceText('workspace.description.settings-context-awaiting-turn');
+                  ui.memoryNote.textContent = workspaceText('workspace.description.settings-memory-awaiting-turn');
                 }
 
                 const current = state.currentState;
@@ -5945,59 +6496,59 @@ object VexLifeWebP1RuntimeArtifacts {
                   const systemMemoryLabel =
                     memoryKnown
                       ? minimumKnown
-                        ? t('workspace.label.system-memory-known')
+                        ? workspaceText('workspace.label.system-memory-known')
                             .replace('{total}', formatBytes(totalMemory))
                             .replace('{minimum}', formatBytes(minimumMemory))
-                        : t('workspace.label.system-memory-minimum-unknown')
+                        : workspaceText('workspace.label.system-memory-minimum-unknown')
                             .replace('{total}', formatBytes(totalMemory))
-                      : t('workspace.label.system-memory-unknown');
+                      : workspaceText('workspace.label.system-memory-unknown');
                   setMeter(
                     ui.memory,
                     [[ui.memoryUsed, minimumShare], [ui.memoryRemaining, memoryKnown ? 1 - minimumShare : 0]],
                     systemMemoryLabel,
-                    t('workspace.description.system-memory-current'),
+                    workspaceText('workspace.description.system-memory-current'),
                     memoryKnown
                   );
 
                   const freeStorage = formatBytes(current.freeStorageBytes);
                   const modelTotal = formatBytes(current.modelArtifactTotalBytes);
                   const modelPresent = formatBytes(current.modelArtifactPresentBySizeBytes);
-                  const modelLabel = current.activeModelRef ?? t('workspace.label.resources-no-model-selected');
+                  const modelLabel = current.activeModelRef ?? workspaceText('workspace.label.resources-no-model-selected');
                   const modelStorage =
                     current.modelArtifactTotalBytes === null || current.modelArtifactTotalBytes === undefined
-                      ? t('workspace.description.resources-no-model-requirement')
-                      : t('workspace.description.resources-model-files')
+                      ? workspaceText('workspace.description.resources-no-model-requirement')
+                      : workspaceText('workspace.description.resources-model-files')
                           .replace('{present}', modelPresent)
                           .replace('{total}', modelTotal)
                           .replace('{state}', String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.resourceNote.textContent =
-                    t('workspace.description.resources-summary')
+                    workspaceText('workspace.description.resources-summary')
                       .replace('{free}', freeStorage)
                       .replace('{model}', String(modelLabel))
                       .replace('{storage}', modelStorage)
                       .replace('{runtime}', String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
                       .replace('{currentness}', String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.homeCurrentState.textContent =
-                    t('workspace.status.home-current')
-                      .replace('{path}', String(current.homePath ?? t('workspace.label.home-unknown-value')))
+                    workspaceText('workspace.status.home-current')
+                      .replace('{path}', String(current.homePath ?? workspaceText('workspace.label.home-unknown-value')))
                       .replace('{disposition}', String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
-                      .replace('{ref}', String(current.homeRef ?? t('workspace.label.home-unknown-value')));
+                      .replace('{ref}', String(current.homeRef ?? workspaceText('workspace.label.home-unknown-value')));
                 } else {
                   setMeter(
                     ui.memory,
                     [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]],
-                    t('workspace.status.system-memory-not-measured'),
-                    t('workspace.description.system-memory-unavailable'),
+                    workspaceText('workspace.status.system-memory-not-measured'),
+                    workspaceText('workspace.description.system-memory-unavailable'),
                     false
                   );
-                  ui.resourceNote.textContent = t('workspace.description.resources-unavailable');
-                  ui.homeCurrentState.textContent = t('workspace.status.home-unobserved');
+                  ui.resourceNote.textContent = workspaceText('workspace.description.resources-unavailable');
+                  ui.homeCurrentState.textContent = workspaceText('workspace.status.home-unobserved');
                 }
 
                 ui.thoughtVisibility.setAttribute('aria-checked', String(state.thoughtsVisible));
                 ui.lowMemoryAlert.setAttribute('aria-checked', 'false');
                 ui.lowMemoryAlert.disabled = true;
-                ui.alertThreshold.textContent = t('workspace.status.low-memory-not-connected');
+                ui.alertThreshold.textContent = workspaceText('workspace.status.low-memory-not-connected');
               };
 
               const renderCompanionHead = () => {
@@ -6005,7 +6556,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const labs = isVexLabs();
                 const privateNow = isPrivate();
                 const engagementMode = labs ? 'LAB' : privateNow ? 'PRIVATE' : 'CONVERSATION';
-                ui.companionTitle.textContent = t(
+                ui.companionTitle.textContent = workspaceText(
                   settings
                     ? 'workspace.heading.companion-settings'
                     : labs
@@ -6016,12 +6567,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.companionMode.disabled = settings || state.privateInFlight || state.sendInFlight;
                 ui.companionMode.value = engagementMode;
                 ui.companionMode.title = labs
-                  ? t('workspace.heading.companion-labs')
+                  ? workspaceText('workspace.heading.companion-labs')
                   : state.privateMode?.display?.detail
                     ? resolveText(state.privateMode.display.detail)
                     : '';
                 ui.companionStatus.hidden = settings;
-                ui.viewSwitch.textContent = t(
+                ui.viewSwitch.textContent = workspaceText(
                   settings
                     ? 'workspace.button.companion-return'
                     : 'workspace.button.companion-settings'
@@ -6050,7 +6601,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.currentness = await readJson(response);
                 root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
                 root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
-                setCompanionStatus('Ready', t('workspace.status.companion-ready'), ui.companionStatusModel.textContent);
+                setCompanionStatus('Ready', workspaceText('workspace.status.companion-ready'), ui.companionStatusModel.textContent);
               };
 
               const loadCurrentState = async () => {
@@ -6063,7 +6614,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Keyed words of the workspace scope, in the person's language. Until they arrive an
               // element shows its key, never an English string written here (localization law).
-              const t = (key) => {
+              const workspaceText = (key) => {
                 const words = state.workspaceStrings?.[key];
                 return typeof words === 'string' ? words : key;
               };
@@ -6074,7 +6625,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const args = text.args || {};
                 const gib = text.gib || {};
                 const parts = text.parts || {};
-                return t(text.key).replace(/\{([a-zA-Z0-9]+)\}/gu, (whole, name) => {
+                return workspaceText(text.key).replace(/\{([a-zA-Z0-9]+)\}/gu, (whole, name) => {
                   if (name in args) {
                     // Formatting is presentation: an ISO instant is shown in the person's locale.
                     const value = String(args[name]);
@@ -6097,7 +6648,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ];
                 for (const [binding, attribute] of bindings) {
                   for (const element of root.querySelectorAll('[' + binding + ']')) {
-                    const words = t(element.getAttribute(binding));
+                    const words = workspaceText(element.getAttribute(binding));
                     if (attribute === null) element.textContent = words;
                     else element.setAttribute(attribute, words);
                   }
@@ -6125,6 +6676,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderQuickActions();
                 renderLocalAsr();
                 renderVoiceInput();
+                renderTimeline();
+                renderComposer();
+                if (state.app === apps.archives) renderArchives();
               };
 
               // The presentation reports only what it observed itself (what it showed, what it could
@@ -6153,7 +6707,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.diagnosticsStatus) return;
                 const projection = state.diagnostics;
                 if (!projection) {
-                  ui.diagnosticsStatus.textContent = t('workspace.status.diagnostics-unavailable');
+                  ui.diagnosticsStatus.textContent = workspaceText('workspace.status.diagnostics-unavailable');
                   ui.diagnosticsCapture.textContent = '';
                   ui.diagnosticsRecords.textContent = '';
                   ui.diagnosticsEnhanced.disabled = true;
@@ -6164,10 +6718,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.diagnosticsStatus.textContent = resolveText(display.status);
                 ui.diagnosticsCapture.textContent = resolveText(display.capture);
                 ui.diagnosticsRecords.textContent = projection.chronologyRecords > 0 && projection.oldestAt
-                  ? t('workspace.label.diagnostics-records')
+                  ? workspaceText('workspace.label.diagnostics-records')
                       .replace('{count}', String(projection.chronologyRecords))
                       .replace('{since}', new Date(projection.oldestAt).toLocaleString(document.documentElement.lang || undefined))
-                  : t('workspace.label.diagnostics-no-records');
+                  : workspaceText('workspace.label.diagnostics-no-records');
                 // Buttons carry the Family's Control refs; their words come from the Control's key.
                 const enhanced = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStartEnhanced)} || control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStopEnhanced)});
                 const clear = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlClearHistory)});
@@ -6201,7 +6755,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   state.diagnostics = await readJson(response);
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.diagnostics-unavailable'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.diagnostics-unavailable'));
                 } finally {
                   state.diagnosticsInFlight = false;
                   renderDiagnostics();
@@ -6210,24 +6764,220 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
-              const servingModelLabel = () => {
-                const serving = (state.models?.models || []).find((model) => model.serving);
-                return serving?.label ?? '';
+              const sourceRows = () =>
+                state.modelSources?.models?.rows || [];
+
+              const sourceRowLabel = (row) => {
+                if (!row) return '';
+                const local =
+                  (state.models?.models || []).find((model) => model.handle === row.handle);
+                return local?.label ?? String(row.modelRef ?? row.handle ?? '');
               };
 
-              const selectedModel = () =>
-                (state.models?.models || []).find((model) => model.targeted) ?? null;
+              const servingSourceRow = () => {
+                const serving = state.modelSources?.inference?.serving ?? null;
+                return serving
+                  ? sourceRows().find((row) => row.handle === serving.handle) ?? null
+                  : null;
+              };
+
+              const selectedSourceRow = () =>
+                sourceRows().find((row) => row.targeted) ?? null;
+
+              const servingModelLabel = () =>
+                sourceRowLabel(servingSourceRow()) ||
+                (state.models?.models || []).find((model) => model.serving)?.label ||
+                '';
+
+              const selectedModel = () => {
+                const selected = selectedSourceRow();
+                if (!selected || selected.sourceKind !== 'LOCAL') return null;
+                return (state.models?.models || []).find((model) => model.handle === selected.handle) ?? null;
+              };
 
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
 
               const modelResourceFacts = (model) =>
                 model.recommendedMemoryBytes == null
-                  ? t('workspace.label.model-facts-memory-unestablished').replace('{size}', gibText(model.totalBytes))
-                  : t('workspace.label.model-facts')
+                  ? workspaceText('workspace.label.model-facts-memory-unestablished').replace('{size}', gibText(model.totalBytes))
+                  : workspaceText('workspace.label.model-facts')
                       .replace('{size}', gibText(model.totalBytes))
                       .replace('{memory}', gibText(model.recommendedMemoryBytes))
-                      .replace('{fit}', t(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
+                      .replace('{fit}', workspaceText(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
+
+              const modelCapabilityFacts = (model) =>
+                (model?.capabilities?.displayFacts || []).map((fact) =>
+                  [resolveText(fact.label), resolveText(fact.status)]
+                    .filter(Boolean)
+                    .join(': ')
+                );
+
+              const partnerProviderConfigured = (providerRef) =>
+                (state.modelSources?.models?.rows || []).some(
+                  (row) =>
+                    row.sourceKind === 'PARTNER' &&
+                    row.providerRef === providerRef &&
+                    row.partnerConnectionStanding &&
+                    row.partnerConnectionStanding !== 'NEEDS_CREDENTIAL'
+                );
+
+              const renderPartnerApiConnection = () => {
+                if (!ui.partnerApiProvider || !ui.partnerApiConnect) return;
+                const availability = state.partnerConnectionAvailability;
+                const currentProvider =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+                const selectedProviderRef = currentProvider?.providerRef ?? '';
+                const options = partnerProviders.map((provider) => {
+                  const option = document.createElement('option');
+                  option.value = provider.providerRef;
+                  option.textContent = provider.label;
+                  option.selected = provider.providerRef === selectedProviderRef;
+                  return option;
+                });
+                ui.partnerApiProvider.replaceChildren(...options);
+
+                const enabled =
+                  availability?.connectEnabled === true &&
+                  !state.partnerConnectionInFlight;
+                const selected =
+                  partnerProviders.find((provider) => provider.providerRef === ui.partnerApiProvider.value) ??
+                  partnerProviders[0] ??
+                  null;
+
+                ui.partnerApiProvider.disabled = !enabled;
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.disabled = !enabled;
+                }
+                if (ui.partnerApiWorkspaceField) {
+                  ui.partnerApiWorkspaceField.hidden = selected?.workspaceOptional !== true;
+                }
+                if (ui.partnerApiWorkspace) {
+                  ui.partnerApiWorkspace.disabled = !enabled || selected?.workspaceOptional !== true;
+                }
+
+                const hasCredential =
+                  Boolean(String(ui.partnerApiCredential?.value ?? ''));
+                ui.partnerApiConnect.disabled = !enabled || !hasCredential;
+                ui.partnerApiConnect.onclick = () => {
+                  if (!ui.partnerApiConnect.disabled) void connectPartnerApi();
+                };
+                ui.partnerApiProvider.onchange = () => renderPartnerApiConnection();
+                if (ui.partnerApiCredential) {
+                  ui.partnerApiCredential.oninput = () => renderPartnerApiConnection();
+                }
+
+                if (availability?.state === service.partnerConnectionHeldFunding) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'held';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'held';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-held-funding');
+                  }
+                  if (ui.partnerApiNote) {
+                    ui.partnerApiNote.textContent = workspaceText('workspace.description.partner-api-held-funding');
+                  }
+                } else if (availability?.connectEnabled === true) {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'ready';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'ready';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiStatus) {
+                    const row =
+                      (state.modelSources?.models?.rows || []).find(
+                        (candidate) =>
+                          candidate.sourceKind === 'PARTNER' &&
+                          candidate.providerRef === selected?.providerRef
+                      ) ?? null;
+                    ui.partnerApiStatus.textContent =
+                      row?.partnerConnectionStanding
+                        ? workspaceText('workspace.status.partner-api-ready') + ' · ' + row.partnerConnectionStanding
+                        : workspaceText('workspace.status.partner-api-ready');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                } else {
+                  if (ui.partnerApiCard) ui.partnerApiCard.dataset.state = 'unavailable';
+                  if (ui.partnerApiState) {
+                    ui.partnerApiState.dataset.state = 'unavailable';
+                    ui.partnerApiState.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent = workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                  if (ui.partnerApiNote) ui.partnerApiNote.textContent = '';
+                }
+              };
+
+              const loadPartnerConnectionAvailability = async () => {
+                const response = await productFetch(
+                  service.partnerConnectionsPath,
+                  { headers: { accept: 'application/json' }, cache: 'no-store' }
+                );
+                state.partnerConnectionAvailability = await readJson(response);
+                renderPartnerApiConnection();
+                return state.partnerConnectionAvailability;
+              };
+
+              const connectPartnerApi = async () => {
+                if (state.partnerConnectionInFlight) return;
+                if (state.partnerConnectionAvailability?.connectEnabled !== true) return;
+                const provider =
+                  partnerProviders.find(
+                    (candidate) => candidate.providerRef === ui.partnerApiProvider?.value
+                  ) ?? null;
+                if (!provider || !ui.partnerApiCredential) return;
+
+                let secretText = String(ui.partnerApiCredential.value ?? '');
+                if (!secretText) return;
+                const secretBytes = new TextEncoder().encode(secretText);
+                secretText = '';
+                ui.partnerApiCredential.value = '';
+
+                const headers = new Headers({
+                  'content-type': 'application/octet-stream',
+                  accept: 'application/json'
+                });
+                headers.set(service.partnerConnectionControlHeader, partnerProviderConfigured(provider.providerRef)
+                  ? service.partnerConnectionControlReplace
+                  : service.partnerConnectionControlConnect);
+                headers.set(service.partnerConnectionProviderRefHeader, provider.providerRef);
+                const workspaceId = String(ui.partnerApiWorkspace?.value ?? '').trim();
+                if (provider.workspaceOptional && workspaceId) {
+                  headers.set(service.partnerConnectionWorkspaceIdHeader, workspaceId);
+                }
+
+                state.partnerConnectionInFlight = true;
+                renderPartnerApiConnection();
+                try {
+                  const response = await effectFetch(
+                    service.partnerConnectionsControlPath,
+                    { method: 'POST', headers, body: secretBytes }
+                  );
+                  await readJson(response);
+                  notify(workspaceText('workspace.status.partner-api-connected'));
+                  await Promise.all([
+                    loadPartnerConnectionAvailability(),
+                    loadModels()
+                  ]);
+                } catch (error) {
+                  notify(workspaceText('workspace.status.partner-api-unavailable'));
+                  if (ui.partnerApiStatus) {
+                    ui.partnerApiStatus.textContent =
+                      error instanceof Error
+                        ? error.message
+                        : workspaceText('workspace.status.partner-api-unavailable');
+                  }
+                } finally {
+                  secretBytes.fill(0);
+                  state.partnerConnectionInFlight = false;
+                  renderPartnerApiConnection();
+                }
+              };
 
               // Settings -> Models. Selection, launch configuration and activation remain separate
               // Controls. The renderer never turns a selection/config edit into a runtime effect.
@@ -6238,8 +6988,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!projection) return;
 
                 const models = projection.models || [];
+                const sourceProjection = state.modelSources?.models ?? null;
+                const rows = sourceProjection?.rows ?? [];
+                const selectedSource = selectedSourceRow();
+                const servingSource = servingSourceRow();
                 const selected = selectedModel();
-                const serving = models.find((model) => model.serving) ?? null;
+                const serving =
+                  servingSource?.sourceKind === 'LOCAL'
+                    ? models.find((model) => model.handle === servingSource.handle) ?? null
+                    : null;
                 const modelImport = projection.modelImport ?? null;
 
                 if (ui.modelImportCheck) ui.modelImportCheck.disabled = state.modelImportInFlight;
@@ -6250,7 +7007,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (ui.modelImportFacts) {
                   ui.modelImportFacts.textContent =
                     modelImport && modelImport.state !== 'HELD' && modelImport.totalBytes != null
-                      ? t('workspace.label.model-import-facts')
+                      ? workspaceText('workspace.label.model-import-facts')
                           .replace('{size}', gibText(modelImport.totalBytes))
                           .replace('{license}', modelImport.providerLicense ?? '')
                           .replace('{revision}', String(modelImport.providerRevision ?? '').slice(0, 12))
@@ -6264,44 +7021,58 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.modelsCurrentState) {
                   const stateParts = [
-                    t('workspace.label.model-state-serving').replace('{model}', serving?.label ?? t('workspace.label.model-none'))
+                    workspaceText('workspace.label.model-state-serving').replace(
+                      '{model}',
+                      servingSource ? sourceRowLabel(servingSource) : workspaceText('workspace.label.model-none')
+                    )
                   ];
-                  if (selected && (!serving || selected.handle !== serving.handle)) {
+                  if (
+                    selectedSource &&
+                    (!servingSource || selectedSource.handle !== servingSource.handle)
+                  ) {
                     stateParts.push(
-                      t('workspace.label.model-state-selected')
-                        .replace('{model}', selected.label)
+                      workspaceText('workspace.label.model-state-selected')
+                        .replace('{model}', sourceRowLabel(selectedSource))
                     );
                   }
                   if (projection.switching) {
                     stateParts.push(resolveText(projection.switching.message));
                   } else if (selected?.runtimeConfigurationPending) {
-                    stateParts.push(t('workspace.status.model-runtime-configuration-pending'));
+                    stateParts.push(workspaceText('workspace.status.model-runtime-configuration-pending'));
                   }
                   ui.modelsCurrentState.textContent = stateParts.join(' · ');
                 }
 
                 if (ui.modelChoice) {
-                  const options = models.map((model) => {
+                  const options = rows.map((row) => {
                     const option = document.createElement('option');
-                    option.value = model.handle;
-                    const availability = resolveText(model.display.status);
-                    option.textContent = model.label + ' · ' + availability;
-                    option.selected = Boolean(model.targeted);
+                    option.value = row.handle;
+                    const local =
+                      row.sourceKind === 'LOCAL'
+                        ? models.find((model) => model.handle === row.handle) ?? null
+                        : null;
+                    const standing =
+                      local
+                        ? resolveText(local.display.status)
+                        : [row.providerRef, row.partnerConnectionStanding, row.partnerSupportStanding]
+                            .filter(Boolean)
+                            .join(' · ');
+                    option.textContent =
+                      [sourceRowLabel(row), standing]
+                        .filter(Boolean)
+                        .join(' · ');
+                    option.selected = Boolean(row.targeted);
                     return option;
                   });
                   ui.modelChoice.replaceChildren(...options);
-                  const anySelectableModel =
-                    models.some((model) =>
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    );
-                  ui.modelChoice.disabled = state.modelsInFlight || !anySelectableModel;
+                  ui.modelChoice.disabled =
+                    state.modelsInFlight ||
+                    Boolean(projection.switching) ||
+                    rows.length === 0;
                   ui.modelChoice.onchange = () => {
                     const handle = ui.modelChoice.value;
-                    const model = models.find((candidate) => candidate.handle === handle);
-                    if (
-                      model &&
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    ) {
+                    const row = rows.find((candidate) => candidate.handle === handle);
+                    if (row && !row.targeted) {
                       void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
                     }
                   };
@@ -6309,7 +7080,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (selected) {
                   const status = selected.downloadedBytes != null
-                    ? t('workspace.status.model-downloading')
+                    ? workspaceText('workspace.status.model-downloading')
                         .replace('{done}', gibText(selected.downloadedBytes))
                         .replace('{total}', gibText(selected.totalBytes))
                     : resolveText(selected.display.status);
@@ -6321,11 +7092,26 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (ui.modelChoiceNotes) {
                     ui.modelChoiceNotes.textContent = [
                       ...(selected.display.notes || []).map(resolveText),
-                      selected.imported ? t('workspace.label.model-imported') : '',
-                      selected.standing === 'CANDIDATE' && !selected.imported ? t('workspace.label.model-candidate') : ''
+                      ...modelCapabilityFacts(selected),
+                      selected.imported ? workspaceText('workspace.label.model-imported') : '',
+                      selected.standing === 'CANDIDATE' && !selected.imported ? workspaceText('workspace.label.model-candidate') : ''
                     ].filter(Boolean).join(' · ');
                   }
-
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.modelRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent =
+                      selectedSource.liveValidationDisclosureRequired
+                        ? String(selectedSource.partnerSupportStanding ?? '')
+                        : '';
+                  }
                 } else {
                   if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
                   if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
@@ -6350,7 +7136,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     resolveText(model.display.status),
                     modelResourceFacts(model),
                     ...(model.display.notes || []).map(resolveText),
-                    model.imported ? t('workspace.label.model-imported') : ''
+                    model.imported ? workspaceText('workspace.label.model-imported') : ''
                   ].filter(Boolean).join(' · ');
 
                   copy.append(label, detail);
@@ -6388,7 +7174,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
 
-                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selectedSource;
                 if (selected) {
                   const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
@@ -6403,7 +7189,9 @@ object VexLifeWebP1RuntimeArtifacts {
                       const option = document.createElement('option');
                       option.value = String(choice.promptCacheEntries);
                       option.textContent =
-                        resolveText(choice.label) + ' · ' + resolveText(choice.standing);
+                        [resolveText(choice.label), resolveText(choice.standing)]
+                          .filter(Boolean)
+                          .join(' · ');
                       option.selected = Boolean(choice.selected);
                       option.disabled = !choice.selected && !choice.controlRef;
                       return option;
@@ -6456,7 +7244,41 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.modelStart.textContent =
                       startControl
                         ? resolveText(startControl.label)
-                        : t('workspace.button.model-start');
+                        : workspaceText('workspace.button.model-start');
+                  }
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelConfigurationRecommendation) {
+                    ui.modelConfigurationRecommendation.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    ui.modelPromptCacheEntries.replaceChildren();
+                    ui.modelPromptCacheEntries.disabled = true;
+                    ui.modelPromptCacheEntries.onchange = null;
+                  }
+                  if (ui.modelUseRecommended) {
+                    ui.modelUseRecommended.hidden = true;
+                    ui.modelUseRecommended.disabled = true;
+                    ui.modelUseRecommended.onclick = null;
+                  }
+                  if (ui.modelStart) {
+                    const mayUse =
+                      selectedSource.targeted &&
+                      !selectedSource.serving &&
+                      !projection.switching;
+                    ui.modelStart.hidden = false;
+                    ui.modelStart.disabled = state.modelsInFlight || !mayUse;
+                    ui.modelStart.onclick = () => {
+                      if (!mayUse) return;
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlUse)},
+                        selectedSource.handle
+                      );
+                    };
+                    ui.modelStart.textContent = workspaceText('workspace.button.model-start');
                   }
                 }
 
@@ -6467,12 +7289,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   lines.push(resolveText(projection.lastOutcome.message));
                 }
                 if (projection.switchPending && !projection.switching) {
-                  lines.push(t('workspace.status.models-switch-pending'));
+                  lines.push(workspaceText('workspace.status.models-switch-pending'));
                 }
                 if (projection.freeStorageBytes != null) {
-                  lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
+                  lines.push(workspaceText('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
                 }
                 if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+                renderPartnerApiConnection();
                 if (projection.switching) {
                   setCompanionStatus(
                     'Checking',
@@ -6482,7 +7305,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (ui.companionStatus?.dataset.state !== 'Unavailable') {
                   setCompanionStatus(
                     'Ready',
-                    t('workspace.status.companion-ready'),
+                    workspaceText('workspace.status.companion-ready'),
                     servingModelLabel() || ui.companionStatusModel.textContent
                   );
                 }
@@ -6490,9 +7313,24 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadModels = async () => {
-                const response = await productFetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.models = await readJson(response);
+                const wasSwitching = Boolean(state.models?.switching);
+                const [localResponse, sourceResponse] = await Promise.all([
+                  productFetch(service.modelsPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  }),
+                  productFetch(service.modelsSourcesPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  })
+                ]);
+                state.models = await readJson(localResponse);
+                state.modelSources = await readJson(sourceResponse);
+                const switchingNow = Boolean(state.models?.switching);
                 renderModels();
+                if (wasSwitching && !switchingNow) {
+                  void loadConversationTurn().catch(() => {});
+                }
                 // Follow only active model work; nothing polls when the relationship is stable.
                 if (state.models?.downloading || state.models?.switching) {
                   window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
@@ -6509,7 +7347,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const response = await effectFetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
                   state.models = await readJson(response);
-                } catch { notify(t('workspace.status.model-import-unavailable')); }
+                } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
               };
 
@@ -6522,25 +7360,39 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
                   state.models = await readJson(response);
-                } catch { notify(t('workspace.status.model-import-unavailable')); }
+                  await loadModels();
+                } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
               };
 
               const modelControl = async (controlRef, handle, promptCacheEntries = null) => {
                 if (state.modelsInFlight) return;
-                if (controlRef === ${jsString(VexLifeModelsFamily.ControlRemove)} && !window.confirm(t('workspace.button.model-remove') + '?')) return;
-                if (controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)} && !window.confirm(t('workspace.button.model-forget') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlRemove)} && !window.confirm(workspaceText('workspace.button.model-remove') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)} && !window.confirm(workspaceText('workspace.button.model-forget') + '?')) return;
                 state.modelsInFlight = true;
                 renderModels();
                 try {
                   const body = { controlRef, handle };
                   if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
-                  const response = await effectFetch(service.modelsControlPath, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify(body)
-                  });
-                  state.models = await readJson(response);
+                  const sourceAware =
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)};
+                  const response = await effectFetch(
+                    sourceAware
+                      ? service.modelsSourcesControlPath
+                      : service.modelsControlPath,
+                    {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json', accept: 'application/json' },
+                      body: JSON.stringify(body)
+                    }
+                  );
+                  if (sourceAware) {
+                    state.modelSources = await readJson(response);
+                    await loadModels();
+                  } else {
+                    state.models = await readJson(response);
+                  }
                   if (
                     controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
                     controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||
@@ -6552,7 +7404,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (message) notify(resolveText(message));
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.models-unavailable'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.models-unavailable'));
                 } finally {
                   state.modelsInFlight = false;
                   renderModels();
@@ -6570,7 +7422,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const localAsrSpokenLanguageLabel = (choice) => {
                 if (choice.labelKey) {
-                  return t(choice.labelKey)
+                  return workspaceText(choice.labelKey)
                     .replace('{language}', String(choice.languageLabel ?? ''));
                 }
                 return String(choice.languageLabel ?? choice.languageCode ?? '');
@@ -6578,19 +7430,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const localAsrArtifactStatusText = (option) => {
                 if (option.downloadedBytes != null) {
-                  return t('workspace.status.model-downloading')
+                  return workspaceText('workspace.status.model-downloading')
                     .replace('{done}', gibText(option.downloadedBytes))
                     .replace('{total}', gibText(option.modelBytes));
                 }
                 switch (option.artifactState) {
                   case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
-                    return t('workspace.status.model-on-this-mac');
+                    return workspaceText('workspace.status.model-on-this-mac');
                   case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
-                    return t('workspace.status.model-partly-downloaded');
+                    return workspaceText('workspace.status.model-partly-downloaded');
                   case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
-                    return t('workspace.status.model-damaged');
+                    return workspaceText('workspace.status.model-damaged');
                   default:
-                    return t('workspace.status.model-not-downloaded');
+                    return workspaceText('workspace.status.model-not-downloaded');
                 }
               };
 
@@ -6610,7 +7462,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.localAsrComposerOutput.disabled = true;
                   }
                   if (ui.localAsrStatus) {
-                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                    ui.localAsrStatus.textContent = workspaceText('workspace.status.local-asr-unavailable');
                   }
                   observeVoiceInputCapability();
                   renderVoiceInput();
@@ -6655,7 +7507,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     notes.className = 'model-notes';
                     notes.textContent =
                       option.selected
-                        ? t('workspace.label.model-chosen')
+                        ? workspaceText('workspace.label.model-chosen')
                         : '';
 
                     const controls = document.createElement('div');
@@ -6664,7 +7516,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       const button = document.createElement('button');
                       button.type = 'button';
                       button.className = 'outline-button';
-                      button.textContent = t(control.labelKey);
+                      button.textContent = workspaceText(control.labelKey);
                       button.disabled = state.localAsrInFlight || voiceInputSessionOwnsState();
                       button.addEventListener('click', () => {
                         void localAsrModelControl(control.controlRef, option.modelRef);
@@ -6681,7 +7533,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.localAsrStorageNote.textContent =
                     projection.freeStorageBytes == null
                       ? ''
-                      : t('workspace.label.local-asr-free-space')
+                      : workspaceText('workspace.label.local-asr-free-space')
                           .replace('{free}', gibText(projection.freeStorageBytes));
                 }
 
@@ -6700,7 +7552,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   for (const choice of projection.composerOutputChoices ?? []) {
                     const node = document.createElement('option');
                     node.value = String(choice.mode);
-                    node.textContent = t(choice.labelKey);
+                    node.textContent = workspaceText(choice.labelKey);
                     node.selected = Boolean(choice.selected);
                     node.disabled = !choice.supportedBySelectedModel && !choice.selected;
                     ui.localAsrComposerOutput.append(node);
@@ -6727,10 +7579,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.localAsrStatus) {
                   if (!selected) {
-                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                    ui.localAsrStatus.textContent = workspaceText('workspace.status.local-asr-unavailable');
                   } else if (selected.currentState === 'READY') {
                     ui.localAsrStatus.textContent =
-                      t('workspace.status.local-asr-ready')
+                      workspaceText('workspace.status.local-asr-ready')
                         .replace('{provider}', selected.providerLabel)
                         .replace('{model}', selected.modelLabel)
                         .replace('{size}', formatBytes(selected.modelBytes));
@@ -6745,7 +7597,7 @@ object VexLifeWebP1RuntimeArtifacts {
                             : selected.currentDetailRef === 'MODEL_DIGEST_NOT_CURRENT'
                               ? 'workspace.status.local-asr-model-not-current'
                               : 'workspace.status.local-asr-unavailable';
-                    ui.localAsrStatus.textContent = t(statusKey);
+                    ui.localAsrStatus.textContent = workspaceText(statusKey);
                   }
                 }
 
@@ -6798,16 +7650,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   const selected = selectedLocalAsrOption();
                   notify(
                     selected
-                      ? t('workspace.status.local-asr-selected')
+                      ? workspaceText('workspace.status.local-asr-selected')
                           .replace('{provider}', selected.providerLabel)
                           .replace('{model}', selected.modelLabel)
-                      : t('workspace.status.local-asr-unavailable')
+                      : workspaceText('workspace.status.local-asr-unavailable')
                   );
                 } catch (error) {
                   notify(
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.local-asr-unavailable')
+                      : workspaceText('workspace.status.local-asr-unavailable')
                   );
                 } finally {
                   state.localAsrInFlight = false;
@@ -6820,7 +7672,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (
                   controlRef ===
                     ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
-                  !window.confirm(t('workspace.button.model-remove') + '?')
+                  !window.confirm(workspaceText('workspace.button.model-remove') + '?')
                 ) {
                   return;
                 }
@@ -6853,7 +7705,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.model-control-not-lawful')
+                      : workspaceText('workspace.status.model-control-not-lawful')
                   );
                 } finally {
                   state.localAsrInFlight = false;
@@ -6901,7 +7753,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.local-asr-unavailable')
+                      : workspaceText('workspace.status.local-asr-unavailable')
                   );
                 } finally {
                   state.localAsrInFlight = false;
@@ -6937,7 +7789,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.local-asr-unavailable')
+                      : workspaceText('workspace.status.local-asr-unavailable')
                   );
                 } finally {
                   state.localAsrInFlight = false;
@@ -6971,10 +7823,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   const display = state.vision?.display;
                   const summary = display
                     ? resolveText(display.label)
-                    : t('workspace.status.vision-summary')
-                        .replace('{vision}', t('workspace.label.vision'))
-                        .replace('{state}', t('workspace.status.vision-checking'));
-                  const detail = display ? resolveText(display.detail) : t('workspace.description.vision-checking');
+                    : workspaceText('workspace.status.vision-summary')
+                        .replace('{vision}', workspaceText('workspace.label.vision'))
+                        .replace('{state}', workspaceText('workspace.status.vision-checking'));
+                  const detail = display ? resolveText(display.detail) : workspaceText('workspace.description.vision-checking');
                   notify(summary + ' — ' + detail);
                   return;
                 }
@@ -6993,24 +7845,24 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   const result = await response.json();
                   if (String(result?.requestRef ?? '') !== requestRef || !result?.vision) {
-                    throw new Error(t('workspace.status.vision-request-mismatch'));
+                    throw new Error(workspaceText('workspace.status.vision-request-mismatch'));
                   }
                   state.vision = result.vision;
                   if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
                     notify(
-                      t('workspace.status.vision-changed-before-action')
+                      workspaceText('workspace.status.vision-changed-before-action')
                         .replace('{detail}', resolveText(result.vision.display.detail))
                     );
                   } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
                     notify(
-                      t('workspace.status.vision-request-not-completed')
+                      workspaceText('workspace.status.vision-request-not-completed')
                         .replace('{label}', resolveText(result.vision.display.label))
                     );
                   } else {
                     notify(resolveText(result.vision.display.label));
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.vision-request-failed'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.vision-request-failed'));
                 } finally {
                   state.visionInFlight = false;
                   await loadVision().catch(() => {
@@ -7060,7 +7912,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!state.conversationTurn?.display?.active) {
                   setCompanionStatus(
                     'Ready',
-                    t('workspace.status.conversation-ready'),
+                    workspaceText('workspace.status.conversation-ready'),
                     servingModelLabel() || latest?.model || ''
                   );
                 }
@@ -7079,10 +7931,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.context?.state === service.contextHeldUnsupportedState) {
                   const schema = String(
                     state.context.durablePromptReceiptSchema ??
-                      t('workspace.label.resources-unknown-value')
+                      workspaceText('workspace.label.resources-unknown-value')
                   );
                   notify(
-                    t('workspace.status.context-unsupported-detail')
+                    workspaceText('workspace.status.context-unsupported-detail')
                       .replace('{schema}', schema)
                   );
                 }
@@ -7161,12 +8013,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   ]);
                 } catch (projectionError) {
                   notify(
-                    t('workspace.status.context-refresh-failed')
+                    workspaceText('workspace.status.context-refresh-failed')
                       .replace(
                         '{detail}',
                         projectionError instanceof Error
                           ? projectionError.message
-                          : t('workspace.status.context-unavailable-build')
+                          : workspaceText('workspace.status.context-unavailable-build')
                       )
                   );
                 }
@@ -7175,7 +8027,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 clearLiveProcessState();
                 setCompanionStatus(
                   'Ready',
-                  t('workspace.status.companion-ready'),
+                  workspaceText('workspace.status.companion-ready'),
                   servingModelLabel() || result.model || ''
                 );
                 render();
@@ -7225,13 +8077,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     result.outcome === conversationTurn.outcome.realized
                       ? resolveText(result.turn?.display?.status)
-                      : t('workspace.status.conversation-cancel-not-active')
+                      : workspaceText('workspace.status.conversation-cancel-not-active')
                   );
                 } catch (error) {
                   notify(
                     error instanceof Error
                       ? error.message
-                      : t('workspace.status.conversation-cancel-unavailable')
+                      : workspaceText('workspace.status.conversation-cancel-unavailable')
                   );
                 } finally {
                   state.sendCancelInFlight = false;
@@ -7296,10 +8148,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus(
                   'Checking',
                   retryingExactAttempt
-                    ? t('workspace.status.companion-retrying-exact')
+                    ? workspaceText('workspace.status.companion-retrying-exact')
                     : newAttemptSeed
-                      ? t('workspace.status.companion-trying-again')
-                      : t('workspace.status.companion-checking'),
+                      ? workspaceText('workspace.status.companion-trying-again')
+                      : workspaceText('workspace.status.companion-checking'),
                   ''
                 );
                 render();
@@ -7318,11 +8170,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
                       if (state.streamPhase === 'CheckingRuntime') {
-                        setCompanionStatus('Checking', t('workspace.status.companion-checking'), '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-checking'), '');
                       } else if (state.streamPhase === 'Reconnecting') {
-                        setCompanionStatus('Checking', t('workspace.status.companion-reconnecting'), '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-reconnecting'), '');
                       } else if (state.streamPhase === 'Generating') {
-                        setCompanionStatus('Checking', t('workspace.status.companion-thinking'), '');
+                        setCompanionStatus('Checking', workspaceText('workspace.status.companion-thinking'), '');
                       }
                       updateLiveTurn();
                       return;
@@ -7331,7 +8183,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
                       appendProcessReasoning(event.delta);
-                      setCompanionStatus('Checking', t('workspace.status.companion-thinking'), '');
+                      setCompanionStatus('Checking', workspaceText('workspace.status.companion-thinking'), '');
                       updateLiveTurn();
                       // Kokoro consumes the raw aggregate above, never the visual containers.
                       followStreamSpeech(false);
@@ -7363,7 +8215,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamedContent += event.delta;
                       freezeActiveProcessThought();
                       if (!state.liveProcessManuallyToggled) state.liveProcessExpanded = false;
-                      setCompanionStatus('Checking', t('workspace.status.companion-responding'), '');
+                      setCompanionStatus('Checking', workspaceText('workspace.status.companion-responding'), '');
                       updateLiveTurn();
                       // Final-answer speech remains on the same raw stream as T004.
                       followStreamSpeech(false);
@@ -7371,14 +8223,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     if (event?.type === 'FAILED') {
                       const failure = event.error ?? {};
-                      const error = new Error(String(failure.message ?? t('workspace.status.conversation-turn-failed')));
+                      const error = new Error(String(failure.message ?? workspaceText('workspace.status.conversation-turn-failed')));
                       error.vexStatus = 409;
                       error.vexResponse = failure;
                       throw error;
                     }
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
-                  if (!result) throw new Error(t('workspace.status.conversation-stream-ended'));
+                  if (!result) throw new Error(workspaceText('workspace.status.conversation-stream-ended'));
                   await completeCanonicalSend(result, true);
                 } catch (error) {
                   // Preserve what the human already saw until the canonical turn owner returns
@@ -7392,7 +8244,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let retireAttempt = status === 400 || retryAllowed === false;
 
                   if (!retireAttempt) {
-                    setCompanionStatus('Checking', t('workspace.status.companion-reconciling'), '');
+                    setCompanionStatus('Checking', workspaceText('workspace.status.companion-reconciling'), '');
                     render();
                     try {
                       const reconciled = await reconcileSendOutcome(pending);
@@ -7433,8 +8285,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     setCompanionStatus(
                       cancelledByPerson ? 'Ready' : 'Unavailable',
                       cancelledByPerson
-                        ? t('workspace.status.conversation-stopped')
-                        : t('workspace.status.companion-send-failed'),
+                        ? workspaceText('workspace.status.conversation-stopped')
+                        : workspaceText('workspace.status.companion-send-failed'),
                       servingModelLabel() || ''
                     );
                   } else {
@@ -7442,7 +8294,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
                     state.pending = pending;
                     state.streamPhase = 'Reconnecting';
-                    setCompanionStatus('Unavailable', t('workspace.status.companion-send-unresolved'), '');
+                    setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-send-unresolved'), '');
                     reportFact(
                       'SEND_OUTCOME_UNRESOLVED_SHOWN',
                       { reason: terminalError instanceof Error ? terminalError.name : 'unknown' }
@@ -7453,10 +8305,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   render();
                   notify(
                     cancelledByPerson
-                      ? t('workspace.description.conversation-stopped')
+                      ? workspaceText('workspace.description.conversation-stopped')
                       : terminalError instanceof Error
                         ? terminalError.message
-                        : t('workspace.status.companion-send-failed')
+                        : workspaceText('workspace.status.companion-send-failed')
                   );
                 }
               };
@@ -7492,16 +8344,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.seam.setAttribute(
                   'aria-valuetext',
                   browserCollapsed
-                    ? t('workspace.status.browser-collapsed')
+                    ? workspaceText('workspace.status.browser-collapsed')
                     : companionCollapsed
-                      ? t('workspace.status.companion-collapsed')
-                      : t(narrow ? 'workspace.status.browser-height' : 'workspace.status.browser-width')
+                      ? workspaceText('workspace.status.companion-collapsed')
+                      : workspaceText(narrow ? 'workspace.status.browser-height' : 'workspace.status.browser-width')
                           .replace('{percent}', String(percent))
                 );
-                const browserAction = t(
+                const browserAction = workspaceText(
                   browserCollapsed ? 'workspace.button.browser-show' : 'workspace.button.browser-hide'
                 );
-                const companionAction = t(
+                const companionAction = workspaceText(
                   companionCollapsed ? 'workspace.button.companion-show' : 'workspace.button.companion-hide'
                 );
                 ui.collapseBefore.setAttribute('aria-label', browserAction);
@@ -7537,11 +8389,11 @@ object VexLifeWebP1RuntimeArtifacts {
               const openCurrentContext = () => {
                 if (!state.browserContext) return;
                 showInspector(
-                  t('workspace.heading.context-inspector-captured-page'),
+                  workspaceText('workspace.heading.context-inspector-captured-page'),
                   [
-                    [t('workspace.label.context-inspector-page'), state.browserContext.pageUrl],
-                    [t('workspace.label.context-inspector-title'), state.browserContext.title || t('workspace.label.context-inspector-none')],
-                    [t('workspace.label.context-inspector-read-from'), t('workspace.label.context-inspector-context-provider')]
+                    [workspaceText('workspace.label.context-inspector-page'), state.browserContext.pageUrl],
+                    [workspaceText('workspace.label.context-inspector-title'), state.browserContext.title || workspaceText('workspace.label.context-inspector-none')],
+                    [workspaceText('workspace.label.context-inspector-read-from'), workspaceText('workspace.label.context-inspector-context-provider')]
                   ],
                   state.browserContext.text
                 );
@@ -7561,7 +8413,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.query.blur();
                   ui.addressError.hidden = true;
                 } catch (error) {
-                  ui.addressError.textContent = error instanceof Error ? error.message : t('workspace.status.browser-open-failed');
+                  ui.addressError.textContent = error instanceof Error ? error.message : workspaceText('workspace.status.browser-open-failed');
                   ui.addressError.hidden = false;
                 }
               });
@@ -7575,13 +8427,13 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
-                  notify(error instanceof Error ? error.message : t('workspace.status.private-note-propose-failed')));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-note-propose-failed')));
               });
               ui.privateKeep.addEventListener('click', () => {
                 const text = state.privateMode?.proposedNoteOrNull;
                 if (!text) return;
                 void privatePost(service.privateNoteKeepPath, { text }).catch((error) =>
-                  notify(error instanceof Error ? error.message : t('workspace.status.private-note-keep-failed')));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.private-note-keep-failed')));
               });
               ui.privateDecline.addEventListener('click', () => {
                 void privatePost(service.privateNoteDeclinePath, {}).catch(() => {});
@@ -7603,7 +8455,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const profileRef = ui.contextProfileChoice.value;
                 const active = currentContextProfile();
                 if (!profileRef || profileRef === active?.profileRef) return;
-                if (state.contextProfileDirty && !window.confirm(t('workspace.description.context-profile-confirm-switch-discard'))) {
+                if (state.contextProfileDirty && !window.confirm(workspaceText('workspace.description.context-profile-confirm-switch-discard'))) {
                   ui.contextProfileChoice.value = active?.profileRef ?? '';
                   return;
                 }
@@ -7612,9 +8464,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   profileRef === 'profile.vexlife.context.product-default' ? {} : { profileRef }
                 )
                   .then((result) => {
-                    if (result) notify(t('workspace.status.context-profile-selected').replace('{name}', String(result.profiles.active.definition.name ?? '')));
+                    if (result) notify(workspaceText('workspace.status.context-profile-selected').replace('{name}', String(result.profiles.active.definition.name ?? '')));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-select-failed')));
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-select-failed')));
               });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
@@ -7634,12 +8486,12 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
               ui.contextProfileSaveAs.addEventListener('click', () => void saveContextProfile(true));
               ui.contextProfileRestore.addEventListener('click', () => {
-                if (!window.confirm(t('workspace.description.context-profile-confirm-restore-default'))) return;
+                if (!window.confirm(workspaceText('workspace.description.context-profile-confirm-restore-default'))) return;
                 void contextProfileControl('RESTORE_PRODUCT_DEFAULT')
                   .then((result) => {
-                    if (result) notify(t('workspace.status.context-profile-restored-default'));
+                    if (result) notify(workspaceText('workspace.status.context-profile-restored-default'));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-restore-failed')));
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-restore-failed')));
               });
               ui.contextProfileHome.addEventListener('click', () => {
                 void effectFetch(service.contextProfileHomeRevealPath, {
@@ -7648,9 +8500,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 })
                   .then(readJson)
                   .then((result) => {
-                    if (result?.outcome !== 'REALIZED') notify(t('workspace.status.context-profile-home-reveal-unavailable'));
+                    if (result?.outcome !== 'REALIZED') notify(workspaceText('workspace.status.context-profile-home-reveal-unavailable'));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-home-open-failed')));
+                  .catch((error) => notify(error instanceof Error ? error.message : workspaceText('workspace.status.context-profile-home-open-failed')));
               });
               ui.contextProfileImport.addEventListener('change', () => {
                 void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
@@ -7660,7 +8512,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.companionMode = 'LAB';
                 ui.companionMode.value = 'LAB';
                 render();
-                ui.vexLabsNote.textContent = t('workspace.status.vex-labs-configuration-armed');
+                ui.vexLabsNote.textContent = workspaceText('workspace.status.vex-labs-configuration-armed');
                 ui.draft.focus();
               });
               ui.vexLabsSaveSupported.addEventListener('click', () => {
@@ -7724,7 +8576,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.browserContext = next;
                 state.contextLoading = false;
                 state.includePage = true;
-                renderFrameStatus(t('workspace.status.browser-context-ready'), 'ContextReady');
+                renderFrameStatus(workspaceText('workspace.status.browser-context-ready'), 'ContextReady');
                 renderComposer();
               });
 
@@ -7738,9 +8590,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.humanFrameLoadExpected) {
                   state.humanFrameLoadExpected = false;
                   if (state.contextTargetPageUrl && !state.browserContext) {
-                    renderFrameStatus(t('workspace.status.browser-opened-context-available'), 'Direct');
+                    renderFrameStatus(workspaceText('workspace.status.browser-opened-context-available'), 'Direct');
                   } else if (!state.contextTargetPageUrl) {
-                    renderFrameStatus(t('workspace.status.browser-opened-context-unavailable'), 'Direct');
+                    renderFrameStatus(workspaceText('workspace.status.browser-opened-context-unavailable'), 'Direct');
                   }
                 } else {
                   reportFact('BROWSER_PAGE_UNLOCATED', {
@@ -7755,9 +8607,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.contextLoading = false;
                   ui.contextFrame.removeAttribute('src');
                   ui.query.value = '';
-                  ui.query.placeholder = t('workspace.placeholder.browser-query-unlocated');
+                  ui.query.placeholder = workspaceText('workspace.placeholder.browser-query-unlocated');
                   renderFrameStatus(
-                    t('workspace.status.browser-page-unlocated'),
+                    workspaceText('workspace.status.browser-page-unlocated'),
                     'Unlocated'
                   );
                 }
@@ -7851,7 +8703,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.timelineFollowTail = true;
                 if (next === 'LAB' && !state.vexLabs) {
                   void loadVexLabs().catch((error) =>
-                    notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-load-failed'))
+                    notify(error instanceof Error ? error.message : workspaceText('workspace.status.vex-labs-load-failed'))
                   );
                 }
                 render();
@@ -7901,6 +8753,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadLocalSources().catch(() => {});
+                  void loadWorkspaceEffects().catch(() => {});
+                  void loadWorkspaceChecks().catch(() => {});
+                  void loadWorkspaceRuns().catch(() => {});
                   void loadLocalAsr().catch(() => {});
                 }
               });
@@ -7918,6 +8773,30 @@ object VexLifeWebP1RuntimeArtifacts {
                 const sourceRef = String(button.dataset.sourceRef ?? '');
                 if (controlRef === localSources.control.remove && sourceRef) {
                   void applyLocalSourcesControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceEffects.control.allow ||
+                    controlRef === workspaceEffects.control.revoke)
+                ) {
+                  void applyWorkspaceEffectsControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceChecks.control.allow ||
+                    controlRef === workspaceChecks.control.revoke)
+                ) {
+                  void applyWorkspaceChecksControl(controlRef, sourceRef);
+                  return;
+                }
+                if (
+                  sourceRef &&
+                  (controlRef === workspaceRuns.control.allow ||
+                    controlRef === workspaceRuns.control.revoke)
+                ) {
+                  void applyWorkspaceRunsControl(controlRef, sourceRef);
                 }
               });
 
@@ -7938,7 +8817,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.includePage = false;
                 reportFact('BROWSER_CONTEXT_REQUESTED', pageRefs(state.contextTargetPageUrl));
                 ui.contextFrame.src = contextFrameUrl;
-                renderFrameStatus(t('workspace.status.browser-reading-context'), 'Loading');
+                renderFrameStatus(workspaceText('workspace.status.browser-reading-context'), 'Loading');
                 renderComposer();
               });
 
@@ -7967,7 +8846,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.attachmentUploads.get(draftRef)?.xhr?.abort();
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : t('workspace.status.attachment-refused'));
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.attachment-refused'));
                 } finally {
                   renderComposer();
                   if (controlRef === attachmentDraft.control.cancelStage) {
@@ -8018,8 +8897,8 @@ object VexLifeWebP1RuntimeArtifacts {
                         : null;
                     if (xhr.status === 409 && result?.code === service.stalePresentationCode) {
                       notify(
-                        String(result?.message ?? t('workspace.status.product-updated')) +
-                          ' ' + t('workspace.status.product-reloading')
+                        String(result?.message ?? workspaceText('workspace.status.product-updated')) +
+                          ' ' + workspaceText('workspace.status.product-reloading')
                       );
                       window.setTimeout(() => window.location.reload(), 2500);
                     }
@@ -8032,11 +8911,11 @@ object VexLifeWebP1RuntimeArtifacts {
                       notify(
                         result?.message
                           ? resolveText(result.message)
-                          : t('workspace.status.attachment-refused')
+                          : workspaceText('workspace.status.attachment-refused')
                       );
                     }
                   } catch {
-                    notify(t('workspace.status.attachment-refused'));
+                    notify(workspaceText('workspace.status.attachment-refused'));
                   } finally {
                     settle();
                     void loadAttachmentDraft().catch(() => {});
@@ -8044,7 +8923,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 xhr.addEventListener('error', () => {
                   settle();
-                  notify(t('workspace.status.attachment-refused'));
+                  notify(workspaceText('workspace.status.attachment-refused'));
                   void loadAttachmentDraft().catch(() => {});
                 });
                 xhr.addEventListener('abort', () => {
@@ -8068,11 +8947,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.attachmentUploads.size
                 );
                 if (room <= 0) {
-                  notify(t('workspace.status.attachment-limit'));
+                  notify(workspaceText('workspace.status.attachment-limit'));
                   return;
                 }
                 selected.slice(0, room).forEach(stageAttachmentFile);
-                if (selected.length > room) notify(t('workspace.status.attachment-limit'));
+                if (selected.length > room) notify(workspaceText('workspace.status.attachment-limit'));
               };
 
               ui.attach?.addEventListener('click', () => {
@@ -8283,7 +9162,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     String(modelRef)
                   );
                 } catch {
-                  notify(t('workspace.status.local-asr-unavailable'));
+                  notify(workspaceText('workspace.status.local-asr-unavailable'));
                 }
               });
               ui.localAsrSpokenLanguage?.addEventListener('change', () => {
@@ -8295,7 +9174,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     languageCode == null ? null : String(languageCode)
                   );
                 } catch {
-                  notify(t('workspace.status.local-asr-unavailable'));
+                  notify(workspaceText('workspace.status.local-asr-unavailable'));
                 }
               });
               ui.localAsrComposerOutput?.addEventListener('change', () => {
@@ -8309,7 +9188,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (controlRef) void diagnosticsControl(controlRef);
               });
               ui.diagnosticsClear?.addEventListener('click', () => {
-                if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
+                if (window.confirm(workspaceText('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
               });
 
               void Promise.all([
@@ -8318,6 +9197,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadConversationTurn(),
                 loadAttachmentDraft(),
                 loadLocalSources(),
+                loadWorkspaceEffects(),
+                loadWorkspaceChecks(),
+                loadWorkspaceRuns(),
                 loadConversation(),
                 loadVision()
               ])
@@ -8331,9 +9213,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     renderVexContext();
                     notify(
                       error instanceof Error
-                        ? t('workspace.status.context-unavailable-detail')
+                        ? workspaceText('workspace.status.context-unavailable-detail')
                             .replace('{detail}', String(error.message))
-                        : t('workspace.status.context-unavailable-build')
+                        : workspaceText('workspace.status.context-unavailable-build')
                     );
                   });
                   void loadContextProfiles().catch(() => {});
@@ -8341,9 +9223,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.vexLabs = null;
                     renderVexLabs();
                     notify(error instanceof Error
-                      ? t('workspace.status.vex-labs-unavailable-detail')
+                      ? workspaceText('workspace.status.vex-labs-unavailable-detail')
                           .replace('{detail}', String(error.message))
-                      : t('workspace.status.vex-labs-unavailable-build'));
+                      : workspaceText('workspace.status.vex-labs-unavailable-build'));
                   });
                   void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
@@ -8351,6 +9233,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
+                  void loadPartnerConnectionAvailability().catch(() => {
+                    state.partnerConnectionAvailability = null;
+                    renderPartnerApiConnection();
+                  });
                   // Release truth is outside Product startup truth. Observe it only after the core
                   // presentation is already usable; its own freshness policy suppresses redundant
                   // remote checks on later visibility opportunities.
@@ -8359,8 +9245,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
                 .catch((error) => {
-                  setCompanionStatus('Unavailable', t('workspace.status.companion-unavailable'), '');
-                  notify(error instanceof Error ? error.message : t('workspace.status.local-service-not-ready'));
+                  setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-unavailable'), '');
+                  notify(error instanceof Error ? error.message : workspaceText('workspace.status.local-service-not-ready'));
                 });
 
               setInterval(() => {

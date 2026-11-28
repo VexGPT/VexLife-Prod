@@ -19,6 +19,7 @@ import vexlife.capability.reach.VexLifeHtmlText
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
+import vexlife.contract.VexContractJson
 import vexlife.memory.VexLifeMemoryContextFixture
 
 /**
@@ -89,6 +90,113 @@ class VexLifeCapabilityReachTest {
         )
         assertNull(
             VexLifeCapabilityRequest.parseOrNull("quoted VEXLIFE_CAPABILITY_REQUEST/v1 mid-line")
+        )
+    }
+
+    @Test
+    fun textControlInstructionAndParserKeepBareJsonOutsideMachineControl() {
+        val instruction =
+            VexLifeCapabilityRequest.TextControlProviderInstruction
+
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.RequestHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                VexLifeCapabilityRequest.ResultHeader,
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "bare JSON",
+            ),
+        )
+        assertTrue(
+            instruction.contains(
+                "ordinary assistant text",
+            ),
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                ```json
+                {
+                  "capability": "registry",
+                  "action": "list",
+                  "arguments": {}
+                }
+                ```
+                """.trimIndent(),
+            ),
+            "A018-style bare JSON remains ordinary assistant text rather than a capability request",
+        )
+    }
+
+    @Test
+    fun oneExactStructuredProtocolWrapperCarriesTheSameRequestMeaning() {
+        val wrapped =
+            assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                VexLifeCapabilityRequest.parseOrNull(
+                    """
+                    ```json
+                    {
+                      "VEXLIFE_CAPABILITY_REQUEST": {
+                        "v1": {
+                          "capability": "atlas",
+                          "action": "list",
+                          "arguments": {}
+                        }
+                      }
+                    }
+                    ```
+                    """.trimIndent()
+                )
+            )
+
+        assertEquals("atlas", wrapped.call.capability)
+        assertEquals("list", wrapped.call.action)
+        assertTrue(wrapped.call.arguments.isEmpty())
+        assertTrue(
+            wrapped.controlContent.contains(
+                "\"VEXLIFE_CAPABILITY_REQUEST\"",
+            )
+        )
+
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": {
+                    "v2": {
+                      "capability": "atlas",
+                      "action": "list",
+                      "arguments": {}
+                    }
+                  }
+                }
+                """.trimIndent()
+            )
+        )
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
+            VexLifeCapabilityRequest.parseOrNull(
+                """
+                {
+                  "VEXLIFE_CAPABILITY_REQUEST": {
+                    "v1": {
+                      "action": "list",
+                      "arguments": {}
+                    }
+                  }
+                }
+                """.trimIndent()
+            )
+        )
+        assertNull(
+            VexLifeCapabilityRequest.parseOrNull(
+                """{"not_a_capability_request":{"v1":{"capability":"atlas","action":"list"}}}"""
+            )
         )
     }
 
@@ -945,6 +1053,8 @@ class VexLifeCapabilityReachTest {
                 estimateTokens = tokens,
             )
         assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, malformed.entry.state)
+        assertTrue(malformed.resultMessage.content.contains("top-level \"capability\""))
+        assertTrue(malformed.resultMessage.content.contains("action-specific targets stay inside \"arguments\""))
         assertTrue(malformed.resultMessage.content.contains("The exact form"))
     }
 
@@ -953,7 +1063,7 @@ class VexLifeCapabilityReachTest {
         val described =
             VexLifeCapabilityBridge.perform(
                 request(
-                    """{"capability":"atlas","action":"describe","arguments":{"capability":"github"}}"""
+                    """{"capability":"atlas","action":"describe","arguments":{"handle":"github"}}"""
                 ),
                 admission(home),
                 estimateTokens = tokens,
@@ -1084,18 +1194,183 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
-    fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
-        val over =
+    fun selfContextIsRegisteredAsTurnBoundReadAndDoesNotInventMissingTurnEvidence() =
+        withHome {
+            home ->
+            val definition =
+                assertNotNull(
+                    VexLifeCapabilityAtlas.resolve(
+                        "self-context",
+                    ),
+                )
+            assertEquals(
+                VexLifeReachDefinitions.SelfContextRef,
+                definition.capabilityRef,
+            )
+            assertEquals(
+                listOf(
+                    "inspect",
+                ),
+                definition.actions.map {
+                    it.action
+                },
+            )
+            assertEquals(
+                "READ_ONLY_LOCAL",
+                definition.effectClass,
+            )
+
+            val exchange =
+                VexLifeCapabilityBridge.perform(
+                    request(
+                        """{"capability":"self-context","action":"inspect","arguments":{}}""",
+                    ),
+                    admission(
+                        home,
+                    ),
+                    estimateTokens =
+                        tokens,
+                )
+
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.NOT_AVAILABLE,
+                exchange.entry.state,
+            )
+            assertTrue(
+                exchange.resultMessage.content.contains(
+                    "self context is not bound to this provider turn",
+                ),
+            )
+            assertFalse(
+                exchange.entry.externalEffectsExecuted,
+            )
+            assertFalse(
+                exchange.entry.effectAuthorityGranted,
+            )
+        }
+
+    @Test
+    fun historicalFixedQuotaTraceRemainsReadableWithoutBecomingCurrentReachLaw() = withHome { home ->
+        val exchange =
             VexLifeCapabilityBridge.perform(
                 request("""{"capability":"atlas","action":"list"}"""),
-                admission(home, number = VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1),
+                admission(
+                    home,
+                    number = 1,
+                ),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.ResultState.LIMIT_REACHED, over.entry.state)
-        assertTrue(over.resultMessage.content.contains("No requests are left this turn"))
-        assertTrue(over.resultMessage.content.contains("Do not send another capability request"))
-        assertTrue(over.resultMessage.content.contains("share what you currently understand"))
-        assertTrue(over.resultMessage.content.contains("continue in a fresh turn"))
+        val current =
+            VexLifeCapabilityBridge.trace(
+                listOf(
+                    exchange.entry,
+                ),
+            )
+        val historicalJson =
+            VexContractJson.compactEncode(
+                current,
+            )
+                .replace(
+                    VexLifeCapabilityBridge.TraceSchema,
+                    VexLifeCapabilityBridge.TraceSchemaV1,
+                )
+                .replace(
+                    "\"reachBoundary\":\"EXCHANGE_HEADROOM\"",
+                    "\"maximumRequestsPerTurn\":4",
+                )
+                .replace(
+                    "\"state\":\"RETURNED\"",
+                    "\"state\":\"LIMIT_REACHED\"",
+                )
+
+        val historical =
+            VexContractJson.decode<VexLifeCapabilityBridge.Trace>(
+                historicalJson,
+            )
+
+        assertEquals(
+            VexLifeCapabilityBridge.TraceSchemaV1,
+            historical.schemaVersion,
+        )
+        assertEquals(
+            4,
+            historical.maximumRequestsPerTurn,
+        )
+        assertNull(
+            historical.reachBoundary,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
+            historical.entries.single().state,
+        )
+
+        val currentRoundTrip =
+            VexContractJson.decode<VexLifeCapabilityBridge.Trace>(
+                VexContractJson.compactEncode(
+                    current,
+                ),
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.TraceSchema,
+            currentRoundTrip.schemaVersion,
+        )
+        assertNull(
+            currentRoundTrip.maximumRequestsPerTurn,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
+            currentRoundTrip.reachBoundary,
+        )
+    }
+
+    @Test
+    fun requestSequenceDoesNotBecomeASmallFixedReachQuota() = withHome { home ->
+        val exchanges =
+            (1..17).map {
+                requestNumber ->
+                VexLifeCapabilityBridge.perform(
+                    request("""{"capability":"atlas","action":"list"}"""),
+                    admission(
+                        home,
+                        number = requestNumber,
+                        tokens = 20_000,
+                    ),
+                    estimateTokens = tokens,
+                )
+            }
+        val later =
+            exchanges.last()
+
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            later.entry.state,
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"request\":\"17\""
+            )
+        )
+        assertTrue(
+            later.resultMessage.content.contains(
+                "\"reachBoundary\":\"EXCHANGE_HEADROOM\""
+            )
+        )
+        assertFalse(
+            later.resultMessage.content.contains(
+                "17 of"
+            )
+        )
+
+        val trace =
+            VexLifeCapabilityBridge.trace(
+                exchanges.map {
+                    it.entry
+                }
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ReachBoundaryExchangeHeadroom,
+            trace.reachBoundary,
+        )
     }
 }
 

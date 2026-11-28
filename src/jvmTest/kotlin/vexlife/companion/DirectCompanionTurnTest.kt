@@ -2,30 +2,45 @@ package vexlife.companion
 
 import java.nio.file.Files
 import java.time.Instant
+import java.util.concurrent.Executors
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingFocus
+import vexlife.continuity.VexLifeWorkingFocusOwner
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationIdentity
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.runtime.FileHereticModelImportStore
+import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
 class DirectCompanionTurnTest {
     private fun productHome(): java.nio.file.Path {
@@ -46,12 +61,55 @@ class DirectCompanionTurnTest {
         return home
     }
 
+    private fun workingFocusDraft(
+        formationRef: String = "receipt.direct-turn.working-focus.001",
+        priorRevisionRefOrNull: String? = null,
+        objective: String = "Keep the current direct-turn relationship in Working Focus.",
+    ) =
+        VexLifeWorkingFocus.Draft(
+            lineageRef = "companion-lineage.vexlife.turn-lineage",
+            threadRef = DirectConversationIdentity.ThreadRef,
+            formationRef = formationRef,
+            priorRevisionRefOrNull = priorRevisionRefOrNull,
+            subjectScopeRefs = listOf("subject.victor", "project.self-inspection"),
+            objective = objective,
+            currentQuestionOrNull = "Is this exact Working Focus still current at the provider boundary?",
+            retainedRelationships =
+                listOf(
+                    VexLifeWorkingFocus.Relationship(
+                        relationshipRef = "relationship.direct-turn.focus",
+                        ownerRef = "owner.self-inspection.source",
+                        standing = VexLifeWorkingFocus.Standing.OBSERVED,
+                        compactMeaning = "One exact current relationship is being carried.",
+                        sourceRefs = listOf("source.direct-turn.focus"),
+                    ),
+                ),
+            openEdges =
+                listOf(
+                    VexLifeWorkingFocus.OpenEdge(
+                        edgeRef = "edge.direct-turn.focus",
+                        ownerRef = "owner.self-inspection.source",
+                        compactMeaning = "Reopen exact source if the relationship needs verification.",
+                        sourceRefs = listOf("source.direct-turn.focus"),
+                    ),
+                ),
+            nextProbeOrNull = "Require this same focus before provider inference.",
+            sourceBindingRefs = listOf("binding.direct-turn.focus.current"),
+            sourceRefs = listOf("source.direct-turn.focus"),
+        )
+
     private fun setup(
         home: java.nio.file.Path,
         model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
+        qualification: HereticRuntimeQualification = HereticRuntimeQualification.qualified(),
     ): VexLifeProdLocalSetup.Result {
-        val identity =
-            model.identity
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            )
         return VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
@@ -67,18 +125,101 @@ class DirectCompanionTurnTest {
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.turn",
                     runtimeState = HereticRuntimeState.Qualified,
-                    modelRef = identity.modelRef,
-                    modelProfileRef = identity.modelProfileRef,
-                    artifactRef = identity.artifactSetRef,
-                    artifactContentSetSha256 = identity.artifactContentSetSha256,
-                    runtimeAdapterRef = identity.runtimeAdapterRef,
-                    runtimeClass = identity.runtimeClass,
-                    endpoint = identity.endpoint,
-                    requestModel = identity.requestModel,
-                    qualification = HereticRuntimeQualification.qualified(),
+                    modelRef = model.modelRef,
+                    realizationRef = realization.realizationRef,
+                    modelProfileRef = realization.modelProfileRef,
+                    artifactRef = realization.artifact.artifactRef,
+                    artifactContentSetSha256 = realization.artifact.contentSetSha256,
+                    runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+                    runtimeClass = realization.runtime.runtimeClass,
+                    endpoint = realization.runtime.endpoint,
+                    requestModel = realization.runtime.requestModel,
+                    qualification = qualification,
+                    contextWindowTokens = realization.runtime.livedLaunchProfile?.contextTokens,
                 ),
-            endpoint = identity.endpoint,
-            requestModel = identity.requestModel,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+        )
+    }
+
+    private fun importedNativeToolModel(
+        home: java.nio.file.Path,
+    ): HereticModelCatalog.Entry {
+        val revision =
+            "7".repeat(
+                40,
+            )
+        val member =
+            HereticModelImport.Member(
+                roleRef = "artifact-role.vexlife-prod.imported.member.config",
+                artifactRef = "artifact.vexlife-prod.imported.turn-native.member.config",
+                filename = "config.json",
+                mediaType = "application/json",
+                sha256 = "8".repeat(64),
+                expectedBytes = 17,
+                sourceRef = "hf.example.turn-native." + revision,
+                licenseRef = "license.huggingface.apache-2.0",
+            )
+        val contentSet =
+            HereticArtifactMaterialization.computeContentSetSha256(
+                listOf(
+                    HereticArtifactMaterialization.PlanMember(
+                        roleRef = member.roleRef,
+                        artifactRef = member.artifactRef,
+                        logicalPath = member.filename,
+                        sha256 = member.sha256,
+                        byteLength = member.expectedBytes,
+                    ),
+                ),
+            )
+        val handle =
+            "hf-turn-native-" +
+                contentSet.take(
+                    8,
+                )
+        val identityStem =
+            handle +
+                "." +
+                contentSet.take(
+                    12,
+                )
+        val record =
+            HereticModelImport.Record(
+                importRef = "model-import.vexlife-prod.huggingface." + contentSet.take(24),
+                sourceUrl = "https://huggingface.co/example/TurnNativeTools",
+                providerRepository = "example/TurnNativeTools",
+                providerRevision = revision,
+                handle = handle,
+                humanLabel = "Turn Native Tools",
+                modelBundleRef = "model-bundle.vexlife.imported." + identityStem + ".001",
+                generationRef = "generation.vexlife-prod.imported-provider." + revision.take(12),
+                modelRef = "model.vexlife-prod.imported." + identityStem,
+                modelProfileRef = "model-profile.vexlife-prod.imported." + identityStem + ".candidate",
+                artifactSetRef = "artifact.vexlife-prod.imported." + identityStem,
+                artifactCustodyEvidenceRef =
+                    "resolution.vexlife-prod.model-import.provider-pin." +
+                        revision.take(12) +
+                        "." +
+                        contentSet.take(12),
+                artifactContentSetSha256 = contentSet,
+                modelRootRelativePath = "models/heretic/imported." + handle,
+                providerLicense = "apache-2.0",
+                representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
+                companionProfileRef =
+                    "companion-profile.vexlife-prod.imported." +
+                        handle +
+                        ".qwen3.v1",
+                nativeToolCalling = true,
+                members = listOf(member),
+            )
+        FileHereticModelImportStore(
+            home,
+        )
+            .add(
+                record,
+            )
+        return HereticModelImport.entry(
+            record,
         )
     }
 
@@ -185,6 +326,1218 @@ class DirectCompanionTurnTest {
                     frame.availableCapabilityRefs,
             )
         } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun exact4BTextControlReachQualificationAdvertisesBridgeWithoutNativeTools() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                val request =
+                    Json.parseToJsonElement(
+                        call.body,
+                    )
+                        .jsonObject
+                assertFalse(
+                    request.containsKey(
+                        "tools",
+                    ),
+                    "4B text-control Vex Reach qualification must not re-enable provider-native tools",
+                )
+                assertTrue(
+                    call.body.contains(
+                        "text-control fallback instead of provider-native tools",
+                    ),
+                )
+                assertTrue(
+                    call.body.contains(
+                        "VEXLIFE_CAPABILITY_REQUEST/v1",
+                    ),
+                )
+                assertFalse(
+                    call.body.contains(
+                        "No outside-source capability reach is admitted in this turn.",
+                    ),
+                )
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "4B qualified text-control response"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-qualified.001",
+                            content =
+                                "Use the current qualified text-control reach only if needed.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-26T19:30:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertTrue(
+                result.promptContextReceipt.capabilityExchangeAllowanceTokens >
+                    0,
+            )
+            assertTrue(
+                result.promptContextReceipt.sourceReturnProtocolEnabled,
+                "text-control reach keeps the dedicated Conversation source-return route",
+            )
+            val frame =
+                requireNotNull(
+                    result.promptContextReceipt.capabilityFrameSnapshot,
+                )
+            assertTrue(
+                "capability.vexlife.continuity.revisit" in
+                    frame.availableCapabilityRefs,
+            )
+            assertTrue(
+                "capability.vexlife.web.read" in
+                    frame.availableCapabilityRefs,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun qwen4BSiblingWireNormalizesToCanonicalEnvelopeBeforeBridgeAndContinuation() {
+        val home =
+            productHome()
+        val a020Wire =
+            """{"VEXLIFE_CAPABILITY_REQUEST":"v1","capability":"atlas","action":"list","arguments":{}}"""
+        val providerBodies =
+            mutableListOf<String>()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                providerBodies +=
+                    call.body
+                val content =
+                    if (
+                        calls ==
+                            1
+                    ) {
+                        a020Wire
+                    } else {
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.RequestHeader,
+                            ),
+                            "the second provider stage must carry the canonical Vex request envelope",
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                VexLifeCapabilityRequest.ResultHeader,
+                            ),
+                            "the second provider stage must carry the canonical Bridge result",
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                """\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\"""",
+                            ),
+                            "the Qwen-specific sibling wire dialect must not survive semantic continuation",
+                        )
+                        "Canonical envelope continuation reached."
+                    }
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": ${JsonPrimitive(content)}
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-canonical-wire-normalization.001",
+                            content =
+                                "Use Atlas if needed, then continue from the real owner result.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-27T22:00:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Canonical envelope continuation reached.",
+                result.content,
+            )
+            assertTrue(
+                providerBodies
+                    .first()
+                    .contains(
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
+                    ),
+                "ordinary Qwen text-control prompting teaches only the canonical Vex request reflex",
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun selfContextReadsTheExactCurrentTurnWithoutReturningPromptOrWorkingFocusProse() {
+        val home =
+            productHome()
+        val privateFocusProse =
+            "PRIVATE_FOCUS_PROSE_MUST_NOT_BE_RETURNED_BY_SELF_CONTEXT"
+        VexLifeWorkingFocusOwner(
+            home,
+        )
+            .setCurrent(
+                workingFocusDraft(
+                    objective =
+                        privateFocusProse,
+                ),
+            )
+        var calls =
+            0
+        var observedSelfContextResult: String? =
+            null
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                if (
+                    calls ==
+                        1
+                ) {
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "{\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\":\"self-context\",\"action\":\"inspect\",\"arguments\":{}}"
+                                  }
+                                }
+                              ],
+                              "usage": {
+                                "prompt_tokens": 321,
+                                "prompt_tokens_details": {
+                                  "cached_tokens": 120
+                                },
+                                "completion_tokens": 17
+                              }
+                            }
+                            """.trimIndent(),
+                    )
+                } else {
+                    val body =
+                        Json.parseToJsonElement(
+                            call.body,
+                        )
+                            .jsonObject
+                    val resultContent =
+                        assertNotNull(
+                            body[
+                                "messages"
+                            ]
+                                ?.jsonArray
+                                ?.map {
+                                    it.jsonObject
+                                }
+                                ?.mapNotNull {
+                                    it[
+                                        "content"
+                                    ]
+                                        ?.jsonPrimitive
+                                        ?.content
+                                }
+                                ?.lastOrNull {
+                                    it.startsWith(
+                                        VexLifeCapabilityRequest.ResultHeader,
+                                    )
+                                },
+                        )
+                    observedSelfContextResult =
+                        resultContent
+                    assertTrue(
+                        resultContent.contains(
+                            "Self context for this human turn",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "workingFocusCurrentness",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "CURRENT",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "source.direct-turn.focus",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "prompt tokens: 321",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "cached prompt tokens: 120",
+                        ),
+                    )
+                    assertTrue(
+                        resultContent.contains(
+                            "prefill tokens: 201",
+                        ),
+                    )
+                    assertFalse(
+                        resultContent.contains(
+                            privateFocusProse,
+                        ),
+                        "Self-Inspection must return owner/receipt evidence rather than Working Focus prose",
+                    )
+                    assertFalse(
+                        resultContent.contains(
+                            "VEXLIFE_WORKING_FOCUS/v1",
+                        ),
+                        "Self-Inspection must not replay the prompt-resident Working Focus body",
+                    )
+
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "I can see the current receipt and Working Focus standing without treating them as a new self store."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home = home,
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            qualification =
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified =
+                                        true,
+                                ),
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.self-context.current-turn.001",
+                            content =
+                                "What are you holding right now, and what evidence tells you that?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-28T02:05:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertNotNull(
+                observedSelfContextResult,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "I can see the current receipt and Working Focus standing without treating them as a new self store.",
+                result.content,
+            )
+            assertTrue(
+                result.capabilityUses.any {
+                    it.handle ==
+                        "self-context" &&
+                        it.action ==
+                        "inspect" &&
+                        it.state ==
+                        VexLifeCapabilityBridge.ResultState.RETURNED
+                },
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun importedNativeToolQualificationDoesNotBypassHeldVexReach() {
+        fun requestBody(
+            nativeToolsQualified: Boolean,
+        ): Pair<kotlinx.serialization.json.JsonObject, DirectCompanionTurn.Result> {
+            val home =
+                productHome()
+            val model =
+                importedNativeToolModel(
+                    home,
+                )
+            var body: String? =
+                null
+            val transport =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    body =
+                        call.body
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "Representation matched."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+
+            return try {
+                val result =
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home = home,
+                                model = model,
+                                qualification =
+                                    HereticRuntimeQualification.qualified(
+                                        providerNativeToolsQualified =
+                                            nativeToolsQualified,
+                                    ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.imported-native-tools." +
+                                        nativeToolsQualified,
+                                content =
+                                    "Use reach only if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                now = {
+                                    Instant.parse(
+                                        "2026-11-24T20:50:00Z",
+                                    )
+                                },
+                            ),
+                    )
+                Json
+                    .parseToJsonElement(
+                        requireNotNull(
+                            body,
+                        ),
+                    )
+                    .jsonObject to
+                    result
+            } finally {
+                home.parent
+                    .toFile()
+                    .deleteRecursively()
+            }
+        }
+
+        val (heldRequest, heldResult) =
+            requestBody(
+                nativeToolsQualified = false,
+            )
+        assertFalse(
+            heldRequest.containsKey(
+                "tools",
+            ),
+            "recognized-but-unqualified imported model must keep text-control carriage",
+        )
+        assertFalse(
+            heldRequest
+                .toString()
+                .contains(
+                    "text-control fallback",
+                ),
+            "held imported reach must not advertise the unqualified text-control route",
+        )
+        assertTrue(
+            heldRequest
+                .toString()
+                .contains(
+                    "No outside-source capability reach is admitted in this turn.",
+                ),
+            "held imported reach must project the bounded capability frame instead of callable reach instructions",
+        )
+        assertTrue(
+            heldRequest
+                .toString()
+                .contains(
+                    DirectConversationSourceReturn.ProtocolHeader,
+                ),
+        )
+        assertTrue(
+            heldResult.promptContextReceipt.sourceReturnProtocolEnabled,
+        )
+
+        val (nativeQualifiedRequest, nativeQualifiedResult) =
+            requestBody(
+                nativeToolsQualified = true,
+            )
+        assertFalse(
+            nativeQualifiedRequest.containsKey(
+                "tools",
+            ),
+            "provider-native tool qualification must not bypass held Vex Reach",
+        )
+        assertFalse(
+            nativeQualifiedRequest
+                .toString()
+                .contains(
+                    "text-control fallback",
+                ),
+            "held imported reach must not advertise the unqualified text-control route",
+        )
+        assertTrue(
+            nativeQualifiedRequest
+                .toString()
+                .contains(
+                    "No outside-source capability reach is admitted in this turn.",
+                ),
+            "provider-native carriage qualification must preserve the held reach frame",
+        )
+        assertFalse(
+            nativeQualifiedRequest
+                .toString()
+                .contains(
+                    DirectConversationSourceReturn.ProtocolHeader,
+                ),
+            "provider-native carriage keeps source-return representation disabled even while Vex Reach remains held",
+        )
+        assertFalse(
+            nativeQualifiedResult.promptContextReceipt.sourceReturnProtocolEnabled,
+            "provider-native carriage qualification and Vex Reach authority remain independent",
+        )
+    }
+
+    @Test
+    fun second4BTurnCarriesPromptOwnedConversationBoundaryIntoProviderRequest() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val bodies =
+            mutableListOf<String>()
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                bodies +=
+                    call.body
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "finish_reason": "stop",
+                              "message": {
+                                "role": "assistant",
+                                "content": "response ${bodies.size}"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            DirectCompanionTurn.performWithHooks(
+                setup = setup,
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.self-development.conversation-cache-boundary.001",
+                        content =
+                            "First cache-boundary turn.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                    ),
+            )
+            DirectCompanionTurn.performWithHooks(
+                setup = setup,
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.self-development.conversation-cache-boundary.002",
+                        content =
+                            "Second cache-boundary turn.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                    ),
+            )
+
+            assertEquals(
+                2,
+                bodies.size,
+            )
+            val first =
+                Json
+                    .parseToJsonElement(
+                        bodies[
+                            0
+                        ],
+                    )
+                    .jsonObject
+            assertFalse(
+                first.containsKey(
+                    "vexlife_prompt_cache_boundary_message_count",
+                ),
+            )
+
+            val second =
+                Json
+                    .parseToJsonElement(
+                        bodies[
+                            1
+                        ],
+                    )
+                    .jsonObject
+            val boundary =
+                second
+                    .getValue(
+                        "vexlife_prompt_cache_boundary_message_count",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .toInt()
+            val messages =
+                second
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+            assertTrue(
+                boundary in
+                    1 until
+                    messages.size,
+            )
+            assertEquals(
+                "assistant",
+                messages[
+                    boundary -
+                        1
+                ]
+                    .jsonObject
+                    .getValue(
+                        "role",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "user",
+                messages[
+                    boundary
+                ]
+                    .jsonObject
+                    .getValue(
+                        "role",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun completedTurnsKeepSharedContinuityLocatorCurrentForTheNextRequest() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val backend =
+            VexLifeContinuitySourceLocator.InMemoryBackend(
+                secret =
+                    ByteArray(32) {
+                        53
+                    },
+                fingerprintBindingRef =
+                    "fingerprint.test.direct-turn-catch-up",
+            )
+        var calls =
+            0
+        val hooks =
+            DirectCompanionTurn.Hooks(
+                transport =
+                    DirectCompanionConnection.Transport {
+                        _ ->
+                        calls +=
+                            1
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "response $calls"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+                continuitySourceLocatorBackend =
+                    backend,
+            )
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.locator-catch-up.001",
+                            content =
+                                "The locator anchor is indigo-bridge-64.",
+                        ),
+                    hooks = hooks,
+                )
+            val afterFirst =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    backend.load(),
+                )
+                    .generation
+            assertEquals(
+                1,
+                afterFirst.completedTurnCount,
+            )
+            assertEquals(
+                first.currentConversationHeadSha256,
+                afterFirst.sourceConversationHeadSha256,
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.locator-catch-up.002",
+                            content =
+                                "A later unrelated turn.",
+                        ),
+                    hooks = hooks,
+                )
+            val afterSecond =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    backend.load(),
+                )
+                    .generation
+            assertEquals(
+                2,
+                afterSecond.completedTurnCount,
+            )
+            assertEquals(
+                second.currentConversationHeadSha256,
+                afterSecond.sourceConversationHeadSha256,
+            )
+
+            DirectConversationStore(
+                home,
+            )
+                .withWriterLease {
+                    val located =
+                        assertIs<VexLifeContinuitySourceLocator.LocateOutcome.Found>(
+                            VexLifeContinuitySourceLocator.locate(
+                                conversationOwner = this,
+                                queryTerms =
+                                    listOf(
+                                        "indigo-bridge-64",
+                                    ),
+                                speakerScope =
+                                    VexLifeContinuitySourceLocator.SpeakerScope.HUMAN,
+                                backend = backend,
+                            ),
+                        )
+                    assertEquals(
+                        first.requestEventRef,
+                        located.candidates
+                            .single()
+                            .requestEvent
+                            .eventRef,
+                    )
+                    assertFalse(
+                        located.wholeHistoryEventEnumerationPerformed,
+                    )
+                }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun exactPreparationIsConsumedAfterRequestBecomesCanonical() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val prefix =
+            DirectPromptContext.projectProviderPreparationPrefix(
+                foundationalField =
+                    VexLifeFoundationalFieldFixture.shipped,
+                memoryContext =
+                    memory,
+                capabilityRequestsAdmitted =
+                    false,
+                providerNativeTools =
+                    false,
+            )
+        val preparationExecutor =
+            Executors.newCachedThreadPool()
+        val preparation =
+            VexLifePromptPreparation(
+                providerPrefill =
+                    VexLifePromptPreparation.ProviderPrefill {
+                        runtime,
+                        _,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 = prefix.systemMessageSha256,
+                            requestBodySha256 = "a".repeat(
+                                64,
+                            ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 12L,
+                        )
+                    },
+            )
+        var providerCalls =
+            0
+
+        try {
+            preparation.start(
+                executor = preparationExecutor,
+                runtime = setup.qualifiedRuntimeEvidence,
+                prefix = prefix,
+            )
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.prompt-preparation.exact.001",
+                            content =
+                                "Use the exact prepared prefix.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    _ ->
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Warm candidate accepted."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-22T17:00:00Z",
+                                )
+                            },
+                            currentMemoryContext = {
+                                memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                cap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    cap,
+                                )
+                            },
+                            currentFoundationalField = {
+                                VexLifeFoundationalFieldFixture.shipped
+                            },
+                            promptPreparation =
+                                preparation,
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertIs<VexLifePromptPreparation.State.Consumed>(
+                preparation.state(),
+            )
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                1,
+                snapshot.canonicalEvents.count {
+                    it.eventKind ==
+                        "REQUEST"
+                },
+            )
+            assertEquals(
+                1,
+                snapshot.canonicalEvents.count {
+                    it.eventKind ==
+                        "RESPONSE"
+                },
+            )
+        } finally {
+            preparation.close()
+            preparationExecutor.shutdownNow()
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun preparationDriftFallsBackColdWithoutCreatingASecondSend() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val stalePrefix =
+            DirectPromptContext.projectProviderPreparationPrefix(
+                foundationalField =
+                    null,
+                memoryContext =
+                    null,
+                capabilityRequestsAdmitted =
+                    false,
+                providerNativeTools =
+                    false,
+            )
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val preparationExecutor =
+            Executors.newCachedThreadPool()
+        val preparation =
+            VexLifePromptPreparation(
+                providerPrefill =
+                    VexLifePromptPreparation.ProviderPrefill {
+                        runtime,
+                        _,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 = stalePrefix.systemMessageSha256,
+                            requestBodySha256 = "b".repeat(
+                                64,
+                            ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 9L,
+                        )
+                    },
+            )
+        var providerCalls =
+            0
+
+        try {
+            preparation.start(
+                executor = preparationExecutor,
+                runtime = setup.qualifiedRuntimeEvidence,
+                prefix = stalePrefix,
+            )
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.prompt-preparation.drift.001",
+                            content =
+                                "Continue cold if startup preparation is stale.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    _ ->
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Cold fallback completed."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-22T17:05:00Z",
+                                )
+                            },
+                            currentMemoryContext = {
+                                memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                cap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    cap,
+                                )
+                            },
+                            currentFoundationalField = {
+                                VexLifeFoundationalFieldFixture.shipped
+                            },
+                            promptPreparation =
+                                preparation,
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Cold fallback completed.",
+                result.content,
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertEquals(
+                "PROVIDER_PREFIX_CHANGED",
+                assertIs<VexLifePromptPreparation.State.Invalidated>(
+                        preparation.state(),
+                    )
+                    .reasonRef,
+            )
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                1,
+                snapshot.canonicalEvents.count {
+                    it.eventKind ==
+                        "REQUEST"
+                },
+            )
+            assertEquals(
+                1,
+                snapshot.canonicalEvents.count {
+                    it.eventKind ==
+                        "RESPONSE"
+                },
+            )
+        } finally {
+            preparation.close()
+            preparationExecutor.shutdownNow()
             home.parent
                 .toFile()
                 .deleteRecursively()
@@ -814,7 +2167,106 @@ class DirectCompanionTurnTest {
                 failure.cause
                     ?.message
                     ?.contains(
-                        "runtime changed during one direct Companion turn",
+                        "runtime evidence changed during one direct Companion turn",
+                    ) ==
+                    true,
+            )
+            assertFalse(
+                failure.failureReceipt
+                    ?.currentHeadCommitted
+                    ?: true,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun sourceReturnRefusesRepresentationQualificationDriftUnderSameRuntimeReceipt() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.source-return.qualification-drift.001",
+                                content =
+                                    "Find an older detail if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                reobserveSameRuntimeEvidence = {
+                                    expected ->
+                                    expected.copy(
+                                        qualification =
+                                            HereticRuntimeQualification.qualified(
+                                                providerNativeToolsQualified = true,
+                                            ),
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "ADMISSION_FAILED",
+                failure.failureCode,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "runtime evidence changed during one direct Companion turn",
                     ) ==
                     true,
             )
@@ -2288,6 +3740,14 @@ class DirectCompanionTurnTest {
                 idempotencyKey = "send.self-development.failure",
                 content = "Please answer",
             )
+        val conversationAttemptIndex =
+            DirectConversationAttemptIndex()
+        conversationAttemptIndex.rebuild(
+            DirectConversationStore(
+                home,
+            )
+                .current(),
+        )
 
         try {
             val error =
@@ -2299,6 +3759,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -2359,6 +3821,8 @@ class DirectCompanionTurnTest {
                         intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
                                 transport =
                                     DirectCompanionConnection.Transport {
                                         calls +=
@@ -2399,6 +3863,8 @@ class DirectCompanionTurnTest {
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
+                            conversationAttemptIndex =
+                                conversationAttemptIndex,
                             transport =
                                 DirectCompanionConnection.Transport {
                                     calls +=
@@ -2918,6 +4384,209 @@ class DirectCompanionTurnTest {
             assertEquals(
                 1,
                 providerCalls,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun workingFocusChangeBeforeFirstProviderStageRejectsTheStalePromptBeforeInvocation() {
+        val home =
+            productHome()
+        val owner =
+            VexLifeWorkingFocusOwner(
+                home,
+            )
+        val first =
+            owner.setCurrent(
+                workingFocusDraft(),
+            )
+        var foundationalReads =
+            0
+        var providerCalls =
+            0
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                                HereticModelCatalog.Models.Qwen4B,
+                                HereticRuntimeQualification.qualified(
+                                    vexReachQualified = true,
+                                ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.working-focus-stale-before-stage-one",
+                                content =
+                                    "Continue from the exact current Working Focus.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport =
+                                    DirectCompanionConnection.Transport {
+                                        providerCalls +=
+                                            1
+                                        error(
+                                            "stale Working Focus must fail before provider invocation",
+                                        )
+                                    },
+                                currentFoundationalField = {
+                                    foundationalReads +=
+                                        1
+                                    if (
+                                        foundationalReads ==
+                                            2
+                                    ) {
+                                        owner.setCurrent(
+                                            workingFocusDraft(
+                                                formationRef =
+                                                    "receipt.direct-turn.working-focus.002",
+                                                priorRevisionRefOrNull =
+                                                    assertNotNull(
+                                                        first.current.revisionRefOrNull,
+                                                    ),
+                                                objective =
+                                                    "This newer Working Focus must invalidate the old prompt.",
+                                            ),
+                                        )
+                                    }
+                                    VexLifeFoundationalFieldFixture.shipped
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                0,
+                providerCalls,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "Working Focus changed after observation",
+                    ) ==
+                    true,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun workingFocusChangeBetweenProviderStagesRejectsContinuationBeforeSecondInvocation() {
+        val home =
+            productHome()
+        val owner =
+            VexLifeWorkingFocusOwner(
+                home,
+            )
+        val first =
+            owner.setCurrent(
+                workingFocusDraft(),
+            )
+        var providerCalls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                _ ->
+                providerCalls +=
+                    1
+                if (
+                    providerCalls ==
+                        1
+                ) {
+                    owner.setCurrent(
+                        workingFocusDraft(
+                            formationRef =
+                                "receipt.direct-turn.working-focus.002",
+                            priorRevisionRefOrNull =
+                                assertNotNull(
+                                    first.current.revisionRefOrNull,
+                                ),
+                            objective =
+                                "A provider-stage continuation must not reuse the older focus.",
+                        ),
+                    )
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "{\"VEXLIFE_CAPABILITY_REQUEST\":\"v1\",\"capability\":\"atlas\",\"action\":\"list\",\"arguments\":{}}"
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                } else {
+                    error(
+                        "stale Working Focus must fail before the second provider invocation",
+                    )
+                }
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home = home,
+                                model = HereticModelCatalog.Models.Qwen4B,
+                                qualification =
+                                    HereticRuntimeQualification.qualified(
+                                        vexReachQualified =
+                                            true,
+                                    ),
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.working-focus-stale-between-stages",
+                                content =
+                                    "Use Atlas if needed, but keep the same Working Focus current.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                now = {
+                                    Instant.parse(
+                                        "2026-11-28T01:45:00Z",
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "Working Focus changed after observation",
+                    ) ==
+                    true,
             )
         } finally {
             home.parent

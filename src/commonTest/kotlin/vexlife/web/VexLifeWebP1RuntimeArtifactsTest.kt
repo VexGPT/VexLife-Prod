@@ -11,6 +11,8 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -30,7 +32,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         )
         assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
-        assertTrue(javascript.contains("t('workspace.status.product-reloading')"))
+        assertTrue(javascript.contains("workspaceText('workspace.status.product-reloading')"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const productFetch = async"))
         assertTrue(javascript.contains("const effectFetch = productFetch"))
@@ -85,6 +87,65 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun modelsChooserObservesSourceRowsAndRoutesOnlySelectUseThroughSourceControl() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesPath: \"/api/v1/models/sources\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "modelsSourcesControlPath: \"/api/v1/models/sources/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "productFetch(service.modelsSourcesPath",
+            ),
+            "Models observation must refresh the provider-neutral source projection",
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"USE_MODEL\" ||",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "controlRef === \"SELECT_MODEL\";",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "? service.modelsSourcesControlPath",
+            ),
+            "Select/Use must cross the source-aware Models control boundary",
+        )
+        assertTrue(
+            javascript.contains(
+                ": service.modelsControlPath",
+            ),
+            "Local artifact/runtime/configuration controls must remain on the Local Models owner",
+        )
+        assertTrue(
+            javascript.contains(
+                "row.sourceKind === 'LOCAL'",
+            ),
+            "Local storage/runtime detail must remain distinguishable from Partner rows",
+        )
+        assertTrue(
+            javascript.contains(
+                "selectedSource?.sourceKind === 'PARTNER'",
+            ),
+            "the existing chooser must render the Partner selection path explicitly",
+        )
+    }
+
+    @Test
     fun ContextFailureDoesNotGateIndependentProductSurfaces() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
@@ -113,7 +174,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "t('workspace.status.context-unsupported-detail')",
+                "workspaceText('workspace.status.context-unsupported-detail')",
             ),
             "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
         )
@@ -174,13 +235,34 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
 
-        VexLifeWorkspaceBlueprint.elements.forEach { element ->
-            assertTrue(
-                bundle.html.contains(
-                    "data-vex-ref=\"${element.ref}\"",
-                ),
-                "missing current Blueprint coordinate from product template: ${element.ref}",
+        val rowRuntimeCoordinates =
+            setOf(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChanges.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopChanges.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceAllowTests.ref,
+                VexLifeWorkspaceBlueprint.LocalSourceStopTests.ref,
             )
+        VexLifeWorkspaceBlueprint.elements.forEach { element ->
+            if (
+                element.ref in
+                    rowRuntimeCoordinates
+            ) {
+                assertTrue(
+                    bundle.javascript.contains(
+                        element.ref,
+                    ),
+                    "missing row-runtime Blueprint coordinate from product runtime: ${element.ref}",
+                )
+            } else {
+                assertTrue(
+                    bundle.html.contains(
+                        "data-vex-ref=\"${element.ref}\"",
+                    ),
+                    "missing current Blueprint coordinate from product template: ${element.ref}",
+                )
+            }
         }
 
         assertTrue(
@@ -247,7 +329,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "t('workspace.placeholder.browser-query-unlocated')",
+                "workspaceText('workspace.placeholder.browser-query-unlocated')",
             ),
             "runtime browser unlocation must not replace the keyed placeholder with English",
         )
@@ -574,7 +656,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
         assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
         assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
-        assertTrue(bundle.javascript.contains("t('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
+        assertTrue(bundle.javascript.contains("workspaceText('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
         assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
         assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(
@@ -969,16 +1051,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "storage controls must remain bound to each model's projected lawfulness instead of only the dropdown target",
         )
         assertFalse(
-            javascript.contains(
+            modelsRenderer.contains(
                 "workspace.label.model-cache-level-1",
             ) ||
-                javascript.contains(
+                modelsRenderer.contains(
                     "workspace.label.model-cache-level-2",
                 ) ||
-                javascript.contains(
+                modelsRenderer.contains(
                     "workspace.label.model-cache-level-3",
                 ),
-            "VexWeb must not own the human meaning of runtime-configuration values",
+            "Settings → Models must not own the human meaning of runtime-configuration values; ResponseProgress may borrow source-owned readiness labels",
         )
         assertTrue(
             javascript.contains(
@@ -1015,10 +1097,140 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains("display.runtimeConfigurationChoices") &&
+                javascript.contains("[resolveText(choice.label), resolveText(choice.standing)]") &&
+                javascript.contains(".filter(Boolean)") &&
                 javascript.contains("resolveText(display.runtimeConfigurationSummary)") &&
                 javascript.contains("resolveText(startControl.label)"),
-            "runtime configuration and activation wording must arrive through the Models projection",
+            "runtime configuration and optional standing wording must arrive through the Models projection",
         )
+        assertTrue(
+            javascript.contains("model?.capabilities?.displayFacts") &&
+                javascript.contains("resolveText(fact.label)") &&
+                javascript.contains("resolveText(fact.status)") &&
+                javascript.contains("...modelCapabilityFacts(selected)"),
+            "local capability wording must arrive through the effective capability projection and be manifested by Models",
+        )
+        assertFalse(
+            javascript.contains("fact.standing ===") ||
+                javascript.contains("capabilities.vexReach ===") ||
+                javascript.contains("capabilities.providerNativeTools ===") ||
+                javascript.contains("capabilities.visualInput ==="),
+            "VexWeb must not become a second capability-standing policy owner",
+        )
+    }
+
+    @Test
+    fun partnerApiSettingsStayVisibleButEffectHeldByServiceFundingGate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"partner-api-card\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-provider\" disabled",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-credential\" type=\"password\"",
+                ) &&
+                bundle.html.contains(
+                    "id=\"partner-api-connect\"",
+                ),
+            "Settings must expose the Partner API connection surface while keeping effect controls fail-safe disabled in markup",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeProdServiceContract.PartnerConnectionsPath,
+            ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionsControlPath,
+                ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding,
+                ),
+            "the UI gate must consume Product service availability rather than invent a browser-only readiness flag",
+        )
+        assertTrue(
+            javascript.contains(
+                "ui.partnerApiCard.dataset.state = 'held'",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiState.dataset.state = 'held'",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-card[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    ".partner-api-state[data-state=\"held\"]",
+                ) &&
+                bundle.css.contains(
+                    "var(--status-caution)",
+                ),
+            "the funding-held Partner API surface must visibly present caution without collapsing the hold into an error",
+        )
+        assertTrue(
+            javascript.contains(
+                "state.partnerConnectionAvailability?.connectEnabled !== true",
+            ) &&
+                javascript.contains(
+                    "ui.partnerApiConnect.disabled = !enabled || !hasCredential",
+                ),
+            "Connect must remain held until the service explicitly opens the live effect gate",
+        )
+        assertTrue(
+            javascript.contains(
+                "new TextEncoder().encode(secretText)",
+            ) &&
+                javascript.contains(
+                    "secretBytes.fill(0)",
+                ) &&
+                javascript.contains(
+                    "ui.partnerApiCredential.value = ''",
+                ),
+            "the future enabled route must clear the DOM value and encoded credential bytes after the loopback effect",
+        )
+        assertFalse(
+            javascript.contains(
+                "localStorage.setItem('partner-api",
+            ) ||
+                javascript.contains(
+                    "URLSearchParams(secret",
+                ),
+            "Partner credentials may not gain browser persistence or URL carriage",
+        )
+        assertTrue(
+            javascript.contains(
+                "partnerConnectionStanding !== 'NEEDS_CREDENTIAL'",
+            ) &&
+                javascript.contains(
+                    "partnerConnectionControlReplace",
+                ) &&
+                javascript.contains(
+                    "partnerConnectionControlConnect",
+                ),
+            "the wired future action must converge through the existing CONNECT/REPLACE service contract",
+        )
+        listOf(
+            "workspace.heading.partner-api",
+            "workspace.description.partner-api",
+            "workspace.status.partner-api-held-funding",
+            "workspace.description.partner-api-held-funding",
+            "workspace.button.partner-api-connect",
+        ).forEach {
+            key ->
+            assertTrue(
+                bundle.html.contains(
+                    key,
+                ) ||
+                    javascript.contains(
+                        key,
+                    ),
+                "Partner API presentation is missing localized key $key",
+            )
+        }
     }
 
     @Test
@@ -1223,11 +1435,147 @@ class VexLifeWebP1RuntimeArtifactsTest {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
         assertTrue(
-            bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
+            bundle.javascript.contains("display ? resolveText(display.label) : workspaceText('workspace.button.vision-quick-access')") &&
                 bundle.javascript.contains("visionButton.disabled = !bound || state.visionInFlight;"),
         )
         assertFalse(bundle.javascript.contains("'Vision · Held'"))
     }
+
+    @Test
+    fun historicalSentResourcesStaySeparateFromHumanWordsAndReviewLazily() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+        val css =
+            bundle.css
+
+        assertTrue(
+            javascript.contains(
+                "conversationResourceMetadataPath: \"/api/v1/conversation/resource/metadata\"",
+            ) &&
+                javascript.contains(
+                    "conversationResourceContentPath: \"/api/v1/conversation/resource/content\"",
+                ),
+            "historical review must use the bounded Product service routes",
+        )
+        assertTrue(
+            javascript.contains(
+                "headers.set(service.conversationResourceEventRefHeader, String(message.eventRef ?? ''));",
+            ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceEventHashHeader, String(message.eventSha256 ?? ''));",
+                ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceSequenceHeader, String(Number(message.sequence) || 0));",
+                ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceRefHeader, String(resource.resourceRef ?? ''));",
+                ),
+            "review must bind the exact canonical message and request-local resource identity",
+        )
+        assertTrue(
+            javascript.contains(
+                "paragraph.textContent = String(message.content ?? '');",
+            ) &&
+                javascript.contains(
+                    "const resources = sentResourcesNode(message);",
+                ) &&
+                javascript.contains(
+                    "if (resources) bubble.append(resources);",
+                ),
+            "resource history must remain a sibling projection beneath the exact human words",
+        )
+        assertTrue(
+            javascript.contains(
+                "Array.isArray(message?.resources)",
+            ) &&
+                javascript.contains(
+                    "name.textContent = String(resource.displayName ?? '');",
+                ) &&
+                javascript.contains(
+                    "detail.hidden = true;",
+                ),
+            "binding truth must be visible as the exact sent display name before any local-custody inspection runs",
+        )
+        assertTrue(
+            javascript.contains(
+                "service.conversationResourceMetadataPath",
+            ) &&
+                javascript.contains(
+                    "service.conversationResourceContentPath",
+                ) &&
+                javascript.contains(
+                    "{ method: 'GET', headers }",
+                ),
+            "metadata/content inspection must remain lazy behind Product fetch currentness",
+        )
+        assertTrue(
+            javascript.contains(
+                "if (metadata?.status) return resolveText(metadata.status);",
+            ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey,
+                ),
+            "custody/review copy must resolve through VexLifeText/string-key identity rather than renderer-authored English",
+        )
+        listOf(
+            "Sent with this message",
+            "Checking local copy",
+            "local copy unavailable",
+            "local copy needs attention",
+            "Could not review this local copy",
+            "Preview of ",
+        ).forEach {
+            forbidden ->
+            assertFalse(
+                javascript.contains(
+                    forbidden,
+                ),
+                "sent-resource renderer must not hardcode human copy: $forbidden",
+            )
+        }
+        assertTrue(
+            javascript.contains(
+                "URL.createObjectURL(blob)",
+            ) &&
+                javascript.contains(
+                    "image.loading = 'lazy';",
+                ) &&
+                javascript.contains(
+                    "const maximumPreviewCharacters = 6000;",
+                ),
+            "image and text review should remain bounded presentation work",
+        )
+        assertTrue(
+            css.contains(
+                ".sent-resources {",
+            ) &&
+                css.contains(
+                    "display: flex; flex-wrap: wrap;",
+                ) &&
+                css.contains(
+                    ".sent-resource {",
+                ) &&
+                css.contains(
+                    "min-width: min(180px, 100%);",
+                ) &&
+                css.contains(
+                    "@media (max-width: 520px)",
+                ),
+            "sent-resource cards must wrap without creating horizontal overflow",
+        )
+        assertTrue(
+            css.contains(
+                ".sent-resource-thumbnail",
+            ) &&
+                css.contains(
+                    ".sent-resource-text-preview",
+                ),
+            "review presentation should support bounded image and readable-text previews",
+        )
+    }
+
 
     @Test
     fun conversationStopIsProjectedFromTheConversationTurnFamily() {
@@ -1257,6 +1605,213 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         }
     }
+    @Test
+    fun firstLocalStartStatusExplainsTheOneInitialLocalTurnWithoutOwningSend() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "a".repeat(
+                        40,
+                    ),
+            )
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.ResponseProgress.ref +
+                    "\"",
+            ),
+            "first local start reuses the existing ResponseProgress coordinate",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"response-progress\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationPendingForNextTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationForActiveTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.heading.first-local-start",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-ready-to-send",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-sent",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".response-progress[data-state=\"FirstLocalStart\"]",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "var(--status-caution)",
+            ),
+            "first-local-start explanation uses the existing evidentiary caution token",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "FirstLocalStartStatus",
+            ),
+            "first-local-start explanation must not create a second Blueprint/VexWeb coordinate",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "READY_REUSABLE",
+            ),
+            "provider-cache state vocabulary must not leak into the browser presentation",
+        )
+    }
+
+    @Test
+    fun lateWorkspaceTextCurrentnessRepaintsDynamicRoleLabelsAndFollowUpReadiness() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts.generate()
+                .javascript
+        val workspaceLoad =
+            javascript
+                .substringAfter(
+                    "const loadWorkspaceStrings = async () => {",
+                )
+                .substringBefore(
+                    "// The presentation reports",
+                )
+
+        assertTrue(
+            javascript.contains(
+                "const workspaceText = (key) => {",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "const t = (key) => {",
+            ),
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "renderTimeline();",
+            ),
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "renderComposer();",
+            ),
+            "ResponseProgress must repaint when async workspace localization becomes current",
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "if (state.app === apps.archives) renderArchives();",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "human ? 'workspace.label.conversation-role-you' : 'workspace.label.conversation-role-vex'",
+            ) &&
+                javascript.contains(
+                    "workspaceText('workspace.label.conversation-role-vex')",
+                ),
+            "late localization must keep both role labels keyed through workspaceText, including the shared human/Vex ternary",
+        )
+        assertFalse(
+            javascript.contains(
+                "who.textContent = 'Vex';",
+            ) ||
+                javascript.contains(
+                    "speaker.textContent = 'Vex';",
+                ),
+        )
+    }
+
+    @Test
+    fun followUpReadinessReusesResponseProgressWithoutProviderCacheInference() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"response-progress\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.conversationTurn?.followUpReadiness",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "ui.responseProgress.dataset.state = 'FollowUpReadiness'",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspace.label.model-prompt-cache-entries",
+            ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-1",
+                ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-2",
+                ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspace.description.follow-up-readiness-will-prepare",
+            ) &&
+                javascript.contains(
+                    "workspace.description.follow-up-readiness-preparing",
+                ) &&
+                javascript.contains(
+                    "workspace.description.follow-up-readiness-successor-reset",
+                ),
+        )
+        assertFalse(
+            javascript.contains(
+                "lastCompletedProviderMeasurement",
+            ),
+            "browser presentation must not infer readiness from provider measurements",
+        )
+        assertFalse(
+            javascript.contains(
+                "cachedPromptTokens",
+            ),
+            "provider cache counters must not become human presentation vocabulary",
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".response-progress[data-state=\"FollowUpReadiness\"]",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const wasSwitching = Boolean(state.models?.switching);",
+            ) &&
+                javascript.contains(
+                    "if (wasSwitching && !switchingNow) {",
+                ) &&
+                javascript.contains(
+                    "void loadConversationTurn().catch(() => {});",
+                ),
+            "ResponseProgress currentness must refresh when model/source switching settles",
+        )
+    }
+
     @Test
     fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
         val sourceSha =
@@ -1419,6 +1974,90 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             javascript.contains(
                 VexLifeLocalSourcesFamily.ControlRemove,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowChecks.ref,
+            ),
+            "Allow checks is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceStopChecks.ref,
+            ),
+            "Stop checks is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksPath: \"/api/v1/workspace-checks\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceChecksControlPath: \"/api/v1/workspace-checks/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadWorkspaceChecks = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const applyWorkspaceChecksControl = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlAllow,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceChecksFamily.ControlRevoke,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceAllowTests.ref,
+            ),
+            "Allow tests is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceBlueprint.LocalSourceStopTests.ref,
+            ),
+            "Stop tests is a per-source row-runtime coordinate, not a static template element",
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceRunsPath: \"/api/v1/workspace-runs\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceRunsControlPath: \"/api/v1/workspace-runs/control\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadWorkspaceRuns = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const applyWorkspaceRunsControl = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceRunsFamily.ControlAllow,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeWorkspaceRunsFamily.ControlRevoke,
             ),
         )
     }

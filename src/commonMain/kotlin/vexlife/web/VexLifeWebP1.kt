@@ -96,6 +96,21 @@ object VexLifeWebP1 {
                 "local-sources.manage",
             )
 
+        val WorkspaceEffectsCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-effects.manage",
+            )
+
+        val WorkspaceChecksCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-checks.manage",
+            )
+
+        val WorkspaceRunsCapability =
+            VexWeb.CapabilityRef.of(
+                "workspace-runs.manage",
+            )
+
         const val ColorModeToggleAction = "color-mode.toggle"
         const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
 
@@ -1070,6 +1085,103 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalSourceAllowChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
+    val LocalSourceStopChanges =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopChanges,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceEffectsCapability,
+                ),
+        )
+
+
+    val LocalSourceAllowChecks =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowChecks,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceChecksCapability,
+                ),
+        )
+
+    val LocalSourceStopChecks =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopChecks,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceChecksCapability,
+                ),
+        )
+
+    val LocalSourceAllowTests =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceAllowTests,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceRunsCapability,
+                ),
+        )
+
+    val LocalSourceStopTests =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourceStopTests,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.WorkspaceRunsCapability,
+                ),
+        )
+
     val SettingsLocalSources =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SettingsLocalSources,
@@ -1077,6 +1189,12 @@ object VexLifeWebP1 {
                 listOf(
                     LocalSourcesList,
                     LocalSourcesAdd,
+                    LocalSourceAllowChanges,
+                    LocalSourceStopChanges,
+                    LocalSourceAllowChecks,
+                    LocalSourceStopChecks,
+                    LocalSourceAllowTests,
+                    LocalSourceStopTests,
                 ),
         )
 

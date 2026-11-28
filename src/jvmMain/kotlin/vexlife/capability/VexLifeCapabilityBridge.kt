@@ -17,6 +17,7 @@ import vexlife.capability.reach.VexLifeHomeReach
 import vexlife.capability.reach.VexLifeLocalSourceReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
+import vexlife.capability.reach.VexLifeSelfContext
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.CompanionProviderMessage
 import vexlife.continuity.VexLifeContextRevisit
@@ -47,9 +48,12 @@ import vexlife.sources.VexLifeLocalSourceStore
  * - A malformed request costs one request and returns the exact form, so Vex can correct it.
  */
 object VexLifeCapabilityBridge {
-    const val MaximumRequestsPerTurn = 4
-
-    /** Prompt room kept free at materialization for request/result exchanges in one turn. */
+    /**
+     * Real prompt room kept free for request/result exchanges in one human turn.
+     *
+     * This is resource headroom, not a capability-call quota. Reach continues while another
+     * request can materially improve the task and this room remains available.
+     */
     const val ExchangeAllowanceTokens = 24_000
 
     /** One result never takes more than this, so later requests in the turn still have room. */
@@ -58,7 +62,11 @@ object VexLifeCapabilityBridge {
     /** Keep semantic Home line windows comfortably below the generic provider-result hard cap. */
     private const val HomeLineProjectionBytes = 24_000
 
-    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v1"
+    const val TraceSchemaV1 = "vexlife-prod.capability-exchange-trace/v1"
+    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v2"
+
+    const val ReachBoundaryExchangeHeadroom =
+        "EXCHANGE_HEADROOM"
 
     enum class ResultState {
         RETURNED,
@@ -67,6 +75,7 @@ object VexLifeCapabilityBridge {
         FAILED,
         INVALID_REQUEST,
         NOT_AVAILABLE,
+        /** Historical v1 trace state only. Current reach never emits this state. */
         LIMIT_REACHED,
         HELD_TOKEN_BUDGET,
     }
@@ -104,6 +113,46 @@ object VexLifeCapabilityBridge {
         val readMemory: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
+        val writeWorkspace: (
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            relativePath: String,
+            content: String,
+            expectedPriorSha256: String?,
+        ) -> VexLifeWorkspaceWrite.Outcome = {
+            productHome,
+            operationRef,
+            sourceRef,
+            relativePath,
+            content,
+            expectedPriorSha256,
+            ->
+            VexLifeWorkspaceWrite(
+                productHome,
+            )
+                .write(
+                    operationRef = operationRef,
+                    sourceRef = sourceRef,
+                    relativePath = relativePath,
+                    content = content,
+                    expectedPriorSha256 = expectedPriorSha256,
+                )
+        },
+        val checkWorkspace: ((
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            request: VexLifeWorkspaceTextCheck.Request,
+        ) -> VexLifeWorkspaceTextCheck.Outcome)? =
+            null,
+        val testWorkspace: ((
+            productHome: Path,
+            operationRef: String,
+            sourceRef: String,
+            request: VexLifeWorkspaceJavaTest.Request,
+        ) -> VexLifeWorkspaceJavaTest.Outcome)? =
+            null,
         val now: () -> Instant = { Instant.now() },
     )
 
@@ -129,6 +178,11 @@ object VexLifeCapabilityBridge {
          * where no turn binds them: continuity revisit is then NOT_AVAILABLE.
          */
         val turnSources: VexLifeContextRevisit.TurnSources? = null,
+        /**
+         * Exact current-turn prompt/body evidence bound by DirectCompanionTurn after a provider
+         * stage. Null outside a direct turn; the model never supplies these coordinates.
+         */
+        val selfContext: VexLifeSelfContext.TurnContext? = null,
     )
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -154,6 +208,14 @@ object VexLifeCapabilityBridge {
         val externalEffectsExecuted: Boolean,
         val effectAuthorityGranted: Boolean,
         /**
+         * True only when the owner cannot prove whether an attempted mutation landed.
+         *
+         * externalEffectsExecuted remains false until execution is verified; this separate bit
+         * prevents "not verified" from becoming the false claim "definitely did not happen".
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val externalEffectMayHaveExecuted: Boolean = false,
+        /**
          * Exact owner refs whose words came back (revisit: Conversation event refs and Memory
          * statement refs), so a later reader can walk from this turn to the source it used. Absent
          * from older traces and from reads that return no owner-addressed source.
@@ -165,30 +227,64 @@ object VexLifeCapabilityBridge {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Trace(
         val schemaVersion: String,
         val truthClass: String,
         val entries: List<TraceEntry>,
-        val maximumRequestsPerTurn: Int,
+        /** Historical v1 fixed-quota evidence. Never emitted by current reach. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val maximumRequestsPerTurn: Int? = null,
+        /** Current v2 resource boundary. Absent from historical v1 evidence. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val reachBoundary: String? = null,
         val exchangeAllowanceTokens: Int,
         val rawResultContentPersisted: Boolean,
         val effectAuthorityGranted: Boolean,
     ) {
         init {
             require(
-                schemaVersion == TraceSchema &&
-                    entries.isNotEmpty() &&
-                    entries.size <= MaximumRequestsPerTurn + 1
+                entries.isNotEmpty()
             ) {
-                "capability exchange trace is invalid"
+                "capability exchange trace requires at least one entry"
+            }
+            when (schemaVersion) {
+                TraceSchemaV1 ->
+                    require(
+                        maximumRequestsPerTurn != null &&
+                            maximumRequestsPerTurn > 0 &&
+                            reachBoundary == null &&
+                            entries.size <= maximumRequestsPerTurn + 1
+                    ) {
+                        "historical capability exchange trace is invalid"
+                    }
+
+                TraceSchema ->
+                    require(
+                        maximumRequestsPerTurn == null &&
+                            reachBoundary == ReachBoundaryExchangeHeadroom
+                    ) {
+                        "current capability exchange trace is invalid"
+                    }
+
+                else ->
+                    error(
+                        "unsupported capability exchange trace schema: $schemaVersion"
+                    )
             }
             require(
                 !rawResultContentPersisted &&
-                    !effectAuthorityGranted &&
-                    entries.none { it.externalEffectsExecuted || it.effectAuthorityGranted }
+                    effectAuthorityGranted ==
+                    entries.any {
+                        it.effectAuthorityGranted
+                    } &&
+                    entries.none {
+                        it.externalEffectsExecuted &&
+                            it.externalEffectMayHaveExecuted
+                    }
             ) {
-                "capability exchange trace may record read-only reach only"
+                "capability exchange trace effect truth is inconsistent"
             }
             require(entries.map { it.requestNumber } == (1..entries.size).toList()) {
                 "capability exchange trace entries must be numbered in order"
@@ -214,10 +310,13 @@ object VexLifeCapabilityBridge {
             schemaVersion = TraceSchema,
             truthClass = "REQUEST_RETURN_CAPABILITY_EXCHANGES_OF_ONE_HUMAN_TURN",
             entries = entries,
-            maximumRequestsPerTurn = MaximumRequestsPerTurn,
+            reachBoundary = ReachBoundaryExchangeHeadroom,
             exchangeAllowanceTokens = ExchangeAllowanceTokens,
             rawResultContentPersisted = false,
-            effectAuthorityGranted = false,
+            effectAuthorityGranted =
+                entries.any {
+                    it.effectAuthorityGranted
+                },
         )
 
     /** Display text for one in-flight request, for the live thought stream. */
@@ -275,13 +374,6 @@ object VexLifeCapabilityBridge {
                         parsed.reason + ". " + FormReminder,
                         untrusted = false,
                     )
-                admission.requestNumber > MaximumRequestsPerTurn ->
-                    Body(
-                        ResultState.LIMIT_REACHED,
-                        null,
-                        "This turn already used its $MaximumRequestsPerTurn requests.",
-                        untrusted = false,
-                    )
                 definition == null ->
                     Body(
                         ResultState.INVALID_REQUEST,
@@ -289,7 +381,7 @@ object VexLifeCapabilityBridge {
                         "No capability is named \"${requireNotNull(call).capability}\". " + handlesLine(),
                         untrusted = false,
                     )
-                definition.capabilityRef !in VexLifeReachDefinitions.EnvelopeCapabilityRefs ->
+                definition.capabilityRef !in RequestEnvelopeCapabilityRefs ->
                     Body(
                         ResultState.INVALID_REQUEST,
                         null,
@@ -303,7 +395,14 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call!!, admission, ownerBindings, estimateTokens)
+                else ->
+                    dispatch(
+                        definition = definition,
+                        call = call!!,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                        estimateTokens = estimateTokens,
+                    )
             }
 
         val maximumTokens =
@@ -335,8 +434,9 @@ object VexLifeCapabilityBridge {
                 effectClass = definition?.effectClass,
                 startedAt = startedAt.toString(),
                 completedAt = completedAt.toString(),
-                externalEffectsExecuted = false,
-                effectAuthorityGranted = false,
+                externalEffectsExecuted = body.externalEffectsExecuted,
+                effectAuthorityGranted = body.effectAuthorityGranted,
+                externalEffectMayHaveExecuted = body.externalEffectMayHaveExecuted,
                 sourceRefs = if (state == body.state) body.sourceRefs else emptyList(),
                 frontierRefs = if (state == body.state) body.frontierRefs else (body.frontierRefs + body.sourceRefs).distinct(),
                 hostScan = body.hostScan,
@@ -380,15 +480,28 @@ object VexLifeCapabilityBridge {
         val sourceRefs: List<String> = emptyList(),
         val frontierRefs: List<String> = emptyList(),
         val hostScan: VexLifeContextRevisit.HostScan? = null,
+        val externalEffectsExecuted: Boolean = false,
+        val effectAuthorityGranted: Boolean = false,
+        val externalEffectMayHaveExecuted: Boolean = false,
     )
 
+    private val RequestEnvelopeCapabilityRefs: Set<String> =
+        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            .toSet() +
+            setOf(
+                VexLifeWorkspaceEffectDefinitions.WriteRef,
+                VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+                VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
+            )
+
     private const val FormReminder =
-        "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
+        "The top-level \"capability\" names the capability being invoked; action-specific targets stay inside \"arguments\". " +
+            "The exact form is the header line VEXLIFE_CAPABILITY_REQUEST/v1, then one JSON object such as " +
             """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}"""
 
     private fun handlesLine(): String =
         "Capabilities: " +
-            VexLifeReachDefinitions.EnvelopeCapabilityRefs.mapNotNull {
+            RequestEnvelopeCapabilityRefs.mapNotNull {
                     VexLifeCapabilityAtlas.resolve(it)?.handle
                 }
                 .joinToString(", ") +
@@ -430,6 +543,7 @@ object VexLifeCapabilityBridge {
         return try {
             when (definition.capabilityRef) {
                 VexLifeReachDefinitions.AtlasRef -> atlas(action.action, args, admission)
+                VexLifeReachDefinitions.SelfContextRef -> selfContext(admission)
                 VexLifeReachDefinitions.WebRef ->
                     web(
                         action = action.action,
@@ -449,6 +563,27 @@ object VexLifeCapabilityBridge {
                 VexLifeReachDefinitions.LocalSourceRef -> localSources(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
+                VexLifeWorkspaceEffectDefinitions.WriteRef ->
+                    workspaceWrite(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
+                VexLifeWorkspaceCheckDefinitions.CapabilityRef ->
+                    workspaceCheck(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
+                VexLifeWorkspaceJavaTestDefinitions.CapabilityRef ->
+                    workspaceTest(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
                 else ->
                     Body(
                         ResultState.INVALID_REQUEST,
@@ -458,14 +593,574 @@ object VexLifeCapabilityBridge {
                     )
             }
         } catch (error: Exception) {
-            // An owner that throws is a failed read, visible to Vex; it never fails the human's
-            // turn.
+            // Owner failure is returned to Vex as evidence; the human turn remains able to reason
+            // about the failed reach/effect rather than silently treating it as success.
             Body(
                 ResultState.FAILED,
                 targetOf(call),
-                "The read did not complete: " + (error.message ?: error.javaClass.simpleName),
+                "The capability owner did not complete: " +
+                    (error.message ?: error.javaClass.simpleName),
                 untrusted = false,
             )
+        }
+    }
+
+    private fun selfContext(
+        admission: Admission,
+    ): Body {
+        val bound =
+            admission.selfContext
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "self-context",
+                    "self context is not bound to this provider turn",
+                    untrusted = false,
+                )
+        val result =
+            VexLifeSelfContext.inspect(
+                productHome = admission.productHome,
+                context = bound,
+            )
+        require(!result.effectsPerformed) {
+            "self context performed an effect"
+        }
+        return Body(
+            state = ResultState.RETURNED,
+            target = bound.promptReceipt.receiptRef,
+            text = result.text,
+            untrusted = false,
+            facts =
+                mapOf(
+                    "workingFocusCurrentness" to
+                        result.workingFocusCurrentness,
+                ),
+        )
+    }
+
+    private fun workspaceWrite(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (
+            action !=
+                "write"
+        ) {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                "workspace",
+                "workspace has no effect owner for action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string(
+                "source",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    "workspace",
+                    "workspace write requires one exact source ref.",
+                    untrusted = false,
+                )
+        val relativePath =
+            args.string(
+                "path",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace write requires one relative path.",
+                    untrusted = false,
+                )
+        val content =
+            args.rawString(
+                "content",
+            )
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef + ":" + relativePath,
+                    "workspace write requires complete UTF-8 content.",
+                    untrusted = false,
+                )
+        val expectedPriorSha256 =
+            args.string(
+                "expectedSha256",
+            )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    sourceRef + ":" + relativePath,
+                    "workspace write requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val operationRef =
+            "operation.vexlife-prod.workspace-write." +
+                VexLifeCapabilityRequest
+                    .sha256(
+                        listOf(
+                            requestEventHash,
+                            VexLifeWorkspaceEffectDefinitions.WriteRef,
+                            action,
+                            VexContractJson.canonicalEncodeElement(
+                                args,
+                            ),
+                        )
+                            .joinToString(
+                                "\u0000",
+                            ),
+                    )
+
+        return when (
+            val outcome =
+                ownerBindings.writeWorkspace(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    relativePath,
+                    content,
+                    expectedPriorSha256,
+                )
+        ) {
+            is VexLifeWorkspaceWrite.Outcome.Completed -> {
+                val receipt =
+                    outcome.receipt
+                Body(
+                    state = ResultState.RETURNED,
+                    target =
+                        receipt.sourceRef +
+                            ":" +
+                            receipt.relativePath,
+                    text =
+                        when (
+                            receipt.disposition
+                        ) {
+                            VexLifeWorkspaceWrite.DispositionRecovered ->
+                                "The exact prior workspace-write intent is already satisfied. " +
+                                    "Its receipt was recovered without another write."
+
+                            else ->
+                                "The workspace write completed and the target was reobserved at the verified new SHA-256."
+                        },
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put(
+                                "receiptRef",
+                                receipt.receiptRef,
+                            )
+                            put(
+                                "intentRef",
+                                receipt.intentRef,
+                            )
+                            put(
+                                "disposition",
+                                receipt.disposition,
+                            )
+                            receipt.priorSha256
+                                ?.let {
+                                    put(
+                                        "priorSha256",
+                                        it,
+                                    )
+                                }
+                            put(
+                                "newSha256",
+                                receipt.newSha256,
+                            )
+                            put(
+                                "bytes",
+                                receipt.bytes.toString(),
+                            )
+                            put(
+                                "effectPerformedNow",
+                                outcome.effectPerformedNow.toString(),
+                            )
+                            put(
+                                "currentEffectAuthority",
+                                outcome.currentEffectAuthority.toString(),
+                            )
+                        },
+                    externalEffectsExecuted =
+                        outcome.effectPerformedNow,
+                    effectAuthorityGranted =
+                        outcome.effectPerformedNow &&
+                            outcome.currentEffectAuthority,
+                )
+            }
+
+            is VexLifeWorkspaceWrite.Outcome.Refused ->
+                Body(
+                    state = ResultState.REFUSED,
+                    target =
+                        sourceRef +
+                            ":" +
+                            relativePath,
+                    text =
+                        "The workspace write was refused: " +
+                            outcome.reason +
+                            ". No new write was performed.",
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            outcome.intentRef
+                                ?.let {
+                                    put(
+                                        "intentRef",
+                                        it,
+                                    )
+                                }
+                            outcome.observedSha256
+                                ?.let {
+                                    put(
+                                        "observedSha256",
+                                        it,
+                                    )
+                                }
+                        },
+                )
+
+            is VexLifeWorkspaceWrite.Outcome.UnknownAfterAttempt ->
+                Body(
+                    state = ResultState.FAILED,
+                    target =
+                        sourceRef +
+                            ":" +
+                            relativePath,
+                    text =
+                        "The workspace write result is uncertain after an attempted mutation. " +
+                            "Do not form a different write to compensate. Reissue the same exact " +
+                            "workspace write so the owner can reobserve/recover before any replay.",
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put(
+                                "intentRef",
+                                outcome.intentRef,
+                            )
+                            put(
+                                "reason",
+                                outcome.reason,
+                            )
+                            outcome.observedSha256
+                                ?.let {
+                                    put(
+                                        "observedSha256",
+                                        it,
+                                    )
+                                }
+                        },
+                    externalEffectMayHaveExecuted = true,
+                )
+        }
+    }
+
+
+    private fun workspaceCheck(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (action != "check") {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                null,
+                "workspace-check has no action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string("source")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    null,
+                    "workspace check requires one exact Local Source ref.",
+                    untrusted = false,
+                )
+        val relativePath =
+            args.string("path")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace check requires one relative text path.",
+                    untrusted = false,
+                )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$relativePath",
+                    "workspace check requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val owner =
+            ownerBindings.checkWorkspace
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$relativePath",
+                    "The Product-owned workspace check process is not available in this runtime.",
+                    untrusted = false,
+                )
+        val request =
+            VexLifeWorkspaceTextCheck.Request(
+                relativePath = relativePath,
+                requiredLiterals = args.stringArray("required"),
+                forbiddenLiterals = args.stringArray("forbidden"),
+            )
+        val operationRef =
+            "operation.vexlife-prod.workspace-check." +
+                VexLifeCapabilityRequest.sha256(
+                    requestEventHash +
+                        "\u0000" +
+                        VexLifeWorkspaceCheckDefinitions.CapabilityRef +
+                        "\u0000" +
+                        action +
+                        "\u0000" +
+                        VexContractJson.canonicalEncodeElement(args),
+                )
+        return when (
+            val outcome =
+                owner(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    request,
+                )
+        ) {
+            is VexLifeWorkspaceTextCheck.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    "$sourceRef:$relativePath",
+                    "The workspace check was refused before the Product-owned checker completed.",
+                    untrusted = false,
+                    facts = mapOf("reason" to outcome.reason),
+                )
+
+            is VexLifeWorkspaceTextCheck.Outcome.Completed -> {
+                val receipt = outcome.receipt
+                val state =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceTextCheck.DispositionCheckCompleted,
+                        VexLifeWorkspaceTextCheck.DispositionCheckFailed,
+                        -> ResultState.RETURNED
+                        VexLifeWorkspaceTextCheck.DispositionTimeout,
+                        VexLifeWorkspaceTextCheck.DispositionProcessFailed,
+                        -> ResultState.FAILED
+                        else -> ResultState.FAILED
+                    }
+                val text =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceTextCheck.DispositionCheckCompleted ->
+                            "The bounded workspace check completed and every requested assertion passed."
+                        VexLifeWorkspaceTextCheck.DispositionCheckFailed ->
+                            "The bounded workspace check completed and returned assertion/file evidence that did not pass."
+                        VexLifeWorkspaceTextCheck.DispositionTimeout ->
+                            "The bounded workspace check process timed out."
+                        else ->
+                            "The bounded workspace check process did not complete normally."
+                    }
+                Body(
+                    state,
+                    "$sourceRef:$relativePath",
+                    text,
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put("disposition", receipt.disposition)
+                            put("currentEffectAuthority", receipt.currentEffectAuthority.toString())
+                            put("runtimeRef", receipt.runtimeRef)
+                            put("checkGrantRef", receipt.checkGrantRef)
+                            put("timedOut", receipt.timedOut.toString())
+                            put("stdoutTruncated", receipt.stdoutTruncated.toString())
+                            put("stderrTruncated", receipt.stderrTruncated.toString())
+                            receipt.exitCode?.let { put("exitCode", it.toString()) }
+                            receipt.observedSha256?.let { put("observedSha256", it) }
+                            receipt.bytes?.let { put("bytes", it.toString()) }
+                            if (receipt.failures.isNotEmpty()) {
+                                put(
+                                    "failures",
+                                    receipt.failures.joinToString(";") {
+                                        it.code + (it.assertionIndex?.let { index -> ":$index" } ?: "")
+                                    },
+                                )
+                            }
+                        },
+                    externalEffectsExecuted = receipt.externalEffectsExecuted,
+                    effectAuthorityGranted = receipt.effectAuthorityGranted,
+                )
+            }
+        }
+    }
+
+    private fun workspaceTest(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
+        if (action != "test") {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                null,
+                "workspace-test has no action \"$action\".",
+                untrusted = false,
+            )
+        }
+        val sourceRef =
+            args.string("source")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    null,
+                    "workspace test requires one exact Local Source ref.",
+                    untrusted = false,
+                )
+        val sources =
+            args.stringArray("sources")
+        val testClass =
+            args.string("testClass")
+                ?: return Body(
+                    ResultState.INVALID_REQUEST,
+                    sourceRef,
+                    "workspace test requires one fully-qualified test class.",
+                    untrusted = false,
+                )
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$testClass",
+                    "workspace test requires one exact durable Conversation request.",
+                    untrusted = false,
+                )
+        val owner =
+            ownerBindings.testWorkspace
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "$sourceRef:$testClass",
+                    "The Product-owned workspace Java-test process is not available in this runtime.",
+                    untrusted = false,
+                )
+        val request =
+            runCatching {
+                VexLifeWorkspaceJavaTest.Request(
+                    sources = sources,
+                    testClass = testClass,
+                )
+            }
+                .getOrElse {
+                    return Body(
+                        ResultState.INVALID_REQUEST,
+                        "$sourceRef:$testClass",
+                        "workspace test sources/testClass are outside the admitted typed Java-test request.",
+                        untrusted = false,
+                    )
+                }
+        val operationRef =
+            "operation.vexlife-prod.workspace-test." +
+                VexLifeCapabilityRequest.sha256(
+                    requestEventHash +
+                        "\u0000" +
+                        VexLifeWorkspaceJavaTestDefinitions.CapabilityRef +
+                        "\u0000" +
+                        action +
+                        "\u0000" +
+                        VexContractJson.canonicalEncodeElement(args),
+                )
+
+        return when (
+            val outcome =
+                owner(
+                    admission.productHome,
+                    operationRef,
+                    sourceRef,
+                    request,
+                )
+        ) {
+            is VexLifeWorkspaceJavaTest.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    "$sourceRef:$testClass",
+                    "The workspace test was refused before the Product-owned Java-test owner completed.",
+                    untrusted = false,
+                    facts = mapOf("reason" to outcome.reason),
+                )
+
+            is VexLifeWorkspaceJavaTest.Outcome.Completed -> {
+                val receipt = outcome.receipt
+                val state =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceJavaTest.DispositionTestPassed,
+                        VexLifeWorkspaceJavaTest.DispositionCompileFailed,
+                        VexLifeWorkspaceJavaTest.DispositionTestFailed,
+                        VexLifeWorkspaceJavaTest.DispositionSourceChanged,
+                        -> ResultState.RETURNED
+                        VexLifeWorkspaceJavaTest.DispositionTimeout,
+                        VexLifeWorkspaceJavaTest.DispositionHostFailed,
+                        -> ResultState.FAILED
+                        else -> ResultState.FAILED
+                    }
+                val text =
+                    when (receipt.disposition) {
+                        VexLifeWorkspaceJavaTest.DispositionTestPassed ->
+                            "The bounded workspace Java test completed and passed."
+                        VexLifeWorkspaceJavaTest.DispositionCompileFailed ->
+                            "The bounded workspace Java test compiled the admitted sources and returned compiler diagnostics."
+                        VexLifeWorkspaceJavaTest.DispositionTestFailed ->
+                            "The bounded workspace Java test ran and returned failing test evidence."
+                        VexLifeWorkspaceJavaTest.DispositionSourceChanged ->
+                            "The bounded workspace Java-test source snapshot changed before completion; re-observe the project before deciding what to run next."
+                        VexLifeWorkspaceJavaTest.DispositionTimeout ->
+                            "The bounded workspace Java test timed out."
+                        else ->
+                            "The bounded workspace Java-test host process did not complete normally."
+                    }
+                Body(
+                    state,
+                    "$sourceRef:$testClass",
+                    text,
+                    untrusted = true,
+                    facts =
+                        buildMap {
+                            put("disposition", receipt.disposition)
+                            put("currentEffectAuthority", receipt.currentEffectAuthority.toString())
+                            put("runtimeRef", receipt.runtimeRef)
+                            put("runGrantRef", receipt.runGrantRef)
+                            put("testClass", receipt.testClass)
+                            put("sourceCount", receipt.sources.size.toString())
+                            put("cleanupComplete", receipt.cleanupComplete.toString())
+                            put("testTimedOut", receipt.testTimedOut.toString())
+                            put("stdoutTruncated", receipt.stdoutTruncated.toString())
+                            put("stderrTruncated", receipt.stderrTruncated.toString())
+                            receipt.testExitCode?.let { put("testExitCode", it.toString()) }
+                            if (receipt.diagnostics.isNotEmpty()) {
+                                put(
+                                    "diagnostics",
+                                    receipt.diagnostics.joinToString("\n") {
+                                        diagnostic ->
+                                        listOfNotNull(
+                                            diagnostic.kind,
+                                            diagnostic.sourcePath,
+                                            diagnostic.line.takeIf { it >= 0 }?.toString(),
+                                            diagnostic.message,
+                                        )
+                                            .joinToString(":")
+                                    },
+                                )
+                            }
+                            if (receipt.testStdout.isNotBlank()) {
+                                put("testStdout", receipt.testStdout)
+                            }
+                            if (receipt.testStderr.isNotBlank()) {
+                                put("testStderr", receipt.testStderr)
+                            }
+                        },
+                    externalEffectsExecuted = receipt.externalEffectsExecuted,
+                    effectAuthorityGranted = receipt.effectAuthorityGranted,
+                )
+            }
         }
     }
 
@@ -595,7 +1290,7 @@ object VexLifeCapabilityBridge {
                     untrusted = false,
                 )
             else -> {
-                val name = args.string("capability").orEmpty()
+                val name = args.string("handle").orEmpty()
                 val definition = VexLifeCapabilityAtlas.resolve(name)
                 if (definition == null) {
                     Body(
@@ -2199,7 +2894,7 @@ object VexLifeCapabilityBridge {
         val result =
             VexLifeContextRevisit.revisit(
                 request = request,
-                sources = bound.sources(request.scopes),
+                sources = bound.sources(request),
                 estimateTokens = estimateTokens,
             )
         require(!result.effectsPerformed) { "revisit performed an effect" }
@@ -2262,7 +2957,8 @@ object VexLifeCapabilityBridge {
         val held =
             compose(
                 ResultState.HELD_TOKEN_BUDGET,
-                "This turn has no room left for that result. Answer from what you have, or ask for something smaller next turn.",
+                "This turn's capability exchange headroom is exhausted. Do not send another capability request in this turn. " +
+                    "Answer from established evidence, or preserve what remains and continue from the next human turn.",
                 false,
             )
         return Triple(held, false, ResultState.HELD_TOKEN_BUDGET)
@@ -2288,7 +2984,8 @@ object VexLifeCapabilityBridge {
                         )
                 }
         val meta = buildMap {
-            put("request", "$requestNumber of $MaximumRequestsPerTurn")
+            put("request", requestNumber.toString())
+            put("reachBoundary", ReachBoundaryExchangeHeadroom)
             put("state", body.state.name)
             body.target?.let { put("target", it) }
             putAll(body.facts)
@@ -2301,29 +2998,30 @@ object VexLifeCapabilityBridge {
             }
             if (cut || body.truncated || nextOffset != null) put("truncated", "true")
         }
-        val remaining = MaximumRequestsPerTurn - requestNumber
+        val reachHealth =
+            "Use another reach only when its result can materially change what you understand, verify, or can truthfully do for the task. " +
+                "Stop when the evidence is sufficient or another materially similar read would not change the decision. " +
+                "The host will hold further reach if real exchange headroom is exhausted."
         val next =
             if (
-                body.continuation != null &&
-                remaining > 0 &&
-                body.state != ResultState.LIMIT_REACHED
+                body.state ==
+                ResultState.HELD_TOKEN_BUDGET
+            ) {
+                "Capability exchange headroom is exhausted for this turn. Do not send another capability request in this turn. " +
+                    "Answer from established evidence, or preserve the unfinished edge for the next human turn."
+            } else if (
+                body.continuation != null
             ) {
                 body.continuation +
-                    " You can make another request ($remaining left this turn) or answer the person now."
+                    " " +
+                    reachHealth
             } else if (
-                nextOffset != null &&
-                remaining > 0 &&
-                body.state != ResultState.LIMIT_REACHED
+                nextOffset != null
             ) {
                 "More of this source remains. To continue this same page, fetch the same URL with offset $nextOffset. " +
-                    "You can make another request ($remaining left this turn) or answer the person now."
-            } else if (remaining > 0 && body.state != ResultState.LIMIT_REACHED) {
-                "You can make another request ($remaining left this turn) or answer the person now."
+                    reachHealth
             } else {
-                "No requests are left this turn. Do not send another capability request in this turn. " +
-                    "Answer the person now from what you have. If a responsible answer still needs more " +
-                    "outside truth, share what you currently understand and what remains missing, then " +
-                    "ask the person to send another message so you can continue in a fresh turn."
+                reachHealth
             }
         return listOf(
                 VexLifeCapabilityRequest.ResultHeader,
@@ -2345,8 +3043,22 @@ object VexLifeCapabilityBridge {
             ?: call.arguments.string("repository")?.let { repo ->
                 repo + (call.arguments.string("path")?.let { ":$it" } ?: "")
             }
+            ?: call.arguments.string("source")?.let {
+                source ->
+                source +
+                    (
+                        call.arguments
+                            .string(
+                                "path",
+                            )
+                            ?.let {
+                                ":$it"
+                            }
+                            ?: ""
+                    )
+            }
             ?: call.arguments.string("path")?.let { "home:$it" }
-            ?: call.arguments.string("capability")
+            ?: call.arguments.string("handle")
 
     private fun JsonObject.string(name: String): String? =
         (this[name] as? JsonPrimitive)
@@ -2354,6 +3066,24 @@ object VexLifeCapabilityBridge {
             ?.contentOrNull
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
+
+    private fun JsonObject.rawString(name: String): String? =
+        (this[name] as? JsonPrimitive)
+            ?.takeIf {
+                it.isString
+            }
+            ?.contentOrNull
+
+
+    private fun JsonObject.stringArray(name: String): List<String> =
+        (this[name] as? JsonArray)
+            ?.map {
+                require(it is JsonPrimitive && it.isString) {
+                    "$name must contain only strings"
+                }
+                (it as JsonPrimitive).content
+            }
+            .orEmpty()
 
     private fun JsonObject.integer(name: String): Int? =
         (this[name] as? JsonPrimitive)

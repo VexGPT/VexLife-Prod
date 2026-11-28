@@ -92,6 +92,10 @@ object DirectConversationSourceReturn {
         val scannedCompletedTurnCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
         val effectsPerformed: Boolean,
+        val sourceLifecycleBindingRef: String? =
+            null,
+        val historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     )
 
     @Serializable
@@ -286,29 +290,45 @@ object DirectConversationSourceReturn {
                     json,
                 )
                 .jsonObject
+        val normalizedObject =
+            objectValue
+                .toMutableMap()
+                .also {
+                    fields ->
+                    if (
+                        "schemaVersion" !in
+                        fields
+                    ) {
+                        // The exact v1 control header already fixes the wire relationship. Some
+                        // local providers omit the redundant body schemaVersion.
+                        fields[
+                            "schemaVersion"
+                        ] =
+                            JsonPrimitive(
+                                RequestSchema,
+                            )
+                    }
+                    if (
+                        "speakerScope" !in
+                        fields
+                    ) {
+                        // The Capability Atlas owns speakerScope as optional with ANY as its
+                        // explicit default. Preserve that semantic contract at the text-control
+                        // carriage boundary; explicit HUMAN/VEX/ANY values remain untouched.
+                        fields[
+                            "speakerScope"
+                        ] =
+                            JsonPrimitive(
+                                AnySpeaker,
+                            )
+                    }
+                }
         val requestJson =
-            if (
-                "schemaVersion" in
-                objectValue
-            ) {
-                json
-            } else {
-                // The exact v1 control header already fixes the wire relationship. Some local
-                // providers omit the redundant body schemaVersion while preserving the bounded
-                // query/speaker meaning. Normalize only that carriage omission here; durable
-                // Request decoding remains strict because Request itself still requires the field.
-                VexContractJson.compactEncode(
-                    JsonObject(
-                        objectValue +
-                            (
-                                "schemaVersion" to
-                                    JsonPrimitive(
-                                        RequestSchema,
-                                    )
-                                ),
-                    ),
-                )
-            }
+            VexContractJson.compactEncode(
+                JsonObject(
+                    normalizedObject,
+                ),
+            )
 
         return requireRequest(
             VexContractJson.decode<Request>(
@@ -438,11 +458,29 @@ object DirectConversationSourceReturn {
         request: Request,
         excludedEventRefs: Set<String> =
             emptySet(),
+        sourceLifecycleBindingRef: String? =
+            null,
+        historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
     ): Discovery {
         val admitted =
             requireRequest(
                 request,
             )
+        require(
+            sourceLifecycleBindingRef ==
+                null ||
+                sourceLifecycleBindingRef.isNotBlank()
+        ) {
+            "Conversation source-return lifecycle binding must be absent or non-empty"
+        }
+        require(
+            historicalCurrentizedEventRefs.isEmpty() ||
+                sourceLifecycleBindingRef !=
+                null
+        ) {
+            "historical-currentized source refs require one exact lifecycle binding"
+        }
         val snapshot =
             conversationOwner.current()
         val events =
@@ -640,6 +678,10 @@ object DirectConversationSourceReturn {
                     2,
             wholeHistoryEventEnumerationPerformed = true,
             effectsPerformed = false,
+            sourceLifecycleBindingRef =
+                sourceLifecycleBindingRef,
+            historicalCurrentizedEventRefs =
+                historicalCurrentizedEventRefs,
         )
     }
 
@@ -797,9 +839,9 @@ object DirectConversationSourceReturn {
         )
     }
 
-    fun formAttemptTrace(
+    internal fun formAttemptTrace(
         initialPrompt: DirectPromptContext.Receipt,
-        inference: DirectCompanionConnection.Result,
+        inference: CompanionInferenceConnection.Result,
         discovery: Discovery,
         projection: Projection,
     ): AttemptTrace {
@@ -826,20 +868,19 @@ object DirectConversationSourceReturn {
                 projection.discoveredMatchCount &&
                 !projection.effectAuthorityGranted &&
                 !projection.effectsPerformed &&
-                inference.runtimeObservation.contentSha256 ==
+                inference.observation.contentSha256 ==
                 sha256(
                     inference.content,
                 ) &&
-                inference.invocationEvidence.runtimeObservationRef ==
-                inference.runtimeObservation.observationRef &&
-                inference.invocationEvidence.runtimeObservationFingerprint ==
-                inference.runtimeObservation.semanticFingerprint &&
+                inference.invocationEvidence.observationRef ==
+                inference.observation.observationRef &&
+                inference.invocationEvidence.observationFingerprint ==
+                inference.observation.semanticFingerprint &&
                 inference.invocationEvidence.responseBodySha256 ==
-                inference.runtimeObservation.responseBodySha256 &&
+                inference.observation.responseBodySha256 &&
                 inference.invocationEvidence.actualHttpCall &&
-                inference.invocationEvidence.loopbackOnly &&
-                !inference.runtimeObservation.rawProviderResponsePersisted &&
-                !inference.runtimeObservation.reasoningTrace.rawPersisted,
+                !inference.observation.rawProviderResponsePersisted &&
+                !inference.observation.rawReasoningPersisted,
         ) {
             "Conversation source-return attempt evidence is not bound to one exact internal inference and source return"
         }
@@ -854,11 +895,11 @@ object DirectConversationSourceReturn {
                 initialPrompt.semanticFingerprint,
             request = request,
             modelOutputSha256 =
-                inference.runtimeObservation.contentSha256,
+                inference.observation.contentSha256,
             runtimeObservationRef =
-                inference.runtimeObservation.observationRef,
+                inference.observation.observationRef,
             runtimeObservationFingerprint =
-                inference.runtimeObservation.semanticFingerprint,
+                inference.observation.semanticFingerprint,
             invocationRef =
                 inference.invocationEvidence.invocationRef,
             invocationFingerprint =
@@ -996,9 +1037,37 @@ object DirectConversationSourceReturn {
                         "Conversation source-return provider state is not recognized",
                     )
             }
-        return listOf(
+        val historicalCurrentizedReturned =
+            matches
+                .flatMap {
+                    match ->
+                    listOf(
+                        match.requestEvent.eventRef,
+                        match.responseEvent.eventRef,
+                    )
+                }
+                .filter {
+                    it in
+                        discovery.historicalCurrentizedEventRefs
+                }
+                .distinct()
+        val lifecycleTruth =
+            discovery.sourceLifecycleBindingRef
+                ?.let {
+                    if (
+                        historicalCurrentizedReturned.isNotEmpty()
+                    ) {
+                        "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                            historicalCurrentizedReturned.joinToString(",") +
+                            ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+                    } else {
+                        "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
+                    }
+                }
+        return listOfNotNull(
             ContextHeader,
             hostTruth,
+            lifecycleTruth,
             "This block is the Product's source-return execution evidence for this human turn. Protocol availability, reasoning, a planned request, or a narrated control is not equivalent to this result.",
             "Returned Conversation source is not Memory, semantic acceptance, or a profile of the human.",
             "Answer the current human from only the exact source actually present here and other current context. If the state is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",

@@ -21,6 +21,7 @@ import vexlife.capability.VexLifeCapabilityAtlas.ValueSchema
  */
 internal object VexLifeReachDefinitions {
     const val AtlasRef = "capability.vexlife.atlas.describe"
+    const val SelfContextRef = "capability.vexlife.self.context"
     const val WebRef = "capability.vexlife.web.read"
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
@@ -31,6 +32,7 @@ internal object VexLifeReachDefinitions {
     const val RevisitRef = "capability.vexlife.continuity.revisit"
 
     const val AtlasResource = "resource.vexlife-prod.capability.registry"
+    const val SelfContextResource = "resource.vexlife-prod.self-context.current-turn"
     const val WebResource = "resource.vexlife-prod.network.public-web"
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
@@ -143,15 +145,49 @@ internal object VexLifeReachDefinitions {
                             arguments =
                                 listOf(
                                     arg(
-                                        "capability",
+                                        "handle",
                                         "string",
                                         true,
-                                        "A handle such as web, or a capabilityRef.",
+                                        "A capability handle such as web, or a full capabilityRef.",
                                     )
                                 ),
-                            exampleArguments = """{"capability":"github"}""",
+                            exampleArguments = """{"handle":"github"}""",
                             returns =
                                 "The capability's actions with argument names, types and an example request.",
+                        ),
+                    ),
+            ),
+            Definition(
+                capabilityRef = SelfContextRef,
+                handle = "self-context",
+                purpose =
+                    "Inspect the exact prompt/body evidence this human turn already holds: prompt " +
+                        "receipt identity, component placement/currentness, Working Focus standing, " +
+                        "held detail/source coordinates and bounded provider token/cache/timing facts. " +
+                        "This reads no source content and exposes no private reasoning.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = SelfContextResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CURRENT_TURN_SELF_CONTEXT",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeSelfContext.kt",
+                priority = 2,
+                actions =
+                    listOf(
+                        Action(
+                            action = "inspect",
+                            purpose =
+                                "Read bounded evidence for what this current human turn is carrying now.",
+                            arguments = emptyList(),
+                            exampleArguments = "{}",
+                            returns =
+                                "Prompt receipt/component placement, Working Focus standing/currentness, " +
+                                    "held/source refs and bounded provider token/cache/timing measurements; " +
+                                    "never prompt/provider bodies or private reasoning.",
                         ),
                     ),
             ),
@@ -743,7 +779,7 @@ internal object VexLifeReachDefinitions {
      * Conversation source return keeps its dedicated semantic owner/control internally.
      */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, AttachmentRef, LocalSourceRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+        listOf(AtlasRef, SelfContextRef, AttachmentRef, LocalSourceRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
 
     /** Every read route declared to provider-native tool-capable shipped models. */
     val ProviderToolCapabilityRefs: List<String> =

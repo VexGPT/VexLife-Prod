@@ -177,31 +177,11 @@ EMPTY
   real archives remain unchanged
 ~~~
 
-Canonical Home identity currentness is separate from Conversation snapshot semantics.
-
-On every Lab projection/control/send, the Lab re-observes the canonical Home identity it was formed
-from. If the same selected Home coordinate now resolves to a different canonical Home/device/Companion
-identity, the old disposable scratch is deleted and re-formed from the newly current identity before
-the Lab continues. If canonical Home identity cannot currently be established, the Lab does not serve
-the old scratch as current and performs no Home repair.
-
-Ordinary canonical Conversation growth does **not** automatically replace the scratch snapshot. That
-relationship remains intentionally human-controlled:
-
 **Reload current conversation** discards the current scratch lineage and forms a new exact snapshot
 from the canonical Conversation.
 
 **Restore defaults** restores the Lab's Product/context defaults, current Memory mode, and a fresh
 current-Conversation snapshot. It does not erase saved profiles or Memory.
-
-```text
-HOME IDENTITY DRIFT
--> automatic scratch currentness re-alignment
-
-CONVERSATION ADVANCES
--> existing scratch remains a snapshot
--> explicit Reload current conversation when wanted
-```
 
 ## Capability boundary
 

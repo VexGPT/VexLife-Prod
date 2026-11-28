@@ -1,5 +1,5 @@
-# Optional GitHub-hosted executor for the source-owned VexLife release process.
-# VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly instead.
+# Manual hosted wrapper for the source-owned VexLife release process.
+# Ordinary release cadence is carried through VexRelay/VexLocalBridge on Victor's Mac.
 name: release
 on:
   workflow_dispatch:

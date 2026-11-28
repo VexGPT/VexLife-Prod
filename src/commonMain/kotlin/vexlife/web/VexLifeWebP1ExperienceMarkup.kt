@@ -363,7 +363,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden data-vex-text="workspace.button.conversation-jump-latest">workspace.button.conversation-jump-latest</button>
 
         <div class="composer" data-vex-ref="${VexLifeWebP1.Composer.identity.ref}">
-          <p class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" hidden></p>
+          <section class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" aria-labelledby="response-progress-title" hidden>
+            <p class="response-progress-title" id="response-progress-title" data-vex-text="workspace.heading.first-local-start">workspace.heading.first-local-start</p>
+            <p class="response-progress-detail" id="response-progress-detail" data-vex-text="workspace.description.first-local-start-ready-to-send">workspace.description.first-local-start-ready-to-send</p>
+          </section>
 
           <div class="ticket" data-vex-ref="${VexLifeWebP1.ContextReceipt.identity.ref}" id="ticket" hidden>
             <div class="ticket-body">
@@ -499,6 +502,35 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             </div>
             <p class="setting-note-line" id="model-import-result" role="status" aria-live="polite"></p>
             <p class="model-import-facts" id="model-import-facts"></p>
+          </div>
+
+          <div class="partner-api-card" id="partner-api-card">
+            <div class="partner-api-heading">
+              <div>
+                <p class="memory-label" data-vex-text="workspace.heading.partner-api"></p>
+                <p class="setting-note-line" data-vex-text="workspace.description.partner-api"></p>
+              </div>
+              <span class="partner-api-state" id="partner-api-state"></span>
+            </div>
+            <div class="partner-api-fields">
+              <label class="partner-api-field">
+                <span data-vex-text="workspace.label.partner-api-provider"></span>
+                <select id="partner-api-provider" disabled></select>
+              </label>
+              <label class="partner-api-field">
+                <span data-vex-text="workspace.label.partner-api-key"></span>
+                <input id="partner-api-credential" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" disabled>
+              </label>
+              <label class="partner-api-field" id="partner-api-workspace-field" hidden>
+                <span data-vex-text="workspace.label.partner-api-workspace"></span>
+                <input id="partner-api-workspace" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" disabled>
+              </label>
+            </div>
+            <div class="partner-api-actions">
+              <button class="outline-button" id="partner-api-connect" type="button" data-vex-text="workspace.button.partner-api-connect" disabled></button>
+            </div>
+            <p class="setting-note-line partner-api-status" id="partner-api-status" role="status" aria-live="polite"></p>
+            <p class="setting-note-line partner-api-note" id="partner-api-note"></p>
           </div>
 
           <div class="model-state-card" data-vex-ref="${VexLifeWebP1.ModelsState.identity.ref}" id="models-state">

@@ -395,6 +395,27 @@ val serviceImageJdk21 =
             )
         }
 
+val serviceImageJavaLauncher21 =
+    extensions
+        .getByType(
+            JavaToolchainService::class.java,
+        )
+        .launcherFor {
+            languageVersion.set(
+                JavaLanguageVersion.of(
+                    21,
+                ),
+            )
+        }
+
+tasks.named<org.gradle.api.tasks.testing.Test>(
+    "jvmTest",
+) {
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+}
+
 val serviceLauncherSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/bin/vexlife-prod-service",
@@ -408,6 +429,11 @@ val setupLauncherSource =
 val setupWindowSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+    )
+
+val macPartnerHostSource =
+    layout.projectDirectory.file(
+        "packaging/macos-partner-host/VexLifePartnerHost.swift",
     )
 
 val releaseContractSource =
@@ -433,6 +459,11 @@ val macApplicationIconArtworkSource =
 val macApplicationVersionProperty =
     providers.gradleProperty(
         "vexlifeAppVersion",
+    )
+
+val macApplicationDistributionChannelProperty =
+    providers.gradleProperty(
+        "vexlifeDistributionChannel",
     )
 
 val visionRuntimeContractSource =
@@ -577,10 +608,35 @@ val macApplicationName =
         macApplicationReleaseContractText,
         "applicationName",
     )
-val macApplicationDiskImageName =
+val macApplicationCandidateDiskImageNamePattern =
     requiredJsonString(
         macApplicationReleaseContractText,
-        "diskImageName",
+        "candidateDiskImageNamePattern",
+    )
+val macApplicationCandidateDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "candidateDiskImageVolumeNamePattern",
+    )
+val macApplicationPreviewDiskImageNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "previewDiskImageNamePattern",
+    )
+val macApplicationPreviewDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "previewDiskImageVolumeNamePattern",
+    )
+val macApplicationStableDiskImageNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "stableDiskImageNamePattern",
+    )
+val macApplicationStableDiskImageVolumeNamePattern =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "stableDiskImageVolumeNamePattern",
     )
 val macApplicationDiskImageVolumeIconName =
     requiredJsonString(
@@ -610,7 +666,7 @@ val macApplicationMinimumMacOSVersion =
 
 require(
     macApplicationReleaseSchemaVersion ==
-        "vexlife-prod.macos-application-release/v1" &&
+        "vexlife-prod.macos-application-release/v2" &&
         macApplicationHumanName ==
         "VexLife" &&
         macApplicationBundleIdentifier ==
@@ -619,8 +675,18 @@ require(
         "darwin-arm64" &&
         macApplicationName ==
         "VexLife.app" &&
-        macApplicationDiskImageName ==
-        "VexLife-macOS-AppleSilicon.dmg" &&
+        macApplicationCandidateDiskImageNamePattern ==
+        "VexLife-Candidate-{sourceShort}-macOS-AppleSilicon.dmg" &&
+        macApplicationCandidateDiskImageVolumeNamePattern ==
+        "VexLife Candidate {sourceShort}" &&
+        macApplicationPreviewDiskImageNamePattern ==
+        "VexLife-Preview-{sourceShort}-macOS-AppleSilicon.dmg" &&
+        macApplicationPreviewDiskImageVolumeNamePattern ==
+        "VexLife Preview {sourceShort}" &&
+        macApplicationStableDiskImageNamePattern ==
+        "VexLife-{version}-macOS-AppleSilicon.dmg" &&
+        macApplicationStableDiskImageVolumeNamePattern ==
+        "VexLife {version}" &&
         macApplicationEmbeddedImageRelativePath ==
         "private-service-image" &&
         macApplicationEmbeddedSetupLauncherRelativePath ==
@@ -1423,6 +1489,9 @@ tasks.register(
         setupWindowSource,
     )
     inputs.file(
+        macPartnerHostSource,
+    )
+    inputs.file(
         localAsrProviderContractSource,
     )
     inputs.dir(
@@ -1670,6 +1739,7 @@ tasks.register(
 
         val runtimeProviderModules =
             setOf(
+                "jdk.compiler",
                 "jdk.crypto.ec",
             )
         val moduleSet =
@@ -1687,10 +1757,12 @@ tasks.register(
                 moduleSet &&
                 "java.net.http" in
                 moduleSet &&
+                "jdk.compiler" in
+                moduleSet &&
                 "jdk.crypto.ec" in
                 moduleSet,
         ) {
-            "service runtime image must include jdk.httpserver + java.net.http + Java 21 SunEC provider"
+            "service runtime image must include jdk.httpserver + java.net.http + jdk.compiler + Java 21 SunEC provider"
         }
 
         val output =
@@ -1832,6 +1904,73 @@ tasks.register(
             setupWindow,
             StandardCopyOption.REPLACE_EXISTING,
         )
+
+        val partnerHost =
+            binRoot.resolve(
+                "vexlife-partner-host",
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/xcrun",
+                "--sdk",
+                "macosx",
+                "swiftc",
+                "-O",
+                macPartnerHostSource
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+                    .toString(),
+                "-o",
+                partnerHost.toString(),
+            ),
+        )
+        Files.setPosixFilePermissions(
+            partnerHost,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--force",
+                "--sign",
+                "-",
+                "--timestamp=none",
+                partnerHost.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--verify",
+                "--strict",
+                "--verbose=2",
+                partnerHost.toString(),
+            ),
+        )
+        require(
+            Files.isRegularFile(
+                partnerHost,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    partnerHost,
+                ) &&
+                Files.isExecutable(
+                    partnerHost,
+                )
+        ) {
+            "bundled macOS Partner host helper is not one executable regular file"
+        }
+        val partnerHostSha256 =
+            sha256(
+                partnerHost,
+            )
 
         val localAsrProviderInput =
             macLocalAsrProviderOutputRoot
@@ -2308,7 +2447,7 @@ tasks.register(
                 )
                 appendLine(
                     "  \"schemaVersion\": \"" +
-                        "vexlife-prod.private-service-image/v5" +
+                        "vexlife-prod.private-service-image/v6" +
                         "\",",
                 )
                 appendLine(
@@ -2355,6 +2494,20 @@ tasks.register(
                 )
                 appendLine(
                     "  ],",
+                )
+                appendLine(
+                    "  \"partnerHost\": {",
+                )
+                appendLine(
+                    "    \"executable\": \"bin/vexlife-partner-host\",",
+                )
+                appendLine(
+                    "    \"executableSha256\": \"" +
+                        partnerHostSha256 +
+                        "\"",
+                )
+                appendLine(
+                    "  },",
                 )
                 appendLine(
                     "  \"localAsrProvider\": " +
@@ -2876,6 +3029,12 @@ tasks.register(
             "0.0.0",
         ),
     )
+    inputs.property(
+        "vexlifeDistributionChannel",
+        macApplicationDistributionChannelProperty.orElse(
+            "candidate",
+        ),
+    )
     outputs.dir(
         macApplicationOutputRoot,
     )
@@ -2920,6 +3079,96 @@ tasks.register(
         ) {
             "VexLife macOS application version must be major.minor.patch"
         }
+
+        val distributionChannel =
+            macApplicationDistributionChannelProperty
+                .orNull
+                ?.trim()
+                ?.takeIf {
+                    it.isNotEmpty()
+                }
+                ?: "candidate"
+        require(
+            distributionChannel in
+                setOf(
+                    "candidate",
+                    "preview",
+                    "stable",
+                ),
+        ) {
+            "VexLife macOS distribution channel must be candidate, preview, or stable"
+        }
+        require(
+            (distributionChannel == "stable" && applicationVersion != "0.0.0") ||
+                (distributionChannel != "stable" && applicationVersion == "0.0.0"),
+        ) {
+            "stable distributions require a semantic app version; candidate/preview remain source-identified 0.0.0 builds"
+        }
+
+        val sourceShort =
+            sourceSha.take(
+                7,
+            )
+        val distributionPattern =
+            when (
+                distributionChannel
+            ) {
+                "candidate" ->
+                    macApplicationCandidateDiskImageNamePattern to
+                        macApplicationCandidateDiskImageVolumeNamePattern
+
+                "preview" ->
+                    macApplicationPreviewDiskImageNamePattern to
+                        macApplicationPreviewDiskImageVolumeNamePattern
+
+                else ->
+                    macApplicationStableDiskImageNamePattern to
+                        macApplicationStableDiskImageVolumeNamePattern
+            }
+        val renderDistributionPattern: (String) -> String =
+            { pattern ->
+                pattern
+                    .replace(
+                        "{sourceShort}",
+                        sourceShort,
+                    )
+                    .replace(
+                        "{version}",
+                        applicationVersion,
+                    )
+                    .also {
+                        rendered ->
+                        require(
+                            '{' !in rendered &&
+                                '}' !in rendered
+                        ) {
+                            "VexLife Mac distribution pattern contains an unresolved token: $rendered"
+                        }
+                    }
+            }
+        val macApplicationDiskImageName =
+            renderDistributionPattern(
+                distributionPattern.first,
+            )
+        val macApplicationDiskImageVolumeName =
+            renderDistributionPattern(
+                distributionPattern.second,
+            )
+        val distributionIdentity =
+            when (
+                distributionChannel
+            ) {
+                "stable" ->
+                    "stable:" +
+                        applicationVersion +
+                        "@" +
+                        sourceSha
+
+                else ->
+                    distributionChannel +
+                        ":" +
+                        sourceSha
+            }
 
         val repositoryRoot =
             rootDir
@@ -3276,6 +3525,26 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdDistributionChannel",
+                "-string",
+                distributionChannel,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdDistributionIdentity",
+                "-string",
+                distributionIdentity,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdEmbeddedSetupLauncherRelativePath",
                 "-string",
                 macApplicationEmbeddedSetupLauncherRelativePath,
@@ -3402,7 +3671,7 @@ tasks.register(
                 "/usr/bin/hdiutil",
                 "create",
                 "-volname",
-                macApplicationHumanName,
+                macApplicationDiskImageVolumeName,
                 "-srcfolder",
                 diskImageStage.toString(),
                 "-ov",
@@ -3422,7 +3691,33 @@ tasks.register(
                 diskImageMount.toString(),
             ),
         )
+
+        val mountBookkeepingNames =
+            listOf(
+                ".fseventsd",
+                ".Spotlight-V100",
+                ".Trashes",
+            )
         try {
+            // Keep FSEvents from repopulating its journal while this writable image is mounted.
+            // The marker is mount-scoped only: final cleanup below removes the entire bookkeeping
+            // directory before detach so the sealed DMG contains no service metadata.
+            val fseventsNoLog =
+                diskImageMount
+                    .resolve(
+                        ".fseventsd",
+                    )
+                    .resolve(
+                        "no_log",
+                    )
+            Files.createDirectories(
+                fseventsNoLog.parent,
+            )
+            Files.writeString(
+                fseventsNoLog,
+                "",
+                StandardCharsets.UTF_8,
+            )
             val diskImageVolumeIcon =
                 diskImageMount.resolve(
                     macApplicationDiskImageVolumeIconName,
@@ -3496,30 +3791,29 @@ tasks.register(
                 ),
             )
 
-            // These are macOS mount-time bookkeeping directories, not VexLife payload.
-            // Remove any that were created while the writable image was mounted so the
-            // sealed DMG stays visually minimal when Finder hidden files are visible.
-            listOf(
-                ".fseventsd",
-                ".Spotlight-V100",
-                ".Trashes",
-            )
-                .forEach {
-                    bookkeepingName ->
-                    deleteTreeNoFollow(
-                        diskImageMount.resolve(
-                            bookkeepingName,
-                        ),
-                    )
-                }
         } finally {
-            runExactCommand(
-                listOf(
-                    "/usr/bin/hdiutil",
-                    "detach",
-                    diskImageMount.toString(),
-                ),
-            )
+            try {
+                // Final cleanup is deliberately adjacent to detach. The FSEvents no_log marker
+                // remains present through every intentional volume write, then the whole
+                // bookkeeping directory is removed only when no more Product writes remain.
+                mountBookkeepingNames
+                    .forEach {
+                        bookkeepingName ->
+                        deleteTreeNoFollow(
+                            diskImageMount.resolve(
+                                bookkeepingName,
+                            ),
+                        )
+                    }
+            } finally {
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/hdiutil",
+                        "detach",
+                        diskImageMount.toString(),
+                    ),
+                )
+            }
         }
 
         val diskImage =
@@ -3578,7 +3872,7 @@ tasks.register(
         val receipt =
             buildString {
                 appendLine("{")
-                appendLine("  \"schemaVersion\": \"vexlife-prod.macos-application-archive-receipt/v1\",")
+                appendLine("  \"schemaVersion\": \"vexlife-prod.macos-application-archive-receipt/v2\",")
                 appendLine("  \"truthClass\": \"SOURCE_BOUND_OPEN_SOURCE_MAC_APPLICATION\",")
                 appendLine("  \"sourceSha\": \"" + sourceSha + "\",")
                 appendLine("  \"platform\": \"" + macApplicationPlatform + "\",")
@@ -3587,7 +3881,10 @@ tasks.register(
                 appendLine("  \"buildVersion\": \"" + buildVersion + "\",")
                 appendLine("  \"applicationName\": \"" + macApplicationName + "\",")
                 appendLine("  \"applicationPayloadSha256\": \"" + applicationPayloadSha256 + "\",")
+                appendLine("  \"distributionChannel\": \"" + distributionChannel + "\",")
+                appendLine("  \"distributionIdentity\": \"" + distributionIdentity + "\",")
                 appendLine("  \"diskImageName\": \"" + macApplicationDiskImageName + "\",")
+                appendLine("  \"diskImageVolumeName\": \"" + macApplicationDiskImageVolumeName + "\",")
                 appendLine("  \"diskImageSha256\": \"" + diskImageSha256 + "\",")
                 appendLine("  \"diskImageBytes\": " + diskImageBytes + ",")
                 appendLine("  \"distributionTrust\": \"" + macApplicationDistributionTrust + "\",")
@@ -3748,4 +4045,110 @@ tasks.register<JavaExec>("continuityPressure") {
     classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
+}
+
+/**
+ * Mac-only C3-R1 proof. This stays on the JVM test classpath so the probe itself does not ship in
+ * Product. The assembled private service image is the runtime under proof.
+ */
+tasks.register<JavaExec>("proveVexLifeWorkspaceJavaTestMac") {
+    group = "verification"
+    description = "Prove the C3-R1 sandboxed Java project-test owner against the exact macOS private service image."
+
+    val test =
+        kotlin.jvm()
+            .compilations
+            .getByName(
+                "test",
+            )
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+        "jvmTestClasses",
+    )
+
+    classpath =
+        files(
+            test.output.allOutputs,
+            test.runtimeDependencyFiles,
+        )
+
+    javaLauncher.set(
+        serviceImageJavaLauncher21,
+    )
+    mainClass.set(
+        "vexlife.capability.VexLifeWorkspaceJavaTestMacProbeKt",
+    )
+    workingDir =
+        projectDir
+
+    doFirst {
+        val compilerInstallation =
+            serviceImageJdk21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        val launcherInstallation =
+            serviceImageJavaLauncher21
+                .get()
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
+                .toRealPath()
+        require(
+            launcherInstallation ==
+                compilerInstallation,
+        ) {
+            "C3-R1 Mac proof launcher must use the exact JDK 21 installation that formed the private service image"
+        }
+
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "C3-R1 Mac proof requires one exact Product source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "C3-R1 Mac proof private service image is missing: $imageRoot"
+        }
+
+        setArgs(
+            listOf(
+                imageRoot.toString(),
+                sourceSha,
+            ),
+        )
+    }
 }

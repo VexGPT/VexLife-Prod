@@ -34,6 +34,19 @@ import vexlife.model.heretic.HereticProductIdentity
 class DirectConversationStore(
     productHome: Path,
 ) {
+    private var attemptIndex: DirectConversationAttemptIndex? =
+        null
+
+    internal constructor(
+        productHome: Path,
+        attemptIndex: DirectConversationAttemptIndex,
+    ) : this(
+        productHome = productHome,
+    ) {
+        this.attemptIndex =
+            attemptIndex
+    }
+
     companion object {
         const val EventSchema =
             VexLifeConversationContract.EventSchemaV1
@@ -77,6 +90,7 @@ class DirectConversationStore(
         val content: String,
         val contentHash: String,
         val semanticRelay: JsonObject?,
+        val providerRef: String?,
         val endpointProfileRef: String?,
         val sanitizedEndpointOrigin: String?,
         val modelNameOrBoundedTestProfileRef: String?,
@@ -146,7 +160,28 @@ class DirectConversationStore(
         val head: Head?,
         val events: List<Event>,
         val canonicalEvents: List<Event>,
+        /**
+         * Exact immutable completed-head projections already validated while this full snapshot was
+         * formed. This is canonical snapshot evidence, not a second head ledger.
+         */
+        val completedHeads: List<Head>,
         val abandonedAttempts: List<AbandonedAttempt>,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestAdmission internal constructor(
+        val requestMessageRef: String,
+        val head: Head?,
+        val matchingCanonicalEvents: List<Event>,
+        val matchingAbandonedAttempt: AbandonedAttempt?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    @ConsistentCopyVisibility
+    data class RequestEventLookup internal constructor(
+        val requestEvent: Event?,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+        val derivedIndexRebuilt: Boolean,
     )
 
     @ConsistentCopyVisibility
@@ -156,6 +191,13 @@ class DirectConversationStore(
         val responseEvent: Event,
         val exactEventFileReadCount: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    @ConsistentCopyVisibility
+    data class CurrentHeadCoordinate internal constructor(
+        val conversationHeadSha256: String,
+        val priorConversationHeadSha256: String?,
+        val sequence: Long,
     )
 
     @ConsistentCopyVisibility
@@ -267,8 +309,120 @@ class DirectConversationStore(
     inner class Locked internal constructor(
         val instanceRef: String,
     ) {
+        /*
+         * One writer lease may own at most one in-flight canonical request. This is ephemeral
+         * custody only: durable Conversation remains the authority, and a later lease with no
+         * matching in-memory custody falls back to the full recovery/classification path.
+         */
+        private var pendingRequest: Event? =
+            null
+        private var pendingResponse: Event? =
+            null
+        private var reusableAdmissionSnapshot: RequestAdmission? =
+            null
+
+        /** Canonical Home-owned person identity used by request/response participant formation. */
+        fun canonicalPersonRef(): String =
+            installation.personRef
+
         fun current(): Snapshot =
             readCurrentComplete()
+
+        /**
+         * Full recovery/idempotency snapshot that this exact writer lease may reuse once for request
+         * admission. The object identity is the lease-local capability; a snapshot from another
+         * lease is never accepted merely because the completed head still matches.
+         */
+        internal fun currentForRequestAdmission(
+            requestMessageRef: String,
+        ): RequestAdmission {
+            requireNonEmpty(
+                requestMessageRef,
+                "requestMessageRef",
+            )
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+
+            val admission =
+                when (
+                    val indexed =
+                        readIndexedAttempt(
+                            requestMessageRef,
+                        )
+                ) {
+                    is IndexedAttemptLookup.Found ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    listOf(
+                                        indexed.request,
+                                        requireNotNull(
+                                            indexed.response,
+                                        ),
+                                    )
+                                } else {
+                                    emptyList()
+                                },
+                            matchingAbandonedAttempt =
+                                if (
+                                    indexed.committed
+                                ) {
+                                    null
+                                } else {
+                                    AbandonedAttempt(
+                                        requestEvent =
+                                            indexed.request,
+                                        responseEventOrNull =
+                                            indexed.response,
+                                    )
+                                },
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.CurrentMiss ->
+                        RequestAdmission(
+                            requestMessageRef =
+                                requestMessageRef,
+                            head =
+                                readImmediatePriorCompletedTurn()
+                                    ?.head,
+                            matchingCanonicalEvents = emptyList(),
+                            matchingAbandonedAttempt = null,
+                            wholeHistoryEventEnumerationPerformed = false,
+                        )
+
+                    IndexedAttemptLookup.FallbackRequired -> {
+                        val snapshot =
+                            readCurrentComplete()
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
+                }
+
+            reusableAdmissionSnapshot =
+                admission
+            return admission
+        }
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
@@ -294,6 +448,7 @@ class DirectConversationStore(
             requestMessageRef: String,
             content: String,
             formedAt: Instant = Instant.now(),
+            admissionSnapshot: RequestAdmission? = null,
         ): Event {
             requireSafeRef(
                 turnRef,
@@ -310,15 +465,16 @@ class DirectConversationStore(
             }
 
             val before =
-                readCurrentComplete()
+                requestAdmissionSnapshot(
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
+                )
 
             require(
-                before.events.none {
-                    it.turnRef ==
-                        turnRef ||
-                        it.messageRef ==
-                        requestMessageRef
-                },
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
             ) {
                 "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
             }
@@ -406,7 +562,160 @@ class DirectConversationStore(
             writeEvent(
                 event,
             )
+            pendingRequest =
+                event
+            pendingResponse =
+                null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
 
+            return event
+        }
+
+        /**
+         * Canonical Semantic Relay v2 REQUEST formation for a separately admitted external turn.
+         *
+         * Local direct turns continue to use [beginRequest] and retain exact v1 bytes. This method
+         * consumes already-formed reference-only Relay metadata; it does not infer language,
+         * interpretation, authority, or delivery truth.
+         */
+        fun beginRequestV2(
+            turnRef: String,
+            requestMessageRef: String,
+            content: String,
+            semanticRelay: JsonObject,
+            formedAt: Instant = Instant.now(),
+            admissionSnapshot: RequestAdmission? = null,
+        ): Event {
+            requireSafeRef(
+                turnRef,
+                "turnRef",
+            )
+            requireNonEmpty(
+                requestMessageRef,
+                "requestMessageRef",
+            )
+            require(
+                content.isNotEmpty(),
+            ) {
+                "direct Conversation request content must be non-empty"
+            }
+
+            val before =
+                requestAdmissionSnapshot(
+                    admissionSnapshot = admissionSnapshot,
+                    requestMessageRef =
+                        requestMessageRef,
+                )
+            require(
+                before.matchingCanonicalEvents.isEmpty() &&
+                    before.matchingAbandonedAttempt ==
+                    null
+            ) {
+                "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
+            }
+
+            val sequence =
+                before.head
+                    ?.sequence
+                    ?.plus(
+                        1,
+                    )
+                    ?: 0L
+            val prior =
+                before.head
+                    ?.eventHash
+            val eventRef =
+                "event.vexlife.request." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase()
+            val core =
+                VexLifeConversationContract.RequestCoreV2(
+                    schemaVersion = VexLifeConversationContract.EventSchemaV2,
+                    eventRef = eventRef,
+                    eventKind = VexLifeConversationContract.RequestKind,
+                    homeRef = manifest.homeRef,
+                    deviceRef = manifest.currentDeviceRef,
+                    companionLineageRef = manifest.currentCompanionLineageRef,
+                    instanceRef = instanceRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                    channelRef = DirectConversationIdentity.ChannelRef,
+                    turnRef = turnRef,
+                    messageRef = requestMessageRef,
+                    speakerRef = installation.personRef,
+                    recipientRefs =
+                        listOf(
+                            DirectConversationIdentity.CompanionRoleRef,
+                        ),
+                    sequence = sequence,
+                    priorEventHash = prior,
+                    content = content,
+                    contentHash =
+                        contentHash(
+                            content,
+                        ),
+                    semanticRelay = semanticRelay,
+                    privacyClass = VexLifeConversationContract.PrivacyClass,
+                    formedAt = formedAt.toString(),
+                )
+                    .let(
+                        VexLifeConversationContract::validateRequestCoreV2,
+                    )
+            val value =
+                VexLifeConversationContract.RequestV2(
+                    schemaVersion = core.schemaVersion,
+                    eventRef = core.eventRef,
+                    eventKind = core.eventKind,
+                    homeRef = core.homeRef,
+                    deviceRef = core.deviceRef,
+                    companionLineageRef = core.companionLineageRef,
+                    instanceRef = core.instanceRef,
+                    threadRef = core.threadRef,
+                    channelRef = core.channelRef,
+                    turnRef = core.turnRef,
+                    messageRef = core.messageRef,
+                    speakerRef = core.speakerRef,
+                    recipientRefs = core.recipientRefs,
+                    sequence = core.sequence,
+                    priorEventHash = core.priorEventHash,
+                    content = core.content,
+                    contentHash = core.contentHash,
+                    semanticRelay = core.semanticRelay,
+                    privacyClass = core.privacyClass,
+                    formedAt = core.formedAt,
+                    eventHash =
+                        semanticHash(
+                            core,
+                        ),
+                )
+            val event =
+                requestProjectionV2(
+                    value,
+                )
+
+            validateEvent(
+                event,
+            )
+            writeEvent(
+                event,
+            )
+            pendingRequest =
+                event
+            pendingResponse =
+                null
+            attemptIndex
+                ?.noteRequest(
+                    sourceConversationHeadSha256 =
+                        before.head
+                            ?.conversationHeadSha256,
+                    request = event,
+                )
             return event
         }
 
@@ -427,9 +736,24 @@ class DirectConversationStore(
                 HereticProductIdentity.CompanionEndpointProfileRef,
             formedAt: Instant = Instant.now(),
         ): Event {
-            validateRequestAsPending(
-                request,
-            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        null,
+                ) {
+                    "canonical writer lease already owns one response for this pending request"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
             requireNonEmpty(
                 responseMessageRef,
                 "responseMessageRef",
@@ -540,7 +864,178 @@ class DirectConversationStore(
             writeEvent(
                 response,
             )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingResponse =
+                    response
+            }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
 
+            return response
+        }
+
+        /**
+         * Canonical external-provider RESPONSE v3 formation mirrored from source-proven VexLife
+         * PR #991. Conversation records provenance only; provider invocation/currentness remains
+         * owned by the caller and its evidence sidecar.
+         */
+        fun appendExternalResponseV3(
+            request: Event,
+            responseMessageRef: String,
+            content: String,
+            model: String,
+            providerRef: String,
+            endpointProfileRef: String,
+            endpointOrigin: String,
+            semanticRelay: JsonObject,
+            observationRef: String,
+            invocationEvidenceRef: String,
+            formedAt: Instant = Instant.now(),
+        ): Event {
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        null,
+                ) {
+                    "canonical writer lease already owns one response for this pending request"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
+            require(
+                request.schemaVersion ==
+                    VexLifeConversationContract.EventSchemaV2,
+            ) {
+                "external provider response v3 requires one canonical v2 request"
+            }
+            requireNonEmpty(
+                responseMessageRef,
+                "responseMessageRef",
+            )
+            requireNonEmpty(
+                observationRef,
+                "observationRef",
+            )
+            requireNonEmpty(
+                invocationEvidenceRef,
+                "invocationEvidenceRef",
+            )
+            require(
+                content.isNotEmpty(),
+            ) {
+                "direct Conversation response content must be non-empty"
+            }
+
+            val eventRef =
+                "event.vexlife.response." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase()
+            val core =
+                VexLifeConversationContract.ResponseCoreV3(
+                    schemaVersion = VexLifeConversationContract.EventSchemaV3,
+                    eventRef = eventRef,
+                    eventKind = VexLifeConversationContract.ResponseKind,
+                    homeRef = manifest.homeRef,
+                    deviceRef = manifest.currentDeviceRef,
+                    companionLineageRef = manifest.currentCompanionLineageRef,
+                    instanceRef = request.instanceRef,
+                    threadRef = request.threadRef,
+                    channelRef = request.channelRef,
+                    turnRef = request.turnRef,
+                    messageRef = responseMessageRef,
+                    speakerRef = DirectConversationIdentity.CompanionRoleRef,
+                    recipientRefs =
+                        listOf(
+                            installation.personRef,
+                        ),
+                    sequence =
+                        request.sequence +
+                            1,
+                    priorEventHash = request.eventHash,
+                    content = content,
+                    contentHash =
+                        contentHash(
+                            content,
+                        ),
+                    semanticRelay = semanticRelay,
+                    providerRef = providerRef,
+                    endpointProfileRef = endpointProfileRef,
+                    sanitizedEndpointOrigin = endpointOrigin,
+                    modelNameOrBoundedTestProfileRef = model,
+                    privacyClass = VexLifeConversationContract.PrivacyClass,
+                    formedAt = formedAt.toString(),
+                )
+                    .let(
+                        VexLifeConversationContract::validateResponseCoreV3,
+                    )
+            val value =
+                VexLifeConversationContract.ResponseV3(
+                    schemaVersion = core.schemaVersion,
+                    eventRef = core.eventRef,
+                    eventKind = core.eventKind,
+                    homeRef = core.homeRef,
+                    deviceRef = core.deviceRef,
+                    companionLineageRef = core.companionLineageRef,
+                    instanceRef = core.instanceRef,
+                    threadRef = core.threadRef,
+                    channelRef = core.channelRef,
+                    turnRef = core.turnRef,
+                    messageRef = core.messageRef,
+                    speakerRef = core.speakerRef,
+                    recipientRefs = core.recipientRefs,
+                    sequence = core.sequence,
+                    priorEventHash = core.priorEventHash,
+                    content = core.content,
+                    contentHash = core.contentHash,
+                    semanticRelay = core.semanticRelay,
+                    providerRef = core.providerRef,
+                    endpointProfileRef = core.endpointProfileRef,
+                    sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+                    modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+                    privacyClass = core.privacyClass,
+                    formedAt = core.formedAt,
+                    eventHash =
+                        semanticHash(
+                            core,
+                        ),
+                )
+            val response =
+                responseProjectionV3(
+                    value,
+                )
+            validateEvent(
+                response,
+            )
+            writeEvent(
+                response,
+            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingResponse =
+                    response
+            }
+            attemptIndex
+                ?.noteResponse(
+                    request = request,
+                    response = response,
+                )
             return response
         }
 
@@ -555,9 +1050,24 @@ class DirectConversationStore(
             contextSha256: String,
             formedAt: Instant = Instant.now(),
         ): Head {
-            validateRequestAsPending(
-                request,
-            )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                require(
+                    pendingResponse ==
+                        response,
+                ) {
+                    "canonical completed head requires this writer lease's exact durable response"
+                }
+                validateOwnedPendingRequest(
+                    request,
+                )
+            } else {
+                validateRequestAsPending(
+                    request,
+                )
+            }
             validateEvent(
                 response,
             )
@@ -668,17 +1178,202 @@ class DirectConversationStore(
             )
 
             val current =
-                readCurrentComplete()
+                requireNotNull(
+                    readImmediatePriorCompletedTurn(),
+                ) {
+                    "canonical Conversation current head disappeared after commit"
+                }
             require(
-                current.head
-                    ?.conversationHeadSha256 ==
-                    value.conversationHeadSha256,
+                current.head.conversationHeadSha256 ==
+                    value.conversationHeadSha256 &&
+                    current.requestEvent ==
+                    request &&
+                    current.responseEvent ==
+                    response
             ) {
                 "canonical Conversation current head did not commit exactly"
             }
+            attemptIndex
+                ?.noteCommitted(
+                    head = current.head,
+                    request = request,
+                    response = response,
+                )
+            if (
+                pendingRequest ==
+                    request
+            ) {
+                pendingRequest =
+                    null
+                pendingResponse =
+                    null
+            }
 
-            return requireNotNull(
-                current.head,
+            return current.head
+        }
+
+        private fun validateOwnedPendingRequest(
+            request: Event,
+        ) {
+            validateEvent(
+                request,
+            )
+            require(
+                request.eventKind ==
+                    VexLifeConversationContract.RequestKind,
+            ) {
+                "canonical response requires one request event"
+            }
+
+            val beforeHead =
+                readHeadRecord()
+            val expectedSequence =
+                beforeHead
+                    ?.sequence
+                    ?.plus(
+                        1,
+                    )
+                    ?: 0L
+            val expectedPrior =
+                beforeHead
+                    ?.eventHash
+
+            require(
+                request.sequence ==
+                    expectedSequence &&
+                    request.priorEventHash ==
+                    expectedPrior,
+            ) {
+                "canonical request no longer extends the exact current completed head"
+            }
+
+            val durable =
+                readEventAt(
+                    eventPath(
+                        request,
+                    ),
+                )
+            require(
+                durable ==
+                    request,
+            ) {
+                "canonical pending request is not the exact durable event"
+            }
+        }
+
+        private fun requestAdmissionSnapshot(
+            admissionSnapshot: RequestAdmission?,
+            requestMessageRef: String,
+        ): RequestAdmission {
+            require(
+                pendingRequest ==
+                    null &&
+                    pendingResponse ==
+                    null
+            ) {
+                "canonical writer lease already owns one pending request"
+            }
+            val admission =
+                admissionSnapshot
+                    ?: run {
+                        val snapshot =
+                            readCurrentComplete()
+                        rebuildAttemptIndexBestEffort(
+                            snapshot,
+                        )
+                        admissionFromSnapshot(
+                            snapshot = snapshot,
+                            requestMessageRef =
+                                requestMessageRef,
+                            wholeHistoryEventEnumerationPerformed = true,
+                        )
+                    }
+            if (
+                admissionSnapshot !=
+                    null
+            ) {
+                require(
+                    admissionSnapshot ===
+                        reusableAdmissionSnapshot &&
+                        admissionSnapshot.requestMessageRef ==
+                        requestMessageRef
+                ) {
+                    "canonical request admission snapshot was not issued for this exact writer lease/request identity"
+                }
+                val currentHead =
+                    readHeadRecord()
+                require(
+                    currentHead
+                        ?.conversationHeadSha256 ==
+                        admission.head
+                            ?.conversationHeadSha256
+                ) {
+                    "canonical request admission snapshot is no longer current"
+                }
+                reusableAdmissionSnapshot =
+                    null
+            }
+            return admission
+        }
+
+        private fun admissionFromSnapshot(
+            snapshot: Snapshot,
+            requestMessageRef: String,
+            wholeHistoryEventEnumerationPerformed: Boolean,
+        ): RequestAdmission {
+            val canonicalRequest =
+                snapshot.canonicalEvents
+                    .singleOrNull {
+                        it.eventKind ==
+                            VexLifeConversationContract.RequestKind &&
+                            it.messageRef ==
+                            requestMessageRef
+                    }
+            val canonicalEvents =
+                canonicalRequest
+                    ?.let {
+                        request ->
+                        snapshot.canonicalEvents
+                            .filter {
+                                it.turnRef ==
+                                    request.turnRef
+                            }
+                            .also {
+                                pair ->
+                                require(
+                                    pair.size ==
+                                        2
+                                ) {
+                                    "canonical request identity does not own one complete pair"
+                                }
+                            }
+                    }
+                    .orEmpty()
+            val abandoned =
+                snapshot.abandonedAttempts
+                    .singleOrNull {
+                        it.requestEvent.messageRef ==
+                            requestMessageRef
+                    }
+            require(
+                canonicalEvents.isEmpty() ||
+                    abandoned ==
+                    null
+            ) {
+                "canonical request identity cannot be both committed and abandoned"
+            }
+
+            return RequestAdmission(
+                requestMessageRef =
+                    requestMessageRef,
+                head =
+                    snapshot.head,
+                matchingCanonicalEvents =
+                    canonicalEvents,
+                matchingAbandonedAttempt =
+                    abandoned,
+                wholeHistoryEventEnumerationPerformed =
+                    wholeHistoryEventEnumerationPerformed,
             )
         }
     }
@@ -780,6 +1475,42 @@ class DirectConversationStore(
                 )
                     .block()
             }
+    }
+
+    internal fun currentHeadCoordinate(): CurrentHeadCoordinate? {
+        val current =
+            readHeadRecord()
+                ?: return null
+        val immutable =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                    ownedRoot = productHome,
+                    path =
+                        immutableHeadPath(
+                            current.conversationHeadSha256,
+                        ),
+                ),
+            ) {
+                "canonical Conversation current head lacks its immutable receipt"
+            }
+        validateCanonicalHeadRecord(
+            immutable,
+        )
+        require(
+            immutable ==
+                current,
+        ) {
+            "canonical Conversation current head differs from its immutable receipt"
+        }
+
+        return CurrentHeadCoordinate(
+            conversationHeadSha256 =
+                current.conversationHeadSha256,
+            priorConversationHeadSha256 =
+                current.priorConversationHeadSha256,
+            sequence =
+                current.sequence,
+        )
     }
 
     fun threadWriterCurrentness(): ThreadWriterCurrentness {
@@ -1032,6 +1763,236 @@ class DirectConversationStore(
         )
     }
 
+    private fun rebuildAttemptIndexBestEffort(
+        snapshot: Snapshot,
+    ): Boolean {
+        val index =
+            attemptIndex
+                ?: return false
+        return runCatching {
+            index.rebuild(
+                snapshot,
+            )
+            true
+        }
+            .getOrElse {
+                index.invalidate()
+                false
+            }
+    }
+
+    private sealed interface IndexedAttemptLookup {
+        data class Found(
+            val request: Event,
+            val response: Event?,
+            val committed: Boolean,
+        ) : IndexedAttemptLookup
+
+        data object CurrentMiss : IndexedAttemptLookup
+
+        data object FallbackRequired : IndexedAttemptLookup
+    }
+
+    internal fun requestEventForMessageRef(
+        requestMessageRef: String,
+    ): RequestEventLookup {
+        requireNonEmpty(
+            requestMessageRef,
+            "requestMessageRef",
+        )
+
+        return when (
+            val indexed =
+                readIndexedAttempt(
+                    requestMessageRef,
+                )
+        ) {
+            is IndexedAttemptLookup.Found ->
+                RequestEventLookup(
+                    requestEvent =
+                        indexed.request,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.CurrentMiss ->
+                RequestEventLookup(
+                    requestEvent = null,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    derivedIndexRebuilt = false,
+                )
+
+            IndexedAttemptLookup.FallbackRequired -> {
+                val snapshot =
+                    readCurrentComplete()
+                val rebuilt =
+                    rebuildAttemptIndexBestEffort(
+                        snapshot,
+                    )
+                RequestEventLookup(
+                    requestEvent =
+                        snapshot.events
+                            .singleOrNull {
+                                it.eventKind ==
+                                    VexLifeConversationContract.RequestKind &&
+                                    it.messageRef ==
+                                    requestMessageRef
+                            },
+                    wholeHistoryEventEnumerationPerformed = true,
+                    derivedIndexRebuilt =
+                        rebuilt,
+                )
+            }
+        }
+    }
+
+    private fun readIndexedAttempt(
+        requestMessageRef: String,
+    ): IndexedAttemptLookup {
+        val index =
+            attemptIndex
+                ?: return IndexedAttemptLookup.FallbackRequired
+        val generation =
+            when (
+                val load =
+                    index.load()
+            ) {
+                DirectConversationAttemptIndex.Load.Absent ->
+                    return IndexedAttemptLookup.FallbackRequired
+
+                is DirectConversationAttemptIndex.Load.Ready ->
+                    load.generation
+            }
+        val currentHead =
+            readHeadRecord()
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHead
+                    ?.conversationHeadSha256 ||
+            generation.sourceConversationSequence !=
+                currentHead
+                    ?.sequence
+        ) {
+            index.invalidate()
+            return IndexedAttemptLookup.FallbackRequired
+        }
+
+        val entry =
+            generation.entriesByRequestMessageRef[
+                requestMessageRef
+            ]
+                ?: return IndexedAttemptLookup.CurrentMiss
+
+        return try {
+            val request =
+                requireNotNull(
+                    readEventAt(
+                        eventPath(
+                            sequence =
+                                entry.request.sequence,
+                            eventHash =
+                                entry.request.eventHash,
+                        ),
+                    ),
+                ) {
+                    "Conversation attempt index request source is missing"
+                }
+            require(
+                request.eventRef ==
+                    entry.request.eventRef &&
+                    request.eventHash ==
+                    entry.request.eventHash &&
+                    request.messageRef ==
+                    entry.requestMessageRef &&
+                    request.turnRef ==
+                    entry.turnRef &&
+                    request.eventKind ==
+                    VexLifeConversationContract.RequestKind
+            ) {
+                "Conversation attempt index request coordinate does not match canonical source"
+            }
+
+            val response =
+                entry.response
+                    ?.let {
+                        address ->
+                        requireNotNull(
+                            readEventAt(
+                                eventPath(
+                                    sequence =
+                                        address.sequence,
+                                    eventHash =
+                                        address.eventHash,
+                                ),
+                            ),
+                        ) {
+                            "Conversation attempt index response source is missing"
+                        }
+                            .also {
+                                value ->
+                                require(
+                                    value.eventRef ==
+                                        address.eventRef &&
+                                        value.eventHash ==
+                                        address.eventHash &&
+                                        value.eventKind ==
+                                        VexLifeConversationContract.ResponseKind &&
+                                        value.turnRef ==
+                                        request.turnRef &&
+                                        value.sequence ==
+                                        request.sequence +
+                                            1 &&
+                                        value.priorEventHash ==
+                                        request.eventHash
+                                ) {
+                                    "Conversation attempt index response coordinate does not match canonical source"
+                                }
+                            }
+                    }
+
+            if (
+                entry.committed
+            ) {
+                val committedResponse =
+                    requireNotNull(
+                        response,
+                    ) {
+                        "committed Conversation attempt index entry has no response"
+                    }
+                val exact =
+                    readExactCommittedConversationEvents(
+                        listOf(
+                            entry.request,
+                            requireNotNull(
+                                entry.response,
+                            ),
+                        ),
+                    )
+                require(
+                    exact.events ==
+                        listOf(
+                            request,
+                            committedResponse,
+                        )
+                ) {
+                    "Conversation attempt index committed pair is not exact current-lineage source"
+                }
+            }
+
+            IndexedAttemptLookup.Found(
+                request = request,
+                response = response,
+                committed =
+                    entry.committed,
+            )
+        } catch (
+            _: RuntimeException,
+        ) {
+            index.invalidate()
+            IndexedAttemptLookup.FallbackRequired
+        }
+    }
+
     private fun prepareOwnedDirectories() {
         for (
             directory in
@@ -1069,6 +2030,7 @@ class DirectConversationStore(
                 head = null,
                 events = events,
                 canonicalEvents = emptyList(),
+                completedHeads = emptyList(),
                 abandonedAttempts = abandoned,
             )
         }
@@ -1165,10 +2127,11 @@ class DirectConversationStore(
             "canonical Conversation current head differs from its immutable receipt"
         }
 
-        validateImmutableHeadLineage(
-            currentHead = headRecord,
-            chain = chain,
-        )
+        val completedHeads =
+            validateImmutableHeadLineage(
+                currentHead = headRecord,
+                chain = chain,
+            )
 
         val abandoned =
             classifyAbandonedAttempts(
@@ -1184,6 +2147,7 @@ class DirectConversationStore(
                 ),
             events = events,
             canonicalEvents = chain,
+            completedHeads = completedHeads,
             abandonedAttempts = abandoned,
         )
     }
@@ -1421,7 +2385,7 @@ class DirectConversationStore(
     private fun validateImmutableHeadLineage(
         currentHead: VexLifeConversationContract.Head,
         chain: List<Event>,
-    ) {
+    ): List<Head> {
         val pairCount =
             chain.size /
                 2
@@ -1481,6 +2445,8 @@ class DirectConversationStore(
             "canonical immutable head lineage count does not match completed turns"
         }
 
+        val projections =
+            mutableListOf<Head>()
         reversed.forEachIndexed {
             index,
             historical,
@@ -1528,7 +2494,13 @@ class DirectConversationStore(
             ) {
                 "canonical immutable head lineage does not bind the exact completed pair"
             }
+            projections +=
+                headProjection(
+                    value = historical,
+                    requestEventHash = request.eventHash,
+                )
         }
+        return projections
     }
 
     private fun readImmediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? {
@@ -1872,6 +2844,19 @@ class DirectConversationStore(
             "exact Conversation return requests an event newer than the current completed head"
         }
 
+        attemptIndex
+            ?.let {
+                index ->
+                readExactCommittedConversationEventsFromIndex(
+                    addresses = addresses,
+                    currentHead = currentHead,
+                    index = index,
+                )
+            }
+            ?.let {
+                return it
+            }
+
         val addressesByHeadSequence =
             addresses.groupBy {
                 address ->
@@ -2096,6 +3081,240 @@ class DirectConversationStore(
         )
     }
 
+    private fun readExactCommittedConversationEventsFromIndex(
+        addresses: List<EventAddress>,
+        currentHead: VexLifeConversationContract.Head,
+        index: DirectConversationAttemptIndex,
+    ): ExactConversationReturn? {
+        val generation =
+            when (
+                val load =
+                    index.load()
+            ) {
+                DirectConversationAttemptIndex.Load.Absent ->
+                    return null
+
+                is DirectConversationAttemptIndex.Load.Ready ->
+                    load.generation
+            }
+        if (
+            generation.sourceConversationHeadSha256 !=
+                currentHead.conversationHeadSha256 ||
+            generation.sourceConversationSequence !=
+                currentHead.sequence
+        ) {
+            index.invalidate()
+            return null
+        }
+
+        return try {
+            val entries =
+                addresses.map {
+                    address ->
+                    requireNotNull(
+                        generation.committedEntriesByEventRef[
+                            address.eventRef
+                        ],
+                    ) {
+                        "Conversation attempt index has no committed coordinate for exact source"
+                    }
+                        .also {
+                            entry ->
+                            require(
+                                entry.committed &&
+                                    entry.committedHeadSha256 !=
+                                        null &&
+                                    (
+                                        entry.request ==
+                                            address ||
+                                        entry.response ==
+                                            address
+                                    )
+                            ) {
+                                "Conversation attempt index exact source coordinate is inconsistent"
+                            }
+                        }
+                }
+            val distinctEntries =
+                entries.distinctBy {
+                    entry ->
+                    requireNotNull(
+                        entry.committedHeadSha256,
+                    )
+                }
+            val headCache =
+                mutableMapOf<String, VexLifeConversationContract.Head>()
+            var headReads =
+                0
+            fun readHead(
+                sha256: String,
+            ): VexLifeConversationContract.Head =
+                headCache[
+                    sha256
+                ]
+                    ?: requireNotNull(
+                        VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                            ownedRoot = productHome,
+                            path =
+                                immutableHeadPath(
+                                    sha256,
+                                ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return is missing an immutable head receipt"
+                    }
+                        .also(
+                            ::validateCanonicalHeadRecord,
+                        )
+                        .also {
+                            head ->
+                            require(
+                                head.conversationHeadSha256 ==
+                                    sha256
+                            ) {
+                                "indexed exact Conversation return head is stored under the wrong identity"
+                            }
+                            headCache[
+                                sha256
+                            ] =
+                                head
+                            headReads +=
+                                1
+                        }
+
+            require(
+                readHead(
+                    currentHead.conversationHeadSha256,
+                ) ==
+                    currentHead
+            ) {
+                "indexed exact Conversation return current head differs from its immutable receipt"
+            }
+
+            val resolved =
+                mutableMapOf<Long, Event>()
+            var eventReads =
+                0
+            distinctEntries.forEach {
+                entry ->
+                val head =
+                    readHead(
+                        requireNotNull(
+                            entry.committedHeadSha256,
+                        ),
+                    )
+                val responseAddress =
+                    requireNotNull(
+                        entry.response,
+                    ) {
+                        "indexed exact Conversation return committed entry has no response"
+                    }
+                require(
+                    head.sequence ==
+                        responseAddress.sequence &&
+                        head.eventHash ==
+                            responseAddress.eventHash &&
+                        head.turnRef ==
+                            entry.turnRef
+                ) {
+                    "indexed exact Conversation return head does not bind its derived committed coordinate"
+                }
+
+                val response =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    responseAddress.sequence,
+                                eventHash =
+                                    responseAddress.eventHash,
+                            ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return response event is missing"
+                    }
+                val request =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    entry.request.sequence,
+                                eventHash =
+                                    entry.request.eventHash,
+                            ),
+                        ),
+                    ) {
+                        "indexed exact Conversation return request event is missing"
+                    }
+                eventReads +=
+                    2
+
+                require(
+                    request.eventRef ==
+                        entry.request.eventRef &&
+                        response.eventRef ==
+                            responseAddress.eventRef
+                ) {
+                    "indexed exact Conversation return event identity differs from its derived coordinate"
+                }
+                validateHeadAgainstPair(
+                    head = head,
+                    request = request,
+                    response = response,
+                )
+                validateContextBinding(
+                    relativePath = head.contextPath,
+                    expectedContextSha256 = head.contextSha256,
+                    request = request,
+                    response = response,
+                )
+
+                resolved[
+                    request.sequence
+                ] =
+                    request
+                resolved[
+                    response.sequence
+                ] =
+                    response
+            }
+
+            ExactConversationReturn(
+                events =
+                    addresses.map {
+                        address ->
+                        requireNotNull(
+                            resolved[
+                                address.sequence
+                            ],
+                        )
+                            .also {
+                                event ->
+                                require(
+                                    event.eventRef ==
+                                        address.eventRef &&
+                                        event.eventHash ==
+                                            address.eventHash
+                                ) {
+                                    "indexed exact Conversation return address does not match canonical committed source"
+                                }
+                            }
+                    },
+                exactEventFileReadCount =
+                    eventReads,
+                exactHeadFileReadCount =
+                    headReads,
+                wholeHistoryHeadTraversalPerformed = false,
+                effectsPerformed = false,
+            )
+        } catch (
+            _: RuntimeException,
+        ) {
+            index.invalidate()
+            null
+        }
+    }
+
     private fun validateRequestAsPending(
         request: Event,
     ) {
@@ -2247,9 +3466,11 @@ class DirectConversationStore(
         }
 
         when (
-            event.eventKind
+            event.schemaVersion to
+                event.eventKind
         ) {
-            VexLifeConversationContract.RequestKind ->
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.RequestKind ->
                 VexDurableContractFile.write(
                     ownedRoot = productHome,
                     path = path,
@@ -2259,7 +3480,8 @@ class DirectConversationStore(
                         ),
                 )
 
-            VexLifeConversationContract.ResponseKind ->
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.ResponseKind ->
                 VexDurableContractFile.write(
                     ownedRoot = productHome,
                     path = path,
@@ -2269,9 +3491,42 @@ class DirectConversationStore(
                         ),
                 )
 
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.RequestKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        requestRecordV2(
+                            event,
+                        ),
+                )
+
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.ResponseKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        responseRecordV2(
+                            event,
+                        ),
+                )
+
+            VexLifeConversationContract.EventSchemaV3 to
+                VexLifeConversationContract.ResponseKind ->
+                VexDurableContractFile.write(
+                    ownedRoot = productHome,
+                    path = path,
+                    value =
+                        responseRecordV3(
+                            event,
+                        ),
+                )
+
             else ->
                 error(
-                    "unsupported canonical event kind",
+                    "unsupported canonical event schema/kind",
                 )
         }
     }
@@ -2416,6 +3671,7 @@ class DirectConversationStore(
                 setOf(
                     VexLifeConversationContract.EventSchemaV1,
                     VexLifeConversationContract.EventSchemaV2,
+                    VexLifeConversationContract.EventSchemaV3,
                 ),
         ) {
             "canonical Conversation event schema is not admitted"
@@ -2453,6 +3709,14 @@ class DirectConversationStore(
                 VexLifeConversationContract.EventSchemaV2 to
                     VexLifeConversationContract.ResponseKind ->
                     responseProjectionV2(
+                        VexContractJson.decode(
+                            text,
+                        ),
+                    )
+
+                VexLifeConversationContract.EventSchemaV3 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseProjectionV3(
                         VexContractJson.decode(
                             text,
                         ),
@@ -2614,6 +3878,8 @@ class DirectConversationStore(
                         core,
                     ) ==
                         event.eventHash &&
+                        event.providerRef ==
+                        null &&
                         event.speakerRef ==
                         DirectConversationIdentity.CompanionRoleRef &&
                         event.recipientRefs ==
@@ -2622,6 +3888,31 @@ class DirectConversationStore(
                         ),
                 ) {
                     "canonical v2 RESPONSE hash/participant semantics are invalid"
+                }
+            }
+
+            VexLifeConversationContract.EventSchemaV3 to
+                VexLifeConversationContract.ResponseKind -> {
+                val core =
+                    responseCoreV3(
+                        event,
+                    )
+                        .let(
+                            VexLifeConversationContract::validateResponseCoreV3,
+                        )
+                require(
+                    semanticHash(
+                        core,
+                    ) ==
+                        event.eventHash &&
+                        event.speakerRef ==
+                        DirectConversationIdentity.CompanionRoleRef &&
+                        event.recipientRefs ==
+                        listOf(
+                            installation.personRef,
+                        ),
+                ) {
+                    "canonical v3 RESPONSE hash/participant semantics are invalid"
                 }
             }
 
@@ -2834,6 +4125,7 @@ class DirectConversationStore(
             content = value.content,
             contentHash = value.contentHash,
             semanticRelay = null,
+            providerRef = null,
             endpointProfileRef = null,
             sanitizedEndpointOrigin = null,
             modelNameOrBoundedTestProfileRef = null,
@@ -2864,6 +4156,7 @@ class DirectConversationStore(
             content = value.content,
             contentHash = value.contentHash,
             semanticRelay = null,
+            providerRef = null,
             endpointProfileRef = value.endpointProfileRef,
             sanitizedEndpointOrigin = value.sanitizedEndpointOrigin,
             modelNameOrBoundedTestProfileRef = value.modelNameOrBoundedTestProfileRef,
@@ -2894,6 +4187,7 @@ class DirectConversationStore(
             content = value.content,
             contentHash = value.contentHash,
             semanticRelay = value.semanticRelay,
+            providerRef = null,
             endpointProfileRef = null,
             sanitizedEndpointOrigin = null,
             modelNameOrBoundedTestProfileRef = null,
@@ -2924,6 +4218,38 @@ class DirectConversationStore(
             content = value.content,
             contentHash = value.contentHash,
             semanticRelay = value.semanticRelay,
+            providerRef = null,
+            endpointProfileRef = value.endpointProfileRef,
+            sanitizedEndpointOrigin = value.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = value.modelNameOrBoundedTestProfileRef,
+            privacyClass = value.privacyClass,
+            formedAt = value.formedAt,
+        )
+
+    private fun responseProjectionV3(
+        value: VexLifeConversationContract.ResponseV3,
+    ): Event =
+        Event(
+            schemaVersion = value.schemaVersion,
+            eventKind = value.eventKind,
+            eventRef = value.eventRef,
+            eventHash = value.eventHash,
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+            instanceRef = value.instanceRef,
+            threadRef = value.threadRef,
+            channelRef = value.channelRef,
+            turnRef = value.turnRef,
+            messageRef = value.messageRef,
+            speakerRef = value.speakerRef,
+            recipientRefs = value.recipientRefs,
+            sequence = value.sequence,
+            priorEventHash = value.priorEventHash,
+            content = value.content,
+            contentHash = value.contentHash,
+            semanticRelay = value.semanticRelay,
+            providerRef = value.providerRef,
             endpointProfileRef = value.endpointProfileRef,
             sanitizedEndpointOrigin = value.sanitizedEndpointOrigin,
             modelNameOrBoundedTestProfileRef = value.modelNameOrBoundedTestProfileRef,
@@ -2987,6 +4313,54 @@ class DirectConversationStore(
             semanticRelay =
                 requireNotNull(
                     event.semanticRelay,
+                ),
+            endpointProfileRef =
+                requireNotNull(
+                    event.endpointProfileRef,
+                ),
+            sanitizedEndpointOrigin =
+                requireNotNull(
+                    event.sanitizedEndpointOrigin,
+                ),
+            modelNameOrBoundedTestProfileRef =
+                requireNotNull(
+                    event.modelNameOrBoundedTestProfileRef,
+                ),
+            privacyClass = event.privacyClass,
+            formedAt = event.formedAt,
+        )
+
+    private fun responseCoreV3(
+        event: Event,
+    ): VexLifeConversationContract.ResponseCoreV3 =
+        VexLifeConversationContract.ResponseCoreV3(
+            schemaVersion = event.schemaVersion,
+            eventRef = event.eventRef,
+            eventKind = event.eventKind,
+            homeRef = event.homeRef,
+            deviceRef = event.deviceRef,
+            companionLineageRef = event.companionLineageRef,
+            instanceRef = event.instanceRef,
+            threadRef = event.threadRef,
+            channelRef = event.channelRef,
+            turnRef = event.turnRef,
+            messageRef = event.messageRef,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            sequence = event.sequence,
+            priorEventHash =
+                requireNotNull(
+                    event.priorEventHash,
+                ),
+            content = event.content,
+            contentHash = event.contentHash,
+            semanticRelay =
+                requireNotNull(
+                    event.semanticRelay,
+                ),
+            providerRef =
+                requireNotNull(
+                    event.providerRef,
                 ),
             endpointProfileRef =
                 requireNotNull(
@@ -3125,6 +4499,118 @@ class DirectConversationStore(
             priorEventHash = core.priorEventHash,
             content = core.content,
             contentHash = core.contentHash,
+            endpointProfileRef = core.endpointProfileRef,
+            sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun requestRecordV2(
+        event: Event,
+    ): VexLifeConversationContract.RequestV2 {
+        val core =
+            requestCoreV2(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateRequestCoreV2,
+                )
+        return VexLifeConversationContract.RequestV2(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun responseRecordV2(
+        event: Event,
+    ): VexLifeConversationContract.ResponseV2 {
+        val core =
+            responseCoreV2(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateResponseCoreV2,
+                )
+        return VexLifeConversationContract.ResponseV2(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            endpointProfileRef = core.endpointProfileRef,
+            sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+            modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+            privacyClass = core.privacyClass,
+            formedAt = core.formedAt,
+            eventHash = event.eventHash,
+        )
+    }
+
+    private fun responseRecordV3(
+        event: Event,
+    ): VexLifeConversationContract.ResponseV3 {
+        val core =
+            responseCoreV3(
+                event,
+            )
+                .let(
+                    VexLifeConversationContract::validateResponseCoreV3,
+                )
+        return VexLifeConversationContract.ResponseV3(
+            schemaVersion = core.schemaVersion,
+            eventRef = core.eventRef,
+            eventKind = core.eventKind,
+            homeRef = core.homeRef,
+            deviceRef = core.deviceRef,
+            companionLineageRef = core.companionLineageRef,
+            instanceRef = core.instanceRef,
+            threadRef = core.threadRef,
+            channelRef = core.channelRef,
+            turnRef = core.turnRef,
+            messageRef = core.messageRef,
+            speakerRef = core.speakerRef,
+            recipientRefs = core.recipientRefs,
+            sequence = core.sequence,
+            priorEventHash = core.priorEventHash,
+            content = core.content,
+            contentHash = core.contentHash,
+            semanticRelay = core.semanticRelay,
+            providerRef = core.providerRef,
             endpointProfileRef = core.endpointProfileRef,
             sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
             modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,

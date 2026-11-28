@@ -23,6 +23,7 @@ import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
@@ -317,6 +318,8 @@ class VexLifeLocalArtifactsServiceTest {
                 null
             var providerCalls =
                 0
+            val conversationAttemptIndex =
+                DirectConversationAttemptIndex()
             val provider =
                 DirectCompanionConnection.Transport {
                     providerCalls +=
@@ -338,6 +341,8 @@ class VexLifeLocalArtifactsServiceTest {
                         setup(
                             home,
                         ),
+                    conversationAttemptIndex =
+                        conversationAttemptIndex,
                     turnExecutor =
                         VexLifeProdLocalService.TurnExecutor {
                             foundation,
@@ -351,6 +356,8 @@ class VexLifeLocalArtifactsServiceTest {
                                 hooks =
                                     DirectCompanionTurn.Hooks(
                                         transport = provider,
+                                        conversationAttemptIndex =
+                                            conversationAttemptIndex,
                                     ),
                             )
                         },

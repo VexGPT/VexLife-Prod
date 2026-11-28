@@ -23,6 +23,13 @@ import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
+import vexlife.partner.ExternalProviderWire
+import vexlife.partner.VexLifePartnerAccountScope
+import vexlife.partner.VexLifePartnerConnectionProjection
+import vexlife.partner.VexLifePartnerDeterministicSupport
+import vexlife.partner.VexLifePartnerLiveQualification
+import vexlife.partner.VexLifePartnerModelProfileCatalog
+import vexlife.partner.VexLifePartnerSupportQualification
 import vexlife.service.VexLifeProdCurrentState
 import vexlife.setup.VexLifeProdSetupModel
 
@@ -60,6 +67,7 @@ class VexLifeModelsTest {
         qualifiedVisualInputEvidence:
             () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = { null },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+        partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
         failDownload: Boolean = true,
         target: vexlife.platform.VexLifePlatformRealization.Target =
             HereticRuntimeRealization.MacArm64,
@@ -77,6 +85,7 @@ class VexLifeModelsTest {
                     },
                 ),
             modelSwitchRealization = modelSwitchRealization,
+            partnerSwitchRealization = partnerSwitchRealization,
             acquirer = { _, _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
@@ -107,6 +116,176 @@ class VexLifeModelsTest {
             qualification = HereticRuntimeQualification.qualified(),
         )
     }
+
+    private fun partnerConnection(
+        profile: VexLifePartnerModelProfileCatalog.Definition,
+        qualified: Boolean = false,
+    ): VexLifePartnerConnectionProjection.Projection =
+        VexLifePartnerConnectionProjection.project(
+            VexLifePartnerConnectionProjection.Observation(
+                providerRef = profile.providerRef,
+                modelRef = profile.modelRef,
+                credential =
+                    VexLifePartnerConnectionProjection.CredentialStanding.ACCEPTED,
+                account =
+                    VexLifePartnerConnectionProjection.AccountStanding.USABLE,
+                service =
+                    VexLifePartnerConnectionProjection.ServiceStanding.READY,
+                modelAccess =
+                    VexLifePartnerConnectionProjection.ModelAccessStanding.AVAILABLE,
+                invocation =
+                    if (
+                        qualified
+                    ) {
+                        VexLifePartnerConnectionProjection.InvocationStanding.QUALIFIED
+                    } else {
+                        VexLifePartnerConnectionProjection.InvocationStanding.NEVER_QUALIFIED
+                    },
+            ),
+        )
+
+    private fun combinedInferenceModels(
+        owner: VexLifeModels,
+        profile: VexLifePartnerModelProfileCatalog.Definition,
+        partnerTargeted: Boolean,
+        partnerServing: Boolean,
+        currentPartnerConnection:
+            VexLifePartnerConnectionProjection.Projection =
+            partnerConnection(
+                profile,
+            ),
+        partnerSupport:
+            VexLifePartnerSupportQualification.Projection =
+            VexLifePartnerDeterministicSupport.projection(
+                profile,
+            ),
+    ): VexLifeModelSourceProjection.Projection {
+        val local =
+            owner.projection()
+                .models
+                .map {
+                    row ->
+                    val entry =
+                        HereticModelCatalog.Entries.single {
+                            it.handle ==
+                                row.handle
+                        }
+                    VexLifeModelSourceProjection.LocalOffering(
+                        handle = row.handle,
+                        modelRef = entry.modelRef,
+                        targeted = row.targeted,
+                        serving = row.serving,
+                    )
+                }
+        return VexLifeModelSourceProjection.project(
+            local = local,
+            partner =
+                listOf(
+                    VexLifeModelSourceProjection.PartnerOffering(
+                        handle = profile.profileRef,
+                        providerRef = profile.providerRef,
+                        modelRef = profile.modelRef,
+                        targeted = partnerTargeted,
+                        serving = partnerServing,
+                        connection = currentPartnerConnection,
+                        support = partnerSupport,
+                    ),
+                ),
+        )
+    }
+
+    private fun qualifiedPartnerOutcome(
+        profile: VexLifePartnerModelProfileCatalog.Definition,
+        credentialRef: String =
+            "credential.vexlife.partner.models-switch-test",
+        receiptProfileRef: String =
+            profile.profileRef,
+    ): VexLifePartnerLiveQualification.Outcome.Qualified {
+        val accountScope =
+            VexLifePartnerAccountScope.Selection(
+                providerRef = profile.providerRef,
+            )
+        val receipt =
+            VexLifePartnerLiveQualification.Receipt(
+                providerRef = profile.providerRef,
+                modelRef = profile.modelRef,
+                profileRef = receiptProfileRef,
+                credentialRef = credentialRef,
+                accountScope = accountScope,
+                requestBodySha256 =
+                    "a".repeat(
+                        64,
+                    ),
+                responseBodySha256 =
+                    "b".repeat(
+                        64,
+                    ),
+                providerRequestId =
+                    "request.models-partner-switch-test",
+                observedAt =
+                    "2026-11-24T23:00:00Z",
+                receiptRef =
+                    "receipt.vexlife.partner.live.models-switch-test",
+            )
+        val support =
+            VexLifePartnerSupportQualification.acceptLiveQualification(
+                current =
+                    VexLifePartnerDeterministicSupport.projection(
+                        profile,
+                    ),
+                live =
+                    receipt.supportLiveQualification(),
+            )
+        return VexLifePartnerLiveQualification.Outcome.Qualified(
+            receipt = receipt,
+            connection =
+                partnerConnection(
+                    profile = profile,
+                    qualified = true,
+                ),
+            support = support,
+        )
+    }
+
+    private fun heldPartnerOutcome(
+        profile: VexLifePartnerModelProfileCatalog.Definition,
+    ): VexLifePartnerLiveQualification.Outcome.Held =
+        VexLifePartnerLiveQualification.Outcome.Held(
+            connection =
+                VexLifePartnerConnectionProjection.project(
+                    VexLifePartnerConnectionProjection.Observation(
+                        providerRef = profile.providerRef,
+                        modelRef = profile.modelRef,
+                        credential =
+                            VexLifePartnerConnectionProjection.CredentialStanding.REJECTED,
+                        account =
+                            VexLifePartnerConnectionProjection.AccountStanding.UNKNOWN,
+                        service =
+                            VexLifePartnerConnectionProjection.ServiceStanding.UNKNOWN,
+                        modelAccess =
+                            VexLifePartnerConnectionProjection.ModelAccessStanding.UNKNOWN,
+                        invocation =
+                            VexLifePartnerConnectionProjection.InvocationStanding.LAST_INVOCATION_FAILED,
+                    ),
+                ),
+            support =
+                VexLifePartnerDeterministicSupport.projection(
+                    profile,
+                ),
+            providerFailure =
+                ExternalProviderWire.Failure(
+                    provider =
+                        ExternalProviderWire.Provider.OPENAI_RESPONSES,
+                    meaning =
+                        ExternalProviderWire.FailureMeaning.CREDENTIAL_REJECTED,
+                    retry =
+                        ExternalProviderWire.RetryDisposition.DO_NOT_RETRY_UNCHANGED,
+                    httpStatus = 401,
+                    providerType = "invalid_request_error",
+                    providerCode = "invalid_api_key",
+                    message = "synthetic rejected credential",
+                ),
+        )
 
     @Test
     fun effectiveCapabilitiesRequireExactQualifiedRuntimeEvidence() = withHome { home, _ ->
@@ -411,6 +590,515 @@ class VexLifeModelsTest {
     }
 
     @Test
+    fun qualifiedPartnerUseBecomesTheOnlyLogicalServingInference() =
+        withHome {
+            home,
+            _,
+            ->
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            val phases =
+                mutableListOf<VexLifeModels.SwitchPhase>()
+            val partnerSwitch =
+                VexLifeModels.PartnerSwitchRealization {
+                    target,
+                    observe,
+                    ->
+                    assertEquals(
+                        profile.profileRef,
+                        target.handle,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                    )
+                    phases +=
+                        listOf(
+                            VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                            VexLifeModels.SwitchPhase.PreparingTarget,
+                        )
+                    qualifiedPartnerOutcome(
+                        profile,
+                    )
+                }
+
+            models(
+                home = home,
+                partnerSwitchRealization = partnerSwitch,
+            )
+                .use {
+                    owner ->
+                    val before =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    val target =
+                        owner.stageInferenceTarget(
+                            models = before,
+                            handle = profile.profileRef,
+                        )
+                    val targeted =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        )
+
+                    owner.useStagedPartnerInference(
+                        targeted,
+                    )
+                    owner.awaitIdle()
+
+                    assertEquals(
+                        target,
+                        owner.partnerServing()
+                            ?.coordinate,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Switched.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
+                    )
+                    assertNull(
+                        owner.projection()
+                            .servingHandle,
+                        "Local Models must stop projecting Local as serving while Partner is serving",
+                    )
+                    assertTrue(
+                        owner.projection()
+                            .models
+                            .none {
+                                it.serving
+                            },
+                    )
+                    assertEquals(
+                        listOf(
+                            VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                            VexLifeModels.SwitchPhase.PreparingTarget,
+                        ),
+                        phases,
+                    )
+                    assertEquals(
+                        target,
+                        owner.stagedInferenceTarget(),
+                        "Partner target remains process-local because there is no durable Partner choice store",
+                    )
+                }
+        }
+
+    @Test
+    fun qualifiedPartnerUseRejectsMismatchedProfileReceipt() =
+        withHome {
+            home,
+            _,
+            ->
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            models(
+                home = home,
+                partnerSwitchRealization =
+                    VexLifeModels.PartnerSwitchRealization {
+                        _,
+                        _,
+                        ->
+                        qualifiedPartnerOutcome(
+                            profile = profile,
+                            receiptProfileRef =
+                                "profile.vexlife.partner.openai.mismatched.v1",
+                        )
+                    },
+            )
+                .use {
+                    owner ->
+                    val before =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    owner.stageInferenceTarget(
+                        models = before,
+                        handle = profile.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Failed.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
+                    )
+                }
+        }
+
+    @Test
+    fun qualificationForSupersededPartnerTargetCannotBecomeServing() =
+        withHome {
+            home,
+            _,
+            ->
+            val first =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            val replacement =
+                VexLifePartnerModelProfileCatalog.AnthropicClaudeSonnet55
+            lateinit var ownerRef: VexLifeModels
+            val partnerSwitch =
+                VexLifeModels.PartnerSwitchRealization {
+                    target,
+                    _,
+                    ->
+                    assertEquals(
+                        first.profileRef,
+                        target.handle,
+                    )
+                    val nextTarget =
+                        ownerRef.stageInferenceTarget(
+                            models =
+                                combinedInferenceModels(
+                                    owner = ownerRef,
+                                    profile = replacement,
+                                    partnerTargeted = false,
+                                    partnerServing = false,
+                                ),
+                            handle = replacement.profileRef,
+                        )
+                    assertEquals(
+                        replacement.profileRef,
+                        nextTarget.handle,
+                    )
+                    qualifiedPartnerOutcome(
+                        first,
+                    )
+                }
+
+            models(
+                home = home,
+                partnerSwitchRealization = partnerSwitch,
+            )
+                .use {
+                    owner ->
+                    ownerRef = owner
+                    owner.stageInferenceTarget(
+                        models =
+                            combinedInferenceModels(
+                                owner = owner,
+                                profile = first,
+                                partnerTargeted = false,
+                                partnerServing = false,
+                            ),
+                        handle = first.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = first,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        replacement.profileRef,
+                        owner.stagedInferenceTarget()
+                            ?.handle,
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Failed.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
+                    )
+                }
+        }
+
+    @Test
+    fun heldPartnerUseLeavesExistingLocalServingTruthUnchanged() =
+        withHome {
+            home,
+            _,
+            ->
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            models(
+                home = home,
+                partnerSwitchRealization =
+                    VexLifeModels.PartnerSwitchRealization {
+                        _,
+                        _,
+                        ->
+                        heldPartnerOutcome(
+                            profile,
+                        )
+                    },
+            )
+                .use {
+                    owner ->
+                    val before =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    owner.stageInferenceTarget(
+                        models = before,
+                        handle = profile.profileRef,
+                    )
+                    val targeted =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        )
+
+                    owner.useStagedPartnerInference(
+                        targeted,
+                    )
+                    owner.awaitIdle()
+
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertTrue(
+                        owner.projection()
+                            .models
+                            .single {
+                                it.handle ==
+                                    HereticModelCatalog.Models.Qwen27B.handle
+                            }
+                            .serving,
+                    )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.Failed.stateRef,
+                        owner.projection()
+                            .lastOutcome
+                            ?.state,
+                    )
+                }
+        }
+
+    @Test
+    fun qualifiedLocalSwitchClearsPartnerServingOnlyAfterLocalBecomesServing() =
+        withHome {
+            home,
+            _,
+            ->
+            val nine =
+                HereticModelCatalog.Models.Qwen9B
+            nine.members
+                .filter {
+                    it.expectedBytes <
+                        50_000_000
+                }
+                .forEach {
+                    place(
+                        home,
+                        nine,
+                        it.filename,
+                    )
+                }
+            val folder =
+                home.resolve(
+                    nine.modelRootRelativePath,
+                )
+                    .resolve(
+                        nine.providerRevision,
+                    )
+            nine.members
+                .filter {
+                    it.expectedBytes >=
+                        50_000_000
+                }
+                .forEach {
+                    member ->
+                    java.io.RandomAccessFile(
+                        folder.resolve(
+                            member.filename,
+                        )
+                            .toFile(),
+                        "rw",
+                    )
+                        .use {
+                            it.setLength(
+                                member.expectedBytes,
+                            )
+                        }
+                }
+
+            val profile =
+                VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+            var localServing: String? =
+                HereticModelCatalog.Models.Qwen27B.modelRef
+            val localSwitch =
+                VexLifeModels.ModelSwitchRealization {
+                    realization,
+                    observe,
+                    ->
+                    observe(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                    )
+                    localServing =
+                        realization.modelRef
+                }
+            val partnerSwitch =
+                VexLifeModels.PartnerSwitchRealization {
+                    _,
+                    observe,
+                    ->
+                    observe(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    observe(
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                    )
+                    qualifiedPartnerOutcome(
+                        profile,
+                    )
+                }
+
+            models(
+                home = home,
+                serving = {
+                    localServing
+                },
+                modelSwitchRealization = localSwitch,
+                partnerSwitchRealization = partnerSwitch,
+            )
+                .use {
+                    owner ->
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        nine.handle,
+                    )
+                    owner.control(
+                        VexLifeModelsFamily.ControlUse,
+                        nine.handle,
+                    )
+                    owner.awaitIdle()
+                    assertEquals(
+                        nine.modelRef,
+                        localServing,
+                    )
+                    assertEquals(
+                        nine.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+
+                    val beforePartner =
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = false,
+                            partnerServing = false,
+                        )
+                    owner.stageInferenceTarget(
+                        models = beforePartner,
+                        handle = profile.profileRef,
+                    )
+                    owner.useStagedPartnerInference(
+                        combinedInferenceModels(
+                            owner = owner,
+                            profile = profile,
+                            partnerTargeted = true,
+                            partnerServing = false,
+                        ),
+                    )
+                    owner.awaitIdle()
+
+                    assertEquals(
+                        profile.profileRef,
+                        owner.partnerServing()
+                            ?.coordinate
+                            ?.handle,
+                    )
+                    assertNull(
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertEquals(
+                        nine.modelRef,
+                        localServing,
+                        "Partner serving does not kill or silently retarget the retained Local runtime",
+                    )
+
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        nine.handle,
+                    )
+                    owner.control(
+                        VexLifeModelsFamily.ControlUse,
+                        nine.handle,
+                    )
+                    owner.awaitIdle()
+
+                    assertEquals(
+                        nine.modelRef,
+                        localServing,
+                    )
+                    assertNull(
+                        owner.partnerServing(),
+                    )
+                    assertEquals(
+                        nine.handle,
+                        owner.projection()
+                            .servingHandle,
+                    )
+                    assertTrue(
+                        owner.projection()
+                            .models
+                            .single {
+                                it.handle ==
+                                    nine.handle
+                            }
+                            .serving,
+                    )
+                }
+        }
+
+    @Test
     fun removingAModelFreesItsFilesAndKeepsItOffered() = withHome { home, _ ->
         val four = HereticModelCatalog.Models.Qwen4B
         place(home, four, "config.json")
@@ -448,7 +1136,7 @@ class VexLifeModelsTest {
                         requireNotNull(before.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
-                        1,
+                        2,
                         requireNotNull(before.runtimeConfiguration).recommendedPromptCacheEntries,
                     )
                     assertEquals(
@@ -456,7 +1144,7 @@ class VexLifeModelsTest {
                         requireNotNull(before.runtimeConfiguration).maximumPromptCacheEntries,
                     )
                     assertEquals(
-                        HereticRuntimeConfiguration.RecommendationHeldExperiment,
+                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
                         requireNotNull(before.runtimeConfiguration).recommendationStanding,
                     )
 
@@ -468,10 +1156,10 @@ class VexLifeModelsTest {
                         owner.control(
                             VexLifeModelsFamily.ControlSetPromptCacheEntries,
                             "heretic-4b",
-                            promptCacheEntries = 2,
+                            promptCacheEntries = 3,
                         )
                     assertEquals(
-                        2,
+                        3,
                         experimental.models
                             .first {
                                 it.handle == "heretic-4b"
@@ -504,7 +1192,7 @@ class VexLifeModelsTest {
                         requireNotNull(four.runtimeConfiguration).mode,
                     )
                     assertEquals(
-                        1,
+                        2,
                         requireNotNull(four.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(

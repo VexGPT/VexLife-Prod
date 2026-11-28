@@ -9,14 +9,14 @@ import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 
 /**
- * Experiment-only request-bound preparation for one backward-looking human request.
+ * Request-bound preparation for one backward-looking human request.
  *
  * This owner does not decide semantic meaning, mutate Conversation/Memory, or answer the human.
  * It recognizes one bounded class of explicit backward-reference cues, derives inspectable lexical
  * terms from the exact current request, and reuses [DirectConversationSourceReturn] to reopen exact
  * canonical Conversation before provider inference.
  *
- * The first proof intentionally stays narrow: explicit backward-reference language after Working
+ * Current Product activation remains narrow: explicit backward-reference language after Working
  * Continuity rollover. Broader associative/context semantics remain held by the EvolveContext lane.
  */
 object DirectConversationContextProjection {
@@ -41,11 +41,32 @@ object DirectConversationContextProjection {
         POINTS_BACK,
     }
 
+    enum class SourcePreparation {
+        CANONICAL_SCAN,
+        LOCATOR_CURRENT,
+        LOCATOR_REBUILT,
+    }
+
+    data class SourceLifecycle(
+        val bindingRef: String =
+            VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+        val blockedEventRefs: Set<String> =
+            emptySet(),
+        val historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
+    )
+
     data class Prepared(
         val cue: Cue,
         val queryTerms: List<String>,
         val speakerScope: String,
         val discovery: DirectConversationSourceReturn.Discovery,
+        val sourcePreparation: SourcePreparation,
+        val exactEventFileReadCount: Int,
+        val historicalCurrentizedEventRefs: Set<String> =
+            emptySet(),
+        val sourceLifecycleBindingRef: String =
+            VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
     )
 
     @Serializable
@@ -93,6 +114,7 @@ object DirectConversationContextProjection {
         val systemMessageSha256: String,
         val systemContent: String,
         val sourceEventRefs: List<String>,
+        val historicalCurrentizedEventRefs: List<String>,
         val effectAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -101,6 +123,10 @@ object DirectConversationContextProjection {
         conversationOwner: DirectConversationStore.Locked,
         currentRequest: DirectConversationStore.Event,
         excludedEventRefs: Set<String> = emptySet(),
+        locatorBackend: VexLifeContinuitySourceLocator.Backend? = null,
+        sourceLifecycle: () -> SourceLifecycle = {
+            SourceLifecycle()
+        },
     ): Prepared? {
         require(currentRequest.eventKind == "REQUEST") {
             "direct Conversation context projection requires the exact current human request"
@@ -112,16 +138,119 @@ object DirectConversationContextProjection {
             return null
         }
         val speakerScope = speakerScope(currentRequest.content)
+        val currentSourceLifecycle =
+            sourceLifecycle()
+        val effectiveExcludedEventRefs =
+            excludedEventRefs +
+                currentSourceLifecycle.blockedEventRefs
+        val request =
+            DirectConversationSourceReturn.Request(
+                schemaVersion = DirectConversationSourceReturn.RequestSchema,
+                queryTerms = queryTerms,
+                speakerScope = speakerScope,
+            )
+
+        if (
+            locatorBackend !=
+                null
+        ) {
+            var rebuilt =
+                false
+            var located =
+                runCatching {
+                        VexLifeContinuitySourceLocator.locate(
+                            conversationOwner = conversationOwner,
+                            queryTerms = queryTerms,
+                            speakerScope =
+                                locatorSpeakerScope(
+                                    speakerScope,
+                                ),
+                            backend = locatorBackend,
+                            excludedEventRefs =
+                                effectiveExcludedEventRefs,
+                            sourceLifecycleBindingRef =
+                                currentSourceLifecycle.bindingRef,
+                        )
+                    }
+                    .getOrNull()
+
+            if (
+                located is
+                    VexLifeContinuitySourceLocator.LocateOutcome.FallbackRequired &&
+                located.reason in
+                    RebuildableLocatorFallbacks
+            ) {
+                rebuilt =
+                    runCatching {
+                            VexLifeContinuitySourceLocator.rebuild(
+                                conversationOwner = conversationOwner,
+                                backend = locatorBackend,
+                                sourceLifecycleBindingRef =
+                                    currentSourceLifecycle.bindingRef,
+                                excludedEventRefs =
+                                    effectiveExcludedEventRefs,
+                            )
+                        }
+                        .isSuccess
+                if (
+                    rebuilt
+                ) {
+                    located =
+                        runCatching {
+                                VexLifeContinuitySourceLocator.locate(
+                                    conversationOwner = conversationOwner,
+                                    queryTerms = queryTerms,
+                                    speakerScope =
+                                        locatorSpeakerScope(
+                                            speakerScope,
+                                        ),
+                                    backend = locatorBackend,
+                                    excludedEventRefs =
+                                        effectiveExcludedEventRefs,
+                                    sourceLifecycleBindingRef =
+                                        currentSourceLifecycle.bindingRef,
+                                )
+                            }
+                            .getOrNull()
+                }
+            }
+
+            when (
+                located
+            ) {
+                is VexLifeContinuitySourceLocator.LocateOutcome.Found ->
+                    return preparedFromLocator(
+                        cue = cue,
+                        request = request,
+                        located = located,
+                        sourcePreparation =
+                            if (
+                                rebuilt
+                            ) {
+                                SourcePreparation.LOCATOR_REBUILT
+                            } else {
+                                SourcePreparation.LOCATOR_CURRENT
+                            },
+                        historicalCurrentizedEventRefs =
+                            currentSourceLifecycle.historicalCurrentizedEventRefs,
+                        sourceLifecycleBindingRef =
+                            currentSourceLifecycle.bindingRef,
+                    )
+
+                is VexLifeContinuitySourceLocator.LocateOutcome.CurrentMiss ->
+                    return null
+
+                else ->
+                    Unit
+            }
+        }
+
         val discovery =
             DirectConversationSourceReturn.discover(
                 conversationOwner = conversationOwner,
-                request =
-                    DirectConversationSourceReturn.Request(
-                        schemaVersion = DirectConversationSourceReturn.RequestSchema,
-                        queryTerms = queryTerms,
-                        speakerScope = speakerScope,
-                    ),
-                excludedEventRefs = excludedEventRefs,
+                request = request,
+                excludedEventRefs =
+                    effectiveExcludedEventRefs,
             )
 
         if (discovery.matches.isEmpty()) {
@@ -133,8 +262,89 @@ object DirectConversationContextProjection {
             queryTerms = queryTerms,
             speakerScope = speakerScope,
             discovery = discovery,
+            sourcePreparation =
+                SourcePreparation.CANONICAL_SCAN,
+            exactEventFileReadCount = 0,
+            historicalCurrentizedEventRefs =
+                currentSourceLifecycle.historicalCurrentizedEventRefs,
+            sourceLifecycleBindingRef =
+                currentSourceLifecycle.bindingRef,
         )
     }
+
+    private fun preparedFromLocator(
+        cue: Cue,
+        request: DirectConversationSourceReturn.Request,
+        located: VexLifeContinuitySourceLocator.LocateOutcome.Found,
+        sourcePreparation: SourcePreparation,
+        historicalCurrentizedEventRefs: Set<String>,
+        sourceLifecycleBindingRef: String,
+    ): Prepared {
+        val matches =
+            located.candidates.map {
+                candidate ->
+                DirectConversationSourceReturn.Match(
+                    requestEvent = candidate.requestEvent,
+                    responseEvent = candidate.responseEvent,
+                    matchedTerms = candidate.matchedTerms,
+                    matchedTermCharacters =
+                        candidate.matchedTerms.sumOf(
+                            String::length,
+                        ),
+                )
+            }
+        require(
+            matches.isNotEmpty()
+        ) {
+            "locator found outcome must carry at least one exact canonical Conversation match"
+        }
+        return Prepared(
+            cue = cue,
+            queryTerms = request.queryTerms,
+            speakerScope = request.speakerScope,
+            discovery =
+                DirectConversationSourceReturn.Discovery(
+                    request = request,
+                    matches = matches,
+                    scannedCompletedTurnCount = 0,
+                    wholeHistoryEventEnumerationPerformed = false,
+                    effectsPerformed = false,
+                ),
+            sourcePreparation = sourcePreparation,
+            exactEventFileReadCount =
+                located.exactEventFileReadCount,
+            historicalCurrentizedEventRefs =
+                historicalCurrentizedEventRefs,
+            sourceLifecycleBindingRef =
+                sourceLifecycleBindingRef,
+        )
+    }
+
+    private fun locatorSpeakerScope(
+        speakerScope: String,
+    ): VexLifeContinuitySourceLocator.SpeakerScope =
+        when (
+            speakerScope
+        ) {
+            DirectConversationSourceReturn.HumanSpeaker ->
+                VexLifeContinuitySourceLocator.SpeakerScope.HUMAN
+
+            DirectConversationSourceReturn.VexSpeaker ->
+                VexLifeContinuitySourceLocator.SpeakerScope.VEX
+
+            else ->
+                VexLifeContinuitySourceLocator.SpeakerScope.ANY
+        }
+
+    private val RebuildableLocatorFallbacks =
+        setOf(
+            VexLifeContinuitySourceLocator.FallbackReason.ABSENT,
+            VexLifeContinuitySourceLocator.FallbackReason.STALE,
+            VexLifeContinuitySourceLocator.FallbackReason.CORRUPT,
+            VexLifeContinuitySourceLocator.FallbackReason.FINGERPRINT_BINDING_MISMATCH,
+            VexLifeContinuitySourceLocator.FallbackReason.SOURCE_LIFECYCLE_BINDING_MISMATCH,
+            VexLifeContinuitySourceLocator.FallbackReason.SOURCE_COORDINATE_MISMATCH,
+        )
 
     fun project(
         prepared: Prepared,
@@ -148,17 +358,36 @@ object DirectConversationContextProjection {
         }
         val discovery =
             prepared.discovery
+        val sourcePreparationCurrent =
+            when (
+                prepared.sourcePreparation
+            ) {
+                SourcePreparation.CANONICAL_SCAN ->
+                    discovery.wholeHistoryEventEnumerationPerformed &&
+                        discovery.scannedCompletedTurnCount >=
+                        discovery.matches.size &&
+                        prepared.exactEventFileReadCount ==
+                        0
+
+                SourcePreparation.LOCATOR_CURRENT,
+                SourcePreparation.LOCATOR_REBUILT,
+                ->
+                    !discovery.wholeHistoryEventEnumerationPerformed &&
+                        discovery.scannedCompletedTurnCount ==
+                        0 &&
+                        prepared.exactEventFileReadCount >=
+                        discovery.matches.size *
+                        2
+            }
         require(
             !discovery.effectsPerformed &&
-                discovery.wholeHistoryEventEnumerationPerformed &&
-                discovery.scannedCompletedTurnCount >=
-                discovery.matches.size &&
+                sourcePreparationCurrent &&
                 prepared.queryTerms ==
                 discovery.request.queryTerms &&
                 prepared.speakerScope ==
                 discovery.request.speakerScope,
         ) {
-            "direct Conversation context projection preparation is not bound to one effect-free canonical scan"
+            "direct Conversation context projection preparation is not bound to one effect-free canonical source preparation"
         }
 
         val selected =
@@ -224,6 +453,8 @@ object DirectConversationContextProjection {
                     ),
                 systemContent = content,
                 sourceEventRefs = emptyList(),
+                historicalCurrentizedEventRefs =
+                    emptyList(),
                 effectAuthorityGranted = false,
                 effectsPerformed = false,
             )
@@ -239,6 +470,19 @@ object DirectConversationContextProjection {
             DirectPromptContext.estimatedMessageTokens(
                 content,
             )
+        val sourceEventRefs =
+            selected.flatMap {
+                listOf(
+                    it.requestEvent.eventRef,
+                    it.responseEvent.eventRef,
+                )
+            }
+        val historicalCurrentizedEventRefs =
+            sourceEventRefs.filter {
+                it in
+                    prepared.historicalCurrentizedEventRefs
+            }
+
         return Projection(
             cue = prepared.cue.name,
             queryTerms = prepared.queryTerms,
@@ -254,12 +498,9 @@ object DirectConversationContextProjection {
                 ),
             systemContent = content,
             sourceEventRefs =
-                selected.flatMap {
-                    listOf(
-                        it.requestEvent.eventRef,
-                        it.responseEvent.eventRef,
-                    )
-                },
+                sourceEventRefs,
+            historicalCurrentizedEventRefs =
+                historicalCurrentizedEventRefs,
             effectAuthorityGranted = false,
             effectsPerformed = false,
         )
@@ -426,9 +667,34 @@ object DirectConversationContextProjection {
                         "direct Conversation context projection provider state is not recognized",
                     )
             }
+        val historicalCurrentizedReturned =
+            matches
+                .flatMap {
+                    match ->
+                    listOf(
+                        match.requestEvent.eventRef,
+                        match.responseEvent.eventRef,
+                    )
+                }
+                .filter {
+                    it in
+                        prepared.historicalCurrentizedEventRefs
+                }
+                .distinct()
+        val lifecycleTruth =
+            if (
+                historicalCurrentizedReturned.isNotEmpty()
+            ) {
+                "LIFECYCLE TRUTH: historicalCurrentizedEventRefs=" +
+                    historicalCurrentizedReturned.joinToString(",") +
+                    ". These exact Conversation events are historical source whose semantic relationship has since been corrected or superseded by current Score/semantic authority. Preserve the historical bytes as evidence; do not present them as current Memory or current accepted meaning."
+            } else {
+                "LIFECYCLE TRUTH: no returned Conversation event is marked corrected/superseded by the current recall membrane."
+            }
         return listOf(
             ContextHeader,
             projectionTruth,
+            lifecycleTruth,
             "This block is request-bound Conversation context for the current human turn. It is not a provider-requested Conversation Source Return and does not prove that Vex asked for retrieval.",
             "Returned Conversation source is not Memory, semantic acceptance, or a profile of the human.",
             "The cue and query terms are deterministic request/source observations derived from the exact current request; they are not a claim about the human's hidden intent.",

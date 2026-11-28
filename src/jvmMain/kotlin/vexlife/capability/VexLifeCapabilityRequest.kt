@@ -20,13 +20,33 @@ import vexlife.contract.VexContractJson
  * ```
  *
  * Parsing is deliberately forgiving about form (code fences, `capabilityRef` vs `capability`,
- * trailing whitespace) and strict about meaning: a header that is present but carries no readable
- * request becomes [Parsed.Malformed], which the bridge answers with the exact form instead of
- * failing the human's turn.
+ * trailing whitespace, and one exact structured protocol/version wrapper) and strict about meaning.
+ * The canonical header-line form remains preferred. A clearly intended request that cannot be read
+ * becomes [Parsed.Malformed], which the bridge answers with the exact form instead of failing the
+ * human's turn.
  */
 object VexLifeCapabilityRequest {
     const val RequestHeader = "VEXLIFE_CAPABILITY_REQUEST/v1"
     const val ResultHeader = "VEXLIFE_CAPABILITY_RESULT/v1"
+
+    /**
+     * One source-owned instruction for the text-control request channel.
+     *
+     * Ordinary prompt projection and exact-runtime qualification both consume this relationship so
+     * provider guidance cannot drift away from the parser/Bridge contract.
+     */
+    val TextControlProviderInstruction =
+        "For a text-control capability request, the whole reply for that provider stage must begin " +
+            "with the exact header " +
+            RequestHeader +
+            " followed by one JSON object with capability, action, and arguments. The top-level capability " +
+            "is the capability being invoked; action-specific target values belong inside arguments. " +
+            "The canonical header is mandatory unless the exact structured protocol/version wrapper " +
+            "is used; bare JSON or code-fenced JSON without either admitted request marker is " +
+            "ordinary assistant text and performs nothing. Stop composing the human-facing answer " +
+            "until the host returns a real " +
+            ResultHeader +
+            " result."
 
     /** The header must start a line within this many characters of the start of the reply. */
     const val MaximumControlPreambleCharacters = 512
@@ -76,7 +96,7 @@ object VexLifeCapabilityRequest {
                 .find(modelContent)
                 ?.range
                 ?.first
-                ?: return null
+                ?: return parseStructuredWrapperOrNull(modelContent)
         val headerIndex =
             controlHeaderIndexOrNull(modelContent)
                 ?: return Parsed.Malformed(
@@ -108,21 +128,174 @@ object VexLifeCapabilityRequest {
             runCatching { VexContractJson.Strict.parseToJsonElement(objectText) }.getOrNull()
                 ?: return malformed("the JSON after the header is not valid JSON")
         val json = element as? JsonObject ?: return malformed("the request must be one JSON object")
-        val capability =
-            (json["capability"] ?: json["capabilityRef"]).stringOrNull()
-                ?: return malformed(
-                    "missing \"capability\" (a handle such as web, github, home, memory, atlas)"
+        return parseRequestObject(
+            json = json,
+            control = control,
+            sha = sha,
+        )
+    }
+
+    private fun parseStructuredWrapperOrNull(modelContent: String): Parsed? {
+        val control =
+            modelContent
+                .trim()
+        val body =
+            control
+                .removePrefix("```json")
+                .removePrefix("```")
+                .trim()
+                .removeSuffix("```")
+                .trim()
+        if (
+            !body.startsWith(
+                "{",
+            )
+        ) {
+            return null
+        }
+
+        val objectText =
+            firstJsonObject(
+                body,
+            )
+                ?: return null
+        if (
+            objectText.length !=
+                body.length
+        ) {
+            return null
+        }
+        val element =
+            runCatching {
+                    VexContractJson.Strict.parseToJsonElement(
+                        objectText,
+                    )
+                }
+                .getOrNull()
+                ?: return null
+        val wrapper =
+            element as? JsonObject
+                ?: return null
+        if (
+            "VEXLIFE_CAPABILITY_REQUEST" !in
+            wrapper
+        ) {
+            return null
+        }
+
+        val sha =
+            sha256(
+                control,
+            )
+        fun malformed(reason: String) =
+            Parsed.Malformed(
+                reason = reason,
+                controlContent = control,
+                controlSha256 = sha,
+            )
+
+        if (
+            wrapper.keys !=
+                setOf(
+                    "VEXLIFE_CAPABILITY_REQUEST",
                 )
-        val action = json["action"].stringOrNull() ?: return malformed("missing \"action\"")
+        ) {
+            return malformed(
+                "structured capability request wrapper must contain only \"VEXLIFE_CAPABILITY_REQUEST\"",
+            )
+        }
+        val protocol =
+            wrapper[
+                "VEXLIFE_CAPABILITY_REQUEST"
+            ] as? JsonObject
+                ?: return malformed(
+                    "structured capability request wrapper must contain one version object",
+                )
+        if (
+            protocol.keys !=
+                setOf(
+                    "v1",
+                )
+        ) {
+            return malformed(
+                "structured capability request wrapper must contain only version \"v1\"",
+            )
+        }
+        val json =
+            protocol[
+                "v1"
+            ] as? JsonObject
+                ?: return malformed(
+                    "structured capability request version \"v1\" must contain one request object",
+                )
+
+        return parseRequestObject(
+            json = json,
+            control = control,
+            sha = sha,
+        )
+    }
+
+    private fun parseRequestObject(
+        json: JsonObject,
+        control: String,
+        sha: String,
+    ): Parsed {
+        fun malformed(reason: String) =
+            Parsed.Malformed(
+                reason = reason,
+                controlContent = control,
+                controlSha256 = sha,
+            )
+
+        val capability =
+            (
+                json[
+                    "capability"
+                ] ?: json[
+                    "capabilityRef"
+                ]
+            )
+                .stringOrNull()
+                ?: return malformed(
+                    "missing top-level \"capability\" (the capability being invoked; a handle such as web, github, home, memory, atlas)",
+                )
+        val action =
+            json[
+                "action"
+            ]
+                .stringOrNull()
+                ?: return malformed(
+                    "missing \"action\"",
+                )
         val arguments =
-            when (val value = json["arguments"]) {
-                null -> JsonObject(emptyMap())
-                is JsonObject -> value
-                else -> return malformed("\"arguments\" must be a JSON object")
+            when (
+                val value =
+                    json[
+                        "arguments"
+                    ]
+            ) {
+                null ->
+                    JsonObject(
+                        emptyMap(),
+                    )
+
+                is JsonObject ->
+                    value
+
+                else ->
+                    return malformed(
+                        "\"arguments\" must be a JSON object",
+                    )
             }
+
         return Parsed.Request(
             call =
-                Call(capability = capability.trim(), action = action.trim(), arguments = arguments),
+                Call(
+                    capability = capability.trim(),
+                    action = action.trim(),
+                    arguments = arguments,
+                ),
             controlContent = control,
             controlSha256 = sha,
         )

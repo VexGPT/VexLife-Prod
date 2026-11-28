@@ -39,12 +39,15 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.VexLifePromptPreparation
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.conversation.DirectConversationAttemptIndex
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdMacRuntimeHandoff
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
@@ -59,14 +62,30 @@ import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
+import vexlife.model.VexLifeInferenceCurrentState
+import vexlife.model.VexLifeInferenceSelection
+import vexlife.model.VexLifeInferenceSessionAdmission
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifeModelsFamily
+import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
+import vexlife.memory.VexLifeCurrentMemoryHotPath
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
+import vexlife.partner.VexLifePartnerConnectionConfiguration
+import vexlife.partner.VexLifePartnerMacHostRealization
+import vexlife.partner.VexLifePartnerNativeHostClient
 import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.continuity.VexLifeContinuitySourceLocator
+import vexlife.continuity.VexLifeContinuitySemanticServiceSession
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.context.VexLifeContextProfileStore
@@ -82,6 +101,15 @@ import vexlife.memory.VexLifeMemoryFamily
 import vexlife.sources.VexLifeLocalFolderPicker
 import vexlife.sources.VexLifeLocalSourceStore
 import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectStore
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceCheckStore
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunStore
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
+import vexlife.capability.VexLifeWorkspaceTextCheck
+import vexlife.capability.VexLifeWorkspaceJavaTest
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -107,18 +135,30 @@ class VexLifeProdLocalService private constructor(
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
+    private val partnerTurnExecutor: PartnerTurnExecutor?,
+    private val streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    private val memoryProviderSelectionAtCap:
+        (Int) -> VexLifeCurrentMemoryProviderSelection.Selection,
     private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     private val currentQualifiedVisualInputEvidence:
         () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
+    private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
+    private val partnerInference: VexLifeProdPartnerInference?,
+    private val partnerConnectionLiveEffectsEnabled: Boolean,
+    private val conversationAttemptIndex: DirectConversationAttemptIndex?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val continuitySemanticRuntimeClose: (() -> Unit)? = null,
+    private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
+    private val promptPreparation: VexLifePromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -130,7 +170,19 @@ class VexLifeProdLocalService private constructor(
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
+        /**
+         * Presentation-only truth for the one first canonical local Send. This does not mirror
+         * preparation lifetime and is never re-armed by later model/runtime switches.
+         */
+        val initialPromptPreparationTurn: Boolean,
     )
+
+    private class PartnerServingNotCurrent(
+        val reason: VexLifeInferenceSessionAdmission.HoldReason,
+    ) : IllegalStateException(
+            "Partner serving admission is not current: " +
+                reason.name,
+        )
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
@@ -202,12 +254,30 @@ class VexLifeProdLocalService private constructor(
             null,
         )
 
+    /**
+     * One-way presentation history only. Prompt Preparation may re-arm for every future local
+     * Session; this bit never re-arms, so a later model switch cannot masquerade as first startup.
+     */
+    private val initialLocalStartPresentationPending =
+        AtomicBoolean(
+            promptPreparation !=
+                null,
+        )
+
     private val localArtifactStore =
         VexLifeLocalArtifactStore(
             Path.of(
                 startupSetup.productHome,
             ),
         )
+
+    private val sentResourceReview by lazy {
+        VexLifeSentResourceReview(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+    }
 
     private val attachmentDraft =
         VexLifeAttachmentDraftRuntime()
@@ -217,6 +287,36 @@ class VexLifeProdLocalService private constructor(
             Path.of(
                 startupSetup.productHome,
             ),
+        )
+
+    private val workspaceEffects =
+        VexLifeWorkspaceEffectStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
+        )
+
+    private val workspaceChecks =
+        VexLifeWorkspaceCheckStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
+        )
+
+    private val workspaceRuns =
+        VexLifeWorkspaceRunStore(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            localSources =
+                localSources,
         )
 
     private val localSourcesMutationLock =
@@ -244,7 +344,524 @@ class VexLifeProdLocalService private constructor(
                     ),
                 ),
             modelSwitchRealization = modelSwitchRealization,
+            partnerSwitchRealization = partnerSwitchRealization,
         )
+
+    private val inferenceControlLock =
+        Any()
+
+    private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection {
+        val composition =
+            partnerInference
+
+        while (
+            true
+        ) {
+            val stagedBefore =
+                models.stagedInferenceTarget()
+            val partnerServingBefore =
+                models.partnerServing()
+            val local =
+                models.projection()
+            val stagedAfter =
+                models.stagedInferenceTarget()
+            val partnerServingAfter =
+                models.partnerServing()
+
+            if (
+                stagedBefore !=
+                    stagedAfter ||
+                partnerServingBefore !=
+                    partnerServingAfter
+            ) {
+                continue
+            }
+
+            return if (
+                composition !=
+                null
+            ) {
+                composition.observe(
+                    local = local,
+                    stagedTarget = stagedAfter,
+                    partnerServing = partnerServingAfter,
+                    localRuntimeEvidence =
+                        runCatching {
+                            currentQualifiedRuntimeEvidence()
+                        }
+                            .getOrNull(),
+                )
+                    .current
+            } else {
+                VexLifeInferenceCurrentState.project(
+                    productHome =
+                        Path.of(
+                            startupSetup.productHome,
+                        ),
+                    local = local,
+                    partner =
+                        VexLifePartnerModelsCurrentState.Projection(
+                            configuredProviders = emptyList(),
+                            connectionByProfileRef = emptyMap(),
+                            offerings = emptyList(),
+                        ),
+                    stagedTargetOrNull =
+                        stagedAfter
+                            ?.takeIf {
+                                it.sourceKind ==
+                                    VexLifeModelSourceProjection.SourceKind.LOCAL
+                            },
+                )
+            }
+        }
+    }
+
+
+    private fun sourceAwareModelControl(
+        controlRef: String,
+        handle: String,
+    ): VexLifeInferenceCurrentState.Projection =
+        synchronized(
+            inferenceControlLock,
+        ) {
+            val current =
+                sourceAwareModelsProjection()
+            val target =
+                VexLifeInferenceSelection.requireTarget(
+                    models = current.models,
+                    handle = handle,
+                )
+
+            when (
+                controlRef
+            ) {
+                VexLifeModelsFamily.ControlSelect -> {
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER -> {
+                            require(
+                                !current.models.rows
+                                    .single {
+                                        it.handle ==
+                                            handle
+                                    }
+                                    .targeted,
+                            ) {
+                                "Partner Select requires a row that is not already targeted"
+                            }
+                            require(
+                                !models.switchInProgress(),
+                            ) {
+                                "Partner Select is unavailable while a model switch is active"
+                            }
+                            models.stageInferenceTarget(
+                                models = current.models,
+                                handle = handle,
+                            )
+                        }
+                    }
+                }
+
+                VexLifeModelsFamily.ControlUse -> {
+                    val staged =
+                        requireNotNull(
+                            models.stagedInferenceTarget(),
+                        ) {
+                            "source-aware Use requires one staged inference target"
+                        }
+                    require(
+                        staged ==
+                            target,
+                    ) {
+                        "source-aware Use handle does not match the exact staged inference target"
+                    }
+
+                    when (
+                        target.sourceKind
+                    ) {
+                        VexLifeModelSourceProjection.SourceKind.LOCAL ->
+                            models.control(
+                                controlRef = controlRef,
+                                handle = handle,
+                            )
+
+                        VexLifeModelSourceProjection.SourceKind.PARTNER ->
+                            models.useStagedPartnerInference(
+                                models = current.models,
+                                controlRef = controlRef,
+                            )
+                    }
+                }
+
+                else ->
+                    throw IllegalArgumentException(
+                        "source-aware Models control admits only Select or Use",
+                    )
+            }
+
+            sourceAwareModelsProjection()
+        }
+
+    private fun partnerConnectionAvailability():
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection =
+        VexLifeProdServiceContract.PartnerConnectionAvailabilityProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.PartnerConnectionAvailabilitySchema,
+            state =
+                if (
+                    partnerConnectionLiveEffectsEnabled
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityReady
+                } else {
+                    VexLifeProdServiceContract.PartnerConnectionAvailabilityHeldFunding
+                },
+            connectEnabled =
+                partnerConnectionLiveEffectsEnabled,
+            liveProviderTestingFunded =
+                partnerConnectionLiveEffectsEnabled,
+            effectsPerformed = false,
+        )
+
+    private fun handlePartnerConnectionControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        if (
+            !partnerConnectionLiveEffectsEnabled
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_CONNECTION_LIVE_TESTING_HELD",
+                message =
+                    "Partner API connection is built but live provider testing is paused for this phase while funding is unavailable.",
+            )
+            return
+        }
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner connection configuration is unavailable on this service realization"
+            }
+        val controlWire =
+            requireNotNull(
+                exchange.requestHeaders
+                    .getFirst(
+                        VexLifeProdServiceContract.PartnerConnectionControlHeader,
+                    )
+                    ?.trim()
+                    ?.takeIf(
+                        String::isNotEmpty,
+                    ),
+            ) {
+                "Partner connection control requires one control header"
+            }
+        val control =
+            requireNotNull(
+                VexLifeProdServiceContract.PartnerConnectionControl.forWire(
+                    controlWire,
+                ),
+            ) {
+                "Partner connection control is not recognized"
+            }
+        val providerRef =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionProviderRefHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+        val workspaceId =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PartnerConnectionWorkspaceIdHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+
+        val results =
+            try {
+                when (
+                    control
+                ) {
+                    VexLifeProdServiceContract.PartnerConnectionControl.Connect -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner connect requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.connect(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Replace -> {
+                        val provider =
+                            requireNotNull(
+                                providerRef,
+                            ) {
+                                "Partner replace requires one providerRef header"
+                            }
+                        val secret =
+                            readPartnerConnectionSecret(
+                                exchange,
+                            )
+                        try {
+                            listOf(
+                                composition.replace(
+                                    providerRef = provider,
+                                    workspaceId = workspaceId,
+                                    secret = secret,
+                                ),
+                            )
+                        } finally {
+                            secret.fill(
+                                '\u0000',
+                            )
+                        }
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Remove -> {
+                        require(
+                            workspaceId ==
+                                null,
+                        ) {
+                            "Partner remove does not accept an account-scope header"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.remove(
+                                requireNotNull(
+                                    providerRef,
+                                ) {
+                                    "Partner remove requires one providerRef header"
+                                },
+                            ),
+                        )
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.Recover -> {
+                        require(
+                            providerRef ==
+                                null &&
+                                workspaceId ==
+                                null,
+                        ) {
+                            "Partner recover does not accept provider/account headers"
+                        }
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        composition.recoverConnections()
+                    }
+
+                    VexLifeProdServiceContract.PartnerConnectionControl.UpdateScope -> {
+                        requireEmptyRequestBody(
+                            exchange,
+                        )
+                        listOf(
+                            composition.updateAccountScope(
+                                providerRef =
+                                    requireNotNull(
+                                        providerRef,
+                                    ) {
+                                        "Partner account-scope update requires one providerRef header"
+                                    },
+                                workspaceId = workspaceId,
+                            ),
+                        )
+                    }
+                }
+            } catch (
+                recovery: VexLifePartnerConnectionConfiguration.RecoveryRequiredException,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_CONNECTION_RECOVERY_REQUIRED",
+                    message =
+                        "Partner connection recovery is required for " +
+                            recovery.providerRef +
+                            " (" +
+                            recovery.transitionKind.name +
+                            ").",
+                )
+                return
+            }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.PartnerConnectionControlResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.PartnerConnectionControlSchema,
+                    control = control.wire,
+                    results =
+                        results.map {
+                            result ->
+                            VexLifeProdServiceContract.PartnerConnectionControlResult(
+                                providerRef = result.providerRef,
+                                state = result.state.name,
+                                credentialRef = result.credentialRef,
+                                recoveryPerformed = result.recoveryPerformed,
+                            )
+                        },
+                    effectsPerformed =
+                        results.isNotEmpty(),
+                ),
+        )
+    }
+
+    private fun readPartnerConnectionSecret(
+        exchange: HttpExchange,
+    ): CharArray {
+        requireContentType(
+            exchange,
+            "application/octet-stream",
+        )
+        val bytes =
+            requestBytes(
+                exchange,
+                vexlife.partner.VexLifePartnerCredentialCustody.MaximumSecretBytes,
+            )
+        require(
+            bytes.isNotEmpty(),
+        ) {
+            "Partner credential secret must not be empty"
+        }
+
+        return try {
+            val decoder =
+                StandardCharsets.UTF_8
+                    .newDecoder()
+                    .onMalformedInput(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+                    .onUnmappableCharacter(
+                        java.nio.charset.CodingErrorAction.REPORT,
+                    )
+            val buffer =
+                decoder.decode(
+                    java.nio.ByteBuffer.wrap(
+                        bytes,
+                    ),
+                )
+            val secret =
+                CharArray(
+                    buffer.remaining(),
+                )
+            buffer.get(
+                secret,
+            )
+            for (
+                index in
+                0 until
+                    buffer.limit()
+            ) {
+                buffer.put(
+                    index,
+                    '\u0000',
+                )
+            }
+            secret
+        } finally {
+            bytes.fill(
+                0,
+            )
+        }
+    }
+
+    private fun requireEmptyRequestBody(
+        exchange: HttpExchange,
+    ) {
+        require(
+            requestBytes(
+                exchange,
+                0,
+            )
+                .isEmpty(),
+        ) {
+            "Partner connection control does not accept a request body"
+        }
+    }
+
+    private fun currentPartnerTextTurnOrNull(): DirectCompanionTurn.PartnerTextTurn? {
+        val serving =
+            models.partnerServing()
+                ?: return null
+        val composition =
+            requireNotNull(
+                partnerInference,
+            ) {
+                "Partner serving truth requires one current Partner service realization"
+            }
+        val snapshot =
+            composition.observe(
+                local = models.projection(),
+                stagedTarget = models.stagedInferenceTarget(),
+                partnerServing = serving,
+                localRuntimeEvidence =
+                    runCatching {
+                        currentQualifiedRuntimeEvidence()
+                    }
+                        .getOrNull(),
+            )
+
+        if (
+            snapshot.admission.standing !=
+            VexLifeInferenceSessionAdmission.Standing.QUALIFIED
+        ) {
+            throw PartnerServingNotCurrent(
+                requireNotNull(
+                    snapshot.admission.holdReason,
+                ),
+            )
+        }
+        require(
+            snapshot.admission.qualified
+                ?.coordinate ==
+                serving.coordinate,
+        ) {
+            "Partner serving admission does not bind Models-owned serving truth"
+        }
+
+        return composition.partnerTextTurn(
+            snapshot,
+        )
+    }
 
     private val privateCompletion =
         privateCompletionOverride
@@ -258,6 +875,17 @@ class VexLifeProdLocalService private constructor(
             }
 
     companion object {
+        /**
+         * Release gate for paid external-provider qualification.
+         *
+         * The Product/UI/service relationship is wired while this is false, but no credential body
+         * is read and no protected-host/provider effect is admitted from the human connection route.
+         * Reopening this gate requires an intentional source change after live-provider testing is
+         * funded and ready to resume.
+         */
+        private const val PartnerConnectionLiveEffectsEnabledForThisRelease =
+            false
+
         private const val MaxRequestBytes =
             256 * 1024
 
@@ -443,6 +1071,7 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            partnerHostExecutablePathOrNull: String? = null,
         ): VexLifeProdLocalService {
             val visionRuntime =
                 visionRuntimeExecutablePathOrNull
@@ -488,6 +1117,25 @@ class VexLifeProdLocalService private constructor(
                     true,
                 )
 
+            val promptPreparation =
+                VexLifePromptPreparation()
+            val continuitySemanticSession =
+                VexLifeContinuitySemanticServiceSession.establish(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
+            val continuitySourceLocatorBackend =
+                continuitySemanticSession.backend
+            val conversationAttemptIndex =
+                DirectConversationAttemptIndex()
+            val currentMemoryHotPath =
+                VexLifeCurrentMemoryHotPath(
+                    Path.of(
+                        session.foundation.productHome,
+                    ),
+                )
+
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
             ): T {
@@ -527,6 +1175,36 @@ class VexLifeProdLocalService private constructor(
                     },
                 )
 
+            val partnerInference =
+                partnerHostExecutablePathOrNull
+                    ?.let {
+                        helperPath ->
+                        require(
+                            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                                vexlife.model.heretic.HereticRuntimeRealization.MacArm64,
+                        ) {
+                            "current Product source admits a packaged Partner helper only on macOS"
+                        }
+                        val plan =
+                            VexLifePartnerMacHostRealization.plan(
+                                helperPath,
+                            )
+                        val client =
+                            VexLifePartnerNativeHostClient(
+                                VexLifePartnerMacHostRealization.processHost(
+                                    plan,
+                                ),
+                            )
+                        VexLifeProdPartnerInference(
+                            productHome =
+                                Path.of(
+                                    session.foundation.productHome,
+                                ),
+                            host = client,
+                            executor = client,
+                        )
+                    }
+
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
                     realization,
@@ -541,6 +1219,11 @@ class VexLifeProdLocalService private constructor(
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )
+                    val restorePreparationOnFailure =
+                        promptPreparation.nextTurnPreparationPending()
+                    promptPreparation.invalidateAndAwait(
+                        "MODEL_SWITCH",
+                    )
                     val write =
                         sessionFence.writeLock()
                     write.lock()
@@ -550,54 +1233,188 @@ class VexLifeProdLocalService private constructor(
                         )
                         val current =
                             sessionRef.get()
-                        val next =
-                            VexLifeProdRuntimeSessionFactory.establishExact(
-                                productHome =
-                                    Path.of(
-                                        current.foundation.productHome,
-                                    ),
-                                realization = realization,
-                                allowAcquisition = false,
-                                allowRuntimeStart = true,
-                                progress =
-                                    object :
-                                        VexLifeProdSetupProgress {
-                                        override fun phase(
-                                            phase: VexLifeProdSetupProgress.Phase,
-                                        ) {
-                                            if (
-                                                phase ==
-                                                    VexLifeProdSetupProgress.Phase.StartingLocalModel
+                        try {
+                            val next =
+                                VexLifeProdRuntimeSessionFactory.establishExact(
+                                    productHome =
+                                        Path.of(
+                                            current.foundation.productHome,
+                                        ),
+                                    realization = realization,
+                                    allowAcquisition = false,
+                                    allowRuntimeStart = true,
+                                    progress =
+                                        object :
+                                            VexLifeProdSetupProgress {
+                                            override fun phase(
+                                                phase: VexLifeProdSetupProgress.Phase,
                                             ) {
-                                                observe(
-                                                    VexLifeModels.SwitchPhase.SwitchingRuntime,
-                                                )
+                                                if (
+                                                    phase ==
+                                                        VexLifeProdSetupProgress.Phase.StartingLocalModel
+                                                ) {
+                                                    observe(
+                                                        VexLifeModels.SwitchPhase.SwitchingRuntime,
+                                                    )
+                                                }
                                             }
-                                        }
 
-                                        override fun artifactBytes(
-                                            completedBytes: Long,
-                                            totalBytes: Long,
-                                        ) = Unit
-                                    },
+                                            override fun artifactBytes(
+                                                completedBytes: Long,
+                                                totalBytes: Long,
+                                            ) = Unit
+                                        },
+                                )
+                            require(
+                                next.foundation.qualifiedRuntimeEvidence.realizationRef ==
+                                    realization.realizationRef,
+                            ) {
+                                "model switch qualified a runtime other than the selected realization"
+                            }
+                            sessionRef.set(
+                                next,
                             )
-                        require(
-                            next.foundation.qualifiedRuntimeEvidence.realizationRef ==
-                                realization.realizationRef,
+                            promptPreparation.startCurrent(
+                                next.foundation.qualifiedRuntimeEvidence,
+                            )
+                        } catch (
+                            error: Throwable,
                         ) {
-                            "model switch qualified a runtime other than the selected realization"
+                            if (
+                                restorePreparationOnFailure
+                            ) {
+                                promptPreparation.startCurrent(
+                                    current.foundation.qualifiedRuntimeEvidence,
+                                )
+                            }
+                            throw error
                         }
-                        sessionRef.set(
-                            next,
-                        )
                     } finally {
                         write.unlock()
                     }
                 }
 
+            val partnerSwitchRealization =
+                partnerInference
+                    ?.let {
+                        composition ->
+                        VexLifeModels.PartnerSwitchRealization {
+                            target,
+                            observe,
+                            ->
+                            observe(
+                                VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                            )
+                            val restorePreparationOnFailure =
+                                promptPreparation.nextTurnPreparationPending()
+                            promptPreparation.invalidateAndAwait(
+                                "MODEL_SWITCH",
+                            )
+                            val write =
+                                sessionFence.writeLock()
+                            write.lock()
+                            try {
+                                observe(
+                                    VexLifeModels.SwitchPhase.PreparingTarget,
+                                )
+                                val current =
+                                    sessionRef.get()
+                                try {
+                                    val outcome =
+                                        composition.qualify(
+                                            target,
+                                        )
+                                    if (
+                                        restorePreparationOnFailure &&
+                                            outcome is
+                                            vexlife.partner.VexLifePartnerLiveQualification.Outcome.Held
+                                    ) {
+                                        promptPreparation.startCurrent(
+                                            current.foundation.qualifiedRuntimeEvidence,
+                                        )
+                                    }
+                                    outcome
+                                } catch (
+                                    error: Throwable,
+                                ) {
+                                    if (
+                                        restorePreparationOnFailure
+                                    ) {
+                                        promptPreparation.startCurrent(
+                                            current.foundation.qualifiedRuntimeEvidence,
+                                        )
+                                    }
+                                    throw error
+                                }
+                            } finally {
+                                write.unlock()
+                            }
+                        }
+                    }
+
+            val workspaceCheckRuntimeSource =
+                VexLifeWorkspaceTextCheck.PrivateServiceImageRuntimeSource(
+                    imageRoot =
+                        Path.of(
+                            "",
+                        )
+                            .toAbsolutePath()
+                            .normalize(),
+                    expectedSourceSha =
+                        sourceSha,
+                )
+            val workspaceJavaTestRuntimeSource =
+                VexLifeWorkspaceJavaTest.PrivateServiceImageRuntimeSource(
+                    imageRoot =
+                        Path.of(
+                            "",
+                        )
+                            .toAbsolutePath()
+                            .normalize(),
+                    expectedSourceSha =
+                        sourceSha,
+                )
+            val workspaceCapabilityOwners =
+                VexLifeCapabilityBridge.OwnerBindings(
+                    checkWorkspace = {
+                        productHome,
+                        operationRef,
+                        sourceRef,
+                        request,
+                        ->
+                        VexLifeWorkspaceTextCheck(
+                            productHome = productHome,
+                            runtimeSource = workspaceCheckRuntimeSource,
+                        )
+                            .check(
+                                operationRef = operationRef,
+                                sourceRef = sourceRef,
+                                request = request,
+                            )
+                    },
+                    testWorkspace = {
+                        productHome,
+                        operationRef,
+                        sourceRef,
+                        request,
+                        ->
+                        VexLifeWorkspaceJavaTest(
+                            productHome = productHome,
+                            runtimeSource = workspaceJavaTestRuntimeSource,
+                        )
+                            .test(
+                                operationRef = operationRef,
+                                sourceRef = sourceRef,
+                                request = request,
+                            )
+                    },
+                )
+
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.foundation,
+                conversationAttemptIndex =
+                    conversationAttemptIndex,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -622,6 +1439,20 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                promptPreparation =
+                                    promptPreparation,
+                                workspaceCheckRuntimeSource =
+                                    workspaceCheckRuntimeSource,
+                                workspaceJavaTestRuntimeSource =
+                                    workspaceJavaTestRuntimeSource,
+                                capabilityOwners =
+                                    workspaceCapabilityOwners,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
@@ -643,10 +1474,83 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                promptPreparation =
+                                    promptPreparation,
+                                workspaceCheckRuntimeSource =
+                                    workspaceCheckRuntimeSource,
+                                workspaceJavaTestRuntimeSource =
+                                    workspaceJavaTestRuntimeSource,
+                                capabilityOwners =
+                                    workspaceCapabilityOwners,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
+                            )
+                        }
+                    },
+                partnerTurnExecutor =
+                    PartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                partnerTextTurn = partnerTextTurn,
+                                promptPreparation =
+                                    promptPreparation,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
+                            )
+                        }
+                    },
+                streamingPartnerTurnExecutor =
+                    StreamingPartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        observer,
+                        cancellation,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                progressObserver = observer,
+                                cancellation = cancellation,
+                                partnerTextTurn = partnerTextTurn,
+                                promptPreparation =
+                                    promptPreparation,
+                                continuitySourceLocatorBackend =
+                                    continuitySourceLocatorBackend,
+                                conversationAttemptIndex =
+                                    conversationAttemptIndex,
+                                memoryHotPath =
+                                    currentMemoryHotPath,
                             )
                         }
                     },
                 dreamExecutor = ProductDreamExecutor,
+                memoryReader = {
+                    currentMemoryHotPath.readContext()
+                },
+                memoryProviderSelectionAtCap = {
+                    memoryTokenCap ->
+                    currentMemoryHotPath.readSelection(
+                        memoryTokenCap,
+                    )
+                },
                 currentStateObserver = {
                     observeCurrentState(
                         Path.of(
@@ -691,11 +1595,44 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
+                servingPromptCacheEntryLimit = {
+                    sessionRef
+                        .get()
+                        .foundation
+                        .promptCacheEntryLimit
+                },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
+                partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    PartnerConnectionLiveEffectsEnabledForThisRelease,
+                promptPreparation = promptPreparation,
                 runtimeSessionClose = {
                     sessionRef
                         .get()
                         .close()
+                },
+                continuitySemanticRuntimeClose =
+                    continuitySemanticSession::close,
+                runtimeSessionRelinquishForRestart = {
+                    if (
+                        vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                            vexlife.model.heretic.HereticRuntimeRealization.MacArm64
+                    ) {
+                        VexLifeProdMacRuntimeHandoff.consumeForServiceClose(
+                            productHome =
+                                Path.of(
+                                    sessionRef
+                                        .get()
+                                        .foundation
+                                        .productHome,
+                                ),
+                            serviceSourceSha =
+                                sourceSha,
+                        )
+                    } else {
+                        false
+                    }
                 },
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
@@ -722,6 +1659,10 @@ class VexLifeProdLocalService private constructor(
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
+            partnerTurnExecutor: PartnerTurnExecutor? =
+                null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? =
+                null,
             dreamExecutor: DreamExecutor? =
                 null,
             visionRuntime: VisionRuntime? =
@@ -736,10 +1677,18 @@ class VexLifeProdLocalService private constructor(
                 (() -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?)? =
                 null,
             servingRuntimeReceiptRef: (() -> String)? = null,
+            servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean = false,
+            conversationAttemptIndex: DirectConversationAttemptIndex? = null,
+            promptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -755,6 +1704,7 @@ class VexLifeProdLocalService private constructor(
                         state = setup.state,
                         productHome = setup.productHome,
                         qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                        promptCacheEntryLimit = setup.promptCacheEntryLimit,
                     ),
                 address =
                     InetSocketAddress(
@@ -768,6 +1718,8 @@ class VexLifeProdLocalService private constructor(
                     ),
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
+                partnerTurnExecutor = partnerTurnExecutor,
+                streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                 dreamExecutor = dreamExecutor,
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
@@ -793,9 +1745,25 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
+                servingPromptCacheEntryLimit =
+                    servingPromptCacheEntryLimit
+                        ?: {
+                            setup.promptCacheEntryLimit
+                        },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
+                partnerInference = partnerInference,
+                partnerConnectionLiveEffectsEnabled =
+                    partnerConnectionLiveEffectsEnabled,
+                conversationAttemptIndex =
+                    conversationAttemptIndex,
+                promptPreparation = promptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                continuitySemanticRuntimeClose =
+                    continuitySemanticRuntimeClose,
+                runtimeSessionRelinquishForRestart =
+                    runtimeSessionRelinquishForRestart,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -803,14 +1771,20 @@ class VexLifeProdLocalService private constructor(
         private fun startAt(
             sourceSha: String,
             startupSetup: VexLifeProdRuntimeSession.Foundation,
+            conversationAttemptIndex: DirectConversationAttemptIndex? = null,
             address: InetSocketAddress,
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
+            partnerTurnExecutor: PartnerTurnExecutor? = null,
+            streamingPartnerTurnExecutor: StreamingPartnerTurnExecutor? = null,
             dreamExecutor: DreamExecutor?,
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
+            memoryProviderSelectionAtCap:
+                ((Int) -> VexLifeCurrentMemoryProviderSelection.Selection)? =
+                null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: () -> String? = {
                 startupSetup.qualifiedRuntimeEvidence.modelRef
@@ -825,10 +1799,20 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
+            servingPromptCacheEntryLimit: () -> Int? = {
+                startupSetup.promptCacheEntryLimit
+            },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
+            partnerInference: VexLifeProdPartnerInference? = null,
+            partnerConnectionLiveEffectsEnabled: Boolean =
+                PartnerConnectionLiveEffectsEnabledForThisRelease,
+            promptPreparation: VexLifePromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            continuitySemanticRuntimeClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -863,17 +1847,53 @@ class VexLifeProdLocalService private constructor(
                 "VexLife service requires one absolute canonical Home"
             }
 
-            // Construction-time validation only. The Conversation store remains the durable owner.
-            DirectConversationStore(
-                productHome,
-            )
-                .current()
+            // Production may reuse this already-required construction validation snapshot to
+            // seed its one shared volatile attempt index. Generic/test service construction keeps
+            // the historical no-index route unless the caller explicitly shares the same index with
+            // its turn executor.
+            val constructionStore =
+                conversationAttemptIndex
+                    ?.let {
+                        index ->
+                        DirectConversationStore(
+                            productHome = productHome,
+                            attemptIndex = index,
+                        )
+                    }
+                    ?: DirectConversationStore(
+                        productHome,
+                    )
+            val constructionSnapshot =
+                constructionStore.current()
+            conversationAttemptIndex
+                ?.let {
+                    index ->
+                    runCatching {
+                        index.rebuild(
+                            constructionSnapshot,
+                        )
+                    }
+                        .onFailure {
+                            index.invalidate()
+                        }
+                }
 
             val releaseUpdates =
                 VexLifeReleaseUpdates(
                     sourceSha = sourceSha,
                     productHome = productHome,
                 )
+            val realizedMemoryProviderSelectionAtCap =
+                memoryProviderSelectionAtCap
+                    ?: {
+                        memoryTokenCap ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome =
+                                productHome,
+                            memoryTokenCap =
+                                memoryTokenCap,
+                        )
+                    }
             val realizedReleaseAlertsProjection =
                 releaseAlertsProjection
                     ?: {
@@ -922,21 +1942,49 @@ class VexLifeProdLocalService private constructor(
                         executor = executor,
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
+                        partnerTurnExecutor = partnerTurnExecutor,
+                        streamingPartnerTurnExecutor = streamingPartnerTurnExecutor,
                         dreamExecutor = dreamExecutor,
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        memoryProviderSelectionAtCap =
+                            realizedMemoryProviderSelectionAtCap,
                         currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
                         currentQualifiedVisualInputEvidence =
                             currentQualifiedVisualInputEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
+                        servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
+                        partnerSwitchRealization = partnerSwitchRealization,
+                        partnerInference = partnerInference,
+                        partnerConnectionLiveEffectsEnabled =
+                            partnerConnectionLiveEffectsEnabled,
+                        conversationAttemptIndex =
+                            conversationAttemptIndex,
+                        promptPreparation = promptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        continuitySemanticRuntimeClose =
+                            continuitySemanticRuntimeClose,
+                        runtimeSessionRelinquishForRestart =
+                            runtimeSessionRelinquishForRestart,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
+                    )
+
+                promptPreparation
+                    ?.attach(
+                        executor = executor,
+                        prefixProvider =
+                            VexLifePromptPreparation.PrefixProvider {
+                                runtime ->
+                                service.currentPromptPreparationPrefix(
+                                    runtime,
+                                )
+                            },
                     )
 
                 server.executor =
@@ -950,6 +1998,7 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
                 server.start()
+                service.startPromptPreparation()
 
                 return service
             } catch (
@@ -964,6 +2013,10 @@ class VexLifeProdLocalService private constructor(
                 runCatching {
                     visionRuntime
                         ?.close()
+                }
+                runCatching {
+                    continuitySemanticRuntimeClose
+                        ?.invoke()
                 }
                 executor.shutdownNow()
                 throw error
@@ -982,6 +2035,24 @@ class VexLifeProdLocalService private constructor(
         fun perform(
             setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
+            progressObserver: DirectCompanionTurn.ProgressObserver,
+            cancellation: DirectCompanionCancellation,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface PartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface StreamingPartnerTurnExecutor {
+        fun perform(
+            setup: VexLifeProdRuntimeSession.Foundation,
+            intent: DirectCompanionTurn.Intent,
+            partnerTextTurn: DirectCompanionTurn.PartnerTextTurn,
             progressObserver: DirectCompanionTurn.ProgressObserver,
             cancellation: DirectCompanionCancellation,
         ): DirectCompanionTurn.Result
@@ -1027,12 +2098,15 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        runCatching { promptPreparation?.close() }
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
         runCatching { localAsrModels.close() }
         runCatching { localAsrRuntime.close() }
         var visionCloseFailure: Throwable? =
+            null
+        var semanticRuntimeCloseFailure: Throwable? =
             null
 
         try {
@@ -1045,21 +2119,48 @@ class VexLifeProdLocalService private constructor(
                 error
         }
 
-        server.stop(
-            0,
-        )
-        frameHost.close()
-        executor.shutdownNow()
-        var runtimeCloseFailure: Throwable? =
-            null
         try {
-            runtimeSessionClose
+            continuitySemanticRuntimeClose
                 ?.invoke()
         } catch (
             error: Throwable,
         ) {
-            runtimeCloseFailure =
+            semanticRuntimeCloseFailure =
                 error
+        }
+
+        server.stop(
+            0,
+        )
+        frameHost.close()
+        val activeTurnBlocksRuntimeRelinquish =
+            activeTurn.get() !=
+                null
+        executor.shutdownNow()
+        val runtimeReleaseRelinquished =
+            !activeTurnBlocksRuntimeRelinquish &&
+                runCatching {
+                    runtimeSessionRelinquishForRestart
+                        ?.invoke() ==
+                        true
+                }
+                    .getOrDefault(
+                        false,
+                    )
+        var runtimeCloseFailure: Throwable? =
+            null
+        if (
+            !runtimeReleaseRelinquished
+        ) {
+            try {
+                runtimeSessionClose
+                    ?.invoke()
+            } catch (
+                error: Throwable,
+            ) {
+                runtimeCloseFailure =
+                    error
+            }
         }
 
         if (
@@ -1069,6 +2170,16 @@ class VexLifeProdLocalService private constructor(
             throw IllegalStateException(
                 "VexLife-Prod runtime Session did not close with the service",
                 runtimeCloseFailure,
+            )
+        }
+
+        if (
+            semanticRuntimeCloseFailure !=
+            null
+        ) {
+            throw IllegalStateException(
+                "VexLife-Prod Continuity semantic runtime did not close with the service",
+                semanticRuntimeCloseFailure,
             )
         }
 
@@ -1193,6 +2304,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.ConversationPath ->
                     handleConversation(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationResourceMetadataPath ->
+                    handleConversationResourceMetadata(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationResourceContentPath ->
+                    handleConversationResourceContent(
                         exchange,
                     )
 
@@ -1353,6 +2474,54 @@ class VexLifeProdLocalService private constructor(
                     respondJson(exchange = exchange, status = 200, value = models.projection())
                 }
 
+                VexLifeProdServiceContract.ModelsSourcesPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelsProjection(),
+                    )
+                }
+
+                VexLifeProdServiceContract.ModelsSourcesControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = decodeRequest<ModelControlRequest>(exchange)
+                    require(
+                        request.promptCacheEntries ==
+                            null,
+                    ) {
+                        "source-aware Models control does not own Local runtime configuration"
+                    }
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            sourceAwareModelControl(
+                                controlRef = request.controlRef,
+                                handle = request.handle,
+                            ),
+                    )
+                }
+
+                VexLifeProdServiceContract.PartnerConnectionsPath -> {
+                    requireMethod(
+                        exchange,
+                        "GET",
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value = partnerConnectionAvailability(),
+                    )
+                }
+
+                VexLifeProdServiceContract.PartnerConnectionsControlPath ->
+                    handlePartnerConnectionControl(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
@@ -1469,6 +2638,36 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.WorkspaceEffectsPath ->
+                    handleWorkspaceEffects(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceEffectsControlPath ->
+                    handleWorkspaceEffectsControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceChecksPath ->
+                    handleWorkspaceChecks(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceChecksControlPath ->
+                    handleWorkspaceChecksControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceRunsPath ->
+                    handleWorkspaceRuns(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.WorkspaceRunsControlPath ->
+                    handleWorkspaceRunsControl(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationSendPath ->
                     handleSend(
                         exchange,
@@ -1547,8 +2746,19 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val conversation =
-            conversationProjection()
+        // Service readiness/currentness must depend only on canonical Conversation ownership,
+        // never on optional historical resource projection. A malformed or unavailable resource
+        // sidecar is presentation history truth and must not keep a healthy source-bound service
+        // from becoming current.
+        val currentConversationHeadSha256 =
+            DirectConversationStore(
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            )
+                .current()
+                .head
+                ?.conversationHeadSha256
 
         respondJson(
             exchange = exchange,
@@ -1568,7 +2778,7 @@ class VexLifeProdLocalService private constructor(
                     startupQualifiedRuntimeReceiptRef =
                         servingRuntimeReceiptRef(),
                     currentConversationHeadSha256 =
-                        conversation.currentConversationHeadSha256,
+                        currentConversationHeadSha256,
                     effectsPerformed = false,
                 ),
         )
@@ -1942,10 +3152,119 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun followUpReadinessProjection(
+        active: ActiveTurn?,
+    ): VexLifeProdServiceContract.FollowUpReadinessProjection {
+        if (
+            models.partnerServing() !=
+            null
+        ) {
+            return VexLifeProdServiceContract.FollowUpReadinessProjection(
+                state =
+                    VexLifeProdServiceContract.FollowUpReadinessUnavailable,
+                lastCompletedProviderMeasurement =
+                    null,
+            )
+        }
+
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
+            )
+        val promptCacheEntryLimit =
+            servingPromptCacheEntryLimit()
+        val currentRuntimeReceiptRef =
+            servingRuntimeReceiptRef()
+        val latestCompletedResponse =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+                .canonicalEvents
+                .lastOrNull {
+                    it.eventKind ==
+                        VexLifeConversationContract.ResponseKind
+                }
+        val lastCompletedEvidence =
+            latestCompletedResponse
+                ?.turnRef
+                ?.let {
+                    turnRef ->
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .read(
+                            turnRef,
+                        )
+                }
+                ?.takeIf {
+                    it.runtimeObservation.runtimeReceiptRef ==
+                        currentRuntimeReceiptRef
+                }
+        val measurement =
+            lastCompletedEvidence
+                ?.providerMeasurement
+                ?.let {
+                    observed ->
+                    VexLifeProdServiceContract.ProviderMeasurementProjection(
+                        stop = observed.stop,
+                        finishReason = observed.finishReason,
+                        promptTokens = observed.promptTokens,
+                        cachedPromptTokens = observed.cachedPromptTokens,
+                        prefillTokens = observed.prefillTokens,
+                        completionTokens = observed.completionTokens,
+                        firstTokenMillis = observed.firstTokenMillis,
+                        firstAnswerMillis = observed.firstAnswerMillis,
+                        totalMillis = observed.totalMillis,
+                    )
+                }
+        val successorResetPending =
+            latestCompletedResponse
+                ?.let {
+                    response ->
+                    VexLifeWorkingContinuityOwner(
+                        productHome,
+                    )
+                        .readCurrent(
+                            lineageRef = response.companionLineageRef,
+                            threadRef = response.threadRef,
+                        )
+                        ?.commitReceipt
+                        ?.successorContextRequired
+                } ==
+            true
+        val state =
+            when {
+                promptCacheEntryLimit == null ->
+                    VexLifeProdServiceContract.FollowUpReadinessUnavailable
+
+                promptCacheEntryLimit < 2 ->
+                    VexLifeProdServiceContract.FollowUpReadinessLowerMemory
+
+                active != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessPreparing
+
+                successorResetPending ->
+                    VexLifeProdServiceContract.FollowUpReadinessSuccessorReset
+
+                measurement != null ->
+                    VexLifeProdServiceContract.FollowUpReadinessFasterEnabled
+
+                else ->
+                    VexLifeProdServiceContract.FollowUpReadinessNotYetPrepared
+            }
+        return VexLifeProdServiceContract.FollowUpReadinessProjection(
+            state = state,
+            lastCompletedProviderMeasurement = measurement,
+        )
+    }
+
     private fun conversationTurnProjection():
         VexLifeProdServiceContract.ConversationTurnProjection {
         val state =
             conversationTurnState()
+        val active =
+            activeTurn.get()
         return VexLifeProdServiceContract.ConversationTurnProjection(
             schemaVersion =
                 VexLifeProdServiceContract.ConversationTurnProjectionSchema,
@@ -1955,6 +3274,19 @@ class VexLifeProdLocalService private constructor(
                     state,
                 ),
             effectsPerformed = false,
+            initialPromptPreparationPendingForNextTurn =
+                initialLocalStartPresentationPending.get() &&
+                    promptPreparation
+                        ?.nextTurnPreparationPending() ==
+                    true,
+            initialPromptPreparationForActiveTurn =
+                active
+                    ?.initialPromptPreparationTurn ==
+                    true,
+            followUpReadiness =
+                followUpReadinessProjection(
+                    active,
+                ),
         )
     }
 
@@ -1988,6 +3320,168 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private data class ConversationResourceRequestIdentity(
+        val requestSequence: Long,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val resourceRef: String,
+    )
+
+    private fun conversationResourceRequestIdentity(
+        exchange: HttpExchange,
+    ): ConversationResourceRequestIdentity {
+        fun requiredHeader(
+            name: String,
+        ): String =
+            exchange.requestHeaders
+                .getFirst(
+                    name,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires $name",
+                )
+
+        val requestSequence =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceSequenceHeader,
+            )
+                .toLongOrNull()
+                ?.takeIf {
+                    it >=
+                        0
+                }
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires one non-negative request sequence",
+                )
+        val requestEventRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventRefHeader,
+            )
+        val requestEventHash =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventHashHeader,
+            )
+        require(
+            requestEventHash.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        ) {
+            "historical resource review request event hash must be one lowercase SHA-256"
+        }
+        val resourceRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceRefHeader,
+            )
+        VexLifeProdServiceContract.requirePortableRef(
+            resourceRef,
+            "resourceRef",
+        )
+
+        return ConversationResourceRequestIdentity(
+            requestSequence = requestSequence,
+            requestEventRef = requestEventRef,
+            requestEventHash = requestEventHash,
+            resourceRef = resourceRef,
+        )
+    }
+
+    private fun handleConversationResourceMetadata(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.metadata(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = lookup.value,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_ADMITTED",
+                    message = lookup.reason,
+                )
+        }
+    }
+
+    private fun handleConversationResourceContent(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.content(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondBytes(
+                    exchange = exchange,
+                    status = 200,
+                    bytes = lookup.value.bytes,
+                    contentType = lookup.value.contentType,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_AVAILABLE",
+                    message = lookup.reason,
+                )
+        }
+    }
+
     private fun handleContext(
         exchange: HttpExchange,
     ) {
@@ -2013,6 +3507,56 @@ class VexLifeProdLocalService private constructor(
             version = current?.body?.version,
             bodySha256 = current?.bodySha256,
         )
+    }
+
+    /**
+     * Re-form the exact current stable provider prefix for one qualified local runtime Session.
+     *
+     * The prefix is always read from current Foundation / Context Profile / Memory / representation
+     * owners. Prompt preparation may cache those exact bytes, but it never becomes their authority.
+     */
+    private fun currentPromptPreparationPrefix(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ): DirectPromptContext.ProviderPreparationPrefix {
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
+            )
+        val entry =
+            HereticModelOfferings.requireEntry(
+                productHome,
+                runtime.modelRef,
+            )
+        val providerNativeTools =
+            entry.companionProfile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val capabilityRequestsAdmitted =
+            entry.companionProfile.reachRepresentationStanding ==
+                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        return DirectPromptContext.projectProviderPreparationPrefix(
+            foundationalField =
+                VexLifeFoundationalField.readCurrent(),
+            contextProfile =
+                contextProfiles.readActive(
+                    productFoundationIdentity(),
+                ),
+            memoryProviderSelection =
+                memoryProviderSelectionAtCap(
+                    VexLifeMemoryContract.MaximumMemoryTokens,
+                ),
+            capabilityRequestsAdmitted =
+                capabilityRequestsAdmitted,
+            providerNativeTools =
+                providerNativeTools,
+        )
+    }
+
+    /** Best-effort preparation never controls Product availability. */
+    private fun startPromptPreparation() {
+        promptPreparation
+            ?.startCurrent(
+                currentQualifiedRuntimeEvidence(),
+            )
     }
 
     private fun contextProfilesProjection(
@@ -4063,6 +5607,456 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun workspaceEffectsProjection(): VexLifeProdServiceContract.WorkspaceEffectsProjection {
+        val state =
+            workspaceEffects.state()
+        return VexLifeProdServiceContract.WorkspaceEffectsProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.WorkspaceEffectsProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceEffects(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceEffectsProjection(),
+        )
+    }
+
+    private fun handleWorkspaceEffectsControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceEffectsControlRequest>(
+                exchange,
+            )
+        val control =
+            when (
+                request.controlRef
+            ) {
+                VexLifeWorkspaceEffectsFamily.ControlAllow ->
+                    VexLifeWorkspaceEffectsFamily.Allow(
+                        request.sourceRef,
+                    )
+
+                VexLifeWorkspaceEffectsFamily.ControlRevoke ->
+                    VexLifeWorkspaceEffectsFamily.Revoke(
+                        request.sourceRef,
+                    )
+
+                else ->
+                    error(
+                        "Workspace Effects Control is unknown",
+                    )
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceEffectsControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceEffectsControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        effects = workspaceEffectsProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                VexLifeWorkspaceEffectsFamily.resolve(
+                    currentState =
+                        workspaceEffects.state(),
+                    control =
+                        control,
+                )
+                    ?.effect
+            }
+        if (
+            semanticEffect ==
+                null
+        ) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (
+                        control is
+                            VexLifeWorkspaceEffectsFamily.Allow
+                    ) {
+                        "workspace.status.workspace-effects-already-granted"
+                    } else {
+                        "workspace.status.workspace-effects-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                when (
+                    semanticEffect
+                ) {
+                    is VexLifeWorkspaceEffectsFamily.Effect.GrantWorkspace ->
+                        workspaceEffects.grant(
+                            semanticEffect.sourceRef,
+                        )
+
+                    is VexLifeWorkspaceEffectsFamily.Effect.RevokeWorkspace ->
+                        workspaceEffects.revoke(
+                            semanticEffect.sourceRef,
+                        )
+                }
+            }
+
+        when (
+            realized
+        ) {
+            is VexLifeWorkspaceEffectStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REALIZED,
+                    reasonKey =
+                        if (
+                            control is
+                                VexLifeWorkspaceEffectsFamily.Allow
+                        ) {
+                            "workspace.status.workspace-effects-granted"
+                        } else {
+                            "workspace.status.workspace-effects-revoked"
+                        },
+                )
+
+            is VexLifeWorkspaceEffectStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceEffectsControlOutcome.REFUSED,
+                    reasonKey =
+                        when (
+                            realized.reason
+                        ) {
+                            VexLifeWorkspaceEffectStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-effects-source-not-current"
+
+                            VexLifeWorkspaceEffectStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-effects-already-granted"
+
+                            VexLifeWorkspaceEffectStore.RefusedLimitReached ->
+                                "workspace.status.workspace-effects-limit-reached"
+
+                            else ->
+                                "workspace.status.workspace-effects-not-granted"
+                        },
+                )
+        }
+    }
+
+
+    private fun workspaceChecksProjection(): VexLifeProdServiceContract.WorkspaceChecksProjection {
+        val state =
+            workspaceChecks.state()
+        return VexLifeProdServiceContract.WorkspaceChecksProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.WorkspaceChecksProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceChecks(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceChecksProjection(),
+        )
+    }
+
+    private fun handleWorkspaceChecksControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceChecksControlRequest>(
+                exchange,
+            )
+        val control =
+            when (request.controlRef) {
+                VexLifeWorkspaceChecksFamily.ControlAllow ->
+                    VexLifeWorkspaceChecksFamily.Allow(
+                        request.sourceRef,
+                    )
+                VexLifeWorkspaceChecksFamily.ControlRevoke ->
+                    VexLifeWorkspaceChecksFamily.Revoke(
+                        request.sourceRef,
+                    )
+                else ->
+                    error(
+                        "Workspace Checks Control is unknown",
+                    )
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceChecksControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceChecksControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceChecksControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        checks = workspaceChecksProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                VexLifeWorkspaceChecksFamily.resolve(
+                    currentState =
+                        workspaceChecks.state(),
+                    control =
+                        control,
+                )
+                    ?.effect
+            }
+        if (semanticEffect == null) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceChecksControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (control is VexLifeWorkspaceChecksFamily.Allow) {
+                        "workspace.status.workspace-checks-already-granted"
+                    } else {
+                        "workspace.status.workspace-checks-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(
+                localSourcesMutationLock,
+            ) {
+                when (semanticEffect) {
+                    is VexLifeWorkspaceChecksFamily.Effect.GrantChecks ->
+                        workspaceChecks.grant(
+                            semanticEffect.sourceRef,
+                        )
+                    is VexLifeWorkspaceChecksFamily.Effect.RevokeChecks ->
+                        workspaceChecks.revoke(
+                            semanticEffect.sourceRef,
+                        )
+                }
+            }
+
+        when (realized) {
+            is VexLifeWorkspaceCheckStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REALIZED,
+                    reasonKey =
+                        if (control is VexLifeWorkspaceChecksFamily.Allow) {
+                            "workspace.status.workspace-checks-granted"
+                        } else {
+                            "workspace.status.workspace-checks-revoked"
+                        },
+                )
+
+            is VexLifeWorkspaceCheckStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceChecksControlOutcome.REFUSED,
+                    reasonKey =
+                        when (realized.reason) {
+                            VexLifeWorkspaceCheckStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-checks-source-not-current"
+                            VexLifeWorkspaceCheckStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-checks-already-granted"
+                            VexLifeWorkspaceCheckStore.RefusedLimitReached ->
+                                "workspace.status.workspace-checks-limit-reached"
+                            else ->
+                                "workspace.status.workspace-checks-not-granted"
+                        },
+                )
+        }
+    }
+
+    private fun workspaceRunsProjection(): VexLifeProdServiceContract.WorkspaceRunsProjection {
+        val state = workspaceRuns.state()
+        return VexLifeProdServiceContract.WorkspaceRunsProjection(
+            schemaVersion = VexLifeProdServiceContract.WorkspaceRunsProjectionSchema,
+            state = state.stateRef,
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleWorkspaceRuns(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = workspaceRunsProjection(),
+        )
+    }
+
+    private fun handleWorkspaceRunsControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request =
+            decodeRequest<VexLifeProdServiceContract.WorkspaceRunsControlRequest>(
+                exchange,
+            )
+        val control =
+            when (request.controlRef) {
+                VexLifeWorkspaceRunsFamily.ControlAllow ->
+                    VexLifeWorkspaceRunsFamily.Allow(request.sourceRef)
+                VexLifeWorkspaceRunsFamily.ControlRevoke ->
+                    VexLifeWorkspaceRunsFamily.Revoke(request.sourceRef)
+                else -> error("Workspace Runs Control is unknown")
+            }
+
+        fun response(
+            outcome: VexLifeProdServiceContract.WorkspaceRunsControlOutcome,
+            reasonKey: String? = null,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.WorkspaceRunsControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.WorkspaceRunsControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = request.sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        runs = workspaceRunsProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        val semanticEffect =
+            synchronized(localSourcesMutationLock) {
+                VexLifeWorkspaceRunsFamily.resolve(
+                    currentState = workspaceRuns.state(),
+                    control = control,
+                )?.effect
+            }
+        if (semanticEffect == null) {
+            response(
+                outcome =
+                    VexLifeProdServiceContract.WorkspaceRunsControlOutcome.NOT_LAWFUL_NOW,
+                reasonKey =
+                    if (control is VexLifeWorkspaceRunsFamily.Allow) {
+                        "workspace.status.workspace-runs-already-granted"
+                    } else {
+                        "workspace.status.workspace-runs-not-granted"
+                    },
+            )
+            return
+        }
+
+        val realized =
+            synchronized(localSourcesMutationLock) {
+                when (semanticEffect) {
+                    is VexLifeWorkspaceRunsFamily.Effect.GrantRuns ->
+                        workspaceRuns.grant(semanticEffect.sourceRef)
+                    is VexLifeWorkspaceRunsFamily.Effect.RevokeRuns ->
+                        workspaceRuns.revoke(semanticEffect.sourceRef)
+                }
+            }
+
+        when (realized) {
+            is VexLifeWorkspaceRunStore.Outcome.Realized ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REALIZED,
+                    reasonKey =
+                        if (control is VexLifeWorkspaceRunsFamily.Allow) {
+                            "workspace.status.workspace-runs-granted"
+                        } else {
+                            "workspace.status.workspace-runs-revoked"
+                        },
+                )
+            is VexLifeWorkspaceRunStore.Outcome.Refused ->
+                response(
+                    outcome =
+                        VexLifeProdServiceContract.WorkspaceRunsControlOutcome.REFUSED,
+                    reasonKey =
+                        when (realized.reason) {
+                            VexLifeWorkspaceRunStore.RefusedSourceNotCurrent ->
+                                "workspace.status.workspace-runs-source-not-current"
+                            VexLifeWorkspaceRunStore.RefusedAlreadyGranted ->
+                                "workspace.status.workspace-runs-already-granted"
+                            VexLifeWorkspaceRunStore.RefusedLimitReached ->
+                                "workspace.status.workspace-runs-limit-reached"
+                            else ->
+                                "workspace.status.workspace-runs-not-granted"
+                        },
+                )
+        }
+    }
+
     private fun attachmentDraftProjection(): VexLifeProdServiceContract.AttachmentDraftProjection {
         val state =
             attachmentDraft.state()
@@ -4560,20 +6554,28 @@ class VexLifeProdLocalService private constructor(
             DirectCompanionTurn.requestMessageRefFor(
                 idempotencyKey,
             )
-        val request =
-            DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
             )
-                .current()
-                .events
-                .firstOrNull {
-                    it.eventKind ==
-                        VexLifeConversationContract.RequestKind &&
-                        it.messageRef ==
-                        requestMessageRef
+        val conversation =
+            conversationAttemptIndex
+                ?.let {
+                    index ->
+                    DirectConversationStore(
+                        productHome = productHome,
+                        attemptIndex = index,
+                    )
                 }
+                ?: DirectConversationStore(
+                    productHome,
+                )
+        val request =
+            conversation
+                .requestEventForMessageRef(
+                    requestMessageRef,
+                )
+                .requestEvent
                 ?: return null
 
         return localArtifactStore
@@ -4625,6 +6627,40 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val partnerConnectionLease =
+            if (
+                models.partnerServing() !=
+                null
+            ) {
+                requireNotNull(
+                    partnerInference,
+                ) {
+                    "Partner serving requires one current Partner service realization"
+                }
+                    .currentConnectionLease()
+            } else {
+                null
+            }
+
+        try {
+        val partnerTextTurn =
+            try {
+                currentPartnerTextTurnOrNull()
+            } catch (
+                held: PartnerServingNotCurrent,
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "PARTNER_SERVING_NOT_CURRENT",
+                    message =
+                        "The selected Partner model is no longer qualified for this Send (" +
+                            held.reason.name +
+                            "). Select or use a current model before sending.",
+                )
+                return
+            }
+
         val draftLeaseAttachments =
             attachmentDraft.beginSend()
         if (
@@ -4658,6 +6694,26 @@ class VexLifeProdLocalService private constructor(
         if (
             durableAttachments ==
                 null &&
+                partnerTextTurn !=
+                    null &&
+                requestAttachments.isNotEmpty()
+        ) {
+            attachmentDraft.releaseSend(
+                draftLeaseAttachments,
+            )
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_TEXT_ATTACHMENTS_NOT_ADMITTED",
+                message =
+                    "The current Partner text stage does not accept selected Local Artifacts. The draft was preserved.",
+            )
+            return
+        }
+
+        if (
+            durableAttachments ==
+                null &&
                 requestUsesStaticImage(
                     requestAttachments,
                 ) &&
@@ -4683,7 +6739,33 @@ class VexLifeProdLocalService private constructor(
                 requestAttachments = requestAttachments,
             )
         val streaming =
-            streamingTurnExecutor
+            if (
+                partnerTextTurn ==
+                null
+            ) {
+                streamingTurnExecutor
+            } else {
+                val partnerExecutor =
+                    requireNotNull(
+                        streamingPartnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one streaming Partner turn executor"
+                    }
+                StreamingTurnExecutor {
+                    setup,
+                    currentIntent,
+                    observer,
+                    cancellation,
+                    ->
+                    partnerExecutor.perform(
+                        setup = setup,
+                        intent = currentIntent,
+                        partnerTextTurn = partnerTextTurn,
+                        progressObserver = observer,
+                        cancellation = cancellation,
+                    )
+                }
+            }
         if (
             acceptsEventStream(
                 exchange,
@@ -4728,6 +6810,9 @@ class VexLifeProdLocalService private constructor(
                 intent = intent,
                 draftLeaseAttachments = draftLeaseAttachments,
                 begin = begin,
+                localTurn =
+                    partnerTextTurn ==
+                    null,
                 executor = streaming,
             )
             return
@@ -4736,11 +6821,38 @@ class VexLifeProdLocalService private constructor(
         var draftCompleted =
             false
         try {
-            val result =
-                turnExecutor.perform(
-                    startupSetup,
-                    intent,
+            // FirstLocalStart belongs to the first canonical Local Send, not merely the first
+            // Conversation Send. A Partner turn must leave this one-way Local presentation fact
+            // available for the first later Local turn.
+            if (
+                partnerTextTurn ==
+                null
+            ) {
+                initialLocalStartPresentationPending.set(
+                    false,
                 )
+            }
+            val result =
+                if (
+                    partnerTextTurn ==
+                    null
+                ) {
+                    turnExecutor.perform(
+                        startupSetup,
+                        intent,
+                    )
+                } else {
+                    requireNotNull(
+                        partnerTurnExecutor,
+                    ) {
+                        "Partner serving requires one Partner turn executor"
+                    }
+                        .perform(
+                            setup = startupSetup,
+                            intent = intent,
+                            partnerTextTurn = partnerTextTurn,
+                        )
+                }
             check(
                 attachmentDraft.completeSend(
                     draftLeaseAttachments,
@@ -4767,6 +6879,10 @@ class VexLifeProdLocalService private constructor(
                     draftLeaseAttachments,
                 )
             }
+        }
+        } finally {
+            partnerConnectionLease
+                ?.close()
         }
     }
 
@@ -4873,6 +6989,7 @@ class VexLifeProdLocalService private constructor(
         intent: DirectCompanionTurn.Intent,
         draftLeaseAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
         begin: VexLifeConversationTurnFamily.BeginTurn,
+        localTurn: Boolean,
         executor: StreamingTurnExecutor,
     ) {
         require(
@@ -4884,10 +7001,18 @@ class VexLifeProdLocalService private constructor(
 
         val cancellation =
             DirectCompanionCancellation()
+        val initialPromptPreparationTurn =
+            localTurn &&
+                initialLocalStartPresentationPending.get() &&
+                promptPreparation
+                    ?.nextTurnPreparationPending() ==
+                true
         val active =
             ActiveTurn(
                 attempt = begin.attempt,
                 cancellation = cancellation,
+                initialPromptPreparationTurn =
+                    initialPromptPreparationTurn,
             )
         if (
             !activeTurn.compareAndSet(
@@ -4905,6 +7030,16 @@ class VexLifeProdLocalService private constructor(
                 message = "Another Conversation turn is already active.",
             )
             return
+        }
+
+        // Only a Local canonical Send consumes the one first-local-start presentation. Partner
+        // turns share Conversation ownership but do not consume Local startup history.
+        if (
+            localTurn
+        ) {
+            initialLocalStartPresentationPending.set(
+                false,
+            )
         }
 
         check(
@@ -5236,8 +7371,35 @@ class VexLifeProdLocalService private constructor(
     private fun humanReasoningProjection(
         result: DirectCompanionTurn.Result,
     ): VexLifeProdServiceContract.HumanReasoningProjection {
+        val localRuntimeObservation =
+            result.localRuntimeObservation
+        if (
+            localRuntimeObservation ==
+            null
+        ) {
+            require(
+                result.providerObservation.sourceKind ==
+                    vexlife.model.VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                    result.localInvocationEvidence ==
+                    null &&
+                    result.humanReasoning ==
+                    null &&
+                    !result.providerObservation.rawReasoningPersisted
+            ) {
+                "Partner Send reasoning projection requires source-neutral no-raw-reasoning evidence"
+            }
+
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "ABSENT",
+                text = null,
+                contentSha256 = null,
+                characterCount = 0,
+                persisted = false,
+            )
+        }
+
         val trace =
-            result.runtimeObservation.reasoningTrace
+            localRuntimeObservation.reasoningTrace
 
         if (
             result.recoveredCompletedTurn
@@ -5606,59 +7768,12 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection {
-        val snapshot =
-            DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
-            )
-                .current()
-
-        val messages =
-            snapshot.canonicalEvents
-                .map {
-                    event ->
-                    VexLifeProdServiceContract.ConversationMessage(
-                        eventRef = event.eventRef,
-                        eventSha256 = event.eventSha256,
-                        messageRef = event.messageRef,
-                        turnRef = event.turnRef,
-                        role =
-                            when (
-                                event.eventKind
-                            ) {
-                                "REQUEST" ->
-                                    "human"
-
-                                "RESPONSE" ->
-                                    "vex"
-
-                                else ->
-                                    error(
-                                        "canonical direct Conversation contains unsupported event kind",
-                                    )
-                            },
-                        content = event.content,
-                        sequence = event.sequence,
-                        formedAt = event.formedAt,
-                        model = event.model,
-                    )
-                }
-
-        return VexLifeProdServiceContract.ConversationProjection(
-            schemaVersion = VexLifeProdServiceContract.ConversationProjectionSchema,
-            projectRef = DirectConversationIdentity.ProjectRef,
-            threadRef = DirectConversationIdentity.ThreadRef,
-            channelRef = DirectConversationIdentity.ChannelRef,
-            currentConversationHeadSha256 =
-                snapshot.head
-                    ?.conversationHeadSha256,
-            messages = messages,
-            abandonedAttemptCount = snapshot.abandonedAttempts.size,
-            effectsPerformed = false,
+    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection =
+        VexLifeConversationServiceProjection.observe(
+            Path.of(
+                startupSetup.productHome,
+            ),
         )
-    }
 
     private fun requestHostAdmitted(
         exchange: HttpExchange,
@@ -5921,6 +8036,39 @@ class VexLifeProdLocalService private constructor(
 
         return bytes.toString(
             StandardCharsets.UTF_8,
+        )
+    }
+
+    private fun respondBytes(
+        exchange: HttpExchange,
+        status: Int,
+        bytes: ByteArray,
+        contentType: String,
+    ) {
+        require(
+            bytes.isNotEmpty() &&
+                contentType.isNotBlank(),
+        ) {
+            "byte response requires content and content type"
+        }
+        exchange.responseHeaders.set(
+            "content-type",
+            contentType,
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.responseHeaders.set(
+            "x-content-type-options",
+            "nosniff",
+        )
+        exchange.sendResponseHeaders(
+            status,
+            bytes.size.toLong(),
+        )
+        exchange.responseBody.write(
+            bytes,
         )
     }
 

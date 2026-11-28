@@ -1,7 +1,6 @@
 package vexlife.labs
 
 import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,8 +12,6 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -414,180 +411,6 @@ class VexLabsNativeTestTest {
                     assertEquals(
                         realHeadBefore,
                         reloaded.projection.seedConversationHeadSha256,
-                    )
-                }
-        } finally {
-            parent.toFile()
-                .deleteRecursively()
-        }
-    }
-
-    @Test
-    fun canonicalHomeIdentityChangeReformsDisposableScratchWithoutExplicitReload() {
-        val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-vex-labs-home-currentness-test-",
-            )
-        val home =
-            parent.resolve(
-                "VexLife-Prod",
-            )
-        val replacementHome =
-            parent.resolve(
-                "Replacement-VexLife-Prod",
-            )
-        CanonicalVexLifeHomeFixture.form(
-            home,
-        )
-        CanonicalVexLifeHomeFixture.form(
-            replacementHome,
-        )
-        val conversation =
-            DirectConversationStore(
-                home,
-            )
-        val topology =
-            HereticExecutionTopology.project(
-                model =
-                    HereticModelCatalog.Models.Qwen4B,
-                exactModelConfig =
-                    qwenConfig,
-                modelConfigSourceRef =
-                    "artifact.test.qwen4b.config",
-            )
-
-        try {
-            val originalHome =
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
-            val replacement =
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        replacementHome,
-                    ),
-                )
-            assertTrue(
-                originalHome.manifest.homeRef !=
-                    replacement.manifest.homeRef,
-            )
-
-            VexLabsNativeTest(
-                productHome = home,
-                currentRuntimeEvidence =
-                    ::runtimeEvidence,
-                activeContextProfile =
-                    ::activeProfile,
-                personContext = {
-                    DirectPromptContext.PersonContext(
-                        replyLanguage = "en",
-                        replyLanguageName = "English",
-                        privateConversations =
-                            emptyList(),
-                    )
-                },
-                currentProductConversationHead = {
-                    conversation.current()
-                        .head
-                        ?.conversationHeadSha256
-                },
-                transport =
-                    DirectCompanionConnection.Transport {
-                        DirectCompanionConnection.HttpResult(
-                            status = 200,
-                            body =
-                                """
-                                {
-                                  "model": "default_model",
-                                  "choices": [
-                                    {
-                                      "finish_reason": "stop",
-                                      "message": {
-                                        "role": "assistant",
-                                        "content": "Disposable Lab reply."
-                                      }
-                                    }
-                                  ]
-                                }
-                                """.trimIndent(),
-                        )
-                    },
-                executionTopology = {
-                    topology
-                },
-            )
-                .use {
-                    labs ->
-                    assertEquals(
-                        0,
-                        labs.projection()
-                            .scratchConversationMessageCount,
-                    )
-                    val completed =
-                        labs.send(
-                            VexLifeProdServiceContract.VexLabsSendRequest(
-                                content =
-                                    "Create one disposable scratch exchange.",
-                                inputTokenBudget =
-                                    64_000,
-                                maximumMemoryTokens =
-                                    0,
-                                memoryMode =
-                                    "NONE",
-                            ),
-                        )
-                    assertEquals(
-                        2,
-                        completed.projection.scratchConversationMessageCount,
-                    )
-                    assertEquals(
-                        1,
-                        completed.projection.exchanges.size,
-                    )
-
-                    Files.copy(
-                        replacementHome.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
-                        home.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
-                        StandardCopyOption.REPLACE_EXISTING,
-                    )
-                    Files.copy(
-                        replacementHome.resolve(
-                            "devices/${replacement.manifest.currentDeviceRef}.json",
-                        ),
-                        home.resolve(
-                            "devices/${replacement.manifest.currentDeviceRef}.json",
-                        ),
-                        StandardCopyOption.REPLACE_EXISTING,
-                    )
-                    assertEquals(
-                        replacement.manifest.homeRef,
-                        requireNotNull(
-                            VexLifeProdHomeFiles.observeExisting(
-                                home,
-                            ),
-                        )
-                            .manifest
-                            .homeRef,
-                    )
-
-                    val realigned =
-                        labs.projection()
-                    assertEquals(
-                        0,
-                        realigned.scratchConversationMessageCount,
-                    )
-                    assertEquals(
-                        null,
-                        realigned.seedConversationHeadSha256,
-                    )
-                    assertTrue(
-                        realigned.exchanges.isEmpty(),
                     )
                 }
         } finally {

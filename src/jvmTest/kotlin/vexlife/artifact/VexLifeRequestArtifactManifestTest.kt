@@ -9,7 +9,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
-import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.companion.DirectPromptContext
 
 class VexLifeRequestArtifactManifestTest {
@@ -133,7 +132,7 @@ class VexLifeRequestArtifactManifestTest {
                 ),
             )
             val resourceRef =
-                VexLifeAttachmentReach.resourceRefFor(
+                VexLifeLocalArtifact.requestResourceRef(
                     requestEventHash = request.eventHash,
                     ordinal = 1,
                 )

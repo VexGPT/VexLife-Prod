@@ -90,7 +90,7 @@ class FileHereticRuntimeConfigurationStoreTest {
                     realization = fourMac,
                 )
             assertEquals(
-                1,
+                2,
                 recommended.promptCacheEntries,
             )
             assertEquals(
@@ -103,7 +103,7 @@ class FileHereticRuntimeConfigurationStoreTest {
                     home,
                 )
             assertEquals(
-                1,
+                2,
                 reread.requireEffective(
                     model = four,
                     realization = fourMac,

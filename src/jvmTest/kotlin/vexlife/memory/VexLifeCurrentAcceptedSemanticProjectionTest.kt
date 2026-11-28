@@ -12,6 +12,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import vexlife.consideration.VexLifeConsiderationContract
+import vexlife.continuity.VexLifeContinuitySourceLocator
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -29,6 +30,20 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
             assertEquals(null, projection.scoreHeadSha256)
             assertEquals(null, projection.semanticAuthorityHeadSha256)
             assertFalse(projection.effectsPerformed)
+            val membrane =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    home,
+                )
+            assertEquals(
+                VexLifeContinuitySourceLocator.UnboundSourceLifecycleBindingRef,
+                membrane.bindingRef,
+            )
+            assertTrue(
+                membrane.blockedEventRefs.isEmpty(),
+            )
+            assertTrue(
+                membrane.historicalCurrentizedEventRefs.isEmpty(),
+            )
             assertEquals(before, after, "accepted-semantic projection must be read-only")
         }
     }
@@ -83,7 +98,18 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                     baseTime = Instant.parse("2026-11-18T09:20:00Z"),
                 )
             val after = VexLifeCurrentAcceptedSemanticProjection.read(home)
+            val rebound =
+                VexLifeCurrentAcceptedSemanticProjection.reobserve(
+                    projection = before,
+                    observedConversationHeadSha256 =
+                        later.headSha256,
+                )
 
+            assertEquals(
+                after,
+                rebound,
+                "re-observation from the already-validated semantic projection must equal a fresh canonical projection after unrelated Conversation advance",
+            )
             assertEquals(before.statements, after.statements)
             assertEquals(before.scoreHeadSha256, after.scoreHeadSha256)
             assertEquals(before.semanticAuthorityHeadSha256, after.semanticAuthorityHeadSha256)
@@ -172,6 +198,278 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                 "Score has not advanced yet in this transition window",
             )
             assertEquals(corrected.semanticAuthorityHeadSha256, after.semanticAuthorityHeadSha256)
+
+            val membrane =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    home,
+                )
+            assertEquals(
+                setOf(
+                    conversation.request.eventRef,
+                    conversation.response.eventRef,
+                ),
+                membrane.blockedEventRefs,
+                "authority-ahead transition must hold the old source before Score catches up",
+            )
+            assertTrue(
+                membrane.historicalCurrentizedEventRefs.isEmpty(),
+            )
+        }
+    }
+
+    @Test
+    fun recallMembraneKeepsCurrentRelationshipFromBeingCensoredByAnotherHeldRelationship() {
+        val shared =
+            setOf(
+                "event.current.request",
+                "event.current.response",
+            )
+        val historical =
+            setOf(
+                "event.historical.request",
+                "event.historical.response",
+            )
+        val held =
+            setOf(
+                "event.held.request",
+                "event.held.response",
+            )
+        val authorityHeld =
+            setOf(
+                "event.authority-held.request",
+                "event.authority-held.response",
+            )
+
+        val membrane =
+            VexLifeCurrentMemoryReader.formConversationRecallMembrane(
+                scoreHeadSha256 =
+                    "1".repeat(
+                        64,
+                    ),
+                semanticAuthorityHeadSha256 =
+                    "2".repeat(
+                        64,
+                    ),
+                statements =
+                    listOf(
+                        VexLifeCurrentMemoryReader.ConversationRecallStatementStanding(
+                            sourceEventRefs = shared,
+                            current = true,
+                            effectiveState = "HUMAN_CONFIRMED",
+                            acceptedForContinuity = true,
+                            consentState = "PERMITTED",
+                            currentAuthorityMember = true,
+                        ),
+                        VexLifeCurrentMemoryReader.ConversationRecallStatementStanding(
+                            sourceEventRefs = shared,
+                            current = false,
+                            effectiveState = "RELEASED_OR_TOMBSTONED",
+                            acceptedForContinuity = false,
+                            consentState = "WITHDRAWN",
+                            currentAuthorityMember = false,
+                        ),
+                        VexLifeCurrentMemoryReader.ConversationRecallStatementStanding(
+                            sourceEventRefs = historical,
+                            current = false,
+                            effectiveState = "CORRECTED",
+                            acceptedForContinuity = true,
+                            consentState = "NARROWED",
+                            currentAuthorityMember = false,
+                        ),
+                        VexLifeCurrentMemoryReader.ConversationRecallStatementStanding(
+                            sourceEventRefs = held,
+                            current = false,
+                            effectiveState = "RELEASED_OR_TOMBSTONED",
+                            acceptedForContinuity = false,
+                            consentState = "WITHDRAWN",
+                            currentAuthorityMember = false,
+                        ),
+                        VexLifeCurrentMemoryReader.ConversationRecallStatementStanding(
+                            sourceEventRefs = authorityHeld,
+                            current = true,
+                            effectiveState = "HUMAN_CONFIRMED",
+                            acceptedForContinuity = true,
+                            consentState = "PERMITTED",
+                            currentAuthorityMember = false,
+                        ),
+                    ),
+            )
+
+        assertEquals(
+            "lifecycle.score." +
+                "1".repeat(
+                    64,
+                ) +
+                "." +
+                "2".repeat(
+                    64,
+                ),
+            membrane.bindingRef,
+        )
+        assertEquals(
+            historical,
+            membrane.historicalCurrentizedEventRefs,
+        )
+        assertEquals(
+            held +
+                authorityHeld,
+            membrane.blockedEventRefs,
+        )
+        assertTrue(
+            shared.none {
+                it in
+                    membrane.blockedEventRefs ||
+                    it in
+                    membrane.historicalCurrentizedEventRefs
+            },
+            "a current admitted semantic relationship must keep the shared canonical source available",
+        )
+    }
+
+    @Test
+    fun correctedSemanticRelationshipKeepsOldConversationAsExplicitHistoricalSource() {
+        withHome("vexlife-current-semantic-recall-currentized-") {
+            home ->
+            val first =
+                completedConversation(
+                    home = home,
+                    suffix = "recall-currentized-first",
+                    requestContent = "When I say tight, I mean compact.",
+                    baseTime = Instant.parse("2026-11-18T09:40:00Z"),
+                )
+            keepCorrection(
+                home = home,
+                conversation = first,
+            )
+            val before =
+                VexLifeCurrentAcceptedSemanticProjection.read(
+                    home,
+                )
+            val prior =
+                before.statements.single()
+            val second =
+                completedConversation(
+                    home = home,
+                    suffix = "recall-currentized-second",
+                    requestContent = "Correction: tight means compact and causally exact.",
+                    baseTime = Instant.parse("2026-11-18T09:50:00Z"),
+                )
+            val corrected =
+                VexLifeSemanticAcceptanceWriter.keep(
+                    productHome = home,
+                    invocation =
+                        VexLifeSemanticAcceptanceWriter.KeepInvocation(
+                            instanceRef =
+                                "instance.vexlife-prod.current-semantic.recall-currentized",
+                            proposal =
+                                VexLifeSemanticAcceptanceWriter.Proposal(
+                                    semanticSubjectRef =
+                                        prior.subjectRef,
+                                    proposedSummary =
+                                        Summary,
+                                    memoryRelation =
+                                        VexLifeSemanticAcceptanceWriter.MemoryRelation
+                                            .SHARED_RELATIONSHIP_HISTORY,
+                                    proposedStatementState =
+                                        VexLifeSemanticAcceptanceWriter.InitialStatementState
+                                            .HUMAN_CONFIRMED,
+                                    proposerRef =
+                                        "owner.vexlife-prod.current-semantic.test",
+                                    proposerClass =
+                                        VexLifeSemanticAcceptanceWriter.ProposerClass.LINEAGE,
+                                    sourceEventHashes =
+                                        second.sourceEventHashes,
+                                ),
+                            classification =
+                                VexLifeSemanticAcceptanceWriter.Classification.Corrects(
+                                    acceptedSummary =
+                                        Summary,
+                                    memoryRelation =
+                                        VexLifeSemanticAcceptanceWriter.MemoryRelation
+                                            .SHARED_RELATIONSHIP_HISTORY,
+                                    targetStatementRef =
+                                        prior.statementRef,
+                                    targetAcceptanceSha256 =
+                                        prior.semanticAcceptanceSha256,
+                                ),
+                            humanDecision =
+                                VexLifeSemanticAcceptanceWriter.HumanDecisionSource(
+                                    humanSubjectRef =
+                                        "person.local-user",
+                                    decisionRef =
+                                        "decision.vexlife-prod.current-semantic.recall-currentized",
+                                    decisionSha256 =
+                                        sha256(
+                                            "recall-currentized".toByteArray(
+                                                StandardCharsets.UTF_8,
+                                            ),
+                                        ),
+                                    decidedAt =
+                                        second.baseTime.plusSeconds(
+                                            30,
+                                        ),
+                                ),
+                            expectedSemanticAuthorityHeadSha256 =
+                                before.semanticAuthorityHeadSha256,
+                            formedAt =
+                                second.baseTime.plusSeconds(
+                                    31,
+                                ),
+                        ),
+                )
+            VexLifeScoreContinuity.appendAcceptedStatement(
+                productHome = home,
+                invocation =
+                    VexLifeScoreContinuity.AppendStatementInvocation(
+                        instanceRef =
+                            "instance.vexlife-prod.current-semantic.recall-currentized.score",
+                        statementRef =
+                            "statement.vexlife-prod.current-semantic.recall-currentized",
+                        semanticAcceptanceRef =
+                            corrected.acceptanceRef,
+                        semanticAcceptanceSha256 =
+                            corrected.acceptanceSha256,
+                        expectedScoreHeadSha256 =
+                            before.scoreHeadSha256,
+                        formedAt =
+                            second.baseTime.plusSeconds(
+                                32,
+                            ),
+                    ),
+            )
+
+            val membrane =
+                VexLifeCurrentMemoryReader.readConversationRecallMembrane(
+                    home,
+                )
+            val oldSourceRefs =
+                setOf(
+                    first.request.eventRef,
+                    first.response.eventRef,
+                )
+            val currentSourceRefs =
+                setOf(
+                    second.request.eventRef,
+                    second.response.eventRef,
+                )
+
+            assertEquals(
+                oldSourceRefs,
+                membrane.historicalCurrentizedEventRefs,
+            )
+            assertTrue(
+                oldSourceRefs.none(
+                    membrane.blockedEventRefs::contains,
+                ),
+            )
+            assertTrue(
+                currentSourceRefs.none {
+                    it in
+                        membrane.blockedEventRefs ||
+                        it in
+                        membrane.historicalCurrentizedEventRefs
+                },
+            )
         }
     }
 

@@ -311,6 +311,33 @@ object VexLifeWorkspaceBlueprint :
         SettingsLocalSources.control(
             "add",
         )
+    /** Separate stronger authority for one existing Local Source; never implied by Add Folder. */
+    val LocalSourceAllowChanges =
+        SettingsLocalSources.control(
+            "allow-changes",
+        )
+    val LocalSourceStopChanges =
+        SettingsLocalSources.control(
+            "stop-changes",
+        )
+    /** Process/check authority remains separate from both read and write authority. */
+    val LocalSourceAllowChecks =
+        SettingsLocalSources.control(
+            "allow-checks",
+        )
+    val LocalSourceStopChecks =
+        SettingsLocalSources.control(
+            "stop-checks",
+        )
+    /** Project-code test authority is separate from read, write and Product-owned checks. */
+    val LocalSourceAllowTests =
+        SettingsLocalSources.control(
+            "allow-tests",
+        )
+    val LocalSourceStopTests =
+        SettingsLocalSources.control(
+            "stop-tests",
+        )
 
     val SettingsContinuity =
         Settings.region(

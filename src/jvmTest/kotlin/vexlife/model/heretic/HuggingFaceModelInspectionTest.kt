@@ -165,13 +165,17 @@ class HuggingFaceModelInspectionTest {
             importedEntry.companionProfile.capabilityRepresentation,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            HereticCompanionRepresentation.ProviderNativeToolStanding.NOT_REPRESENTED,
+            importedEntry.companionProfile.providerNativeToolStanding,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
             importedEntry.companionProfile.reachRepresentationStanding,
         )
     }
 
     @Test
-    fun pinnedQwenToolTemplateSelectsProviderNativeToolsWithoutDownloadingWeights() {
+    fun pinnedQwenToolTemplateRecordsHeldNativeToolCandidateWithoutActivatingIt() {
         val chatTemplate =
             """
             {% if tools %}tools{% endif %}
@@ -204,11 +208,15 @@ class HuggingFaceModelInspectionTest {
                 candidate.record,
             )
         assertEquals(
-            HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
             entry.companionProfile.capabilityRepresentation,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            HereticCompanionRepresentation.ProviderNativeToolStanding.RECOGNIZED_HELD,
+            entry.companionProfile.providerNativeToolStanding,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
             entry.companionProfile.reachRepresentationStanding,
         )
         assertFalse(

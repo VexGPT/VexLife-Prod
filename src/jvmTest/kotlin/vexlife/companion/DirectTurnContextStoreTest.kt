@@ -18,6 +18,7 @@ import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -451,10 +452,17 @@ class DirectTurnContextStoreTest {
                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
                         "\n" +
                         """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
+                val initialRuntime =
+                    runtime()
                 val initialInference =
-                    DirectCompanionConnection.invoke(
-                        runtime = runtime(),
-                        messages = initialPrompt.messages,
+                    LocalHereticInference(
+                        runtime = initialRuntime,
+                        model =
+                            requireNotNull(
+                                HereticModelCatalog.entry(
+                                    initialRuntime.modelRef,
+                                ),
+                            ),
                         transport =
                             DirectCompanionConnection.Transport {
                                 DirectCompanionConnection.HttpResult(
@@ -489,6 +497,15 @@ class DirectTurnContextStoreTest {
                             )
                         },
                     )
+                        .invoke(
+                            CompanionInferenceConnection.Request(
+                                messages = initialPrompt.messages,
+                                capabilityOffer = emptyList(),
+                                conversationCacheBoundaryMessageCount = null,
+                                progressObserver = null,
+                                cancellation = null,
+                            ),
+                        )
                 val sourceRequest =
                     requireNotNull(
                         DirectConversationSourceReturn.parseRequestOrNull(
@@ -625,7 +642,7 @@ class DirectTurnContextStoreTest {
                     rereadTrace.finalPromptReceiptRef,
                 )
                 assertEquals(
-                    initialInference.runtimeObservation.observationRef,
+                    initialInference.observation.observationRef,
                     rereadTrace.attempt.runtimeObservationRef,
                 )
                 assertEquals(
@@ -1049,6 +1066,7 @@ class DirectTurnContextStoreTest {
                         promptContext = prompt.receipt,
                         runtimeObservation = inference.runtimeObservation,
                         invocationEvidence = inference.invocationEvidence,
+                        providerMeasurement = inference.measurement,
                         formedAt = Instant.parse(
                             "2026-11-05T04:31:01Z",
                         ),
@@ -1072,6 +1090,34 @@ class DirectTurnContextStoreTest {
                 )
                 assertFalse(
                     reread.rawReportedModelPersisted,
+                )
+                val providerMeasurement =
+                    assertNotNull(
+                        reread.providerMeasurement,
+                    )
+                assertEquals(
+                    inference.measurement.stop.wire,
+                    providerMeasurement.stop,
+                )
+                assertEquals(
+                    inference.measurement.promptTokens,
+                    providerMeasurement.promptTokens,
+                )
+                assertEquals(
+                    inference.measurement.cachedPromptTokens,
+                    providerMeasurement.cachedPromptTokens,
+                )
+                assertEquals(
+                    inference.measurement.prefillTokens,
+                    providerMeasurement.prefillTokens,
+                )
+                assertEquals(
+                    inference.measurement.firstTokenMillis,
+                    providerMeasurement.firstTokenMillis,
+                )
+                assertEquals(
+                    inference.measurement.totalMillis,
+                    providerMeasurement.totalMillis,
                 )
                 assertEquals(
                     "LOCAL_PATH_LIKE",

@@ -3,6 +3,7 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.attachment.VexLifeAttachmentDraftFamily
+import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
@@ -14,6 +15,9 @@ import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.text.VexLifeText
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -31,10 +35,39 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-current-state/v2"
 
     const val ConversationProjectionSchema =
-        "vexlife-prod.local-service-conversation-projection/v1"
+        "vexlife-prod.local-service-conversation-projection/v2"
+
+    const val ConversationResourceMetadataSchema =
+        "vexlife-prod.local-service-conversation-resource-metadata/v1"
+
+    const val ConversationResourceUnavailableTextKey =
+        "workspace.status.sent-resource-local-copy-unavailable"
+
+    const val ConversationResourceInvalidTextKey =
+        "workspace.status.sent-resource-local-copy-invalid"
+
+    const val ConversationResourceReviewFailedTextKey =
+        "workspace.status.sent-resource-review-failed"
 
     const val ConversationTurnProjectionSchema =
-        "vexlife-prod.local-service-conversation-turn-projection/v1"
+        "vexlife-prod.local-service-conversation-turn-projection/v2"
+
+    const val FollowUpReadinessUnavailable = "UNAVAILABLE"
+    const val FollowUpReadinessLowerMemory = "LOWER_MEMORY_REALIZATION"
+    const val FollowUpReadinessNotYetPrepared = "NOT_YET_PREPARED"
+    const val FollowUpReadinessPreparing = "PREPARING"
+    const val FollowUpReadinessSuccessorReset = "SUCCESSOR_RESET"
+    const val FollowUpReadinessFasterEnabled = "FASTER_FOLLOWUPS_ENABLED"
+
+    val FollowUpReadinessStates =
+        setOf(
+            FollowUpReadinessUnavailable,
+            FollowUpReadinessLowerMemory,
+            FollowUpReadinessNotYetPrepared,
+            FollowUpReadinessPreparing,
+            FollowUpReadinessSuccessorReset,
+            FollowUpReadinessFasterEnabled,
+        )
 
     const val AttachmentDraftProjectionSchema =
         "vexlife-prod.local-service-attachment-draft-projection/v1"
@@ -50,6 +83,24 @@ object VexLifeProdServiceContract {
 
     const val LocalSourcesControlResponseSchema =
         "vexlife-prod.local-service-local-sources-control-response/v1"
+
+    const val WorkspaceEffectsProjectionSchema =
+        "vexlife-prod.local-service-workspace-effects-projection/v1"
+
+    const val WorkspaceEffectsControlResponseSchema =
+        "vexlife-prod.local-service-workspace-effects-control-response/v1"
+
+    const val WorkspaceChecksProjectionSchema =
+        "vexlife-prod.local-service-workspace-checks-projection/v1"
+
+    const val WorkspaceChecksControlResponseSchema =
+        "vexlife-prod.local-service-workspace-checks-control-response/v1"
+
+    const val WorkspaceRunsProjectionSchema =
+        "vexlife-prod.local-service-workspace-runs-projection/v1"
+
+    const val WorkspaceRunsControlResponseSchema =
+        "vexlife-prod.local-service-workspace-runs-control-response/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -173,6 +224,24 @@ object VexLifeProdServiceContract {
     const val ConversationPath =
         "/api/v1/conversation"
 
+    const val ConversationResourceMetadataPath =
+        "/api/v1/conversation/resource/metadata"
+
+    const val ConversationResourceContentPath =
+        "/api/v1/conversation/resource/content"
+
+    const val ConversationResourceEventRefHeader =
+        "x-vexlife-request-event-ref"
+
+    const val ConversationResourceEventHashHeader =
+        "x-vexlife-request-event-hash"
+
+    const val ConversationResourceSequenceHeader =
+        "x-vexlife-request-sequence"
+
+    const val ConversationResourceRefHeader =
+        "x-vexlife-request-resource-ref"
+
     const val ConversationTurnPath =
         "/api/v1/conversation/turn"
 
@@ -255,6 +324,24 @@ object VexLifeProdServiceContract {
 
     /** Settings → Models: offered models as this Home holds them, and their Controls. */
     const val ModelsPath = "/api/v1/models"
+    const val ModelsSourcesPath = "/api/v1/models/sources"
+    const val ModelsSourcesControlPath = "/api/v1/models/sources/control"
+    const val PartnerConnectionsPath = "/api/v1/partner-connections"
+    const val PartnerConnectionsControlPath = "/api/v1/partner-connections/control"
+    const val PartnerConnectionAvailabilitySchema =
+        "vexlife-prod.partner-connection-availability/v1"
+    const val PartnerConnectionAvailabilityHeldFunding =
+        "HELD_FUNDING"
+    const val PartnerConnectionAvailabilityReady =
+        "READY_FOR_LIVE_TESTING"
+    const val PartnerConnectionControlSchema =
+        "vexlife-prod.partner-connection-control-response/v1"
+    const val PartnerConnectionControlHeader =
+        "x-vexlife-partner-control"
+    const val PartnerConnectionProviderRefHeader =
+        "x-vexlife-partner-provider-ref"
+    const val PartnerConnectionWorkspaceIdHeader =
+        "x-vexlife-partner-workspace-id"
     const val ModelsControlPath = "/api/v1/models/control"
     const val ModelsImportCheckPath = "/api/v1/models/import/check"
     const val ModelsImportAddPath = "/api/v1/models/import/add"
@@ -325,11 +412,129 @@ object VexLifeProdServiceContract {
     const val LocalSourcesControlPath =
         "/api/v1/local-sources/control"
 
+    const val WorkspaceEffectsPath =
+        "/api/v1/workspace-effects"
+
+    const val WorkspaceEffectsControlPath =
+        "/api/v1/workspace-effects/control"
+
+    const val WorkspaceChecksPath =
+        "/api/v1/workspace-checks"
+
+    const val WorkspaceChecksControlPath =
+        "/api/v1/workspace-checks/control"
+
+    const val WorkspaceRunsPath =
+        "/api/v1/workspace-runs"
+
+    const val WorkspaceRunsControlPath =
+        "/api/v1/workspace-runs/control"
+
     const val AttachmentDraftRefHeader =
         "x-vexlife-attachment-draft-ref"
 
     const val AttachmentNameHeader =
         "x-vexlife-attachment-name"
+
+    @Serializable
+    data class PartnerConnectionAvailabilityProjection(
+        val schemaVersion: String,
+        val state: String,
+        val connectEnabled: Boolean,
+        val liveProviderTestingFunded: Boolean,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    PartnerConnectionAvailabilitySchema &&
+                    state in
+                    setOf(
+                        PartnerConnectionAvailabilityHeldFunding,
+                        PartnerConnectionAvailabilityReady,
+                    ) &&
+                    connectEnabled ==
+                    liveProviderTestingFunded &&
+                    !effectsPerformed,
+            ) {
+                "Partner connection availability projection is invalid"
+            }
+        }
+    }
+
+    enum class PartnerConnectionControl(
+        val wire: String,
+    ) {
+        Connect("CONNECT"),
+        Replace("REPLACE"),
+        Remove("REMOVE"),
+        Recover("RECOVER"),
+        UpdateScope("UPDATE_SCOPE"),
+        ;
+
+        companion object {
+            fun forWire(
+                value: String,
+            ): PartnerConnectionControl? =
+                entries.firstOrNull {
+                    it.wire ==
+                        value
+                }
+        }
+    }
+
+    @Serializable
+    data class PartnerConnectionControlResult(
+        val providerRef: String,
+        val state: String,
+        val credentialRef: String?,
+        val recoveryPerformed: Boolean,
+    ) {
+        init {
+            require(
+                providerRef.isNotBlank() &&
+                    state.matches(
+                        Regex(
+                            "[A-Z][A-Z0-9_]*",
+                        ),
+                    ) &&
+                    (
+                        credentialRef ==
+                            null ||
+                            credentialRef.matches(
+                                Regex(
+                                    "credential\\.vexlife\\.partner\\.[a-z0-9][a-z0-9._-]{7,180}",
+                                ),
+                            )
+                    ),
+            ) {
+                "Partner connection control result is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class PartnerConnectionControlResponse(
+        val schemaVersion: String,
+        val control: String,
+        val results: List<PartnerConnectionControlResult>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    PartnerConnectionControlSchema &&
+                    PartnerConnectionControl.forWire(
+                        control,
+                    ) !=
+                    null &&
+                    effectsPerformed ==
+                    results.isNotEmpty(),
+            ) {
+                "Partner connection control response is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class SourceCurrentness(
@@ -536,6 +741,27 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class ConversationResource(
+        val resourceRef: String,
+        val displayName: String,
+    ) {
+        init {
+            requirePortableRef(
+                resourceRef,
+                "resourceRef",
+            )
+            require(
+                VexLifeLocalArtifact.admitDisplayName(
+                    displayName,
+                ) ==
+                    displayName,
+            ) {
+                "Conversation resource display name is not admitted"
+            }
+        }
+    }
+
+    @Serializable
     data class ConversationMessage(
         val eventRef: String,
         val eventSha256: String,
@@ -546,7 +772,193 @@ object VexLifeProdServiceContract {
         val sequence: Long,
         val formedAt: String,
         val model: String?,
-    )
+        val resources: List<ConversationResource> = emptyList(),
+        val resourceHistoryState: ConversationResourceHistoryState =
+            ConversationResourceHistoryState.AVAILABLE,
+    ) {
+        init {
+            require(
+                resources.size <=
+                    VexLifeLocalArtifact.MaximumPerRequest &&
+                    (
+                        role ==
+                            "human" ||
+                            resources.isEmpty()
+                    ) &&
+                    (
+                        resourceHistoryState ==
+                            ConversationResourceHistoryState.AVAILABLE ||
+                            resources.isEmpty()
+                    ),
+            ) {
+                "Conversation message resource projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    enum class ConversationResourceHistoryState {
+        AVAILABLE,
+        UNAVAILABLE,
+    }
+
+    @Serializable
+    enum class ConversationResourceRepresentation {
+        PARSED_TEXT,
+        STATIC_IMAGE,
+        UNKNOWN,
+    }
+
+    @Serializable
+    enum class ConversationResourceCustody {
+        EXACT,
+        MISSING,
+        INVALID,
+    }
+
+    @Serializable
+    data class ConversationResourceMetadata(
+        val schemaVersion: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val requestSequence: Long,
+        val resourceRef: String,
+        val displayName: String,
+        val representation: ConversationResourceRepresentation,
+        val originalCustody: ConversationResourceCustody,
+        val projectionCustody: ConversationResourceCustody,
+        val readableBytes: Long? = null,
+        val lineCount: Int? = null,
+        val mediaType: String? = null,
+        val widthPixels: Int? = null,
+        val heightPixels: Int? = null,
+        val contentAvailable: Boolean,
+        val status: VexLifeText? = null,
+        val effectsPerformed: Boolean = false,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    ConversationResourceMetadataSchema &&
+                    requestSequence >=
+                    0 &&
+                    !effectsPerformed,
+            ) {
+                "Conversation resource metadata identity is invalid"
+            }
+            requireSha256(
+                requestEventHash,
+                "requestEventHash",
+            )
+            require(
+                requestEventRef.isNotBlank() &&
+                    VexLifeLocalArtifact.requestResourceOrdinal(
+                        requestEventHash = requestEventHash,
+                        resourceRef = resourceRef,
+                    ) !=
+                    null &&
+                    VexLifeLocalArtifact.admitDisplayName(
+                        displayName,
+                    ) ==
+                    displayName,
+            ) {
+                "Conversation resource metadata request/resource binding is invalid"
+            }
+
+            val expectedStatusKey =
+                when {
+                    originalCustody ==
+                        ConversationResourceCustody.INVALID ||
+                        projectionCustody ==
+                        ConversationResourceCustody.INVALID ->
+                        ConversationResourceInvalidTextKey
+
+                    !contentAvailable ->
+                        ConversationResourceUnavailableTextKey
+
+                    else ->
+                        null
+                }
+            require(
+                status?.key ==
+                    expectedStatusKey
+            ) {
+                "Conversation resource status text does not match its custody observation"
+            }
+
+            when (
+                representation
+            ) {
+                ConversationResourceRepresentation.PARSED_TEXT ->
+                    require(
+                        projectionCustody ==
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes !=
+                            null &&
+                            readableBytes >
+                            0 &&
+                            lineCount !=
+                            null &&
+                            lineCount >
+                            0 &&
+                            mediaType ==
+                            null &&
+                            widthPixels ==
+                            null &&
+                            heightPixels ==
+                            null &&
+                            contentAvailable,
+                    ) {
+                        "Conversation text-resource metadata is incomplete"
+                    }
+
+                ConversationResourceRepresentation.STATIC_IMAGE ->
+                    require(
+                        projectionCustody ==
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes ==
+                            null &&
+                            lineCount ==
+                            null &&
+                            !mediaType.isNullOrBlank() &&
+                            widthPixels !=
+                            null &&
+                            widthPixels >
+                            0 &&
+                            heightPixels !=
+                            null &&
+                            heightPixels >
+                            0 &&
+                            contentAvailable ==
+                            (
+                                originalCustody ==
+                                    ConversationResourceCustody.EXACT
+                            ),
+                    ) {
+                        "Conversation image-resource metadata is incomplete"
+                    }
+
+                ConversationResourceRepresentation.UNKNOWN ->
+                    require(
+                        projectionCustody !=
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes ==
+                            null &&
+                            lineCount ==
+                            null &&
+                            mediaType ==
+                            null &&
+                            widthPixels ==
+                            null &&
+                            heightPixels ==
+                            null &&
+                            !contentAvailable,
+                    ) {
+                        "unknown Conversation resource metadata must not invent review content"
+                    }
+            }
+        }
+    }
 
     @Serializable
     data class ConversationProjection(
@@ -1920,6 +2332,225 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class WorkspaceEffectsProjection(
+        val schemaVersion: String,
+        val state: String,
+        val grants: List<VexLifeWorkspaceEffectsFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceEffectsProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeWorkspaceEffectsFamily.StateEmpty,
+                        VexLifeWorkspaceEffectsFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Workspace Effects projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceEffectsControlRequest(
+        val controlRef: String,
+        val sourceRef: String,
+    ) {
+        init {
+            require(
+                controlRef in
+                    VexLifeWorkspaceEffectsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ),
+            ) {
+                "Workspace Effects Control is unknown"
+            }
+        }
+    }
+
+    enum class WorkspaceEffectsControlOutcome {
+        REALIZED,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class WorkspaceEffectsControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String,
+        val outcome: WorkspaceEffectsControlOutcome,
+        val reasonKey: String? = null,
+        val effects: WorkspaceEffectsProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceEffectsControlResponseSchema &&
+                    controlRef in
+                    VexLifeWorkspaceEffectsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ) &&
+                    grantMutationPerformed ==
+                    (
+                        outcome ==
+                            WorkspaceEffectsControlOutcome.REALIZED
+                    ),
+            ) {
+                "Workspace Effects Control response is invalid"
+            }
+        }
+    }
+
+
+    @Serializable
+    data class WorkspaceChecksProjection(
+        val schemaVersion: String,
+        val state: String,
+        val grants: List<VexLifeWorkspaceChecksFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceChecksProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeWorkspaceChecksFamily.StateEmpty,
+                        VexLifeWorkspaceChecksFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Workspace Checks projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceChecksControlRequest(
+        val controlRef: String,
+        val sourceRef: String,
+    ) {
+        init {
+            require(
+                controlRef in
+                    VexLifeWorkspaceChecksFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ),
+            ) {
+                "Workspace Checks Control is unknown"
+            }
+        }
+    }
+
+    enum class WorkspaceChecksControlOutcome {
+        REALIZED,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class WorkspaceChecksControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String,
+        val outcome: WorkspaceChecksControlOutcome,
+        val reasonKey: String? = null,
+        val checks: WorkspaceChecksProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    WorkspaceChecksControlResponseSchema &&
+                    controlRef in
+                    VexLifeWorkspaceChecksFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(
+                        sourceRef,
+                    ) &&
+                    grantMutationPerformed ==
+                    (
+                        outcome ==
+                            WorkspaceChecksControlOutcome.REALIZED
+                    ),
+            ) {
+                "Workspace Checks Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceRunsProjection(
+        val schemaVersion: String,
+        val state: String,
+        val grants: List<VexLifeWorkspaceRunsFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == WorkspaceRunsProjectionSchema &&
+                    state in setOf(
+                        VexLifeWorkspaceRunsFamily.StateEmpty,
+                        VexLifeWorkspaceRunsFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Workspace Runs projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class WorkspaceRunsControlRequest(
+        val controlRef: String,
+        val sourceRef: String,
+    ) {
+        init {
+            require(
+                controlRef in VexLifeWorkspaceRunsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(sourceRef),
+            ) {
+                "Workspace Runs Control is unknown"
+            }
+        }
+    }
+
+    enum class WorkspaceRunsControlOutcome {
+        REALIZED,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class WorkspaceRunsControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String,
+        val outcome: WorkspaceRunsControlOutcome,
+        val reasonKey: String? = null,
+        val runs: WorkspaceRunsProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == WorkspaceRunsControlResponseSchema &&
+                    controlRef in VexLifeWorkspaceRunsFamily.ControlRefs &&
+                    VexLifeLocalSourcesFamily.isSourceRef(sourceRef) &&
+                    grantMutationPerformed == (outcome == WorkspaceRunsControlOutcome.REALIZED),
+            ) {
+                "Workspace Runs Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
     data class BrowserContextInput(
         val pageUrl: String,
         val title: String?,
@@ -1966,17 +2597,105 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class ProviderMeasurementProjection(
+        val stop: String,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val prefillTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
+    ) {
+        init {
+            require(
+                stop.isNotBlank() &&
+                    listOfNotNull(
+                        promptTokens,
+                        cachedPromptTokens,
+                        prefillTokens,
+                        completionTokens,
+                    )
+                        .all {
+                            it >= 0
+                        } &&
+                    listOfNotNull(
+                        firstTokenMillis,
+                        firstAnswerMillis,
+                        totalMillis,
+                    )
+                        .all {
+                            it >= 0L
+                        } &&
+                    prefillTokens ==
+                    promptTokens
+                        ?.let {
+                            prompt ->
+                            prompt - (cachedPromptTokens ?: 0)
+                        } &&
+                    (
+                        promptTokens == null ||
+                            cachedPromptTokens == null ||
+                            cachedPromptTokens <= promptTokens
+                        )
+            ) {
+                "Conversation provider measurement projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class FollowUpReadinessProjection(
+        val state: String,
+        val lastCompletedProviderMeasurement: ProviderMeasurementProjection? = null,
+    ) {
+        init {
+            require(
+                state in FollowUpReadinessStates,
+            ) {
+                "Conversation follow-up readiness projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
     data class ConversationTurnProjection(
         val schemaVersion: String,
         val state: String,
         val display: VexLifeConversationTurnFamily.DisplayState,
         val effectsPerformed: Boolean,
+        /**
+         * The existing Prompt Preparation owner says the next canonical Send still belongs to this
+         * service's one initial local-start window. Presentation may explain it; it may not infer or
+         * control provider/cache state from this flag.
+         */
+        val initialPromptPreparationPendingForNextTurn: Boolean = false,
+        /**
+         * The currently active canonical turn began inside that same initial local-start window.
+         * This keeps the explanation visible while the first reply is being formed, even after the
+         * reusable-prefix state itself has been consumed.
+         */
+        val initialPromptPreparationForActiveTurn: Boolean = false,
+        /**
+         * Follow-up mode is Product/runtime truth. The nested measurement is observed completed-turn
+         * evidence only; neither field certifies invisible provider cache residency.
+         */
+        val followUpReadiness: FollowUpReadinessProjection? = null,
     ) {
         init {
             require(
                 schemaVersion == ConversationTurnProjectionSchema &&
                     state in VexLifeConversationTurnFamily.StateRefs &&
-                    !effectsPerformed
+                    !effectsPerformed &&
+                    (
+                        !initialPromptPreparationForActiveTurn ||
+                            state in
+                            setOf(
+                                VexLifeConversationTurnFamily.StateActive,
+                                VexLifeConversationTurnFamily.StateCancelling,
+                            )
+                    )
             ) {
                 "Conversation turn projection is invalid"
             }

@@ -159,6 +159,67 @@ change boundary for the running mlx-lm process
 The projection fails closed if the pinned mlx-lm version changes without the default map being
 re-audited.
 
+### Candidate append-only Conversation cache boundary
+
+Prompt-cache capacity and prompt semantic ownership remain separate.
+
+~~~text
+DirectPromptContext
+  -> owns provider message order
+  -> records selected Conversation as APPEND_ONLY_HISTORY
+  -> records the exact provider-message coordinate where that history ends
+
+DirectCompanionConnection
+  -> may carry that existing coordinate as provider-execution metadata
+
+HereticPersistentRuntime / pinned mlx-lm adapter
+  -> may realize a cache segment at that coordinate
+  != prompt owner
+  != Conversation owner
+~~~
+
+The current source candidate is deliberately fail-soft for the optimization:
+
+~~~text
+exact admitted Qwen/MLX text-control representation
++ exact pinned mlx-lm server source
++ boundary ends one assistant message before the later user/current tail
++ two context-preserving provider probes keep a later user present so historical assistant
+  rendering matches the full Qwen template
++ their common leading tokens remain an exact token prefix of the full prompt
+  -> cache system + append-only Conversation as intermediate segments
+
+missing / unsupported / token-prefix mismatch
+  -> keep ordinary mlx-lm segmentation
+  -> human Send remains lawful
+~~~
+
+No model-visible message, template argument, Conversation event, Memory value or current-state value
+is changed to make cache reuse work. The mutable current-state envelope and current request remain
+after selected Conversation as owned by `DirectPromptContext`; the provider adapter changes only
+where an already-identical token sequence may be snapshotted.
+
+With the Product safety floor of one entry, the candidate still retains only the system cache. An
+explicit two-entry experiment is expected to permit system + append-only Conversation retention.
+That expectation is a lived-proof predicate, not a recommendation or default change.
+
+`HereticExecutionTopology` itself remains a read-only projection. This section records the runtime
+relationship so a later reader can see where the effective cache behavior comes from; the topology
+does not launch, patch or configure the provider.
+
+Permanent:
+
+~~~text
+PROMPT SEMANTICS / ORDER
+!= PROVIDER CACHE SEGMENTATION
+
+CACHED PREFIX
+!= CURRENT CONTEXT AUTHORITY
+
+CACHE HIT
+!= PERMISSION TO RETAIN STALE FOUNDATION / MEMORY / CONFIGURATION
+~~~
+
 ## Effective field vocabulary
 
 Every projected field carries:

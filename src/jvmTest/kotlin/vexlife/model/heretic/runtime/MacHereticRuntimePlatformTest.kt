@@ -344,6 +344,26 @@ class MacHereticRuntimePlatformTest {
             )
             assertTrue(
                 host.observedPlist.contains(
+                    "<string>-c</string>",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "9462d6e57822df160adc260d9414838179b71907",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "vexlife_prompt_cache_boundary_message_count",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<string>--prompt-cache-size</string>",
+                ),
+            )
+            assertFalse(
+                host.observedPlist.contains(
                     "<string>mlx_lm.server</string>",
                 ),
             )

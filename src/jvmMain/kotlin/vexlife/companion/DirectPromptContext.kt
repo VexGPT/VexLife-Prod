@@ -12,6 +12,9 @@ import vexlife.capability.VexLifeReachDefinitions
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeWorkspaceEffectDefinitions
+import vexlife.capability.VexLifeWorkspaceCheckDefinitions
+import vexlife.capability.VexLifeWorkspaceJavaTestDefinitions
 import vexlife.contract.VexContractJson
 import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
@@ -24,6 +27,10 @@ import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.workspace.VexLifeWorkspaceEffectsFamily
+import vexlife.workspace.VexLifeWorkspaceChecksFamily
+import vexlife.workspace.VexLifeWorkspaceRunsFamily
 
 /**
  * Bounded direct Companion prompt materialization.
@@ -70,8 +77,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV10 =
         "vexlife-prod.direct-prompt-materialization-receipt/v10"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v11"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
@@ -213,6 +223,9 @@ object DirectPromptContext {
     private data class VerifiedTurnContext(
         val memoryAvailability: VerifiedMemory?,
         val workingContinuity: VerifiedWorkingContinuity?,
+        val workingCycleRecoveryProjection: DirectWorkingContinuity.CycleRecoveryProjection?,
+        val workingFocusObservation: DirectWorkingFocus.Observation?,
+        val workingFocusProjection: DirectWorkingFocus.Projection?,
         val browserContextSha256: String?,
         val browserContextRef: String?,
         val capabilityFrame: VerifiedCapabilityFrame?,
@@ -299,6 +312,8 @@ object DirectPromptContext {
         const val Memory = Prefix + "memory-current-context"
         const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
+        const val WorkingCycleRecovery = Prefix + "working-cycle-recovery"
+        const val WorkingFocus = Prefix + "working-focus-current"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
         const val CurrentStateEnvelope = Prefix + "current-state-envelope"
@@ -417,6 +432,23 @@ object DirectPromptContext {
         val effectAuthorityGranted: Boolean,
     )
 
+    @Serializable
+    data class WorkingFocusSnapshot(
+        val projectionState: String,
+        val observedStanding: String,
+        val workingFocusRefOrNull: String?,
+        val stateRefOrNull: String?,
+        val revisionRefOrNull: String?,
+        val contentSha256OrNull: String?,
+        val estimatedTokens: Int,
+        val requiredCoreTokens: Int,
+        val detailsIncluded: Boolean,
+        val heldRelationshipRefs: List<String>,
+        val heldOpenEdgeRefs: List<String>,
+        val sourceRefs: List<String>,
+        val effectsPerformed: Boolean,
+    )
+
     @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     private data class ReceiptCore(
@@ -484,6 +516,7 @@ object DirectPromptContext {
         val workingContinuitySourceRefs: List<String>,
         val workingContinuitySystemMessageSha256: String?,
         val workingContinuityEstimatedSystemMessageTokens: Int,
+        val workingFocusSnapshot: WorkingFocusSnapshot?,
         val capabilityFrameIncluded: Boolean,
         val capabilityFrameRef: String?,
         val capabilityFrameFingerprint: String?,
@@ -701,6 +734,8 @@ object DirectPromptContext {
         )
         val workingContinuityEstimatedSystemMessageTokens: Int =
             0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val workingFocusSnapshot: WorkingFocusSnapshot? = null,
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
         )
@@ -781,6 +816,36 @@ object DirectPromptContext {
     )
 
     /**
+     * Exclusive provider-message boundary after the exact selected append-only Conversation.
+     *
+     * This is a projection of already-recorded prompt ownership, not a second prompt/cache owner.
+     * Provider realizations may use it only as execution metadata; it never changes model-visible
+     * message bytes. Modes without one ordinary selected Conversation history return null.
+     */
+    internal fun conversationHistoryProviderBoundaryMessageCount(
+        receipt: Receipt,
+    ): Int? {
+        val history =
+            receipt.contextComponents
+                .singleOrNull {
+                    it.componentRef ==
+                        ComponentRefs.ConversationHistory
+                }
+                ?: return null
+        require(
+            history.stabilityClass ==
+                ComponentStability.APPEND_ONLY_HISTORY &&
+                history.placementClass ==
+                ComponentPlacement.HISTORICAL_SEQUENCE &&
+                receipt.selectedConversationEventRefs.isNotEmpty(),
+        ) {
+            "Conversation cache boundary requires one append-only selected-history component"
+        }
+        return history.providerMessageIndex +
+            receipt.selectedConversationEventRefs.size
+    }
+
+    /**
      * What Vex is told about the person's current settings and its own continuity: the language to
      * reply in, and the private conversations it does not remember (only when, how long, and the
      * notes both agreed to keep). Composed by the service from Home owners; carried as one bounded
@@ -852,15 +917,15 @@ object DirectPromptContext {
     )
 
     /**
-     * Exact provider-leading system prefix that may be formed before the first human request.
+     * Exact provider-leading system prefix that may be formed before a local human request.
      *
      * This projection owns no Foundation, Memory, capability or provider meaning. It composes the
      * already-owned stable/current inputs exactly as [materialize] will place them at the beginning
-     * of a genesis turn. A later Send must re-materialize and compare exact provider bytes before
+     * of a local turn. A later Send must re-materialize and compare exact provider bytes before
      * any prepared cache may be treated as reusable.
      */
     @ConsistentCopyVisibility
-    data class InitialBootPrefix internal constructor(
+    data class ProviderPreparationPrefix internal constructor(
         val messages: List<CompanionProviderMessage>,
         val systemMessageSha256: String,
         val foundationalField: VexLifeFoundationalField.Evidence?,
@@ -995,25 +1060,25 @@ object DirectPromptContext {
     }
 
     /**
-     * Forms only the exact leading system message that a normal first turn can reuse.
+     * Forms only the exact leading system message that a normal local turn can reuse.
      *
      * No synthetic user message is added. No provider call occurs. The projection deliberately
      * binds the current Memory snapshot and provider representation so a later human Send can
      * invalidate it if either changed before inference.
      */
-    internal fun projectInitialBootPrefix(
+    internal fun projectProviderPreparationPrefix(
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         memoryContext: VexLifeMemoryContract.Context? = null,
         memoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? = null,
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
-    ): InitialBootPrefix {
+    ): ProviderPreparationPrefix {
         require(
             memoryContext == null ||
                 memoryProviderSelection == null,
         ) {
-            "initial boot prefix accepts either one Memory context or one provider selection, not both"
+            "provider preparation prefix accepts either one Memory context or one provider selection, not both"
         }
 
         val memory =
@@ -1040,7 +1105,7 @@ object DirectPromptContext {
                 ?.effectAuthorityGranted !=
                 true,
         ) {
-            "initial boot prefix Foundation cannot grant effect authority"
+            "provider preparation prefix Foundation cannot grant effect authority"
         }
         val profileFoundation =
             contextProfile
@@ -1163,16 +1228,16 @@ object DirectPromptContext {
             requireNotNull(
                 messages.singleOrNull(),
             ) {
-                "initial boot prefix must form exactly one leading provider system message"
+                "provider preparation prefix must form exactly one leading provider system message"
             }
         require(
             systemMessage.role ==
                 "system",
         ) {
-            "initial boot prefix must remain one provider system message"
+            "provider preparation prefix must remain one provider system message"
         }
 
-        return InitialBootPrefix(
+        return ProviderPreparationPrefix(
             messages = messages,
             systemMessageSha256 =
                 sha256(
@@ -1709,6 +1774,10 @@ object DirectPromptContext {
                     workingContinuity
                         ?.estimatedSystemMessageTokens
                         ?: 0,
+                workingFocusSnapshot =
+                    workingFocusSnapshot(
+                        turnContext.workingFocusProjection,
+                    ),
                 capabilityFrameIncluded =
                     capabilityFrame !=
                     null,
@@ -1886,6 +1955,8 @@ object DirectPromptContext {
                     core.workingContinuitySystemMessageSha256,
                 workingContinuityEstimatedSystemMessageTokens =
                     core.workingContinuityEstimatedSystemMessageTokens,
+                workingFocusSnapshot =
+                    core.workingFocusSnapshot,
                 capabilityFrameIncluded = core.capabilityFrameIncluded,
                 capabilityFrameRef = core.capabilityFrameRef,
                 capabilityFrameFingerprint = core.capabilityFrameFingerprint,
@@ -1954,6 +2025,16 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ): Materialization =
         materializeContinuityAt(
             conversationOwner = conversationOwner,
@@ -1974,6 +2055,11 @@ object DirectPromptContext {
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -1990,6 +2076,8 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2003,6 +2091,16 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -2038,6 +2136,10 @@ object DirectPromptContext {
                     memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
@@ -2049,6 +2151,11 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                 successorBridgeInSuffix = false,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
@@ -2409,6 +2516,16 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ) =
         reverifyContinuityAt(
             materialization = materialization,
@@ -2430,6 +2547,11 @@ object DirectPromptContext {
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
+            workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -2441,6 +2563,8 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2454,6 +2578,16 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -2471,6 +2605,10 @@ object DirectPromptContext {
                     memoryContextAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
+                workingCycleRecovery =
+                    workingCycleRecovery,
+                workingFocusObservation =
+                    workingFocusObservation,
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
@@ -2486,6 +2624,11 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
+                workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
@@ -2761,6 +2904,8 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        workingCycleRecovery: DirectWorkingContinuity.CycleRecovery? = null,
+        workingFocusObservation: DirectWorkingFocus.Observation? = null,
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
@@ -2772,6 +2917,16 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
         /**
          * Legacy successor bridge: the prior Vex reply alone, in the suffix. The continuity path
          * passes false and keeps an exact overlap tail of whole turns instead.
@@ -2859,6 +3014,27 @@ object DirectPromptContext {
                 prior = prior,
                 currentRequest = currentRequest,
             )
+
+        val workingCycleRecoveryProjection =
+            workingCycleRecovery
+                ?.also {
+                    recovery ->
+                    require(
+                        recovery.currentRequestEventRef ==
+                            currentRequest.eventRef &&
+                            recovery.currentRequestEventSha256 ==
+                            currentRequest.eventHash &&
+                            recovery.cycle.lineageRef ==
+                            currentRequest.companionLineageRef &&
+                            recovery.cycle.threadRef ==
+                            currentRequest.threadRef
+                    ) {
+                        "working cycle recovery does not bind the exact current request/lineage"
+                    }
+                }
+                ?.let(
+                    DirectWorkingContinuity::projectCycleRecovery,
+                )
 
         if (
             prior ==
@@ -2948,6 +3124,11 @@ object DirectPromptContext {
                         runtimeEvidence = it,
                         capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                         providerNativeTools = providerNativeTools,
+                        workspaceEffectGrants = workspaceEffectGrants,
+            workspaceCheckGrants = workspaceCheckGrants,
+            workspaceCheckRuntimeRef = workspaceCheckRuntimeRef,
+            workspaceRunGrants = workspaceRunGrants,
+            workspaceJavaTestRuntimeRef = workspaceJavaTestRuntimeRef,
                     )
                 }
         val personContextContent = personContext?.let(::personContextSystemContent)
@@ -2964,7 +3145,7 @@ object DirectPromptContext {
         // live tail -> the person's request. The pinned chat template admits one system message,
         // first only ("System message must be at the beginning."), so current state is a host
         // envelope in the user role, the role browser context and capability results already use.
-        val currentSections =
+        val baseCurrentSections =
             buildList {
                 workingContinuity?.let {
                     add(
@@ -2973,6 +3154,16 @@ object DirectPromptContext {
                             ComponentStability.MUTABLE_CURRENT,
                             it.systemContent,
                             listOf(it.context.successorContextRef),
+                        ),
+                    )
+                }
+                workingCycleRecoveryProjection?.let {
+                    add(
+                        Section(
+                            ComponentRefs.WorkingCycleRecovery,
+                            ComponentStability.MUTABLE_CURRENT,
+                            it.content,
+                            it.sourceRefs,
                         ),
                     )
                 }
@@ -3031,7 +3222,7 @@ object DirectPromptContext {
                     )
                 },
             )
-        val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
+        val baseCurrentParts = listOfNotNull(currentStateEnvelope(baseCurrentSections))
         val historyParts =
             listOfNotNull(
                 successorPriorResponse
@@ -3085,11 +3276,11 @@ object DirectPromptContext {
                 )
             }
         val prefixMessages = systemParts.map { it.message }
-        val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
+        val baseSuffixMessages = (historyParts + baseCurrentParts + liveParts).map { it.message }
         val otherTurnContextEstimate =
             (
                 prefixMessages +
-                    suffixMessages
+                    baseSuffixMessages
             )
                 .sumOf {
                     estimatedMessageTokens(
@@ -3107,7 +3298,7 @@ object DirectPromptContext {
             } else {
                 val measured =
                     currentStateEnvelope(
-                        currentSections +
+                        baseCurrentSections +
                             Section(
                                 ComponentRefs.SourceReturnProtocol,
                                 ComponentStability.MUTABLE_CURRENT,
@@ -3118,15 +3309,17 @@ object DirectPromptContext {
                     estimatedMessageTokens(it.content)
                 }
             }
+        val immediatePriorReservation =
+            if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
+                estimatedMessageTokens(prior.requestEvent.content) +
+                    estimatedMessageTokens(prior.responseEvent.content)
+            } else {
+                0
+            }
         val foundationRoom =
             inputTokenBudget -
                 roomEstimate -
-                (if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
-                    estimatedMessageTokens(prior.requestEvent.content) +
-                        estimatedMessageTokens(prior.responseEvent.content)
-                } else {
-                    0
-                })
+                immediatePriorReservation
         val foundationMode =
             contextProfile
                 ?.definition
@@ -3159,8 +3352,54 @@ object DirectPromptContext {
                         availableTokens = afterProductFoundation,
                     )
                 }
-        val fixedEstimate =
+        val baseFixedEstimate =
             otherTurnContextEstimate +
+                (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
+                (profileFoundation?.estimatedSystemMessageTokens ?: 0)
+        val workingFocusProjection =
+            workingFocusObservation?.let {
+                observation ->
+                projectWorkingFocusForCurrentState(
+                    observation = observation,
+                    baseCurrentSections = baseCurrentSections,
+                    availableTokens =
+                        maxOf(
+                            0,
+                            inputTokenBudget -
+                                baseFixedEstimate -
+                                immediatePriorReservation,
+                        ),
+                )
+            }
+        val currentSections =
+            baseCurrentSections +
+                listOfNotNull(
+                    workingFocusProjection
+                        ?.contentOrNull
+                        ?.let {
+                            content ->
+                            Section(
+                                ComponentRefs.WorkingFocus,
+                                ComponentStability.MUTABLE_CURRENT,
+                                content,
+                                workingFocusProjection.sourceRefs,
+                            )
+                        },
+                )
+        val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
+        val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
+        val finalOtherTurnContextEstimate =
+            (
+                prefixMessages +
+                    suffixMessages
+            )
+                .sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+        val fixedEstimate =
+            finalOtherTurnContextEstimate +
                 (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
                 (profileFoundation?.estimatedSystemMessageTokens ?: 0)
 
@@ -3191,6 +3430,10 @@ object DirectPromptContext {
         return VerifiedTurnContext(
             memoryAvailability = memoryAvailability,
             workingContinuity = workingContinuity,
+            workingCycleRecoveryProjection =
+                workingCycleRecoveryProjection,
+            workingFocusObservation = workingFocusObservation,
+            workingFocusProjection = workingFocusProjection,
             browserContextSha256 = browserContextSha256,
             browserContextRef = browserContextRef,
             capabilityFrame = capabilityFrame,
@@ -3228,6 +3471,96 @@ object DirectPromptContext {
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
+
+    private fun projectWorkingFocusForCurrentState(
+        observation: DirectWorkingFocus.Observation,
+        baseCurrentSections: List<Section>,
+        availableTokens: Int,
+    ): DirectWorkingFocus.Projection {
+        val full =
+            DirectWorkingFocus.project(
+                observation = observation,
+                availableTokens = Int.MAX_VALUE,
+                estimateTokens = ::estimatedMessageTokens,
+            )
+        if (full.contentOrNull == null) {
+            return full
+        }
+
+        fun currentStateDelta(content: String): Int {
+            val before =
+                currentStateEnvelope(baseCurrentSections)
+                    ?.content
+                    ?.let(::estimatedMessageTokens)
+                    ?: 0
+            val after =
+                currentStateEnvelope(
+                    baseCurrentSections +
+                        Section(
+                            ComponentRefs.WorkingFocus,
+                            ComponentStability.MUTABLE_CURRENT,
+                            content,
+                            full.sourceRefs,
+                        ),
+                )
+                    ?.content
+                    ?.let(::estimatedMessageTokens)
+                    ?: 0
+            return maxOf(
+                0,
+                after - before,
+            )
+        }
+
+        if (currentStateDelta(requireNotNull(full.contentOrNull)) <= availableTokens) {
+            return full
+        }
+
+        val core =
+            DirectWorkingFocus.project(
+                observation = observation,
+                availableTokens = full.requiredCoreTokens,
+                estimateTokens = ::estimatedMessageTokens,
+            )
+        if (
+            core.contentOrNull != null &&
+            currentStateDelta(requireNotNull(core.contentOrNull)) <= availableTokens
+        ) {
+            return core
+        }
+
+        return DirectWorkingFocus.project(
+            observation = observation,
+            availableTokens =
+                maxOf(
+                    0,
+                    full.requiredCoreTokens - 1,
+                ),
+            estimateTokens = ::estimatedMessageTokens,
+        )
+    }
+
+    private fun workingFocusSnapshot(
+        projection: DirectWorkingFocus.Projection?,
+    ): WorkingFocusSnapshot? =
+        projection?.let {
+            value ->
+            WorkingFocusSnapshot(
+                projectionState = value.state.name,
+                observedStanding = value.observedStanding.name,
+                workingFocusRefOrNull = value.workingFocusRefOrNull,
+                stateRefOrNull = value.stateRefOrNull,
+                revisionRefOrNull = value.revisionRefOrNull,
+                contentSha256OrNull = value.contentSha256OrNull,
+                estimatedTokens = value.estimatedTokens,
+                requiredCoreTokens = value.requiredCoreTokens,
+                detailsIncluded = value.detailsIncluded,
+                heldRelationshipRefs = value.heldRelationshipRefs,
+                heldOpenEdgeRefs = value.heldOpenEdgeRefs,
+                sourceRefs = value.sourceRefs,
+                effectsPerformed = value.effectsPerformed,
+            )
+        }
 
     /** Product foundation first, then the person's optional profile foundation. */
     private fun foundationalFieldMessages(turnContext: VerifiedTurnContext): List<CompanionProviderMessage> =
@@ -3319,10 +3652,20 @@ object DirectPromptContext {
         return ConversationExtent(
             priorCompletedExchangeCount = count,
             systemContent =
-                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
+                listOf(
+                    ConversationExtentHeader,
+                    "priorCompletedExchanges=$count",
+                    statement,
+                    ConversationChronologyLead,
+                )
                     .joinToString("\n"),
         )
     }
+
+    internal val ConversationChronologyLead =
+        "The Conversation messages shown in this prompt remain in their original Conversation order, " +
+            "earlier to later. Order is chronology only; it does not by itself mark any turn " +
+            "superseded or more authoritative."
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
 
@@ -3337,9 +3680,11 @@ object DirectPromptContext {
     internal val CurrentStateLead =
         listOf(
             CurrentStateHeader,
-            "From VexLife, not a message from the person: what is current at this request. It comes " +
-                "after the Conversation because it is current now. It is not a fact from the " +
-                "Conversation's beginning; earlier turns happened under whatever was current then.",
+            "From VexLife, not a message from the person: current host context for this request. " +
+                "Each section is current only for the owner and subject it names; being current here does " +
+                "not by itself state or explain a different person, project, or subject in the Conversation. " +
+                "It comes after the Conversation because it is current now; earlier turns happened under " +
+                "whatever host context was current then.",
         )
             .joinToString("\n")
 
@@ -3372,11 +3717,69 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         capabilityRequestsAdmitted: Boolean = false,
         providerNativeTools: Boolean = true,
+        workspaceEffectGrants: List<VexLifeWorkspaceEffectsFamily.Grant> =
+            emptyList(),
+        workspaceCheckGrants: List<VexLifeWorkspaceChecksFamily.Grant> =
+            emptyList(),
+        workspaceCheckRuntimeRef: String? =
+            null,
+        workspaceRunGrants: List<VexLifeWorkspaceRunsFamily.Grant> =
+            emptyList(),
+        workspaceJavaTestRuntimeRef: String? =
+            null,
     ): VerifiedCapabilityFrame {
         val memoryCurrent =
             memoryContext?.projectionState == "CURRENT" && memoryContext.projectionCurrentness == "CURRENT"
         val capabilityRefs =
-            if (capabilityRequestsAdmitted) DirectTurnCapabilityRefs + DirectTurnReachRefs else DirectTurnCapabilityRefs
+            if (
+                capabilityRequestsAdmitted
+            ) {
+                DirectTurnCapabilityRefs +
+                    DirectTurnReachRefs +
+                    DirectTurnEffectRefs
+            } else {
+                DirectTurnCapabilityRefs
+            }
+        val workspaceSourceRefs =
+            workspaceEffectGrants
+                .flatMap {
+                    listOf(
+                        it.sourceRef,
+                        it.grantRef,
+                    )
+                }
+                .distinct()
+                .sorted()
+        val workspaceCheckSourceRefs =
+            (
+                workspaceCheckGrants
+                    .flatMap {
+                        listOf(
+                            it.sourceRef,
+                            it.grantRef,
+                        )
+                    } +
+                    listOfNotNull(
+                        workspaceCheckRuntimeRef,
+                    )
+            )
+                .distinct()
+                .sorted()
+        val workspaceRunSourceRefs =
+            (
+                workspaceRunGrants
+                    .flatMap {
+                        listOf(
+                            it.sourceRef,
+                            it.grantRef,
+                        )
+                    } +
+                    listOfNotNull(
+                        workspaceJavaTestRuntimeRef,
+                    )
+            )
+                .distinct()
+                .sorted()
         val frame =
             VexLifeCapabilityAtlas.formFrame(
                 VexLifeCapabilityAtlas.FrameInput(
@@ -3384,10 +3787,114 @@ object DirectPromptContext {
                     platformRef = VexLifeCapabilityAtlas.MacPlatformRef,
                     projectGrantedCapabilityRefs = capabilityRefs,
                     relevantCapabilityRefs = capabilityRefs,
-                    permissionFacts = emptyList(),
+                    permissionFacts =
+                        if (
+                            capabilityRequestsAdmitted
+                        ) {
+                            listOf(
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef =
+                                        VexLifeWorkspaceEffectDefinitions.PermissionRef,
+                                    state =
+                                        if (
+                                            workspaceEffectGrants.isNotEmpty()
+                                        ) {
+                                            VexLifeCapabilityAtlas.PermissionState.GRANTED
+                                        } else {
+                                            VexLifeCapabilityAtlas.PermissionState.DENIED
+                                        },
+                                    sourceRefs =
+                                        workspaceSourceRefs,
+                                ),
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef =
+                                        VexLifeWorkspaceCheckDefinitions.PermissionRef,
+                                    state =
+                                        if (
+                                            workspaceCheckGrants.isNotEmpty()
+                                        ) {
+                                            VexLifeCapabilityAtlas.PermissionState.GRANTED
+                                        } else {
+                                            VexLifeCapabilityAtlas.PermissionState.DENIED
+                                        },
+                                    sourceRefs =
+                                        workspaceCheckSourceRefs,
+                                ),
+                                VexLifeCapabilityAtlas.PermissionFact(
+                                    permissionRef =
+                                        VexLifeWorkspaceJavaTestDefinitions.PermissionRef,
+                                    state =
+                                        if (
+                                            workspaceRunGrants.isNotEmpty()
+                                        ) {
+                                            VexLifeCapabilityAtlas.PermissionState.GRANTED
+                                        } else {
+                                            VexLifeCapabilityAtlas.PermissionState.DENIED
+                                        },
+                                    sourceRefs =
+                                        workspaceRunSourceRefs,
+                                ),
+                            )
+                        } else {
+                            emptyList()
+                        },
                     tokenBudget = if (capabilityRequestsAdmitted) ReachFrameTokenBudget else 1_600,
                     resourceFacts =
                         (if (capabilityRequestsAdmitted) reachResourceFacts(currentRequest, memoryCurrent) else emptyList()) +
+                        (
+                            if (
+                                capabilityRequestsAdmitted
+                            ) {
+                                listOf(
+                                    VexLifeCapabilityAtlas.ResourceFact(
+                                        resourceRef =
+                                            VexLifeWorkspaceEffectDefinitions.ResourceRef,
+                                        state =
+                                            if (
+                                                workspaceEffectGrants.isNotEmpty()
+                                            ) {
+                                                VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                            } else {
+                                                VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                            },
+                                        sourceRefs =
+                                            workspaceSourceRefs,
+                                    ),
+                                    VexLifeCapabilityAtlas.ResourceFact(
+                                        resourceRef =
+                                            VexLifeWorkspaceCheckDefinitions.ResourceRef,
+                                        state =
+                                            if (
+                                                workspaceCheckGrants.isNotEmpty() &&
+                                                workspaceCheckRuntimeRef != null
+                                            ) {
+                                                VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                            } else {
+                                                VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                            },
+                                        sourceRefs =
+                                            workspaceCheckSourceRefs,
+                                    ),
+                                    VexLifeCapabilityAtlas.ResourceFact(
+                                        resourceRef =
+                                            VexLifeWorkspaceJavaTestDefinitions.ResourceRef,
+                                        state =
+                                            if (
+                                                workspaceRunGrants.isNotEmpty() &&
+                                                workspaceJavaTestRuntimeRef != null
+                                            ) {
+                                                VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                            } else {
+                                                VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                            },
+                                        sourceRefs =
+                                            workspaceRunSourceRefs,
+                                    ),
+                                )
+                            } else {
+                                emptyList()
+                            }
+                        ) +
                         listOf(
                             VexLifeCapabilityAtlas.ResourceFact(
                                 resourceRef = "resource.vexlife-prod.memory.current-context",
@@ -3470,9 +3977,17 @@ object DirectPromptContext {
 
     private const val ReachFrameTokenBudget = 6_000
 
-    /** Request/return reach admitted in an ordinary direct turn (VexLifeReachDefinitions). */
+    /** Request/return read reach admitted in an ordinary direct turn. */
     private val DirectTurnReachRefs =
         VexLifeReachDefinitions.ProviderToolCapabilityRefs
+
+    /** Effect capability remains descriptive in the frame; W1 owns every actual mutation. */
+    private val DirectTurnEffectRefs =
+        listOf(
+            VexLifeWorkspaceEffectDefinitions.WriteRef,
+            VexLifeWorkspaceCheckDefinitions.CapabilityRef,
+            VexLifeWorkspaceJavaTestDefinitions.CapabilityRef,
+        )
 
     /**
      * Current resource truth for reach. The bridges exist in this build and their own per-request
@@ -3489,6 +4004,10 @@ object DirectPromptContext {
             VexLifeCapabilityAtlas.ResourceFact(resource, VexLifeCapabilityAtlas.ResourceState.AVAILABLE, listOf(bridge) + refs)
         return listOf(
             available("resource.vexlife-prod.capability.registry"),
+            available(
+                VexLifeReachDefinitions.SelfContextResource,
+                currentRequest.eventRef,
+            ),
             available("resource.vexlife-prod.network.public-web"),
             available("resource.vexlife-prod.network.public-github"),
             available("resource.vexlife-prod.home.files", currentRequest.homeRef),
@@ -3524,6 +4043,10 @@ object DirectPromptContext {
                     "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
                         "Use one read route at a time because what returns may change which route is needed next. " +
                         "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
+                    "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                        "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                        "Reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                        "Stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     "Exact older Conversation also has its source-return relationship for this turn. " +
                         "Current-message attachments, persistent Local Sources, Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
                 )
@@ -3532,7 +4055,7 @@ object DirectPromptContext {
                     add("Vex capability context")
                     add(
                         "This model's current VexLife provider relationship uses the text-control fallback instead of provider-native tools. " +
-                            "Callable read routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                            "Callable read and bounded effect routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
                     )
                     VexLifeReachDefinitions.EnvelopeCapabilityRefs
                         .mapNotNull(
@@ -3555,19 +4078,22 @@ object DirectPromptContext {
                             }
                         }
                     add(
+                        "AVAILABLE bounded effects are action routes, not drafting hints. " +
+                            "When the human asks me to perform one, I use the smallest AVAILABLE effect request instead of only describing the file, command, or JSON I would use. " +
+                            "Bare or example arguments are not a request by themselves.",
+                    )
+                    add(
                         "For older local Conversation truth: when I know distinctive exact earlier words, I use Conversation Source Return. " +
                             "When the human paraphrases, I do not know the earlier wording, I need an earlier correction, or I need evidence that something was not found, I use continuity.revisit instead of github, web, home, or Memory. " +
-                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms.",
+                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms. " +
+                            "A current human instruction can change the task now, but a current claim about what we agreed earlier is not by itself evidence of that earlier agreement. " +
+                            "If a historical claim conflicts with visible prior Conversation, or would revise prior work based on history, I preserve the visible source and use the rightful Conversation/continuity route before treating the claim as past truth.",
                     )
                     add(
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
                     )
                     add(
-                        "To request one of these reads, my whole reply for this provider stage is the exact header " +
-                            VexLifeCapabilityRequest.RequestHeader +
-                            " followed by one JSON object with capability, action, and arguments. The header is mandatory: bare JSON or code-fenced JSON is ordinary assistant text and performs nothing. I stop composing the human-facing answer until the host returns a real " +
-                            VexLifeCapabilityRequest.ResultHeader +
-                            " result.",
+                        VexLifeCapabilityRequest.TextControlProviderInstruction,
                     )
                     add(
                         "Exact older Conversation uses the separate source-return form carried in current state. " +
@@ -3575,6 +4101,12 @@ object DirectPromptContext {
                     )
                     add(
                         "When current context already answers the human, I simply answer. I use one read route at a time because what returns may change which route is needed next.",
+                    )
+                    add(
+                        "Current reach is governed by the task, current authority/source scope, and real exchange headroom — not by a small fixed request quota. " +
+                            "Earlier Conversation statements about 4, 10, or 20 request limits do not describe this turn. " +
+                            "I reach again only when another result can materially change what I understand, verify, or can truthfully do. " +
+                            "I stop when evidence is sufficient or materially similar reads stop changing the decision. The host holds further reach when real exchange headroom is exhausted.",
                     )
                 }
             }
@@ -3589,6 +4121,26 @@ object DirectPromptContext {
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
             byState[state].orEmpty().sortedBy { it.handle }.joinToString(", ") { it.handle }
+        val entriesByRef =
+            frame.capabilityEntries.associateBy {
+                it.capabilityRef
+            }
+        val availableEffectDefinitions =
+            DirectTurnEffectRefs
+                .mapNotNull(
+                    VexLifeCapabilityAtlas::resolve,
+                )
+                .filter {
+                    definition ->
+                    entriesByRef[
+                        definition.capabilityRef
+                    ]
+                        ?.state ==
+                        VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                }
+                .sortedBy {
+                    it.priority
+                }
         val now =
             buildString {
                 append("Now: AVAILABLE — ")
@@ -3605,6 +4157,175 @@ object DirectPromptContext {
                         .append('.')
                 }
                 append(" (").append(frame.selfCapabilityFrameRef).append(')')
+                frame.capabilityEntries
+                    .singleOrNull {
+                        it.capabilityRef ==
+                            VexLifeWorkspaceEffectDefinitions.WriteRef &&
+                            it.state ==
+                            VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                    }
+                    ?.sourceRefs
+                    ?.filter(
+                        VexLifeLocalSourcesFamily::isSourceRef,
+                    )
+                    ?.takeIf(
+                        List<String>::isNotEmpty,
+                    )
+                    ?.let {
+                        writable ->
+                        append(" Writable Local Sources — ")
+                            .append(
+                                writable.joinToString(
+                                    ", ",
+                                ),
+                            )
+                            .append('.')
+                    }
+                if (
+                    availableEffectDefinitions.isNotEmpty()
+                ) {
+                    appendLine()
+                    if (
+                        entriesByRef[
+                            VexLifeReachDefinitions.LocalSourceRef
+                        ]
+                            ?.state ==
+                            VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                    ) {
+                        appendLine(
+                            "Same granted Local Source, separate current hands:",
+                        )
+                        appendLine(
+                            "    inspect existing files: sources.list / sources.find / sources.read",
+                        )
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceEffectDefinitions.WriteRef
+                            }
+                        ) {
+                            appendLine(
+                                "    change text: workspace.write",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceCheckDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    verify text: workspace-check.check",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceJavaTestDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    execute Java project tests: workspace-test.test",
+                            )
+                        }
+                        appendLine(
+                            "Use sources, not workspace, for list/find/read. These handles stay separate because reading, changing, checking, and executing have different rightful owners.",
+                        )
+                    }
+                    appendLine(
+                        "Available bounded effect requests this turn — exact Atlas-derived forms:",
+                    )
+                    if (
+                        !providerNativeTools
+                    ) {
+                        appendLine(
+                            "Text-control action boundary: example arguments below are not a request by themselves.",
+                        )
+                        appendLine(
+                            VexLifeCapabilityRequest.TextControlProviderInstruction,
+                        )
+                        appendLine(
+                            "When the human asks me to perform one of these AVAILABLE bounded effects, " +
+                                "I use the complete request form rather than ordinary prose, shell/code blocks, or bare JSON.",
+                        )
+                    }
+                    availableEffectDefinitions.forEach {
+                        definition ->
+                        append("- ")
+                            .append(
+                                definition.handle,
+                            )
+                            .append(": ")
+                            .appendLine(
+                                definition.purpose,
+                            )
+                        entriesByRef[
+                            definition.capabilityRef
+                        ]
+                            ?.sourceRefs
+                            ?.filter(
+                                VexLifeLocalSourcesFamily::isSourceRef,
+                            )
+                            ?.takeIf(
+                                List<String>::isNotEmpty,
+                            )
+                            ?.let {
+                                sourceRefs ->
+                                append("    current Local Sources: ")
+                                    .appendLine(
+                                        sourceRefs.joinToString(
+                                            ", ",
+                                        ),
+                                    )
+                            }
+                        definition.actions.forEach {
+                            action ->
+                            append("    ")
+                                .append(
+                                    action.action,
+                                )
+                                .append(' ')
+                                .append(
+                                    action.exampleArguments,
+                                )
+                                .append(" — ")
+                                .appendLine(
+                                    action.purpose,
+                                )
+                            if (
+                                !providerNativeTools
+                            ) {
+                                appendLine(
+                                    "    complete request:",
+                                )
+                                append("    ")
+                                    .appendLine(
+                                        VexLifeCapabilityRequest.RequestHeader,
+                                    )
+                                append("    {\"capability\":\"")
+                                    .append(
+                                        definition.handle,
+                                    )
+                                    .append("\",\"action\":\"")
+                                    .append(
+                                        action.action,
+                                    )
+                                    .append("\",\"arguments\":")
+                                    .append(
+                                        action.exampleArguments,
+                                    )
+                                    .appendLine(
+                                        "}",
+                                    )
+                            }
+                        }
+                    }
+                    append(
+                        "These are current request forms, not proof that an effect occurred. " +
+                            "The capability frame itself grants no effect authority; the host owner re-checks current authority, " +
+                            "and only a real ${VexLifeCapabilityRequest.ResultHeader} result is evidence of what happened.",
+                    )
+                }
             }
         return reachInstructionSystemContent(providerNativeTools) to now
     }
