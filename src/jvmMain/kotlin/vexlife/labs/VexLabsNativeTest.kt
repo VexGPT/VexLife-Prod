@@ -94,10 +94,18 @@ class VexLabsNativeTest(
             "instance.vexlife-prod.vex-labs.native-test"
     }
 
+    private data class SourceHomeIdentity(
+        val homeRef: String,
+        val familyRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+    )
+
     private data class Scratch(
         val root: Path,
         val seedConversationHeadSha256: String?,
         val seededMessageCount: Int,
+        val sourceHomeIdentity: SourceHomeIdentity,
     )
 
     private val lock =
@@ -109,7 +117,7 @@ class VexLabsNativeTest(
         null
 
     private var conversationPreset =
-        "CURRENT_SNAPSHOT"
+        "EMPTY"
 
     private var memoryMode =
         "CURRENT"
@@ -161,13 +169,13 @@ class VexLabsNativeTest(
 
                 ControlRestoreDefaults -> {
                     conversationPreset =
-                        "CURRENT_SNAPSHOT"
+                        "EMPTY"
                     memoryMode =
                         "CURRENT"
                     lastAdmission =
                         null
                     replaceScratch(
-                        seedConversation = true,
+                        seedConversation = false,
                     )
                 }
 
@@ -800,12 +808,39 @@ class VexLabsNativeTest(
         )
     }
 
+    private fun currentSourceHome(): VexLifeProdHomeFiles.Result =
+        requireNotNull(
+            VexLifeProdHomeFiles.observeExisting(
+                productHome,
+            ),
+        ) {
+            "Vex Labs requires one current canonical Product Home"
+        }
+
+    private fun sourceHomeIdentity(
+        current: VexLifeProdHomeFiles.Result,
+    ): SourceHomeIdentity =
+        SourceHomeIdentity(
+            homeRef = current.manifest.homeRef,
+            familyRef = current.manifest.familyRef,
+            deviceRef = current.installation.deviceRef,
+            companionLineageRef = current.installation.companionLineageRef,
+        )
+
     private fun ensureScratch(): Scratch {
+        val current =
+            currentSourceHome()
+        val currentIdentity =
+            sourceHomeIdentity(
+                current,
+            )
         val existing =
             scratch
         if (
             existing !=
-                null
+                null &&
+            existing.sourceHomeIdentity ==
+                currentIdentity
         ) {
             return existing
         }
@@ -813,11 +848,14 @@ class VexLabsNativeTest(
             seedConversation =
                 conversationPreset ==
                     "CURRENT_SNAPSHOT",
+            current = current,
         )
     }
 
     private fun replaceScratch(
         seedConversation: Boolean,
+        current: VexLifeProdHomeFiles.Result =
+            currentSourceHome(),
     ): Scratch {
         lastAdmission =
             null
@@ -828,14 +866,10 @@ class VexLabsNativeTest(
             )
         exchanges.clear()
 
-        val current =
-            requireNotNull(
-                VexLifeProdHomeFiles.observeExisting(
-                    productHome,
-                ),
-            ) {
-                "Vex Labs requires one current canonical Product Home"
-            }
+        val currentIdentity =
+            sourceHomeIdentity(
+                current,
+            )
         val root =
             Files.createTempDirectory(
                 "vexlife-labs-native-test-",
@@ -935,6 +969,15 @@ class VexLabsNativeTest(
             "real Conversation changed while Vex Labs was taking its scratch snapshot; reload the Lab from the new current Conversation"
         }
 
+        require(
+            sourceHomeIdentity(
+                currentSourceHome(),
+            ) ==
+                currentIdentity,
+        ) {
+            "canonical VexLife Home identity changed while Vex Labs was taking its scratch snapshot"
+        }
+
         requireNotNull(
             VexLifeProdHomeFiles.observeExisting(
                 root,
@@ -961,6 +1004,8 @@ class VexLabsNativeTest(
                         ?.conversationHeadSha256,
                 seededMessageCount =
                     snapshot.canonicalEvents.size,
+                sourceHomeIdentity =
+                    currentIdentity,
             )
         scratch =
             next
