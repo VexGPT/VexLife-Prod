@@ -214,6 +214,8 @@ object HereticExecutionTopology {
         /** Ordinary prompt room left when the capability reserve is active. */
         val directTurnInputWithReachTokens: EffectiveField<Int>,
         val maximumMemoryTokens: EffectiveField<Int>,
+        /** No fixed request quota is current; null is truthful absence, not an unknown value. */
+        val maximumRequestsPerTurn: EffectiveField<Int?>,
         val reservedOutputTokens: EffectiveField<Int>,
         val hardInputOutputTokenLimit: EffectiveField<Int>,
         /**
@@ -836,6 +838,16 @@ object HereticExecutionTopology {
                         ),
                 ),
                 descriptor(
+                    "field.vexlife-prod.continuity.maximum-requests-per-turn",
+                    FieldGroup.CONTINUITY,
+                    VexLifeText("workspace.label.execution-field-continuity-maximum-requests-per-turn"),
+                    VexLifeText("workspace.description.execution-field-continuity-maximum-requests-per-turn"),
+                    continuity.maximumRequestsPerTurn,
+                    capabilityOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = VexLifeText("workspace.label.execution-unit-requests"),
+                ),
+                descriptor(
                     "field.vexlife-prod.continuity.reserved-output-tokens",
                     FieldGroup.CONTINUITY,
                     VexLifeText("workspace.label.execution-field-continuity-reserved-output-tokens"),
@@ -1046,6 +1058,13 @@ object HereticExecutionTopology {
                 field(DirectPromptContext.DirectTurnInputTokenBudget, promptSource),
             maximumMemoryTokens =
                 field(VexLifeMemoryContract.MaximumMemoryTokens, memorySource),
+            maximumRequestsPerTurn =
+                EffectiveField<Int?>(
+                    value = null,
+                    provenance = Provenance.PRODUCT_SOURCE,
+                    changeBoundary = ChangeBoundary.PRODUCT_SOURCE_CHANGE,
+                    sourceRef = capabilitySource,
+                ),
             reservedOutputTokens = field(DirectPromptContext.ReservedOutputTokens, promptSource),
             hardInputOutputTokenLimit = field(DirectPromptContext.HardTokenLimit, promptSource),
             adaptiveContextPolicyState = "NOT_CONFIGURED",
