@@ -4040,7 +4040,8 @@ object DirectPromptContext {
                         "For older local Conversation truth: when I know distinctive exact earlier words, I use Conversation Source Return. " +
                             "When the human paraphrases, I do not know the earlier wording, I need an earlier correction, or I need evidence that something was not found, I use continuity.revisit instead of github, web, home, or Memory. " +
                             "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms. " +
-                            "If a current claim would revise prior work and the visible Conversation does not establish it, I source-check that prior truth before treating the claim as history.",
+                            "A current human instruction can change the task now, but a current claim about what we agreed earlier is not by itself evidence of that earlier agreement. " +
+                            "If a historical claim conflicts with visible prior Conversation, or would revise prior work based on history, I preserve the visible source and use the rightful Conversation/continuity route before treating the claim as past truth.",
                     )
                     add(
                         "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
@@ -4132,6 +4133,53 @@ object DirectPromptContext {
                     availableEffectDefinitions.isNotEmpty()
                 ) {
                     appendLine()
+                    if (
+                        entriesByRef[
+                            VexLifeReachDefinitions.LocalSourceRef
+                        ]
+                            ?.state ==
+                            VexLifeCapabilityAtlas.FrameState.AVAILABLE
+                    ) {
+                        appendLine(
+                            "Same granted Local Source, separate current hands:",
+                        )
+                        appendLine(
+                            "    inspect existing files: sources.list / sources.find / sources.read",
+                        )
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceEffectDefinitions.WriteRef
+                            }
+                        ) {
+                            appendLine(
+                                "    change text: workspace.write",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceCheckDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    verify text: workspace-check.check",
+                            )
+                        }
+                        if (
+                            availableEffectDefinitions.any {
+                                it.capabilityRef ==
+                                    VexLifeWorkspaceJavaTestDefinitions.CapabilityRef
+                            }
+                        ) {
+                            appendLine(
+                                "    execute Java project tests: workspace-test.test",
+                            )
+                        }
+                        appendLine(
+                            "Use sources, not workspace, for list/find/read. These handles stay separate because reading, changing, checking, and executing have different rightful owners.",
+                        )
+                    }
                     appendLine(
                         "Available bounded effect requests this turn — exact Atlas-derived forms:",
                     )
@@ -4192,6 +4240,32 @@ object DirectPromptContext {
                                 .appendLine(
                                     action.purpose,
                                 )
+                            if (
+                                !providerNativeTools
+                            ) {
+                                appendLine(
+                                    "    complete request:",
+                                )
+                                append("    ")
+                                    .appendLine(
+                                        VexLifeCapabilityRequest.RequestHeader,
+                                    )
+                                append("    {\"capability\":\"")
+                                    .append(
+                                        definition.handle,
+                                    )
+                                    .append("\",\"action\":\"")
+                                    .append(
+                                        action.action,
+                                    )
+                                    .append("\",\"arguments\":")
+                                    .append(
+                                        action.exampleArguments,
+                                    )
+                                    .appendLine(
+                                        "}",
+                                    )
+                            }
                         }
                     }
                     append(
