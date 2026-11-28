@@ -45,8 +45,6 @@ class VexLifeLongHorizonMemoryScaleTest {
     private data class Corpus(
         val first: Pair<DirectConversationStore.Event, DirectConversationStore.Event>,
         val semanticTarget: Pair<DirectConversationStore.Event, DirectConversationStore.Event>,
-        val last: Pair<DirectConversationStore.Event, DirectConversationStore.Event>,
-        val lastHead: DirectConversationStore.Head,
         val admissionWholeHistoryScans: Int,
     )
 
@@ -481,13 +479,15 @@ class VexLifeLongHorizonMemoryScaleTest {
                 homeStats(
                     home,
                 )
-            assertEquals(
-                homeAfterCorpus.fileCount +
-                    filesAddedByOneTurn(
-                        homeAfterCorpus,
-                        homeFinal,
-                    ),
-                homeFinal.fileCount,
+            assertTrue(
+                homeFinal.fileCount >
+                    homeAfterCorpus.fileCount,
+                "one appended canonical turn must add durable source files",
+            )
+            assertTrue(
+                homeFinal.bytes >
+                    homeAfterCorpus.bytes,
+                "one appended canonical turn must add durable source bytes",
             )
 
             val completedTurns =
@@ -530,12 +530,28 @@ class VexLifeLongHorizonMemoryScaleTest {
                         corpus.admissionWholeHistoryScans,
                     )
                     put(
-                        "canonicalHomeFiles",
+                        "canonicalHomeFilesBeforeAppend",
+                        homeAfterCorpus.fileCount,
+                    )
+                    put(
+                        "canonicalHomeBytesBeforeAppend",
+                        homeAfterCorpus.bytes,
+                    )
+                    put(
+                        "canonicalHomeFilesAfterAppend",
                         homeFinal.fileCount,
                     )
                     put(
-                        "canonicalHomeBytes",
+                        "canonicalHomeBytesAfterAppend",
                         homeFinal.bytes,
+                    )
+                    put(
+                        "canonicalFilesAddedByOneTurn",
+                        homeFinal.fileCount - homeAfterCorpus.fileCount,
+                    )
+                    put(
+                        "canonicalBytesAddedByOneTurn",
+                        homeFinal.bytes - homeAfterCorpus.bytes,
                     )
                     put(
                         "sourceLightPortableEncodingBytesEstimate",
@@ -699,12 +715,6 @@ class VexLifeLongHorizonMemoryScaleTest {
         var semanticTarget:
             Pair<DirectConversationStore.Event, DirectConversationStore.Event>? =
             null
-        var last:
-            Pair<DirectConversationStore.Event, DirectConversationStore.Event>? =
-            null
-        var lastHead:
-            DirectConversationStore.Head? =
-            null
         var admissionWholeHistoryScans =
             0
         val start =
@@ -809,10 +819,6 @@ class VexLifeLongHorizonMemoryScaleTest {
                     semanticTarget =
                         pair.first
                 }
-                last =
-                    pair.first
-                lastHead =
-                    pair.second
             }
         }
 
@@ -824,14 +830,6 @@ class VexLifeLongHorizonMemoryScaleTest {
             semanticTarget =
                 requireNotNull(
                     semanticTarget,
-                ),
-            last =
-                requireNotNull(
-                    last,
-                ),
-            lastHead =
-                requireNotNull(
-                    lastHead,
                 ),
             admissionWholeHistoryScans =
                 admissionWholeHistoryScans,
@@ -1245,17 +1243,6 @@ class VexLifeLongHorizonMemoryScaleTest {
                 },
         )
     }
-
-    /**
-     * The final corpus has one additional committed turn. The exact count is intentionally measured
-     * rather than hard-coded because canonical Home may add bounded owner metadata around one turn.
-     */
-    private fun filesAddedByOneTurn(
-        before: HomeStats,
-        after: HomeStats,
-    ): Long =
-        after.fileCount -
-            before.fileCount
 
     private inline fun <T> measured(
         block: () -> T,
