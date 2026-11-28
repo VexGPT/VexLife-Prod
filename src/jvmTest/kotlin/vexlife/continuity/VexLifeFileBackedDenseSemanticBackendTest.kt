@@ -181,6 +181,113 @@ class VexLifeFileBackedDenseSemanticBackendTest {
     }
 
     @Test
+    fun firstCommittedTurnBootstrapsFreshDenseSnapshotWithoutPriorRebuild() {
+        ContinuityTurnFixture().use {
+            fixture ->
+            val encoder =
+                RecordingEncoder(
+                    "semantic.test.file-backed.genesis-catchup",
+                )
+            val backend =
+                VexLifeFileBackedDenseSemanticBackend(
+                    productHome = fixture.home,
+                    encoder = encoder,
+                    secretSource = fixedSecret(
+                        20,
+                    ),
+                )
+
+            val firstTurn =
+                fixture.commit(
+                    ContinuityTurnFixture.Line(
+                        human =
+                            "Genesis live request semantic-slot-1.",
+                        vex =
+                            "Genesis live response semantic-slot-2.",
+                        at =
+                            Instant.parse(
+                                "2023-12-01T00:00:00Z",
+                            ),
+                    ),
+                )
+                    .single()
+
+            var expectedConversationHeadSha256: String? =
+                null
+            fixture.store.withWriterLease {
+                val current =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                expectedConversationHeadSha256 =
+                    current.head.conversationHeadSha256
+                val catchUp =
+                    VexLifeContinuitySourceLocator.catchUpCommittedTurn(
+                        committedHead = current.head,
+                        request = firstTurn.first,
+                        response = firstTurn.second,
+                        backend = backend,
+                    )
+                assertEquals(
+                    VexLifeContinuitySourceLocator.CatchUpState.UPDATED,
+                    catchUp.state,
+                )
+                assertEquals(
+                    1,
+                    catchUp.completedTurnCount,
+                )
+                assertEquals(
+                    expectedConversationHeadSha256,
+                    catchUp.sourceConversationHeadSha256,
+                )
+                assertFalse(
+                    catchUp.wholeHistoryEventEnumerationPerformed,
+                )
+            }
+
+            assertEquals(
+                listOf(
+                    2,
+                ),
+                encoder.sourceBatchSizes,
+                "fresh live catch-up must encode only the first committed canonical pair",
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    backend.persistentSnapshotPath(),
+                ),
+                "first live catch-up must persist the dense derived generation",
+            )
+
+            val restarted =
+                VexLifeFileBackedDenseSemanticBackend(
+                    productHome = fixture.home,
+                    encoder =
+                        RecordingEncoder(
+                            "semantic.test.file-backed.genesis-catchup",
+                        ),
+                    secretSource = {
+                        error(
+                            "restart must reuse the first catch-up persisted fingerprint seed",
+                        )
+                    },
+                )
+            val ready =
+                assertIs<VexLifeContinuitySourceLocator.BackendLoad.Ready>(
+                    restarted.load(),
+                )
+            assertEquals(
+                1,
+                ready.generation.completedTurnCount,
+            )
+            assertEquals(
+                expectedConversationHeadSha256,
+                ready.generation.sourceConversationHeadSha256,
+            )
+        }
+    }
+
+    @Test
     fun incrementalCatchUpPersistsAndReloadsTheNewCanonicalGeneration() {
         ContinuityTurnFixture().use {
             fixture ->
