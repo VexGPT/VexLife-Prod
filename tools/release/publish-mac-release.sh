@@ -64,10 +64,25 @@ case "$CHANNEL" in
 esac
 
 cd "$ROOT"
-bash "$ROOT/tools/release/prove-mac-candidate.sh" "$APP_VERSION"
+bash "$ROOT/tools/release/prove-mac-candidate.sh" "$APP_VERSION" "$CHANNEL"
 
 SERVICE_DIR="$ROOT/build/vexlife-prod-service-image/archives/$SOURCE_SHA"
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
+SOURCE_SHORT="${SOURCE_SHA:0:7}"
+if [ "$CHANNEL" = "preview" ]; then
+  DMG_NAME="VexLife-Preview-$SOURCE_SHORT-macOS-AppleSilicon.dmg"
+else
+  DMG_NAME="VexLife-$VERSION-macOS-AppleSilicon.dmg"
+fi
+DMG="$APP_DIR/$DMG_NAME"
+DMG_SUM="$DMG.sha256"
+RECEIPT="$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
+for path in "$DMG" "$DMG_SUM" "$RECEIPT"; do
+  [ -f "$path" ] && [ ! -L "$path" ] || {
+    echo "proved Mac release artifact is absent or symlinked: $path" >&2
+    exit 1
+  }
+done
 
 if [ "$CHANNEL" = "preview" ]; then
   TAG="private-service-image-$SOURCE_SHA"
@@ -76,21 +91,21 @@ if [ "$CHANNEL" = "preview" ]; then
   {
     echo "Preview of $SOURCE_SHA for Mac (Apple silicon)."
     echo
-    echo "Preferred download: VexLife-macOS-AppleSilicon.dmg."
+    echo "Preferred download: $DMG_NAME."
     echo
     echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized. macOS may require explicit approval before first launch and may separately ask to open the bundled Java runtime."
     echo
     echo "source-sha: $SOURCE_SHA"
-    for file in "$APP_DIR"/*.dmg "$SERVICE_DIR"/*.command; do
+    for file in "$DMG" "$SERVICE_DIR"/*.command; do
       echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
     done
   } > "$NOTES"
 
   if gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
-    gh release upload "$TAG" "$SERVICE_DIR"/* "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json --clobber --repo "$REPOSITORY"
+    gh release upload "$TAG" "$SERVICE_DIR"/* "$DMG" "$DMG_SUM" "$RECEIPT" --clobber --repo "$REPOSITORY"
     gh release edit "$TAG" --title "Preview ${SOURCE_SHA:0:7}" --notes-file "$NOTES" --repo "$REPOSITORY"
   else
-    gh release create "$TAG" "$SERVICE_DIR"/* "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json       --repo "$REPOSITORY" --target "$SOURCE_SHA" --prerelease       --title "Preview ${SOURCE_SHA:0:7}" --notes-file "$NOTES"
+    gh release create "$TAG" "$SERVICE_DIR"/* "$DMG" "$DMG_SUM" "$RECEIPT"       --repo "$REPOSITORY" --target "$SOURCE_SHA" --prerelease       --title "Preview ${SOURCE_SHA:0:7}" --notes-file "$NOTES"
   fi
 else
   NOTES="$(mktemp "${TMPDIR:-/tmp}/vexlife-stable-notes.XXXXXX")"
@@ -103,16 +118,16 @@ else
     echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized. macOS may require explicit approval before first launch and may separately ask to open the bundled Java runtime."
     echo
     echo "source-sha: $SOURCE_SHA"
-    for file in "$APP_DIR"/*.dmg "$SERVICE_DIR"/*.command; do
+    for file in "$DMG" "$SERVICE_DIR"/*.command; do
       echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
     done
   } > "$NOTES"
 
-  gh release create "v$VERSION"     "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json     "$SERVICE_DIR"/*.command "$SERVICE_DIR"/*.sha256     --repo "$REPOSITORY" --target "$SOURCE_SHA" --title "VexLife $VERSION"     --notes-file "$NOTES" --latest
+  gh release create "v$VERSION"     "$DMG" "$DMG_SUM" "$RECEIPT"     "$SERVICE_DIR"/*.command "$SERVICE_DIR"/*.sha256     --repo "$REPOSITORY" --target "$SOURCE_SHA" --title "VexLife $VERSION"     --notes-file "$NOTES" --latest
 fi
 
 # Release existence and the public download catalog are one human-facing publication outcome.
 # Form/publish the Pages projection only after GitHub has accepted the exact release.
 VEXLIFE_REPOSITORY="$REPOSITORY" bash "$ROOT/tools/site/publish-gh-pages.sh"
 
-printf 'VEXLIFE_RELEASE_PUBLISHED\t%s\t%s\t%s\n' "$CHANNEL" "$SOURCE_SHA" "${VERSION:-preview}"
+printf 'VEXLIFE_RELEASE_PUBLISHED\t%s\t%s\t%s\t%s\n' "$CHANNEL" "$SOURCE_SHA" "${VERSION:-preview}" "$DMG_NAME"
