@@ -1,11 +1,9 @@
 package vexlife.platform.windows
 
-import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeRealization
 
@@ -69,10 +67,7 @@ class VexLifeWindowsHereticRuntimeTest {
         val realization =
             HereticRuntimeRealization.WindowsQwen4B
         val qualification =
-            HereticRuntimeQualification.qualified(
-                vexReachQualified =
-                    true,
-            )
+            HereticRuntimeQualification.qualified()
         val evidence =
             VexLifeWindowsHereticRuntime.qualifiedEvidence(
                 realization = realization,
@@ -119,10 +114,6 @@ class VexLifeWindowsHereticRuntimeTest {
         assertEquals(
             qualification,
             evidence.qualification,
-        )
-        assertEquals(
-            HereticRuntimeQualification.VexReachQualificationRef,
-            evidence.qualification.vexReachQualificationRef,
         )
 
         val bindingEvidence =
@@ -291,149 +282,6 @@ class VexLifeWindowsHereticRuntimeTest {
         assertEquals(
             "default_model",
             observed.commandLineArguments.last(),
-        )
-    }
-
-    @Test
-    fun windowsReachQualificationUsesTheOrdinaryRuntimeOutputBudget() {
-        val realization =
-            HereticRuntimeRealization.WindowsQwen4B
-
-        assertEquals(
-            4_096,
-            VexLifeWindowsHereticRuntime
-                .reachQualificationMaxOutputTokens(
-                    realization,
-                ),
-        )
-    }
-
-    @Test
-    fun windowsVexReachQualificationEarnsAtlasListThenDerivedDescribe() {
-        val home =
-            Files.createTempDirectory(
-                "windows-vex-reach-qualification-",
-            )
-                .toAbsolutePath()
-        val derived =
-            requireNotNull(
-                VexLifeCapabilityAtlas
-                    .definitions()
-                    .singleOrNull {
-                        definition ->
-                        definition.actions
-                            .singleOrNull()
-                            ?.action ==
-                            "test"
-                    },
-            )
-        val providerStages =
-            mutableListOf(
-                """
-                VEXLIFE_CAPABILITY_REQUEST/v1
-                {"capability":"atlas","action":"list","arguments":{}}
-                """.trimIndent(),
-                """
-                VEXLIFE_CAPABILITY_REQUEST/v1
-                {"capability":"atlas","action":"describe","arguments":{"handle":"${derived.handle}"}}
-                """.trimIndent(),
-            )
-        var stages =
-            0
-
-        val qualified =
-            VexLifeWindowsHereticRuntime.qualifyVexReach(
-                productHome = home,
-                maxOutputTokens =
-                    4_096,
-                invokeStage = {
-                    systemMessage,
-                    userMessage,
-                    maxTokens,
-                    exchanges,
-                    ->
-                    assertTrue(
-                        systemMessage.contains(
-                            "VEXLIFE_CAPABILITY_REQUEST/v1",
-                        ),
-                    )
-                    assertTrue(
-                        userMessage.contains(
-                            "capability atlas",
-                        ),
-                    )
-                    assertEquals(
-                        4_096,
-                        maxTokens,
-                    )
-                    assertEquals(
-                        stages,
-                        exchanges.size,
-                    )
-                    stages +=
-                        1
-                    if (
-                        providerStages.isEmpty()
-                    ) {
-                        null
-                    } else {
-                        providerStages.removeAt(
-                            0,
-                        )
-                    }
-                },
-            )
-
-        assertTrue(
-            qualified,
-        )
-        assertEquals(
-            2,
-            stages,
-        )
-        assertTrue(
-            providerStages.isEmpty(),
-        )
-    }
-
-    @Test
-    fun windowsVexReachQualificationStopsDuplicateControlInsteadOfLooping() {
-        val home =
-            Files.createTempDirectory(
-                "windows-vex-reach-duplicate-",
-            )
-                .toAbsolutePath()
-        val repeated =
-            """
-            VEXLIFE_CAPABILITY_REQUEST/v1
-            {"capability":"atlas","action":"list","arguments":{}}
-            """.trimIndent()
-        var stages =
-            0
-
-        val qualified =
-            VexLifeWindowsHereticRuntime.qualifyVexReach(
-                productHome = home,
-                maxOutputTokens =
-                    4_096,
-                invokeStage = {
-                    _,
-                    _,
-                    _,
-                    _,
-                    ->
-                    stages +=
-                        1
-                    repeated
-                },
-            )
-
-        assertFalse(
-            qualified,
-        )
-        assertEquals(
-            2,
-            stages,
         )
     }
 
